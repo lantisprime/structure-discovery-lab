@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "date": "2026-06-11",
+    "seed": 20260611,
+    "registration": "docs/REGISTRATION_BATCH7.md"
+  },
+  "seasons": {
+    "pairs": {
+      "Q1|Q2": 0.005,
+      "Q1|Q3": 0.005,
+      "Q1|Q4": 0.005,
+      "Q2|Q3": 0.005,
+      "Q2|Q4": 0.005,
+      "Q3|Q4": 0.005
+    },
+    "quarter_starts": [
+      "2025-06-11",
+      "2025-09-10",
+      "2025-12-11",
+      "2026-03-12"
+    ],
+    "sidak_threshold": 0.008512444610847103,
+    "n_reject_corrected": 6,
+    "note": "Q1 starts 2025-06-11 (wet); Q3 spans Nov-Mar (dry) per era registry"
+  },
+  "cca": {
+    "pressure_vs_sunmoon": {
+      "heldout_rho1": 0.5670652756376611,
+      "p_shuffled_pairing": 0.005,
+      "null_mean": 0.0023746161263014814,
+      "null_q95": 0.14814927340905343,
+      "n_train": 219,
+      "n_test": 147,
+      "m_perm": 199
+    },
+    "pressure_vs_kp": {
+      "heldout_rho1": -0.012051905371930124,
+      "p_shuffled_pairing": 0.605,
+      "null_mean": 0.007847655306777602,
+      "null_q95": 0.13537579586459492,
+      "n_train": 219,
+      "n_test": 146,
+      "m_perm": 199
+    }
+  },
+  "gwgate": {
+    "n_trials": 20,
+    "shape": [
+      120,
+      3
+    ],
+    "fpr_at_alpha": 0.05,
+    "ks_p": 0.976255094592155,
+    "gate_passed": true
+  },
+  "gw": {
+    "pressure|tidal": {
+      "score": -0.1725839480393207,
+      "p": 1.0,
+      "null_mean": -0.06242160592371909,
+      "registration": "exploratory"
+    },
+    "pressure|lotto655_sum": {
+      "score": -0.09681571266679015,
+      "p": 0.3,
+      "null_mean": -0.1126165940610459,
+      "registration": "registered NULL"
+    },
+    "tidal|moon": {
+      "score": -0.023063974602935498,
+      "p": 0.05,
+      "null_mean": -0.10259994073723931,
+      "registration": "registered POSITIVE (lunar mechanism)"
+    }
+  }
+}

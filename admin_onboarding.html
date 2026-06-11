@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onboarding Admin — Theorems & Datasets</title>
+<style>
+:root{--bg:#0f1623;--card:#1a2332;--ink:#e8edf5;--mut:#8fa1bb;--acc:#4da3ff;--gold:#f5c542;--grn:#51cf8a;--red:#ff6b6b}
+*{box-sizing:border-box;margin:0}
+body{font-family:-apple-system,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);padding:24px;max-width:960px;margin:0 auto}
+h1{font-size:1.4rem}.sub{color:var(--mut);font-size:.85rem;margin:4px 0 16px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{padding:10px 18px;border-radius:8px;background:var(--card);cursor:pointer;border:1px solid #2e3d55;font-weight:700}
+.tab.on{background:var(--acc);color:#06121f}
+.card{background:var(--card);border:1px solid #2e3d55;border-radius:14px;padding:18px;margin-bottom:14px}
+label{display:block;font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 4px}
+input,textarea,select{width:100%;background:#111a29;color:var(--ink);border:1px solid #2e3d55;border-radius:8px;padding:8px 10px;font-size:.92rem;font-family:inherit}
+textarea{min-height:64px;font-family:ui-monospace,Menlo,monospace;font-size:.84rem}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+button{background:var(--acc);border:0;color:#06121f;font-weight:700;padding:10px 16px;border-radius:8px;cursor:pointer;margin:6px 6px 0 0}
+button.sec{background:#2e3d55;color:var(--ink)}
+.gate{font-family:ui-monospace,Menlo,monospace;font-size:.82rem;line-height:1.7;background:#111a29;border-radius:8px;padding:10px 14px;margin-top:10px}
+.ok{color:var(--grn)}.bad{color:var(--red)}.derived{color:var(--gold)}
+h3{font-size:.95rem;margin:14px 0 2px;color:var(--gold)}
+.note{font-size:.78rem;color:var(--mut);margin-top:10px;line-height:1.5}
+</style></head><body>
+<h1>Onboarding Admin — Theorems &amp; Datasets</h1>
+<div class="sub">Enforces docs/THEOREM_GOVERNANCE.md Part 3 (theorems) &amp; Part 4 (datasets) and docs/EVALUATION_PROTOCOL.md constants.
+Generates conformant artifacts for download — drop them into <b>docs/kb/</b> or <b>datasets/&lt;id&gt;/</b>, or paste the generated instruction block to Claude to execute the remaining gated steps.</div>
+<div class="tabs"><div class="tab on" id="tT" onclick="tab('T')">Onboard Theorem</div><div class="tab" id="tD" onclick="tab('D')">Onboard Dataset</div></div>
+
+<div id="paneT" class="card">
+<h3>Step 1 — Statement card (→ docs/kb/&lt;id&gt;.md)</h3>
+<div class="row"><div><label>theorem id (kebab-case)</label><input id="t_id" placeholder="benford-jackpots"></div>
+<div><label>name</label><input id="t_name" placeholder="Benford's Law on rollover jackpots"></div></div>
+<div class="row3"><div><label>domain face</label><select id="t_face"><option>statistical</option><option>dynamical</option><option>algorithmic</option><option>cross-sectional/physical</option><option>decision</option></select></div>
+<div><label>certificate sidedness</label><select id="t_side"><option>two-sided</option><option>one-sided (detect only)</option></select></div>
+<div><label>layer</label><select id="t_layer"><option>detection</option><option>interpretation</option><option>decision</option></select></div></div>
+<label>statement (with formulas)</label><textarea id="t_stmt"></textarea>
+<label>assumptions (exact conditions)</label><textarea id="t_assum"></textarea>
+<div class="row"><div><label>null value under project H₀</label><input id="t_null"></div>
+<div><label>detects / blind to</label><input id="t_detect"></div></div>
+<label>finite-sample cautions (known estimator biases)</label><textarea id="t_caut"></textarea>
+<label>reference links (one per line — governance requires a fetched+distilled summary at execution)</label><textarea id="t_refs" placeholder="https://en.wikipedia.org/wiki/..."></textarea>
+<h3>Steps 2–5 inputs</h3>
+<div class="row3"><div><label>suspected equivalence class (existing statistic?)</label><input id="t_equiv" placeholder="none / chi-square-family"></div>
+<div><label>current family size m (classes)</label><input id="t_m" type="number" value="25"></div>
+<div><label>target dataset id</label><input id="t_ds" value="pcso-lotto"></div></div>
+<div class="gate" id="t_gate"></div>
+<button onclick="genT()">Generate artifacts</button>
+<button class="sec" onclick="dl('t_card')">⬇ kb card .md</button>
+<button class="sec" onclick="dl('t_trial')">⬇ null-trial .py</button>
+<button class="sec" onclick="copyEl('t_prompt')">⧉ copy Claude instruction</button>
+<label>generated kb card</label><textarea id="t_card" style="min-height:120px"></textarea>
+<label>generated null-trial skeleton (Step 4 gate — must pass on simulated H₀ BEFORE real data)</label><textarea id="t_trial" style="min-height:100px"></textarea>
+<label>instruction block for Claude (executes Steps 1–7 incl. reference download)</label><textarea id="t_prompt" style="min-height:90px"></textarea>
+</div>
+
+<div id="paneD" class="card" style="display:none">
+<h3>Steps D1–D2 — Card &amp; schema (→ datasets/&lt;id&gt;/DATASET.md)</h3>
+<div class="row"><div><label>dataset id (kebab-case)</label><input id="d_id" placeholder="spy-daily-returns"></div>
+<div><label>owner</label><input id="d_owner" value="Cha"></div></div>
+<label>H₀ in ONE sentence (onboarding halts without it)</label><textarea id="d_h0"></textarea>
+<label>null simulator (executable description/code — Article A1 root object)</label><textarea id="d_sim" placeholder="e.g. circular block bootstrap of returns, block length 20, seeded"></textarea>
+<label>schema: columns, types, units, ordering semantics</label><textarea id="d_schema"></textarea>
+<h3>Steps D3–D5 — Sources &amp; eras</h3>
+<div class="row3"><div><label>primary source</label><input id="d_src1"></div>
+<div><label>verification source #1</label><input id="d_src2"></div>
+<div><label>verification source #2</label><input id="d_src3"></div></div>
+<label>era registry (one per line: YYYY-MM-DD | event | consequence)</label><textarea id="d_eras"></textarea>
+<h3>Step D6 — Freeze</h3>
+<div class="row3"><div><label>exploration/confirmation boundary date</label><input id="d_freeze" type="date"></div>
+<div><label>registered family size m_conf</label><input id="d_m" type="number" value="9"></div>
+<div><label>update cadence</label><input id="d_cad" value="weekly (scheduled task)"></div></div>
+<div class="gate" id="d_gate"></div>
+<button onclick="genD()">Generate artifacts</button>
+<button class="sec" onclick="dl('d_card')">⬇ DATASET.md</button>
+<button class="sec" onclick="copyEl('d_prompt')">⧉ copy Claude instruction</button>
+<label>generated DATASET.md</label><textarea id="d_card" style="min-height:140px"></textarea>
+<label>instruction block for Claude (executes D1–D8: folder, acquisition, audit, integrity gate)</label><textarea id="d_prompt" style="min-height:90px"></textarea>
+</div>
+<div class="note">Protocol constants applied: SEED_BASE=2026 · NSIM_TEST=10000 · NSIM_EXPLORE≥1000 · NPERM=20000 · α=0.05 · EQUIV_RHO=0.90.
+Static page: artifacts are generated for download/copy — file placement and gated execution happen via Claude or manually. Inadmissibility rules enforced: no card → no instrument; no null simulator → no dataset.</div>
+
+<script>
+function tab(w){for(const x of ["T","D"]){document.getElementById("pane"+x).style.display=w===x?"":"none";document.getElementById("t"+x).className="tab"+(w===x?" on":"");}}
+function v(id){return document.getElementById(id).value.trim();}
+function dl(id){const t=v(id);if(!t)return alert("Generate first.");
+ const name=id==="t_card"?(v("t_id")||"theorem")+".md":id==="t_trial"?"null_trial_"+(v("t_id")||"x").replaceAll("-","_")+".py":"DATASET.md";
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"}));a.download=name;a.click();}
+function copyEl(id){navigator.clipboard.writeText(v(id));}
+function gates(items,el){let h="",pass=true;for(const [name,ok] of items){h+=(ok?'<span class="ok">PASS</span> ':'<span class="bad">FAIL</span> ')+name+"<br>";if(!ok)pass=false;}
+ document.getElementById(el).innerHTML=h;return pass;}
+
+function genT(){
+ const m=parseInt(v("t_m")||"25"), mNew=v("t_equiv")&&v("t_equiv")!=="none"?m:m+1;
+ const alpha=(0.05/mNew);
+ const ok=gates([["id + name present",!!(v("t_id")&&v("t_name"))],
+  ["statement with formulas",v("t_stmt").length>20],["assumptions stated",v("t_assum").length>5],
+  ["H₀ value declared",!!v("t_null")],["detects/blind-to declared",!!v("t_detect")],
+  ["finite-sample cautions considered",v("t_caut").length>3],["≥1 reference link",v("t_refs").length>8]],"t_gate");
+ document.getElementById("t_gate").innerHTML+='<span class="derived">DERIVED: equivalence → '+(mNew>m?"NEW class; m: "+m+" → "+mNew:"joins existing class; m stays "+m)+
+  " · Bonferroni α′ = 0.05/"+mNew+" = "+alpha.toFixed(5)+" · sidedness: "+v("t_side")+"</span>";
+ if(!ok)return;
+ document.getElementById("t_card").value=
+`# ${v("t_name")}
+**Domain face**: ${v("t_face")}
+**Statement**: ${v("t_stmt")}
+**Assumptions**: ${v("t_assum")}
+**Null value under i.i.d. uniform**: ${v("t_null")}
+**Detects / blind to**: ${v("t_detect")}
+**Finite-sample cautions**: ${v("t_caut")}
+**Reference summary**: [TO FILL at execution: fetch + distill the references below — Governance P3 Step 1]
+**Canonical references**: ${v("t_refs").split("\\n").join(" · ")}
+**Use in this project**: dataset ${v("t_ds")}; equivalence class: ${v("t_equiv")||"new"}; family m=${mNew}; threshold α′=${alpha.toFixed(5)}; certificate: ${v("t_side")}; layer: ${v("t_layer")}. Status: EXPLORATORY (promotion only at a confirmation-set reset, Step 8).`;
+ document.getElementById("t_trial").value=
+`#!/usr/bin/env python3
+"""NULL TRIAL (Governance P3 Step 4) for ${v("t_id")} — must pass on simulated H0 BEFORE real data.
+Pass criteria: (a) null distribution non-degenerate; (b) location matches theory or bias documented."""
+import random
+SEED, NSIM = 2026, 1000   # EVALUATION_PROTOCOL constants
+rng = random.Random(SEED)
+def null_dataset():
+    raise NotImplementedError("copy the null simulator from datasets/${v("t_ds")}/DATASET.md section 1")
+def statistic(data):
+    raise NotImplementedError("implement: ${v("t_stmt").slice(0,70)}...")
+null = [statistic(null_dataset()) for _ in range(NSIM)]
+import statistics as st
+print("null mean/sd:", st.mean(null), st.pstdev(null))
+print("degenerate?" , st.pstdev(null) < 1e-9, "(must be False)")`;
+ document.getElementById("t_prompt").value=
+`Onboard theorem "${v("t_name")}" (id: ${v("t_id")}) per docs/THEOREM_GOVERNANCE.md Part 3 into dataset ${v("t_ds")}: (1) save the attached kb card to docs/kb/${v("t_id")}.md, fetch the listed references and write the distilled Reference summary; (2) run the conflict scan C1–C8; (3) measure null-correlation vs all ledger statistics (EQUIV_RHO=0.90) to confirm class "${v("t_equiv")||"new"}" and m=${mNew}; (4) complete and run the null-trial script — HALT if degenerate or biased without documentation; (5) run on real data with MC p (correct sidedness: ${v("t_side")}), trace any flag to driving rows; (6) add ledger row to docs/THEOREM_SYNTHESIS.md, update webpage constants block, log in docs/RESEARCH_NOTES.md. Do NOT add to the confirmation family (Step 8 requires a reset boundary).`;
+}
+
+function genD(){
+ const ok=gates([["id present",!!v("d_id")],["H₀ is one sentence",v("d_h0").length>15&&v("d_h0").split(".").filter(s=>s.trim()).length<=2],
+  ["null simulator written (A1 — else HALT)",v("d_sim").length>15],["schema declared",v("d_schema").length>10],
+  ["primary + 2 verification sources",!!(v("d_src1")&&v("d_src2")&&v("d_src3"))],
+  ["era registry considered (may be 'none known')",v("d_eras").length>3],["freeze date set",!!v("d_freeze")]],"d_gate");
+ const m=parseInt(v("d_m")||"9");
+ document.getElementById("d_gate").innerHTML+='<span class="derived">DERIVED: confirmation threshold = 0.05/'+m+" = "+(0.05/m).toFixed(5)+
+  " · folder: datasets/"+v("d_id")+"/ · exploration ≤ "+v("d_freeze")+" &lt; confirmation</span>";
+ if(!ok)return;
+ const eras=v("d_eras").split("\n").map(l=>"| "+l.split("|").map(s=>s.trim()).join(" | ")+" |").join("\n");
+ document.getElementById("d_card").value=
+`# DATASET CARD — ${v("d_id")}
+Onboarded: ${new Date().toISOString().slice(0,10)} · Status: ONBOARDING · Owner: ${v("d_owner")}
+## 1. Identity & generative null (H₀)
+**H₀:** ${v("d_h0")}
+**Null simulator:** ${v("d_sim")}
+## 2. Files in this folder
+[TO FILL at D3: canonical, audited, provenance stages]
+## 3. Schema (canonical)
+${v("d_schema")}
+## 4. Provenance & audit status
+Primary: ${v("d_src1")}. Verification: ${v("d_src2")}; ${v("d_src3")}. Census: [TO FILL at D4].
+## 5. Era registry
+| Boundary | Event | Consequence |
+|---|---|---|
+${eras}
+## 6. Frozen/holdout structure (BINDING)
+Exploration set: rows ≤ ${v("d_freeze")}. Confirmation: rows after. Registered family m=${m}, threshold p<${(0.05/m).toFixed(5)}. Update cadence: ${v("d_cad")}.
+## 7. Known anomalies & dispositions
+None yet.
+## 8. Update pipeline & instruments
+[TO FILL at D7–D8]
+## 9. Loading snippet
+[TO FILL]
+## 10. Domain cautions
+[Costs/frictions before EV; expected-structure prior; legal notes.]`;
+ document.getElementById("d_prompt").value=
+`Onboard dataset "${v("d_id")}" per docs/THEOREM_GOVERNANCE.md Part 4: (D1) create datasets/${v("d_id")}/ and save the attached DATASET.md; verify the null simulator is executable — HALT if not; (D2) freeze schema; (D3) acquire from ${v("d_src1")}, keep provenance stages, verify against ${v("d_src2")} and ${v("d_src3")}; (D4) build the _audited.csv row-level table and run EVALUATION_PROTOCOL E0 integrity gate (schema/duplicates/near-duplicate Poisson scan/calendar), adjudicate all flags; (D5) confirm era registry; (D6) record freeze ${v("d_freeze")}, family m=${m}, threshold ${(0.05/m).toFixed(5)}; (D7) admit instruments one by one, each via its own Part 3 null trial against THIS simulator; (D8) maintain the card. Then run EVALUATION_PROTOCOL E1–E9 + harmonization H1–H5 and report per the output contract (section 4).`;
+}
+</script>
+</body></html>

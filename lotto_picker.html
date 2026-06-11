@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCSO 2-Ticket Protocol Picker</title>
+<style>
+  :root { --bg:#0f1623; --card:#1a2332; --ink:#e8edf5; --mut:#8fa1bb; --acc:#4da3ff; --gold:#f5c542; --red:#ff6b6b; --grn:#51cf8a; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:-apple-system, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--ink); padding:24px; max-width:880px; margin:0 auto; }
+  h1 { font-size:1.5rem; margin-bottom:4px; }
+  .sub { color:var(--mut); font-size:.9rem; margin-bottom:16px; }
+  .banner { background:#2b2030; border:1px solid #6b4f2a; border-radius:10px; padding:10px 14px; font-size:.85rem; color:#e8c98a; margin-bottom:20px; }
+  .controls { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:end; }
+  label { display:block; font-size:.75rem; color:var(--mut); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
+  input, select { background:var(--card); color:var(--ink); border:1px solid #2e3d55; border-radius:8px; padding:9px 12px; font-size:1rem; }
+  .card { background:var(--card); border:1px solid #2e3d55; border-radius:14px; padding:18px 20px; margin-bottom:14px; }
+  .gname { font-weight:700; font-size:1.1rem; }
+  .meta { color:var(--mut); font-size:.82rem; margin:2px 0 12px; }
+  .tk { display:flex; align-items:center; gap:8px; margin:8px 0; flex-wrap:wrap; }
+  .tk b { width:64px; color:var(--mut); font-size:.8rem; }
+  .ball { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;
+          background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), var(--acc); color:#06121f; font-size:.95rem; }
+  .b2 .ball { background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), var(--gold); }
+  .evrow { display:flex; gap:10px; align-items:end; margin-top:12px; flex-wrap:wrap; }
+  .ev { font-size:.85rem; padding:6px 10px; border-radius:8px; }
+  .neg { background:#3a1f24; color:var(--red); } .pos { background:#15331f; color:var(--grn); }
+  button { background:var(--acc); border:0; color:#06121f; font-weight:700; padding:9px 16px; border-radius:8px; cursor:pointer; font-size:.9rem; }
+  button:hover { filter:brightness(1.1); }
+  .nodraw { color:var(--mut); font-style:italic; padding:20px; }
+  .foot { color:var(--mut); font-size:.75rem; margin-top:18px; line-height:1.5; }
+</style>
+</head>
+<body>
+<h1>PCSO 2-Ticket Protocol Picker</h1>
+<div class="sub">Pick a date &rarr; see which games draw that night (9 PM PHT) and two protocol-compliant combinations per game.</div>
+<div class="banner" style="font-family:ui-monospace,Menlo,monospace">
+P(any 6-set next draw | full history) = 1/C(n,6)&ensp;[i.i.d. uniform: conditional = marginal]<br>
+P(jackpot, 2 disjoint tickets) = 2/C(n,6)&ensp;[mutually exclusive events]<br>
+E[payout] = &Sigma;<sub>k=3..6</sub> P(match k)&middot;prize<sub>k</sub>, &ensp;P(match k) = C(6,k)C(n&minus;6,6&minus;k)/C(n,6)&ensp;[hypergeometric]<br>
+Kelly stake f* &le; 1/C(n,6) &rArr; &#8369;25 stake requires bankroll &ge; 25&middot;C(n,6)<br>
+P(remainder | any subset of history) = marginal&ensp;[relational face, batches 5&ndash;6: recovery curves flat at null for k=1&ndash;40%, all 5 games]</div>
+
+<div class="controls">
+  <div><label>Draw date</label><input type="date" id="d" min="2026-06-11"></div>
+  <div><label>Game</label><select id="g"><option value="all">All games that night</option></select></div>
+  <div><button onclick="render(true)">New picks &#x21bb;</button></div>
+</div>
+<div id="out"></div>
+<div class="foot">
+Empirical basis (as of 2026-06-11, incl. relational batches 5&ndash;6): n=776 validated draws; 55+ within-dataset tests plus ~190 relational tests, min familywise-corrected p=0.148 (scan statistic) among new discoveries &mdash; nothing relational survives correction;
+Markov order-0 confirmed (|&lambda;&#8322;|&le;0.12, relaxation &le;1.14 draws); compression &ge; entropy bound in all games; MLE sequence-learnability &beta;=+0.015, CI [&minus;0.04,+0.08] &ni; 0;
+SOC scan (Per Bak): spectral slope &alpha;=0.03&ndash;0.16 (white noise; 1/f would be &alpha;&asymp;1), avalanche sizes geometric (no heavy tail), Hurst H&#770; indistinguishable from calibrated null (p&ge;0.09) &mdash; no self-organized criticality reaches the outputs.
+Power-law test (Clauset&ndash;Shalizi&ndash;Newman MLE, Vuong LR vs geometric): recurrence gaps n=4407, z=&minus;35.3; avalanches n=206, z=&minus;3.2 &mdash; exponential tails, characteristic scale, off-critical; scaling range 0.9 decades &lt; 2 needed for any exponent (universality-class ID not attemptable).
+Universality observed on the mathematics side instead: &lambda;<sub>max</sub> null skewness +0.316 vs Tracy&ndash;Widom GOE universal +0.293; CLT (Gaussian class) under every z-score; Gumbel class in the scan-statistic null.
+Full universality machinery (data collapse / RG flow / Binder): five games' rescaled avalanche CCDFs collapse onto ONE scaling function = the geometric 2<sup>&minus;(2x&minus;1)</sup> of the trivial fixed point (max spread 0.21);
+block-mean excess kurtosis &asymp;0 at all scales k=1&ndash;16 (data sits AT the Gaussian/CLT fixed point); Binder cumulant U(W=32)=0.32 vs i.i.d.-null 0.36, CI [&minus;0.05,+0.60] &mdash; the apparent critical plateau is the n&asymp;4-window estimator bias.
+Scaling-law sweep (8 relations, family m=18, threshold p&lt;0.003): Zipf slope s=0.21&ndash;0.28 vs i.i.d. null 0.20&ndash;0.23 (not Zipf's s&asymp;1; min p=0.017 n.s.);
+Taylor exponent b=0.3&ndash;1.3 vs binomial ~0.9 (no clustering, b&#8780;2); first digits reject Benford (&chi;&sup2;=1312, df=8) and fit the exact uniform-derived law (&chi;&sup2;=9.3);
+L&eacute;vy step-tails exponential (Vuong z=&minus;9.4); coupon-collector coverage inside MC 95% CI in all games (e.g. 6/58: 66 vs [27,70]).
+Fixed point identified: trivial / infinite-temperature. Same verdict from every instrument family &mdash; 8 scaling relations, all i.i.d.-form.
+Batch 4 (harmonization instruments, registered docs/REGISTRATION_BATCH4.md, results docs/RESULTS_BATCH4.md): concentration exclusion &mdash; per-ball bias bound &epsilon;=0.16&ndash;0.20 per game, honest verdict: vacuous at lottery data rates (~130&ndash;330 yrs of draws for a 10% bound, so uniformity rests on direct tests, not the bound);
+graphon cut-norm proxy (Lov&aacute;sz&ndash;Szegedy) &mdash; measured OUT of the RMT equivalence class (null-&rho;=+0.11), all games null except 6/55 (p=0.0005), attributed by driving rows to the already-adjudicated 2025 #45 excess (8th/9th correlated flags, one anomaly, era-bounded, dead since Feb 2026, zero forward value &mdash; picks remain uniform);
+Szemer&eacute;di AP counts &mdash; all games at the theorem-forced rate (p&ge;0.011, n.s. at m=20 threshold 0.0025). The &laquo;Ramsey trap&raquo;: density alone forces 3.2&ndash;4.4 three-term APs into any hot-10 set (Szemer&eacute;di 1975), so &laquo;the hot numbers form a progression&raquo; is a theorem, not a signal.
+Relational face (batches 5&ndash;6, registered docs/REGISTRATION_BATCH5.md &amp; _BATCH6.md, results docs/RESULTS_RELATIONAL_FIRSTRUN.md, _BATCH5.md, _BATCH6.md, figures results/figures/fig1&ndash;7):
+7 instrument families (MMD, Gromov&ndash;Wasserstein, CCA, persistence diagrams, graph spectra, Nystr&ouml;m, matrix completion) admitted only after calibration on independence (FPR&asymp;&alpha;) and power 1.00 on planted structure;
+subset-to-whole recovery curves FLAT at the null line for every game at every subset fraction k=1&ndash;40% (|z|&le;1.1 vs tidal/lunar controls reaching z=+19.7 on the same pipeline);
+cross-game co-occurrence: all 10 pairs null (min p=0.05 vs &Scaron;id&aacute;k 0.0051); sub-dataset partitions (quarters &amp; halves): 65 tests, all joint-null;
+draws vs tidal/geomagnetic/sun&ndash;moon covariates: held-out CCA &rho;&#8321;=&minus;0.01&ndash;0.11, p=0.19&ndash;0.56 (the same test detects the known tidal&harr;ephemerides mechanism at &rho;&#8321;=0.9977, p=0.005 &mdash; the pipeline sees real relations, and sees none here);
+draws vs atmospheric pressure at the draw site (ERA5 Mandaluyong, batch 7): per-game CCA joint null (min p=0.03 &gt; &Scaron;id&aacute;k 0.0102) while pressure itself is richly structured (recovery z=+10.5, all 6 season pairs reject at p=0.005, couples to sun/moon at &rho;&#8321;=0.567 &mdash; weather is predictable, draws are not);
+delay-embedding topology: no H&#8321; loop in any game (p&ge;0.13; tidal loop detected at p=0.01 floor and recoverable from 20% landmarks).
+The 2025 6/55 #45 excess now traces identically through FOUR instruments (chi-square family, graphon row 27, cross-game &lambda;<sub>max</sub> eigenvector loading 0.439, half-vs-half hot-corr contributors #45/#42) &mdash; one era-bounded anomaly, dead since Feb 2026, zero forward value; picks remain uniform.
+Tickets: uniform random, disjoint, filtered (reject all&le;31, runs&ge;4, 6-term AP, single last-digit) &mdash; filters affect split-risk only, never P(win). The AP filter is itself Ramsey-aware: progressions are popular picks (split risk), not lucky ones.
+EV model: 20% tax &gt;&#8369;10k; co-winner split E[J/(1+K)], K~Poisson(tickets/C(n,6)); pari-mutuel tiers estimated (yellow cells in workbook).
+Jackpot defaults = last verified draws (Jun 9&ndash;10, 2026); edit per draw night. Schedule: 6/42 Tu/Th/Sa &middot; 6/45 Mo/We/Fr &middot; 6/49 Tu/Th/Su &middot; 6/55 Mo/We/Sa &middot; 6/58 Tu/Fr/Su.
+EV model: 20% tax over &#8369;10k, Poisson co-winner split (Stern&ndash;Cover), pari-mutuel lower tiers estimated.
+Rejection rules: all numbers &le;31 (birthday-heavy), 4+ consecutive, single arithmetic progression, all same last digit.
+Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun.
+Full methodology: RESEARCH_NOTES.md in this folder. Please play responsibly &mdash; expected cost is ~&#8369;17&ndash;20 per &#8369;25 ticket.
+</div>
+
+<script>
+const GAMES = {
+  "Lotto 6/42":      {pool:42, days:[2,4,6], minJack:20676273, tickets:400000, p5:24000,  p4:800,  p3:20,  eps:0.16234, apBase:4.39, relZ:0.54, ccaP:0.295, halfCorr:0.060, halfP:0.360},
+  "Mega Lotto 6/45": {pool:45, days:[1,3,5], minJack:52078363, tickets:500000, p5:32000,  p4:1000, p3:30,  eps:0.17564, apBase:4.04, relZ:1.09, ccaP:0.490, halfCorr:0.147, halfP:0.210},
+  "Super Lotto 6/49":{pool:49, days:[0,2,4], minJack:25000000, tickets:500000, p5:56000,  p4:1200, p3:50,  eps:0.16155, apBase:3.79, relZ:0.61, ccaP:0.375, halfCorr:0.004, halfP:0.435},
+  "Grand Lotto 6/55":{pool:55, days:[1,3,6], minJack:45000000, tickets:600000, p5:200000, p4:3000, p3:60,  eps:0.19848, apBase:3.32, relZ:1.03, ccaP:0.190, halfCorr:0.251, halfP:0.025, halfNote:" (#45/#42 era shadow, C9)"},
+  "Ultra Lotto 6/58":{pool:58, days:[0,2,5], minJack:75000000, tickets:700000, p5:280000, p4:4000, p3:100, eps:0.16085, apBase:3.19, relZ:0.71, ccaP:0.560, halfCorr:0.060, halfP:0.330}
+  // eps: batch-4 (Jun 2026) 95% simultaneous exclusion bound on |p_i - 6/P| (concentration_exclusion.py);
+  // apBase: theorem-forced E[3-term APs] in a random 10-subset (Ramsey-trap baseline, szemeredi_ap.py);
+  // relZ: batches 5-6 (Jun 2026) max |null-adjusted z| across subset-to-whole recovery curves, k=1-40%
+  //       (relational_allgames.py; null band is +/-2 -- all games flat);
+  // ccaP: held-out CCA p vs tidal/geomagnetic/sun-moon covariates, shuffled-pairing null (all null);
+  // halfCorr/halfP: half-vs-half hot-number consistency vs constrained-uniform null (relational_subsets.py;
+  //       joint null at Sidak m=5; the 6/55 raw flag traces to the expired #45/#42 era rows per C9)
+};
+// days: JS getDay() with 0=Sun … 6=Sat. 6/42 Tue(2)/Thu(4)/Sat(6); 6/45 Mon(1)/Wed(3)/Fri(5); 6/49 Tue/Thu/Sun(0)... fixed below
+GAMES["Lotto 6/42"].days=[2,4,6]; GAMES["Mega Lotto 6/45"].days=[1,3,5];
+GAMES["Super Lotto 6/49"].days=[0,2,4]; GAMES["Grand Lotto 6/55"].days=[1,3,6]; GAMES["Ultra Lotto 6/58"].days=[0,2,5];
+
+function comb(n,k){let r=1;for(let i=0;i<k;i++)r=r*(n-i)/(i+1);return Math.round(r);}
+
+function badTicket(t){
+  const s=[...t].sort((a,b)=>a-b);
+  if(s[5]<=31) return true;                                   // birthday-heavy
+  let run=1,maxRun=1;
+  for(let i=1;i<6;i++){run=(s[i]===s[i-1]+1)?run+1:1;maxRun=Math.max(maxRun,run);}
+  if(maxRun>=4) return true;                                  // long consecutive run
+  const d=s[1]-s[0];
+  if(d>0 && s.every((v,i)=>v===s[0]+i*d)) return true;        // arithmetic progression
+  if(new Set(s.map(v=>v%10)).size===1) return true;           // same last digit
+  return false;
+}
+function picks(dateStr, game, salt){
+  const rng=Math.random; // pure random: the date does NOT influence picks (no signal exists — see RESEARCH_NOTES.md)
+  const pool=GAMES[game].pool;
+  for(let tries=0;tries<200;tries++){
+    const arr=Array.from({length:pool},(_,i)=>i+1);
+    for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+    const A=arr.slice(0,6).sort((a,b)=>a-b), B=arr.slice(6,12).sort((a,b)=>a-b);
+    if(!badTicket(A)&&!badTicket(B)) return [A,B];
+  }
+  return null;
+}
+function ev(game, jack){
+  const g=GAMES[game], C=comb(g.pool,6), p=1/C;
+  const lam=g.tickets*p, share=jack*(1-Math.exp(-lam))/lam;
+  const low=6*(g.pool-6)/C*g.p5*0.8 + 15*comb(g.pool-6,2)/C*g.p4*(g.p4>10000?0.8:1) + 20*comb(g.pool-6,3)/C*g.p3;
+  return {total:p*share*0.8+low, odds:C, low:low};
+}
+function pmatch(P,k){return comb(6,k)*comb(P-6,6-k)/comb(P,6);}
+function derived(game){
+  const g=GAMES[game], P=g.pool, C=comb(P,6);
+  const pAny=pmatch(P,3)+pmatch(P,4)+pmatch(P,5)+pmatch(P,6);
+  const eMatch=36/P, H=Math.log2(C);
+  const e=ev(game,g.minJack);
+  const brk=(25-e.low)/(0.8/C);
+  const relEps=(g.eps/(6/P)*100).toFixed(0);
+  return `P(match&ge;3)=1/${Math.round(1/pAny).toLocaleString()} &middot; E[matches]=${eMatch.toFixed(3)} &middot; `+
+         `H=log&#8322;C(${P},6)=${H.toFixed(1)} bits (irreducible) &middot; `+
+         `break-even J&asymp;${fmt(brk)} (pre-split) &middot; Kelly bankroll for &#8369;25 &asymp; ${fmt(25*C)}<br>`+
+         `Batch-4 bias bound: |p<sub>i</sub>&minus;6/${P}| &le; ${g.eps.toFixed(3)} (95% simult.) &mdash; `+
+         `vacuous at n&asymp;155 (${relEps}% of 6/P): uniformity rests on the 20 direct tests, all null &middot; `+
+         `Ramsey baseline: ${g.apBase.toFixed(1)} 3-term APs forced in any hot-10 set<br>`+
+         `Relational (batches 5&ndash;6): subset&rarr;whole recovery flat, max |z|=${g.relZ.toFixed(2)} (null band &plusmn;2) &middot; `+
+         `physics coupling null (CCA p=${g.ccaP.toFixed(2)}) &middot; `+
+         `half-vs-half hot-number corr ${g.halfCorr>=0?"+":""}${g.halfCorr.toFixed(3)}, p=${g.halfP.toFixed(3)}${g.halfNote||""} &mdash; `+
+         `no part of the history predicts the rest`;
+}
+function fmt(n){return "₱"+Math.round(n).toLocaleString();}
+
+let salts={};
+function render(newSalt){
+  const dateStr=document.getElementById("d").value;
+  const sel=document.getElementById("g").value;
+  const out=document.getElementById("out"); out.innerHTML="";
+  if(!dateStr){out.innerHTML='<div class="nodraw">Choose a date.</div>';return;}
+  const [y,m,dd]=dateStr.split("-").map(Number);
+  const wd=new Date(y,m-1,dd).getDay();
+  const tonight=Object.keys(GAMES).filter(g=>GAMES[g].days.includes(wd));
+  const show=sel==="all"?tonight:(tonight.includes(sel)?[sel]:[]);
+  if(sel!=="all"&&!tonight.includes(sel)){
+    out.innerHTML=`<div class="nodraw">${sel} does not draw on that date. Games that night: ${tonight.join(", ")||"none"}.</div>`;return;
+  }
+  if(!show.length){out.innerHTML='<div class="nodraw">No 6-number draws that date.</div>';return;}
+  for(const g of show){
+    if(newSalt===true) salts[g]=(salts[g]||0)+1;
+    const pr=picks(dateStr,g,salts[g]||0);
+    const e=ev(g,GAMES[g].minJack);
+    const id="j_"+g.replace(/\W/g,"");
+    const card=document.createElement("div"); card.className="card";
+    card.innerHTML=`<div class="gname">${g}</div>
+      <div class="meta">Draw ${dateStr}, 9:00 PM PHT &middot; P(jackpot)=1/${e.odds.toLocaleString()} per ticket; 2/${e.odds.toLocaleString()} for the disjoint pair</div>
+      <div class="meta" style="font-family:ui-monospace,Menlo,monospace">${derived(g)}</div>
+      <div class="tk"><b>Ticket A</b>${pr[0].map(n=>`<span class="ball">${String(n).padStart(2,"0")}</span>`).join("")}</div>
+      <div class="tk b2"><b>Ticket B</b>${pr[1].map(n=>`<span class="ball">${String(n).padStart(2,"0")}</span>`).join("")}</div>
+      <div class="evrow">
+        <div><label>Current jackpot (edit)</label><input type="number" id="${id}" value="${GAMES[g].minJack}" step="1000000" style="width:180px"
+          onchange="evUpdate('${g}','${id}')"></div>
+        <div class="ev neg" id="${id}_ev"></div>
+      </div>`;
+    out.appendChild(card);
+    evUpdate(g,id);
+  }
+}
+function evUpdate(g,id){
+  const j=Number(document.getElementById(id).value)||GAMES[g].minJack;
+  const e=ev(g,j), el=document.getElementById(id+"_ev");
+  const net=e.total-25;
+  el.textContent=`EV: ${fmt(e.total)} per ₱25 ticket (net ${net>=0?"+":""}${fmt(net)}) — ${net>0?"+EV: rare!":"-EV: entertainment only"}`;
+  el.className="ev "+(net>0?"pos":"neg");
+}
+(function(){
+  const gSel=document.getElementById("g");
+  for(const g of Object.keys(GAMES)){const o=document.createElement("option");o.value=g;o.textContent=g;gSel.appendChild(o);}
+  const t=new Date(); t.setDate(t.getDate()+1);
+  document.getElementById("d").value=t.toISOString().slice(0,10);
+  document.getElementById("d").onchange=()=>render(false);
+  gSel.onchange=()=>render(false);
+  render(false);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+you have opne mind, discover mathematical theorems and do not dismiss dead end hypthesis. use the agent work flow doucment forr dataset, therem onboarding, analysis.ß

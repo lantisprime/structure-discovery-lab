@@ -1,0 +1,220 @@
+{
+  "_meta": {
+    "date": "2026-06-11",
+    "alpha": 0.05,
+    "seed_scheme": "20260611 + 1000*instrument_index",
+    "protocol": "THEOREM_GOVERNANCE Part 3 Step 4 + CROSS_DATASET_FRAMEWORK \u00a77 (E1-E8)"
+  },
+  "R1_mmd_energy": {
+    "negative_E1_same_dist": {
+      "n_trials": 200,
+      "fpr_at_alpha": 0.04,
+      "mean_p": 0.53155,
+      "ks_stat_vs_uniform": 0.07,
+      "ks_p": 0.2682332715315978
+    },
+    "positive_E4_mean_shift_1.0": {
+      "n_trials": 100,
+      "power_at_alpha": 1.0,
+      "median_p": 0.01
+    },
+    "powercurve_E4_mean_shift_0.5": {
+      "n_trials": 100,
+      "power_at_alpha": 0.55,
+      "median_p": 0.04
+    },
+    "params": {
+      "n": 80,
+      "d": 5,
+      "m_perm": 99,
+      "kernel": "RBF median heuristic",
+      "note": "admission gated at |mu|=1.0; power at 0.5 reported as the A4 power statement"
+    },
+    "runtime_sec": 3.9,
+    "admission": {
+      "fpr_ok": true,
+      "p_uniformity_ok": true,
+      "power_ok": true,
+      "ADMITTED": true
+    }
+  },
+  "R2_gromov_wasserstein": {
+    "negative_E1_independent_gaussians": {
+      "n_trials": 50,
+      "fpr_at_alpha": 0.06,
+      "mean_p": 0.516,
+      "ks_stat_vs_uniform": 0.12,
+      "ks_p": 0.4337679661310233
+    },
+    "positive_E2_shared_circle_geometry": {
+      "n_trials": 30,
+      "power_at_alpha": 1.0,
+      "median_p": 0.05
+    },
+    "params": {
+      "n": 50,
+      "m_null": 19,
+      "null": "matched mean/cov Gaussian regeneration of B",
+      "solver": "POT exact GW, square loss, scale-normalized"
+    },
+    "runtime_sec": 2.2,
+    "admission": {
+      "fpr_ok": true,
+      "p_uniformity_ok": true,
+      "power_ok": true,
+      "ADMITTED": true
+    }
+  },
+  "R3_cca_family": {
+    "negative_E1_independent_views": {
+      "n_trials": 200,
+      "fpr_at_alpha": 0.05,
+      "mean_p": 0.52655,
+      "ks_stat_vs_uniform": 0.05500000000000005,
+      "ks_p": 0.5616777704322733
+    },
+    "positive_E6_planted_latent": {
+      "n_trials": 100,
+      "power_at_alpha": 1.0,
+      "median_p": 0.01
+    },
+    "in_sample_rho1_on_independent_data_mean": 0.673985840544166,
+    "params": {
+      "n": 160,
+      "p": 15,
+      "q": 15,
+      "train": 100,
+      "test": 60,
+      "ridge_gamma": 0.1,
+      "m_perm": 99,
+      "note": "in-sample rho1 logged to document inflation (teaching output)"
+    },
+    "runtime_sec": 0.4,
+    "admission": {
+      "fpr_ok": true,
+      "p_uniformity_ok": true,
+      "power_ok": true,
+      "ADMITTED": true
+    }
+  },
+  "R4_tda_persistence": {
+    "negative_E3_gaussian_blob": {
+      "n_trials": 100,
+      "fpr_at_alpha": 0.05,
+      "mean_p": 0.485,
+      "ks_stat_vs_uniform": 0.07999999999999996,
+      "ks_p": 0.5182193645480672
+    },
+    "positive_E3_noisy_circle_H1": {
+      "n_trials": 50,
+      "power_at_alpha": 1.0,
+      "median_p": 0.02
+    },
+    "bottleneck_sanity_circle_pair_closer": "20/20",
+    "params": {
+      "n": 100,
+      "m_null": 49,
+      "null": "matched mean/cov Gaussian",
+      "statistic": "max H1 persistence"
+    },
+    "runtime_sec": 12.1,
+    "admission": {
+      "fpr_ok": true,
+      "p_uniformity_ok": true,
+      "power_ok": true,
+      "ADMITTED": true
+    }
+  },
+  "R5_graph_matching_spectra": {
+    "negative_E1_independent_ER": {
+      "n_trials": 60,
+      "fpr_at_alpha": 0.08333333333333333,
+      "mean_p": 0.4516666666666667,
+      "ks_stat_vs_uniform": 0.15000000000000002,
+      "ks_p": 0.12110534950589502
+    },
+    "positive_E5_shared_SBM_communities": {
+      "n_trials": 40,
+      "power_at_alpha": 1.0,
+      "median_p": 0.05
+    },
+    "params": {
+      "m_null": 19,
+      "null": "degree-preserving double-edge swaps",
+      "statistic": "L2 between bottom-12 normalized-Laplacian eigenvalues",
+      "sbm": {
+        "blocks": 4,
+        "p_in": 0.3,
+        "p_out": 0.02
+      },
+      "note": "planted contrast declared after a pilot showed p_in=0.15/p_out=0.03 below this statistic's detection threshold (power statement, A4)"
+    },
+    "runtime_sec": 7.9,
+    "admission": {
+      "fpr_ok": true,
+      "p_uniformity_ok": true,
+      "power_ok": true,
+      "ADMITTED": true
+    }
+  },
+  "R6_coresets_landmarks_nystrom": {
+    "negative_E8_iid_gaussian": {
+      "n_trials": 100,
+      "fpr_at_alpha": 0.08,
+      "mean_p": 0.5008000000000001,
+      "ks_stat_vs_uniform": 0.05999999999999994,
+      "ks_p": 0.8428847956274128
+    },
+    "positive_E8_swiss_roll_manifold": {
+      "n_trials": 50,
+      "power_at_alpha": 1.0,
+      "median_p": 0.02
+    },
+    "params": {
+      "n": 150,
+      "d": 8,
+      "k_landmarks": 15,
+      "m_null": 49,
+      "null": "within-column permutation (preserves marginals, destroys dependence)",
+      "statistic": "-relative Nystrom reconstruction error, fixed landmark seed"
+    },
+    "runtime_sec": 4.0,
+    "admission": {
+      "fpr_ok": true,
+      "p_uniformity_ok": true,
+      "power_ok": true,
+      "ADMITTED": true
+    }
+  },
+  "R7_matrix_completion": {
+    "negative_E8_iid_gaussian_matrix": {
+      "n_trials": 100,
+      "fpr_at_alpha": 0.01,
+      "mean_p": 0.4870000000000001,
+      "ks_stat_vs_uniform": 0.07000000000000006,
+      "ks_p": 0.6846706791645834
+    },
+    "positive_E8_planted_rank2": {
+      "n_trials": 50,
+      "power_at_alpha": 1.0,
+      "median_p": 0.03333333333333333
+    },
+    "params": {
+      "shape": [
+        60,
+        40
+      ],
+      "observed_frac": 0.5,
+      "m_null": 29,
+      "solver": "SoftImpute, lam=0.3*s1, 15 iters",
+      "null": "within-column value permutation, same mask"
+    },
+    "runtime_sec": 9.9,
+    "admission": {
+      "fpr_ok": true,
+      "p_uniformity_ok": true,
+      "power_ok": true,
+      "ADMITTED": true
+    }
+  }
+}

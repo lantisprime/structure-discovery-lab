@@ -1,0 +1,85 @@
+{
+  "_meta": {
+    "date": "2026-06-11",
+    "seed": 20260681,
+    "registered": [
+      "H-P1 pressure structured",
+      "H-P2 draws-vs-pressure null x5"
+    ]
+  },
+  "HP1_pressure_recovery": {
+    "n": 366,
+    "curve": [
+      {
+        "frac": 0.01,
+        "median_p": 0.33,
+        "mean_null_adjusted_z": 0.36496848077700805
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.02,
+        "mean_null_adjusted_z": 1.5741125886061438
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.02,
+        "mean_null_adjusted_z": 1.796525404963362
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.02,
+        "mean_null_adjusted_z": 4.543269081163699
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.02,
+        "mean_null_adjusted_z": 7.413081157519427
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.02,
+        "mean_null_adjusted_z": 10.522373723310713
+      }
+    ]
+  },
+  "HP2_per_game": {
+    "Lotto 6/42": {
+      "n_paired": 154,
+      "cca_heldout_rho1": 0.1320610626569901,
+      "cca_p": 0.18,
+      "corr_sum_pressure": 0.044190090519422985,
+      "p_scalar": 0.555
+    },
+    "Mega Lotto 6/45": {
+      "n_paired": 156,
+      "cca_heldout_rho1": 0.260829098083729,
+      "cca_p": 0.03,
+      "corr_sum_pressure": -0.1796772436701699,
+      "p_scalar": 0.025
+    },
+    "Super Lotto 6/49": {
+      "n_paired": 155,
+      "cca_heldout_rho1": 0.10662608282705141,
+      "cca_p": 0.22,
+      "corr_sum_pressure": 0.008541519676695808,
+      "p_scalar": 0.92
+    },
+    "Grand Lotto 6/55": {
+      "n_paired": 156,
+      "cca_heldout_rho1": -0.07222998363902995,
+      "cca_p": 0.715,
+      "corr_sum_pressure": -0.06332069332339073,
+      "p_scalar": 0.475
+    },
+    "Ultra Lotto 6/58": {
+      "n_paired": 155,
+      "cca_heldout_rho1": -0.20823095930074778,
+      "cca_p": 0.94,
+      "corr_sum_pressure": 0.1389334950208465,
+      "p_scalar": 0.075
+    }
+  },
+  "HP2_min_cca_p": 0.03,
+  "HP2_sidak": 0.010206218313011495,
+  "HP2_joint_null": true
+}

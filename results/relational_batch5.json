@@ -1,0 +1,208 @@
+{
+  "_meta": {
+    "date": "2026-06-11",
+    "seed": 20260611,
+    "registration": "docs/REGISTRATION_BATCH5.md"
+  },
+  "shapegate": {
+    "n_trials": 40,
+    "m_null": 49,
+    "fpr_at_alpha": 0.075,
+    "ks_p": 0.9970033712610588,
+    "gate_passed": true
+  },
+  "crossgame": {
+    "per_game_lambda_max": {
+      "Lotto 6/42": {
+        "lambda_max": 16.930244980348583,
+        "p": 0.33,
+        "null_mean": 16.322899678749685,
+        "null_std": 1.570507935475089
+      },
+      "Mega Lotto 6/45": {
+        "lambda_max": 21.14121817220262,
+        "p": 0.02,
+        "null_mean": 17.45506268858938,
+        "null_std": 1.6216987187026415
+      },
+      "Super Lotto 6/49": {
+        "lambda_max": 18.918568225429766,
+        "p": 0.37,
+        "null_mean": 18.30985386592721,
+        "null_std": 1.6990043745376138
+      },
+      "Grand Lotto 6/55": {
+        "lambda_max": 26.262649582078396,
+        "p": 0.01,
+        "null_mean": 19.761815315940606,
+        "null_std": 1.6692084594346603
+      },
+      "Ultra Lotto 6/58": {
+        "lambda_max": 22.690163632386806,
+        "p": 0.1,
+        "null_mean": 20.024646205207212,
+        "null_std": 1.812579595156637
+      }
+    },
+    "pairs": {
+      "Lotto 6/42 | Mega Lotto 6/45": {
+        "score": -4.9485813825417795,
+        "p": 0.82,
+        "null_mean": -3.8568494057301095,
+        "null_q05": -6.141097903426149
+      },
+      "Lotto 6/42 | Super Lotto 6/49": {
+        "score": -6.5343193189033,
+        "p": 0.81,
+        "null_mean": -5.493123699159247,
+        "null_q05": -7.525804803140173
+      },
+      "Lotto 6/42 | Grand Lotto 6/55": {
+        "score": -12.977832105638074,
+        "p": 1.0,
+        "null_mean": -9.170167311099137,
+        "null_q05": -10.786726757081912
+      },
+      "Lotto 6/42 | Ultra Lotto 6/58": {
+        "score": -10.73007139912099,
+        "p": 0.45,
+        "null_mean": -10.966689416011759,
+        "null_q05": -13.212123213553895
+      },
+      "Mega Lotto 6/45 | Super Lotto 6/49": {
+        "score": -4.685525879391315,
+        "p": 0.67,
+        "null_mean": -4.22513918523012,
+        "null_q05": -6.4580237945238785
+      },
+      "Mega Lotto 6/45 | Grand Lotto 6/55": {
+        "score": -8.526840304610527,
+        "p": 0.9,
+        "null_mean": -6.957082931410822,
+        "null_q05": -9.233249388521992
+      },
+      "Mega Lotto 6/45 | Ultra Lotto 6/58": {
+        "score": -6.862641602446544,
+        "p": 0.05,
+        "null_mean": -8.84370023588036,
+        "null_q05": -10.703675781839355
+      },
+      "Super Lotto 6/49 | Grand Lotto 6/55": {
+        "score": -8.809388062249802,
+        "p": 1.0,
+        "null_mean": -4.851518598503808,
+        "null_q05": -7.112704702312829
+      },
+      "Super Lotto 6/49 | Ultra Lotto 6/58": {
+        "score": -6.091801031822808,
+        "p": 0.41,
+        "null_mean": -6.514548331404734,
+        "null_q05": -8.39175897231189
+      },
+      "Grand Lotto 6/55 | Ultra Lotto 6/58": {
+        "score": -4.075921753965158,
+        "p": 0.7,
+        "null_mean": -3.7029532502042315,
+        "null_q05": -6.432395649499438
+      }
+    },
+    "m_pairs": 10,
+    "sidak_threshold": 0.005116196891823743,
+    "min_pair_p": 0.05,
+    "joint_verdict_null": true
+  },
+  "topology": {
+    "tau": 3,
+    "dim": 3,
+    "m_null": 99,
+    "series": {
+      "tidal_total_accel": {
+        "max_h1_persistence": 1.1237143278121948,
+        "p": 0.01,
+        "null_mean": 0.3938817830398829,
+        "null_q95": 0.47767173647880545,
+        "n_embedded": 360
+      },
+      "moon_distance_km": {
+        "max_h1_persistence": 1.2011105865240097,
+        "p": 0.01,
+        "null_mean": 0.3988118659366261,
+        "null_q95": 0.48376479744911194,
+        "n_embedded": 360
+      },
+      "kp_daily_mean": {
+        "max_h1_persistence": 0.2901785373687744,
+        "p": 0.98,
+        "null_mean": 0.3809565317751181,
+        "null_q95": 0.5090483129024506,
+        "n_embedded": 359
+      },
+      "lotto655_draw_sum": {
+        "max_h1_persistence": 0.42666852474212646,
+        "p": 0.25,
+        "null_mean": 0.39151952934987616,
+        "null_q95": 0.518494951725006,
+        "n_embedded": 150
+      }
+    }
+  },
+  "recovery": {
+    "selector": "farthest-first",
+    "m_null": 49,
+    "repeats": 10,
+    "curves": {
+      "lotto655_draw_sum": [
+        {
+          "frac": 0.05,
+          "k_landmarks": 8,
+          "median_p": 0.43000000000000005,
+          "frac_p_le_05": 0.2
+        },
+        {
+          "frac": 0.1,
+          "k_landmarks": 15,
+          "median_p": 0.51,
+          "frac_p_le_05": 0.0
+        },
+        {
+          "frac": 0.2,
+          "k_landmarks": 30,
+          "median_p": 0.5700000000000001,
+          "frac_p_le_05": 0.2
+        },
+        {
+          "frac": 0.4,
+          "k_landmarks": 60,
+          "median_p": 0.74,
+          "frac_p_le_05": 0.0
+        }
+      ],
+      "tidal_total_accel": [
+        {
+          "frac": 0.05,
+          "k_landmarks": 18,
+          "median_p": 0.35,
+          "frac_p_le_05": 0.3
+        },
+        {
+          "frac": 0.1,
+          "k_landmarks": 36,
+          "median_p": 0.07,
+          "frac_p_le_05": 0.4
+        },
+        {
+          "frac": 0.2,
+          "k_landmarks": 72,
+          "median_p": 0.02,
+          "frac_p_le_05": 1.0
+        },
+        {
+          "frac": 0.4,
+          "k_landmarks": 144,
+          "median_p": 0.02,
+          "frac_p_le_05": 1.0
+        }
+      ]
+    }
+  }
+}

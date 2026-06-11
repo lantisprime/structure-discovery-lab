@@ -1,0 +1,12 @@
+{
+  "with_suspicious": {
+    "n": 156,
+    "corr": 0.251,
+    "p": 0.035
+  },
+  "without_suspicious": {
+    "n": 153,
+    "corr": 0.154,
+    "p": 0.11
+  }
+}

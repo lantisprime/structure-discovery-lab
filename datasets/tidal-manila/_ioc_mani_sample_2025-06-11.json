@@ -1,0 +1,14 @@
+{
+  "provenance": "IOC Sea Level Station Monitoring Facility (ioc-sealevelmonitoring.org), station code 'mani' (Manila), VLIZ/IOC",
+  "fetched": "2026-06-11",
+  "request": "https://www.ioc-sealevelmonitoring.org/service.php?query=data&code=mani&timestart=2025-06-11&timestop=2025-06-12",
+  "note": "Connectivity + format sample only. Full single-day response is ~67 KB of 1-minute records across sensors (prs=pressure, bat=battery/aux). Sea level in metres. Records around the PCSO draw epoch 13:00 UTC shown.",
+  "sample_records": [
+    {"slevel": 1.595, "stime": "2025-06-11 12:00:00", "sensor": "prs"},
+    {"slevel": 1.594, "stime": "2025-06-11 12:01:00", "sensor": "prs"},
+    {"slevel": 1.594, "stime": "2025-06-11 12:02:00", "sensor": "prs"},
+    {"slevel": 1.603, "stime": "2025-06-11 12:03:00", "sensor": "prs"},
+    {"slevel": 0.131, "stime": "2025-06-11 13:01:00", "sensor": "bat"},
+    {"slevel": 0.131, "stime": "2025-06-11 13:06:00", "sensor": "bat"}
+  ]
+}

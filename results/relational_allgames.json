@@ -1,0 +1,428 @@
+{
+  "_meta": {
+    "date": "2026-06-11",
+    "seed_scheme": "20260611+hash(game)%1000",
+    "registered_expectation": "all tests null for all five games",
+    "protocol": "amendment to REGISTRATION_BATCH5.md, all-games symmetry"
+  },
+  "g42": {
+    "game": "Lotto 6/42",
+    "P": 42,
+    "n_draws": 154,
+    "drawsum_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.61,
+        "mean_null_adjusted_z": -0.33120911885892795
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.6,
+        "mean_null_adjusted_z": -0.3229554871459547
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.49,
+        "mean_null_adjusted_z": 0.2586727412797122
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.53,
+        "mean_null_adjusted_z": -0.1719233870335036
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.5800000000000001,
+        "mean_null_adjusted_z": 0.026418130806078945
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.22999999999999998,
+        "mean_null_adjusted_z": 0.5364073822967428
+      }
+    ],
+    "presence_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.5725,
+        "mean_null_adjusted_z": 0.07100020733061355
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.43,
+        "mean_null_adjusted_z": 0.2325692592900265
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.26249999999999996,
+        "mean_null_adjusted_z": 0.24304459350892862
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.305,
+        "mean_null_adjusted_z": 0.17368887996712187
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.3075,
+        "mean_null_adjusted_z": 0.3724254164111298
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.3725,
+        "mean_null_adjusted_z": -0.03007992424195024
+      }
+    ],
+    "topology_h1": {
+      "max_h1_persistence": 0.38888657093048096,
+      "p": 0.53,
+      "null_q95": 0.5498417973518371
+    },
+    "cca_vs_covariates": {
+      "heldout_rho1": 0.0765387295766444,
+      "p_shuffled_pairing": 0.295,
+      "null_mean": 0.0033391680795213886,
+      "null_q95": 0.22668320311140375,
+      "n_train": 92,
+      "n_test": 62,
+      "m_perm": 199
+    },
+    "note": "presence null = 6-of-P constrained generator (A1), m=199"
+  },
+  "g45": {
+    "game": "Mega Lotto 6/45",
+    "P": 45,
+    "n_draws": 156,
+    "drawsum_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.69,
+        "mean_null_adjusted_z": -0.7969204881697344
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.43,
+        "mean_null_adjusted_z": 0.24134252278113885
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.28,
+        "mean_null_adjusted_z": 0.3195956169429961
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.38,
+        "mean_null_adjusted_z": 0.27482193635731755
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.25,
+        "mean_null_adjusted_z": 0.6269556726219004
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.4,
+        "mean_null_adjusted_z": 0.03425317055642707
+      }
+    ],
+    "presence_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.315,
+        "mean_null_adjusted_z": 0.643983616461745
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.275,
+        "mean_null_adjusted_z": 0.6318051529204173
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.2825,
+        "mean_null_adjusted_z": 0.5216145169759607
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.345,
+        "mean_null_adjusted_z": 0.6348788926080394
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.28500000000000003,
+        "mean_null_adjusted_z": 0.7434582345869014
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.16999999999999998,
+        "mean_null_adjusted_z": 1.0854365929156802
+      }
+    ],
+    "topology_h1": {
+      "max_h1_persistence": 0.32991987466812134,
+      "p": 0.86,
+      "null_q95": 0.5229217648506164
+    },
+    "cca_vs_covariates": {
+      "heldout_rho1": -0.001796787210440815,
+      "p_shuffled_pairing": 0.49,
+      "null_mean": -0.00029297329119998023,
+      "null_q95": 0.19147094790085126,
+      "n_train": 93,
+      "n_test": 63,
+      "m_perm": 199
+    },
+    "note": "presence null = 6-of-P constrained generator (A1), m=199"
+  },
+  "g49": {
+    "game": "Super Lotto 6/49",
+    "P": 49,
+    "n_draws": 155,
+    "drawsum_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.37,
+        "mean_null_adjusted_z": 0.20708540447494328
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.5700000000000001,
+        "mean_null_adjusted_z": -0.19525624099832486
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.47,
+        "mean_null_adjusted_z": 0.15441152861111776
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.37,
+        "mean_null_adjusted_z": 0.2911618300032562
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.6000000000000001,
+        "mean_null_adjusted_z": -0.2502667128630637
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.39,
+        "mean_null_adjusted_z": 0.21924081472007165
+      }
+    ],
+    "presence_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.6975,
+        "mean_null_adjusted_z": -0.5631522172257548
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.6000000000000001,
+        "mean_null_adjusted_z": -0.48184593386824404
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.5549999999999999,
+        "mean_null_adjusted_z": -0.10758142690549137
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.685,
+        "mean_null_adjusted_z": -0.2551854038793701
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.6975,
+        "mean_null_adjusted_z": -0.6094342246893886
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.61,
+        "mean_null_adjusted_z": -0.08545668486517903
+      }
+    ],
+    "topology_h1": {
+      "max_h1_persistence": 0.355823278427124,
+      "p": 0.76,
+      "null_q95": 0.5380134105682373
+    },
+    "cca_vs_covariates": {
+      "heldout_rho1": 0.02939458420499803,
+      "p_shuffled_pairing": 0.375,
+      "null_mean": -0.004808104814243292,
+      "null_q95": 0.20575754938026966,
+      "n_train": 93,
+      "n_test": 62,
+      "m_perm": 199
+    },
+    "note": "presence null = 6-of-P constrained generator (A1), m=199"
+  },
+  "g55": {
+    "game": "Grand Lotto 6/55",
+    "P": 55,
+    "n_draws": 156,
+    "drawsum_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.64,
+        "mean_null_adjusted_z": -0.2215106613579442
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.75,
+        "mean_null_adjusted_z": -0.7259438488754677
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.5,
+        "mean_null_adjusted_z": 0.14492320512452184
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.71,
+        "mean_null_adjusted_z": -0.9585655667251671
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.53,
+        "mean_null_adjusted_z": -0.34537952411035433
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.58,
+        "mean_null_adjusted_z": -0.46914658524173164
+      }
+    ],
+    "presence_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.265,
+        "mean_null_adjusted_z": 0.2492784404129921
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.28500000000000003,
+        "mean_null_adjusted_z": 0.6612637019098833
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.205,
+        "mean_null_adjusted_z": 0.6436022406058619
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.15999999999999998,
+        "mean_null_adjusted_z": 0.35435744917399187
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.20750000000000002,
+        "mean_null_adjusted_z": 0.8522815023779398
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.13,
+        "mean_null_adjusted_z": 1.029873984972294
+      }
+    ],
+    "topology_h1": {
+      "max_h1_persistence": 0.42666852474212646,
+      "p": 0.36,
+      "null_q95": 0.5303001224994658
+    },
+    "cca_vs_covariates": {
+      "heldout_rho1": 0.1101147769001933,
+      "p_shuffled_pairing": 0.19,
+      "null_mean": 0.0013799563696458863,
+      "null_q95": 0.20877123018068042,
+      "n_train": 93,
+      "n_test": 63,
+      "m_perm": 199
+    },
+    "note": "presence null = 6-of-P constrained generator (A1), m=199"
+  },
+  "g58": {
+    "game": "Ultra Lotto 6/58",
+    "P": 58,
+    "n_draws": 155,
+    "drawsum_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.27,
+        "mean_null_adjusted_z": 0.3023068983824367
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.75,
+        "mean_null_adjusted_z": -0.4017293663832143
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.79,
+        "mean_null_adjusted_z": -0.5540212007728216
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.65,
+        "mean_null_adjusted_z": -0.34410391739761026
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.71,
+        "mean_null_adjusted_z": -0.7114669510832259
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.45,
+        "mean_null_adjusted_z": 0.10678656719403956
+      }
+    ],
+    "presence_recovery": [
+      {
+        "frac": 0.01,
+        "median_p": 0.49250000000000005,
+        "mean_null_adjusted_z": -0.0639966982839599
+      },
+      {
+        "frac": 0.02,
+        "median_p": 0.22,
+        "mean_null_adjusted_z": 0.634338662025523
+      },
+      {
+        "frac": 0.05,
+        "median_p": 0.255,
+        "mean_null_adjusted_z": 0.7044949358255627
+      },
+      {
+        "frac": 0.1,
+        "median_p": 0.35250000000000004,
+        "mean_null_adjusted_z": 0.2489430905306917
+      },
+      {
+        "frac": 0.2,
+        "median_p": 0.325,
+        "mean_null_adjusted_z": 0.3870654093561217
+      },
+      {
+        "frac": 0.4,
+        "median_p": 0.39,
+        "mean_null_adjusted_z": 0.17847930284308572
+      }
+    ],
+    "topology_h1": {
+      "max_h1_persistence": 0.4881415367126465,
+      "p": 0.13,
+      "null_q95": 0.5405250668525695
+    },
+    "cca_vs_covariates": {
+      "heldout_rho1": -0.010016315161404946,
+      "p_shuffled_pairing": 0.56,
+      "null_mean": 0.013254278917455571,
+      "null_q95": 0.24284809317783068,
+      "n_train": 93,
+      "n_test": 62,
+      "m_perm": 199
+    },
+    "note": "presence null = 6-of-P constrained generator (A1), m=199"
+  }
+}
