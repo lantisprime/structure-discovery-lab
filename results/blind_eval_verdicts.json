@@ -1,0 +1,429 @@
+{
+  "verdicts": {
+    "DRAW-MARGINAL-A": {
+      "verdict": "NULL",
+      "p": 0.1825,
+      "alpha_corrected": 0.0102,
+      "note": "chi2=61.9"
+    },
+    "DRAW-MARGINAL-B": {
+      "verdict": "STRUCTURED",
+      "p": 0.0025,
+      "alpha_corrected": 0.0102,
+      "note": "chi2=105.9"
+    },
+    "DRAW-MARGINAL-C": {
+      "verdict": "NULL",
+      "p": 1.0,
+      "alpha_corrected": 0.0102,
+      "note": "chi2=0.0"
+    },
+    "DRAW-MARGINAL-D": {
+      "verdict": "NULL",
+      "p": 0.625,
+      "alpha_corrected": 0.0102,
+      "note": "chi2=49.8"
+    },
+    "DRAW-MARGINAL-E": {
+      "verdict": "NULL",
+      "p": 0.7725,
+      "alpha_corrected": 0.0102,
+      "note": "chi2=46.3"
+    },
+    "DRAW-MEMORY-A": {
+      "verdict": "NULL",
+      "p": 0.945,
+      "alpha_corrected": 0.0102,
+      "note": "mean_overlap=0.599 vs null_mean=0.602"
+    },
+    "DRAW-MEMORY-B": {
+      "verdict": "NULL",
+      "p": 0.1025,
+      "alpha_corrected": 0.0102,
+      "note": "mean_overlap=0.663 vs null_mean=0.603"
+    },
+    "DRAW-MEMORY-C": {
+      "verdict": "STRUCTURED",
+      "p": 0.0025,
+      "alpha_corrected": 0.0102,
+      "note": "mean_overlap=1.986 vs null_mean=0.598"
+    },
+    "DRAW-MEMORY-D": {
+      "verdict": "NULL",
+      "p": 0.6625,
+      "alpha_corrected": 0.0102,
+      "note": "mean_overlap=0.618 vs null_mean=0.6"
+    },
+    "DRAW-MEMORY-E": {
+      "verdict": "NULL",
+      "p": 0.84,
+      "alpha_corrected": 0.0102,
+      "note": "mean_overlap=0.607 vs null_mean=0.599"
+    },
+    "DRAW-STATION-A": {
+      "verdict": "NULL",
+      "p": 0.6225,
+      "alpha_corrected": 0.0102,
+      "note": "half_corr=-0.046"
+    },
+    "DRAW-STATION-B": {
+      "verdict": "NULL",
+      "p": 0.0575,
+      "alpha_corrected": 0.0102,
+      "note": "half_corr=0.19"
+    },
+    "DRAW-STATION-C": {
+      "verdict": "NULL",
+      "p": 1.0,
+      "alpha_corrected": 0.0102,
+      "note": "half_corr=-1.0"
+    },
+    "DRAW-STATION-D": {
+      "verdict": "NULL",
+      "p": 0.6125,
+      "alpha_corrected": 0.0102,
+      "note": "half_corr=-0.039"
+    },
+    "DRAW-STATION-E": {
+      "verdict": "NULL",
+      "p": 0.2925,
+      "alpha_corrected": 0.0102,
+      "note": "half_corr=0.086"
+    },
+    "DRAW-SUBSET-A": {
+      "verdict": "NULL",
+      "p": 0.2025,
+      "alpha_corrected": 0.0102,
+      "note": "min median_p across k taken at frac=0.4; curve=[0.54, 0.3925, 0.3225, 0.2025]"
+    },
+    "DRAW-SUBSET-B": {
+      "verdict": "NULL",
+      "p": 0.41500000000000004,
+      "alpha_corrected": 0.0102,
+      "note": "min median_p across k taken at frac=0.05; curve=[0.415, 0.59, 0.52, 0.625]"
+    },
+    "DRAW-SUBSET-C": {
+      "verdict": "STRUCTURED",
+      "p": 0.0075,
+      "alpha_corrected": 0.0102,
+      "note": "min median_p across k taken at frac=0.4; curve=[0.645, 0.3875, 0.04, 0.0075]"
+    },
+    "DRAW-SUBSET-D": {
+      "verdict": "NULL",
+      "p": 0.0125,
+      "alpha_corrected": 0.0102,
+      "note": "min median_p across k taken at frac=0.2; curve=[0.4425, 0.075, 0.0125, 0.0225]"
+    },
+    "DRAW-SUBSET-E": {
+      "verdict": "NULL",
+      "p": 0.0175,
+      "alpha_corrected": 0.0102,
+      "note": "min median_p across k taken at frac=0.4; curve=[0.335, 0.0375, 0.075, 0.0175]"
+    },
+    "DRAW-CROSS-A|B": {
+      "verdict": "NULL",
+      "p": 0.0125,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=0.189"
+    },
+    "DRAW-CROSS-A|C": {
+      "verdict": "NULL",
+      "p": 0.09125,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=0.114"
+    },
+    "DRAW-CROSS-A|D": {
+      "verdict": "NULL",
+      "p": 0.78875,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=-0.073"
+    },
+    "DRAW-CROSS-A|E": {
+      "verdict": "NULL",
+      "p": 0.14,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=0.092"
+    },
+    "DRAW-CROSS-B|C": {
+      "verdict": "NULL",
+      "p": 0.0175,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=0.169"
+    },
+    "DRAW-CROSS-B|D": {
+      "verdict": "NULL",
+      "p": 0.41625,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=0.017"
+    },
+    "DRAW-CROSS-B|E": {
+      "verdict": "NULL",
+      "p": 0.025,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=0.169"
+    },
+    "DRAW-CROSS-C|D": {
+      "verdict": "NULL",
+      "p": 0.585,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=-0.019"
+    },
+    "DRAW-CROSS-C|E": {
+      "verdict": "NULL",
+      "p": 0.7625,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=-0.06"
+    },
+    "DRAW-CROSS-D|E": {
+      "verdict": "NULL",
+      "p": 0.0075,
+      "alpha_corrected": 0.0051,
+      "note": "rho1=0.204"
+    },
+    "DRAW-SENSOR-A": {
+      "verdict": "NULL",
+      "p": 0.925,
+      "alpha_corrected": 0.0102,
+      "note": "rho1=-0.123"
+    },
+    "DRAW-SENSOR-B": {
+      "verdict": "NULL",
+      "p": 0.535,
+      "alpha_corrected": 0.0102,
+      "note": "rho1=-0.009"
+    },
+    "DRAW-SENSOR-C": {
+      "verdict": "NULL",
+      "p": 0.6675,
+      "alpha_corrected": 0.0102,
+      "note": "rho1=-0.038"
+    },
+    "DRAW-SENSOR-D": {
+      "verdict": "STRUCTURED",
+      "p": 0.0025,
+      "alpha_corrected": 0.0102,
+      "note": "rho1=0.383"
+    },
+    "DRAW-SENSOR-E": {
+      "verdict": "STRUCTURED",
+      "p": 0.0025,
+      "alpha_corrected": 0.0102,
+      "note": "rho1=0.456"
+    },
+    "SENSOR-STRUCT-sensor_01": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.0127,
+      "note": "recovery z at k=20%, median p over 10 seeds"
+    },
+    "SENSOR-STRUCT-sensor_02": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.0127,
+      "note": "recovery z at k=20%, median p over 10 seeds"
+    },
+    "SENSOR-STRUCT-sensor_03": {
+      "verdict": "NULL",
+      "p": 0.635,
+      "alpha_corrected": 0.0127,
+      "note": "recovery z at k=20%, median p over 10 seeds"
+    },
+    "SENSOR-STRUCT-sensor_04": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.0127,
+      "note": "recovery z at k=20%, median p over 10 seeds"
+    },
+    "SERIES-RECOVERY-S1": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.0127,
+      "note": "min median_p across k taken at frac=0.05; curve=[0.005, 0.005, 0.005, 0.005]"
+    },
+    "SERIES-RECOVERY-S2": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.0127,
+      "note": "min median_p across k taken at frac=0.05; curve=[0.005, 0.005, 0.005, 0.005]"
+    },
+    "SERIES-RECOVERY-S3": {
+      "verdict": "NULL",
+      "p": 0.27,
+      "alpha_corrected": 0.0127,
+      "note": "min median_p across k taken at frac=0.1; curve=[0.545, 0.27, 0.53, 0.715]"
+    },
+    "SERIES-RECOVERY-S4": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.0127,
+      "note": "min median_p across k taken at frac=0.05; curve=[0.005, 0.005, 0.005, 0.005]"
+    },
+    "SERIES-TDA-S1": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.0127,
+      "note": "max_h1=0.839 vs null_q95=0.613"
+    },
+    "SERIES-TDA-S2": {
+      "verdict": "NULL",
+      "p": 0.995,
+      "alpha_corrected": 0.0127,
+      "note": "max_h1=0.298 vs null_q95=0.572"
+    },
+    "SERIES-TDA-S3": {
+      "verdict": "NULL",
+      "p": 0.335,
+      "alpha_corrected": 0.0127,
+      "note": "max_h1=0.391 vs null_q95=0.505"
+    },
+    "SERIES-TDA-S4": {
+      "verdict": "NULL",
+      "p": 1.0,
+      "alpha_corrected": 0.0127,
+      "note": "max_h1=0.135 vs null_q95=0.85"
+    },
+    "SERIES-PAIR-S1|S2": {
+      "verdict": "NULL",
+      "p": 0.7462,
+      "alpha_corrected": 0.0085,
+      "note": "abs_spearman=0.316, circular-shift null"
+    },
+    "SERIES-PAIR-S1|S3": {
+      "verdict": "NULL",
+      "p": 0.3926,
+      "alpha_corrected": 0.0085,
+      "note": "abs_spearman=0.039, circular-shift null"
+    },
+    "SERIES-PAIR-S1|S4": {
+      "verdict": "NULL",
+      "p": 0.7549,
+      "alpha_corrected": 0.0085,
+      "note": "abs_spearman=0.013, circular-shift null"
+    },
+    "SERIES-PAIR-S2|S3": {
+      "verdict": "NULL",
+      "p": 0.5401,
+      "alpha_corrected": 0.0085,
+      "note": "abs_spearman=0.028, circular-shift null"
+    },
+    "SERIES-PAIR-S2|S4": {
+      "verdict": "NULL",
+      "p": 0.4685,
+      "alpha_corrected": 0.0085,
+      "note": "abs_spearman=0.024, circular-shift null"
+    },
+    "SERIES-PAIR-S3|S4": {
+      "verdict": "NULL",
+      "p": 0.0759,
+      "alpha_corrected": 0.0085,
+      "note": "abs_spearman=0.089, circular-shift null"
+    },
+    "SERIES-SEGMENT-S1": {
+      "verdict": "NULL",
+      "p": 0.29,
+      "alpha_corrected": 0.008512,
+      "note": "min of 6 quarter-pair MMD p-values; pairs={'Q1|Q2': 0.8775, 'Q1|Q3': 0.6525, 'Q1|Q4': 0.29, 'Q2|Q3': 0.8825, 'Q2|Q4': 0.565, 'Q3|Q4': 0.6675}"
+    },
+    "SERIES-SEGMENT-S2": {
+      "verdict": "NULL",
+      "p": 0.285,
+      "alpha_corrected": 0.008512,
+      "note": "min of 6 quarter-pair MMD p-values; pairs={'Q1|Q2': 0.285, 'Q1|Q3': 0.475, 'Q1|Q4': 0.385, 'Q2|Q3': 0.81, 'Q2|Q4': 0.8325, 'Q3|Q4': 0.7825}"
+    },
+    "SERIES-SEGMENT-S3": {
+      "verdict": "NULL",
+      "p": 0.245,
+      "alpha_corrected": 0.008512,
+      "note": "min of 6 quarter-pair MMD p-values; pairs={'Q1|Q2': 0.4875, 'Q1|Q3': 0.535, 'Q1|Q4': 0.31, 'Q2|Q3': 0.9875, 'Q2|Q4': 0.245, 'Q3|Q4': 0.305}"
+    },
+    "SERIES-SEGMENT-S4": {
+      "verdict": "STRUCTURED",
+      "p": 0.0025,
+      "alpha_corrected": 0.008512,
+      "note": "min of 6 quarter-pair MMD p-values; pairs={'Q1|Q2': 0.0025, 'Q1|Q3': 0.0025, 'Q1|Q4': 0.0025, 'Q2|Q3': 0.0025, 'Q2|Q4': 0.0025, 'Q3|Q4': 0.0025}"
+    },
+    "CLOUD-TDA-X": {
+      "verdict": "STRUCTURED",
+      "p": 0.0025,
+      "alpha_corrected": 0.017,
+      "note": "max_h1=1.727 vs null_q95=0.51"
+    },
+    "CLOUD-TDA-Y": {
+      "verdict": "STRUCTURED",
+      "p": 0.0025,
+      "alpha_corrected": 0.017,
+      "note": "max_h1=1.974 vs null_q95=0.668"
+    },
+    "CLOUD-TDA-Z": {
+      "verdict": "NULL",
+      "p": 0.34,
+      "alpha_corrected": 0.017,
+      "note": "max_h1=0.554 vs null_q95=0.652"
+    },
+    "GRAPH-COMMUNITY-A": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.017,
+      "note": "mean_bottom12=0.4404 vs null_mean=0.4967"
+    },
+    "GRAPH-COMMUNITY-B": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.017,
+      "note": "mean_bottom12=0.4186 vs null_mean=0.475"
+    },
+    "GRAPH-COMMUNITY-C": {
+      "verdict": "NULL",
+      "p": 0.46,
+      "alpha_corrected": 0.017,
+      "note": "mean_bottom12=0.5028 vs null_mean=0.5029"
+    },
+    "GRAPH-PAIR-A|B": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.017,
+      "note": "-L2 between bottom-12 spectra, rewired null"
+    },
+    "GRAPH-PAIR-A|C": {
+      "verdict": "NULL",
+      "p": 0.095,
+      "alpha_corrected": 0.017,
+      "note": "-L2 between bottom-12 spectra, rewired null"
+    },
+    "GRAPH-PAIR-B|C": {
+      "verdict": "NULL",
+      "p": 0.12,
+      "alpha_corrected": 0.017,
+      "note": "-L2 between bottom-12 spectra, rewired null"
+    },
+    "MATRIX-M1": {
+      "verdict": "STRUCTURED",
+      "p": 0.005,
+      "alpha_corrected": 0.0253,
+      "note": "skill=0.5426 (rmse_model=0.513, rmse_baseline=1.0557)"
+    },
+    "MATRIX-M2": {
+      "verdict": "NULL",
+      "p": 0.03,
+      "alpha_corrected": 0.0253,
+      "note": "skill=-0.0125 (rmse_model=1.0445, rmse_baseline=1.0321)"
+    }
+  },
+  "exploratory_flags": [
+    "DRAW-STATION-B: raw p=0.0575 above corrected alpha=0.0102 -- exploratory excursion only, no verdict",
+    "DRAW-SUBSET-D: raw p=0.0125 above corrected alpha=0.0102 -- exploratory excursion only, no verdict",
+    "DRAW-SUBSET-E: raw p=0.0175 above corrected alpha=0.0102 -- exploratory excursion only, no verdict",
+    "DRAW-CROSS-A|B: raw p=0.0125 above corrected alpha=0.0051 -- exploratory excursion only, no verdict",
+    "DRAW-CROSS-A|C: raw p=0.09125 above corrected alpha=0.0051 -- exploratory excursion only, no verdict",
+    "DRAW-CROSS-B|C: raw p=0.0175 above corrected alpha=0.0051 -- exploratory excursion only, no verdict",
+    "DRAW-CROSS-B|E: raw p=0.025 above corrected alpha=0.0051 -- exploratory excursion only, no verdict",
+    "DRAW-CROSS-D|E: raw p=0.0075 above corrected alpha=0.0051 -- exploratory excursion only, no verdict",
+    "SERIES-PAIR-S3|S4: raw p=0.0759 above corrected alpha=0.0085 -- exploratory excursion only, no verdict",
+    "GRAPH-PAIR-A|C: raw p=0.095 above corrected alpha=0.017 -- exploratory excursion only, no verdict",
+    "MATRIX-M2: raw p=0.03 above corrected alpha=0.0253 -- exploratory excursion only, no verdict",
+    "CLOUD-GW-X|Y (G0, exploratory-only per standing instrument flag, never a verdict): score=-0.07707, p=0.01, null_mean=-0.09248",
+    "CLOUD-GW-X|Z (G0, exploratory-only per standing instrument flag, never a verdict): score=-0.09097, p=0.26, null_mean=-0.09411",
+    "CLOUD-GW-Y|Z (G0, exploratory-only per standing instrument flag, never a verdict): score=-0.07954, p=0.18, null_mean=-0.0848"
+  ],
+  "summary": "Blind methodology eval (structure_eval_set_v1), seed 20260611, registration hash d66f66574e1638e9, answer key sealed. 68 registered units judged at family-corrected Sidak thresholds per the claim table: 19 STRUCTURED, 49 NULL. STRUCTURED: CLOUD-TDA-X, CLOUD-TDA-Y, DRAW-MARGINAL-B, DRAW-MEMORY-C, DRAW-SENSOR-D, DRAW-SENSOR-E, DRAW-SUBSET-C, GRAPH-COMMUNITY-A, GRAPH-COMMUNITY-B, GRAPH-PAIR-A|B, MATRIX-M1, SENSOR-STRUCT-sensor_01, SENSOR-STRUCT-sensor_02, SENSOR-STRUCT-sensor_04, SERIES-RECOVERY-S1, SERIES-RECOVERY-S2, SERIES-RECOVERY-S4, SERIES-SEGMENT-S4, SERIES-TDA-S1. Raw excursions above corrected alpha and all GW (G0) outputs are listed under exploratory_flags only. NULL verdicts are bounded by the admission power curves (REMEDIATION_LOG): 'below detection at these shapes', not proof of absence. Phipson-Smyth +1 applied throughout; no thresholds tuned post hoc."
+}

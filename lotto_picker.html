@@ -48,7 +48,8 @@ P(remainder | any subset of history) = marginal&ensp;[relational face, batches 5
 </div>
 <div id="out"></div>
 <div class="foot">
-Empirical basis (as of 2026-06-11, incl. relational batches 5&ndash;6): n=776 validated draws; 55+ within-dataset tests plus ~190 relational tests, min familywise-corrected p=0.148 (scan statistic) among new discoveries &mdash; nothing relational survives correction;
+<b>Summary (external-review wording, 2026-06-11):</b> this lab found no reproducible evidence of exploitable structure in the PCSO lottery data <i>at the tested resolution</i>. One historical 6/55 #45 anomaly remains era-bounded and (for hit-count statistics) data-quality-sensitive. The relational instruments are calibrated on synthetic controls and detect large planted/mechanism-scale effects, but subtle effects are below the demonstrated power of the current dataset. This is &laquo;no detectable structure at the tested resolution&raquo;, never &laquo;no structure exists&raquo;. Independently verified: a blinded second system reproduced all 9 series-level verdicts (9/9) with its own methods. Floor-compliant rerun under the remediated methodology (batch67_r2, registration hash 2709deedb274f0f6, docs/RESULTS_BATCH6_7_RERUN.md) left every verdict unchanged.<br><br>
+Empirical basis (as of 2026-06-11, incl. relational batches 5&ndash;7 + remediation): n=776 validated draws; 55+ within-dataset tests plus a 248-row relational test ledger (results/multiplicity_ledger.jsonl; 7.3% raw p&le;0.05 incl. superseded originals) whose current-best panel of 136 tests is consistent with uniform p-values (8.8% &le;0.05, meta-uniformity KS p=0.111), min familywise-corrected p=0.148 (scan statistic) among new discoveries &mdash; the sole relational corrected rejection is the known 6/55 co-occurrence shadow (&lambda;<sub>max</sub> p=0.0010 at m=999);
 Markov order-0 confirmed (|&lambda;&#8322;|&le;0.12, relaxation &le;1.14 draws); compression &ge; entropy bound in all games; MLE sequence-learnability &beta;=+0.015, CI [&minus;0.04,+0.08] &ni; 0;
 SOC scan (Per Bak): spectral slope &alpha;=0.03&ndash;0.16 (white noise; 1/f would be &alpha;&asymp;1), avalanche sizes geometric (no heavy tail), Hurst H&#770; indistinguishable from calibrated null (p&ge;0.09) &mdash; no self-organized criticality reaches the outputs.
 Power-law test (Clauset&ndash;Shalizi&ndash;Newman MLE, Vuong LR vs geometric): recurrence gaps n=4407, z=&minus;35.3; avalanches n=206, z=&minus;3.2 &mdash; exponential tails, characteristic scale, off-critical; scaling range 0.9 decades &lt; 2 needed for any exponent (universality-class ID not attemptable).
@@ -67,7 +68,7 @@ Relational face (batches 5&ndash;6, registered docs/REGISTRATION_BATCH5.md &amp;
 subset-to-whole recovery curves FLAT at the null line for every game at every subset fraction k=1&ndash;40% (|z|&le;1.1 vs tidal/lunar controls reaching z=+19.7 on the same pipeline);
 cross-game co-occurrence: all 10 pairs null (min p=0.05 vs &Scaron;id&aacute;k 0.0051); sub-dataset partitions (quarters &amp; halves): 65 tests, all joint-null;
 draws vs tidal/geomagnetic/sun&ndash;moon covariates: held-out CCA &rho;&#8321;=&minus;0.01&ndash;0.11, p=0.19&ndash;0.56 (the same test detects the known tidal&harr;ephemerides mechanism at &rho;&#8321;=0.9977, p=0.005 &mdash; the pipeline sees real relations, and sees none here);
-draws vs atmospheric pressure at the draw site (ERA5 Mandaluyong, batch 7): per-game CCA joint null (min p=0.03 &gt; &Scaron;id&aacute;k 0.0102) while pressure itself is richly structured (recovery z=+10.5, all 6 season pairs reject at p=0.005, couples to sun/moon at &rho;&#8321;=0.567 &mdash; weather is predictable, draws are not);
+draws vs atmospheric pressure at the draw site (ERA5 Mandaluyong, batch 7): per-game CCA joint null (min p=0.03 &gt; &Scaron;id&aacute;k 0.0102) while pressure itself is richly structured (recovery z=+10.5, all 6 season pairs reject at p=0.0025 at m=399 (rerun_batch67.py, batch67_r2), sun/moon coupling robust across 3 splits (median p=0.005 from b7_cca, &rho;&#8321;=0.567) &mdash; weather is predictable, draws are not);
 delay-embedding topology: no H&#8321; loop in any game (p&ge;0.13; tidal loop detected at p=0.01 floor and recoverable from 20% landmarks).
 The 2025 6/55 #45 excess now traces identically through FOUR instruments (chi-square family, graphon row 27, cross-game &lambda;<sub>max</sub> eigenvector loading 0.439, half-vs-half hot-corr contributors #45/#42) &mdash; one era-bounded anomaly, dead since Feb 2026, zero forward value; picks remain uniform.
 Tickets: uniform random, disjoint, filtered (reject all&le;31, runs&ge;4, 6-term AP, single last-digit) &mdash; filters affect split-risk only, never P(win). The AP filter is itself Ramsey-aware: progressions are popular picks (split risk), not lucky ones.
@@ -82,17 +83,18 @@ Full methodology: RESEARCH_NOTES.md in this folder. Please play responsibly &mda
 <script>
 const GAMES = {
   "Lotto 6/42":      {pool:42, days:[2,4,6], minJack:20676273, tickets:400000, p5:24000,  p4:800,  p3:20,  eps:0.16234, apBase:4.39, relZ:0.54, ccaP:0.295, halfCorr:0.060, halfP:0.360},
-  "Mega Lotto 6/45": {pool:45, days:[1,3,5], minJack:52078363, tickets:500000, p5:32000,  p4:1000, p3:30,  eps:0.17564, apBase:4.04, relZ:1.09, ccaP:0.490, halfCorr:0.147, halfP:0.210},
-  "Super Lotto 6/49":{pool:49, days:[0,2,4], minJack:25000000, tickets:500000, p5:56000,  p4:1200, p3:50,  eps:0.16155, apBase:3.79, relZ:0.61, ccaP:0.375, halfCorr:0.004, halfP:0.435},
-  "Grand Lotto 6/55":{pool:55, days:[1,3,6], minJack:45000000, tickets:600000, p5:200000, p4:3000, p3:60,  eps:0.19848, apBase:3.32, relZ:1.03, ccaP:0.190, halfCorr:0.251, halfP:0.025, halfNote:" (#45/#42 era shadow, C9)"},
-  "Ultra Lotto 6/58":{pool:58, days:[0,2,5], minJack:75000000, tickets:700000, p5:280000, p4:4000, p3:100, eps:0.16085, apBase:3.19, relZ:0.71, ccaP:0.560, halfCorr:0.060, halfP:0.330}
+  "Mega Lotto 6/45": {pool:45, days:[1,3,5], minJack:52078363, tickets:500000, p5:32000,  p4:1000, p3:30,  eps:0.17564, apBase:4.04, relZ:1.09, ccaP:0.490, halfCorr:0.147, halfP:0.155},
+  "Super Lotto 6/49":{pool:49, days:[0,2,4], minJack:25000000, tickets:500000, p5:56000,  p4:1200, p3:50,  eps:0.16155, apBase:3.79, relZ:0.61, ccaP:0.375, halfCorr:0.004, halfP:0.495},
+  "Grand Lotto 6/55":{pool:55, days:[1,3,6], minJack:45000000, tickets:600000, p5:200000, p4:3000, p3:60,  eps:0.19848, apBase:3.32, relZ:1.03, ccaP:0.190, halfCorr:0.251, halfP:0.050, halfNote:" (#45/#42 era shadow, C9)"},
+  "Ultra Lotto 6/58":{pool:58, days:[0,2,5], minJack:75000000, tickets:700000, p5:280000, p4:4000, p3:100, eps:0.16085, apBase:3.19, relZ:0.71, ccaP:0.560, halfCorr:0.060, halfP:0.280}
   // eps: batch-4 (Jun 2026) 95% simultaneous exclusion bound on |p_i - 6/P| (concentration_exclusion.py);
   // apBase: theorem-forced E[3-term APs] in a random 10-subset (Ramsey-trap baseline, szemeredi_ap.py);
   // relZ: batches 5-6 (Jun 2026) max |null-adjusted z| across subset-to-whole recovery curves, k=1-40%
   //       (relational_allgames.py; null band is +/-2 -- all games flat);
   // ccaP: held-out CCA p vs tidal/geomagnetic/sun-moon covariates, shuffled-pairing null (all null);
-  // halfCorr/halfP: half-vs-half hot-number consistency vs constrained-uniform null (relational_subsets.py;
-  //       joint null at Sidak m=5; the 6/55 raw flag traces to the expired #45/#42 era rows per C9)
+  // halfCorr/halfP: half-vs-half hot-number consistency vs constrained-uniform null (rerun_batch67.py,
+  //       batch67_r2, m=199; supersedes relational_subsets.py; joint null at Sidak m=5;
+  //       the 6/55 raw flag traces to the expired #45/#42 era rows per C9)
 };
 // days: JS getDay() with 0=Sun … 6=Sat. 6/42 Tue(2)/Thu(4)/Sat(6); 6/45 Mon(1)/Wed(3)/Fri(5); 6/49 Tue/Thu/Sun(0)... fixed below
 GAMES["Lotto 6/42"].days=[2,4,6]; GAMES["Mega Lotto 6/45"].days=[1,3,5];

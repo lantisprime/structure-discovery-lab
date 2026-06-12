@@ -31,8 +31,8 @@ Hard rules:
    prediction was wrong in the informative direction). Apply the registered
    Bonferroni threshold; never tune thresholds after seeing real data.
 4. Any fire gets driving-row attribution before being called new; check it
-   against the adjudicated-anomaly registry (currently: 6/55 #45, 2025,
-   era-bounded). Re-detections count as 0 new discoveries.
+   against the active domain's ANOMALY_REGISTRY (src/domains/<domain>.py).
+   Re-detections of a registered anomaly count as 0 new discoveries.
 5. Exploration can motivate, never confirm (A6). Confirmation only on the
    registered held-out set at the registered thresholds.
 6. Write results into docs/RESULTS_<batch>.md and propose (not silently apply)
@@ -43,3 +43,7 @@ Hard rules:
    what was learned (CLAUDE.md).
 8. End your final message with: statistics run, p-values, fires + attribution,
    multiplicity arithmetic, and the reproducibility verification (diff of two runs).
+9. ROLE-ID RULE (2026-06-11, after review finding C2): you never verify your
+   own runs — verification is dispatched by the orchestrator to the
+   independent-verifier agent, and both identities are recorded in the run
+   ledger. You also never append your own run-ledger row marked "verified".

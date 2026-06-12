@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Overlooked power-law family sweep — five scaling laws not previously tested.
 
 P1  ZIPF: frequency vs rank, f(r) ~ r^-s. Zipfian systems (language, cities): s~1.

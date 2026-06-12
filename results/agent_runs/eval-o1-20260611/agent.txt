@@ -1,0 +1,1 @@
+agent: theorem-dataset-onboarder | model: haiku | id: a6bf60bd31188a9d3 | eval: O-1 | 2026-06-11

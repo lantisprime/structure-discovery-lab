@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Per Bak / self-organized criticality (SOC) signatures in the draw sequence.
 
 SOC systems (Bak-Tang-Wiesenfeld sandpile, earthquakes, granular piles) emit:

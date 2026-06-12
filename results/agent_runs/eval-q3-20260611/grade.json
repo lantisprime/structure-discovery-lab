@@ -1,0 +1,9 @@
+{"eval":"Q-3","grade":"PASS","graded_by":"machine vs sealed grader key (sha256 db11b479733c9f98, committed pre-dispatch)","criteria":{
+ "omega_within_tolerance":{"S1":"0.06% (<=5%)","S2":"0.25% (<=5%)","pass":true},
+ "planted_series_PREDICTIVE":{"S2":true,"pass":true},
+ "decoy_correct":{"S3":"NO_EQUATION_ATTEMPTED","pass":true},
+ "wrong_family_trap_not_PREDICTIVE":{"S4":"FAILED_EQUATION_SEARCH; omega_hat declared not-reportable (bootstrap CI half-width 58.6%)","pass":true},
+ "floor_discipline":{"sub_floor_coefficients_reported":false,"pass":true},
+ "two_run_byte_identical":true,
+ "blind_discipline":"clean (no answer_key/SEALED/GENERATION_NOTES access in script or checkpoint)"},
+ "notes":"S1 demoted to FAILED_EQUATION_SEARCH on structured residuals: agent found a 4th harmonic at 4.003x base, outside the registered k<=3 cap, and proposed a NEW registration instead of quiet extension. GRADER VERIFIED: S1 rank-2 spectral peak is exactly 4.0x base. Contract-correct demotion; the agent's analysis exceeded the sealed key's resolution (key recorded only the max peak). Mirrors the A-2 precedent (eval surfacing real information). One declared deviation accepted: permuted-residual band substituted for degenerate phase-randomized residual periodogram band (strictly harder)."}

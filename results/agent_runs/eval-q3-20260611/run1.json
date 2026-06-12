@@ -1,0 +1,450 @@
+{
+ "claims": {
+  "eq.eval.S1": {
+   "bootstrap": {
+    "B": 199,
+    "block": 32,
+    "stable_omega": true
+   },
+   "claim_id": "eq.eval.S1",
+   "coefficients": [
+    {
+     "below_floor": true,
+     "ci95": [
+      -0.026985,
+      0.016597
+     ],
+     "estimate": null,
+     "name": "a0"
+    },
+    {
+     "below_floor": false,
+     "ci95": [
+      0.987362,
+      1.03975
+     ],
+     "estimate": 1.011647,
+     "name": "a1_sin1wt"
+    },
+    {
+     "below_floor": true,
+     "ci95": [
+      -0.116022,
+      0.108902
+     ],
+     "estimate": null,
+     "name": "b1_cos1wt"
+    }
+   ],
+   "data_regimes": "all_rows only (eval synthetic; no provenance flags \u2014 regimes degenerate)",
+   "detection_attribution": "periodogram positive; delay-embed H1 loop",
+   "gate": "STRUCTURED (registered, post-freeze)",
+   "k_star": 1,
+   "null_baselines": {
+    "ar1_train": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 1.033194344352122,
+     "null_rmse_on_real_test_q025": 0.5971064987391594,
+     "p": 0.005
+    },
+    "permutation": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 0.8067677599648149,
+     "null_rmse_on_real_test_q025": 0.7896856134975933,
+     "p": 0.005
+    },
+    "phase_randomized": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 0.9687296341386457,
+     "null_rmse_on_real_test_q025": 0.32255273620011676,
+     "p": 0.03
+    }
+   },
+   "null_equation_generator": {
+    "B": 99,
+    "null_adjusted_p": 0.01,
+    "null_best_improvement": 0.08143943195293424,
+    "observed_improvement": 0.47827281300303914,
+    "perm_null_mean_rmse": 0.7982825147093672
+   },
+   "omega_ci95": [
+    0.09752415,
+    0.09874637
+   ],
+   "omega_ci_halfwidth_pct_of_omega": 0.623,
+   "omega_hat": 0.09811293,
+   "omega_reportable": true,
+   "period_hat": 64.0403,
+   "residual_checks": {
+    "acf_lag1_10": {
+     "max_abs": 0.6152,
+     "p": 0.005,
+     "pass": false,
+     "simultaneous_band95": 0.1257,
+     "values": [
+      0.5938,
+      0.4731,
+      0.2429,
+      0.0246,
+      -0.2316,
+      -0.4247,
+      -0.604,
+      -0.6152,
+      -0.5821,
+      -0.4344
+     ]
+    },
+    "cusum": {
+     "p": 0.87,
+     "pass": true,
+     "stat": 0.5665
+    },
+    "periodogram_max_peak": {
+     "fisher_g": 162.995,
+     "note": "band from PERMUTED residuals; phase-randomized surrogates preserve the periodogram exactly (degenerate) \u2014 declared deviation",
+     "p": 0.005,
+     "pass": false
+    }
+   },
+   "rmse": {
+    "test": 0.32001,
+    "train": 0.301623,
+    "val": 0.339756
+   },
+   "selection_table": [
+    {
+     "bic": -206.349,
+     "k": 1,
+     "omega": 0.098113,
+     "rmse_val": 0.339756
+    },
+    {
+     "bic": -197.89,
+     "k": 2,
+     "omega": 0.098096,
+     "rmse_val": 0.338441
+    },
+    {
+     "bic": -188.536,
+     "k": 3,
+     "omega": 0.098106,
+     "rmse_val": 0.338613
+    }
+   ],
+   "series": "S1",
+   "verdict": "FAILED_EQUATION_SEARCH"
+  },
+  "eq.eval.S2": {
+   "bootstrap": {
+    "B": 199,
+    "block": 32,
+    "stable_omega": true
+   },
+   "claim_id": "eq.eval.S2",
+   "coefficients": [
+    {
+     "below_floor": true,
+     "ci95": [
+      -0.021608,
+      0.006728
+     ],
+     "estimate": null,
+     "name": "a0"
+    },
+    {
+     "below_floor": false,
+     "ci95": [
+      -0.324411,
+      -0.244915
+     ],
+     "estimate": -0.290586,
+     "name": "a1_sin1wt"
+    },
+    {
+     "below_floor": false,
+     "ci95": [
+      0.590194,
+      0.645269
+     ],
+     "estimate": 0.618021,
+     "name": "b1_cos1wt"
+    },
+    {
+     "below_floor": false,
+     "ci95": [
+      0.235241,
+      0.284968
+     ],
+     "estimate": 0.264099,
+     "name": "a2_sin2wt"
+    },
+    {
+     "below_floor": true,
+     "ci95": [
+      -0.038166,
+      0.032351
+     ],
+     "estimate": null,
+     "name": "b2_cos2wt"
+    }
+   ],
+   "data_regimes": "all_rows only (eval synthetic; no provenance flags \u2014 regimes degenerate)",
+   "detection_attribution": "periodic, related view of S1's cycle",
+   "gate": "STRUCTURED (registered, post-freeze)",
+   "k_star": 2,
+   "null_baselines": {
+    "ar1_train": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 0.6279072339624596,
+     "null_rmse_on_real_test_q025": 0.4253619443635218,
+     "p": 0.005
+    },
+    "permutation": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 0.5569455987246903,
+     "null_rmse_on_real_test_q025": 0.5460544697425574,
+     "p": 0.005
+    },
+    "phase_randomized": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 0.7289579180119433,
+     "null_rmse_on_real_test_q025": 0.2634443275886044,
+     "p": 0.005
+    }
+   },
+   "null_equation_generator": {
+    "B": 99,
+    "null_adjusted_p": 0.01,
+    "null_best_improvement": 0.06433500341844278,
+    "observed_improvement": 0.36364380541518204,
+    "perm_null_mean_rmse": 0.569928933339702
+   },
+   "omega_ci95": [
+    0.09815796,
+    0.09876443
+   ],
+   "omega_ci_halfwidth_pct_of_omega": 0.308,
+   "omega_hat": 0.09841967,
+   "omega_reportable": true,
+   "period_hat": 63.8407,
+   "residual_checks": {
+    "acf_lag1_10": {
+     "max_abs": 0.0716,
+     "p": 0.65,
+     "pass": true,
+     "simultaneous_band95": 0.1211,
+     "values": [
+      0.0301,
+      0.0317,
+      0.0128,
+      0.0716,
+      0.0329,
+      0.0023,
+      0.0262,
+      0.0013,
+      0.0608,
+      0.0132
+     ]
+    },
+    "cusum": {
+     "p": 0.555,
+     "pass": true,
+     "stat": 0.7458
+    },
+    "periodogram_max_peak": {
+     "fisher_g": 4.914,
+     "note": "band from PERMUTED residuals; phase-randomized surrogates preserve the periodogram exactly (degenerate) \u2014 declared deviation",
+     "p": 0.85,
+     "pass": true
+    }
+   },
+   "rmse": {
+    "test": 0.206285,
+    "train": 0.183332,
+    "val": 0.187841
+   },
+   "selection_table": [
+    {
+     "bic": -245.861,
+     "k": 1,
+     "omega": 0.098586,
+     "rmse_val": 0.27993
+    },
+    {
+     "bic": -317.996,
+     "k": 2,
+     "omega": 0.09842,
+     "rmse_val": 0.187841
+    },
+    {
+     "bic": -308.34,
+     "k": 3,
+     "omega": 0.098422,
+     "rmse_val": 0.188215
+    }
+   ],
+   "series": "S2",
+   "verdict": "PREDICTIVE_EQUATION"
+  },
+  "eq.eval.S3": {
+   "claim_id": "eq.eval.S3",
+   "reason": "detection verdict NULL \u2014 gate failed; no fit, no code run on this column",
+   "series": "S3",
+   "verdict": "NO_EQUATION_ATTEMPTED"
+  },
+  "eq.eval.S4": {
+   "bootstrap": {
+    "B": 199,
+    "block": 32,
+    "stable_omega": false
+   },
+   "claim_id": "eq.eval.S4",
+   "coefficients": [
+    {
+     "below_floor": false,
+     "ci95": [
+      -56564093207.67832,
+      0.627247
+     ],
+     "estimate": 0.557786,
+     "name": "a0"
+    },
+    {
+     "below_floor": false,
+     "ci95": [
+      -0.959088,
+      241452345.96496
+     ],
+     "estimate": -0.609793,
+     "name": "a1_sin1wt"
+    },
+    {
+     "below_floor": false,
+     "ci95": [
+      -1.002637,
+      75418514875.76181
+     ],
+     "estimate": -0.73287,
+     "name": "b1_cos1wt"
+    },
+    {
+     "below_floor": false,
+     "ci95": [
+      -120726002.636824,
+      0.360797
+     ],
+     "estimate": 0.298078,
+     "name": "a2_sin2wt"
+    },
+    {
+     "below_floor": true,
+     "ci95": [
+      -18854421668.285503,
+      1.135421
+     ],
+     "estimate": null,
+     "name": "b2_cos2wt"
+    }
+   ],
+   "data_regimes": "all_rows only (eval synthetic; no provenance flags \u2014 regimes degenerate)",
+   "detection_attribution": "cross-segment MMD (regime/changepoint type)",
+   "gate": "STRUCTURED (registered, post-freeze)",
+   "k_star": 2,
+   "null_baselines": {
+    "ar1_train": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 0.9774830813996627,
+     "null_rmse_on_real_test_q025": 0.3083895777187808,
+     "p": 0.01
+    },
+    "permutation": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 0.5161472557292192,
+     "null_rmse_on_real_test_q025": 0.467671754675688,
+     "p": 0.005
+    },
+    "phase_randomized": {
+     "B": 199,
+     "null_rmse_on_real_test_mean": 1.1521451591923801,
+     "null_rmse_on_real_test_q025": 0.24905719401414014,
+     "p": 0.055
+    }
+   },
+   "null_equation_generator": {
+    "B": 99,
+    "null_adjusted_p": 0.01,
+    "null_best_improvement": 0.09160760233495435,
+    "observed_improvement": 0.4902517436901033,
+    "perm_null_mean_rmse": 0.7530161330949093
+   },
+   "omega_ci95": [
+    2.422e-05,
+    0.01660683
+   ],
+   "omega_ci_halfwidth_pct_of_omega": 58.598,
+   "omega_hat": 0.01414945,
+   "omega_reportable": false,
+   "period_hat": 444.0588,
+   "residual_checks": {
+    "acf_lag1_10": {
+     "max_abs": 0.3778,
+     "p": 0.005,
+     "pass": false,
+     "simultaneous_band95": 0.1294,
+     "values": [
+      0.3217,
+      0.3586,
+      0.2719,
+      0.3778,
+      0.3153,
+      0.3073,
+      0.3552,
+      0.3578,
+      0.2899,
+      0.3149
+     ]
+    },
+    "cusum": {
+     "p": 0.005,
+     "pass": false,
+     "stat": 5.2878
+    },
+    "periodogram_max_peak": {
+     "fisher_g": 39.31,
+     "note": "band from PERMUTED residuals; phase-randomized surrogates preserve the periodogram exactly (degenerate) \u2014 declared deviation",
+     "p": 0.005,
+     "pass": false
+    }
+   },
+   "rmse": {
+    "test": 0.262764,
+    "train": 0.213064,
+    "val": 0.373369
+   },
+   "selection_table": [
+    {
+     "bic": -79.244,
+     "k": 1,
+     "omega": 0.013789,
+     "rmse_val": 0.633519
+    },
+    {
+     "bic": -177.854,
+     "k": 2,
+     "omega": 0.014149,
+     "rmse_val": 0.373369
+    },
+    {
+     "bic": 117.892,
+     "k": 3,
+     "omega": 0.012984,
+     "rmse_val": 1.520748
+    }
+   ],
+   "series": "S4",
+   "verdict": "FAILED_EQUATION_SEARCH"
+  }
+ },
+ "registration": "REGISTRATION_EVAL_Q3.md sha256:37cffb4899ab994b",
+ "seed": 20260611
+}

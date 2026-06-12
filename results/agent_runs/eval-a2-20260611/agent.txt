@@ -1,0 +1,1 @@
+agent: structure-analyst (execute-only) | model: haiku | id: a956feb2fca7b6fb8 | eval: A-2 | 2026-06-11

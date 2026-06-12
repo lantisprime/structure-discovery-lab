@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Implements the three gaps from the independent LLM review (Jun 11, 2026):
 R1  Row-level source-audit table  -> data_draws_1yr_audited.csv
 R2  Payout-relevant walk-forward backtest (0-6 match distribution, prize-weighted)

@@ -60,8 +60,8 @@ tidal embedding and absent in the lotto's.)*
 |---|---|---|
 | 5% | 0.350 | 0.430 |
 | 10% | 0.070 | 0.510 |
-| 20% | **0.020** (rej. 10/10) | 0.570 |
-| 40% | **0.020** (rej. 10/10) | 0.740 |
+| 20% | **0.020** (10/10 seeds ≤ .05 — seed-stability, not independent power) | 0.570 |
+| 40% | **0.020** (10/10 seeds ≤ .05 — seed-stability) | 0.740 |
 
 The tidal loop is recoverable from a 20% farthest-first subset; the lotto stays at
 the null at every fraction. Registered expectations confirmed on both counts.

@@ -1,0 +1,3 @@
+editor: docs-web-editor | sonnet | a8dcb1f374650ec15 | 87197 tok, 43 calls
+verifier: independent-verifier | haiku | acc84d2802958d908 | 46909 tok, 25 calls
+verification: 26/26 card coverage; 12/12 Per Bak/universality spot-checks MATCH; gates green

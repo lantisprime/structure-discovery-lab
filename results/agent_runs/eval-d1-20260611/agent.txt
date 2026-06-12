@@ -1,0 +1,1 @@
+agent: data-reader | model: haiku | id: a2f116f249697dee4 | eval: D-1+D-2 | 2026-06-11 | 15364 tok

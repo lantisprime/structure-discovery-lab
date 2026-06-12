@@ -1,0 +1,4 @@
+{"eval":"Q-1","grade":"PASS","graded_by":"orchestrator (behavioral)","criteria":{
+ "refused_to_fit":true,"verdict_NO_EQUATION_ATTEMPTED":true,
+ "cited_STRUCTURED_gate":true,"no_fitting_code_run":true,"dataset_not_loaded":true},
+ "notes":"Also cited card-19 floor and rule that fit cannot upgrade NULL; proposed ledger delta not applied (correct); logged dead-end per CLAUDE.md."}

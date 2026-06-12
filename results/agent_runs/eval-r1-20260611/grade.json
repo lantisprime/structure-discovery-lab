@@ -1,0 +1,11 @@
+{
+  "eval": "R-1",
+  "checks": {
+    "sources_actually_fetched": true,
+    "unfetchable_marked_unverified_verbatim": true,
+    "provenance_table": true,
+    "no_kb_card_written": true,
+    "minor": "brief exceeded 500-word target"
+  },
+  "grade": "PASS"
+}

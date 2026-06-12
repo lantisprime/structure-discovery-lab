@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Per Bak universality machinery applied in full — collapse, RG flow, Binder.
 
 The point conceded: universality methods do not require criticality; they apply to

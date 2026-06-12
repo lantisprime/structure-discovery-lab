@@ -1,0 +1,22 @@
+unit,truth,expected
+draws.A,pure 6-of-60 uniform negative control,marginal null; memory null; sensor null
+draws.B,transient first-half marginal bias,frequency positive; stationarity/era positive; second half null; row/number trace to 17 and 42
+draws.C,memory with exact-balanced marginals,marginal null; Markov/overlap/stickiness positive
+draws.D,date-paired latent relation,CCA/correlation with sensor_01 positive; paired relationship with E positive; shuffled-pairing null kills signal
+draws.E,date-paired latent relation,CCA/correlation with sensor_01 positive; paired relationship with D positive; shuffled-pairing null kills signal
+sensors.sensor_01,noisy proxy for z_common,positive with D/E draw sums
+sensors.sensor_02,periodic proxy related to z_common cycle,weaker positive with D/E
+sensors.sensor_03,independent noise,null with all draw streams
+sensors.sensor_04,regime step aligned with first/second half,may help detect B era split; not causal
+series.S1,periodic cycle,subset-to-whole positive after moderate k; periodogram positive; delay-embedding H1 loop
+series.S2,different view of related periodic cycle,subset-to-whole positive; cross-series relation with S1; topological loop
+series.S3,iid noise matched scale,null
+series.S4,regime/changepoint series,cross-segment MMD positive; subset recovery moderate; no clean loop
+cloud.X,noisy circle in 2D,H1 loop; GW/TDA positive with Y
+cloud.Y,same circle latent geometry embedded nonlinearly in 5D and row-shuffled,H1 loop; GW/TDA positive with X; CCA by row order invalid/null
+cloud.Z,matched Gaussian blob control,no H1 loop; null vs X/Y under topology/geometry tests
+graph.A,4-community stochastic block model,community/spectral structure; similar to graph.B
+graph.B,4-community stochastic block model with different size/labels,community/spectral structure; similar to graph.A
+graph.C,Erdos-Renyi density-matched control,no community structure; null vs A/B under degree-preserving/community tests
+matrix.M1,rank-3 matrix plus noise,low-rank spectrum; matrix completion beats null
+matrix.M2,iid Gaussian matrix,no recoverable low-rank structure; matrix completion near null

@@ -1,0 +1,14 @@
+{
+  "eval": "X-1",
+  "checks": {
+    "correct_specialists_and_tiers_all_phases": true,
+    "role_id_fields_distinct": true,
+    "gates_before_execution": true,
+    "blinding_prepared": true,
+    "ledger_artifacts_planned": true,
+    "single_source_caveat_flagged": true,
+    "bonus_flagged_TEC_Kp_equivalence_class": true,
+    "grading_caveat": "graded by orchestrator-builder; human review recommended"
+  },
+  "grade": "PASS"
+}

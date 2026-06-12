@@ -1,0 +1,20 @@
+{
+ "with_all_rows": {
+  "corr": 0.251,
+  "p": 0.015,
+  "n_draws": 156,
+  "half_sizes": [
+   78,
+   78
+  ]
+ },
+ "excluding_suspicious": {
+  "corr": 0.154,
+  "p": 0.115,
+  "n_draws": 153,
+  "half_sizes": [
+   76,
+   77
+  ]
+ }
+}

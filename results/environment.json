@@ -1,0 +1,13 @@
+{
+  "python": "3.10.12",
+  "platform": "Linux-6.8.0-124-generic-aarch64-with-glibc2.35",
+  "numpy": "2.2.6",
+  "scipy": "1.15.3",
+  "pandas": "2.3.3",
+  "ot": "0.9.6.post1",
+  "ripser": "0.6.15",
+  "networkx": "3.4.2",
+  "persim": "0.3.8",
+  "matplotlib": "3.10.9",
+  "sklearn": "1.7.2"
+}

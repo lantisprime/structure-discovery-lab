@@ -1,0 +1,4 @@
+created: results/agent_runs/eval-q2-20260611/RESULTS_EQ_eval-q2-toy.md
+created: results/agent_runs/eval-q2-20260611/REGISTRATION_EQ_EVAL_Q2_DRAFT.md
+created: results/agent_runs/eval-q2-20260611/_CHECKPOINT.md
+data values read: none (deliberate — kept itself uncontaminated)

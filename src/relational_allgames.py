@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """
 All-games extension (registered amendment to batch 5, same date): every per-game
 relational test runs identically on all five PCSO games — 6/42, 6/45, 6/49,

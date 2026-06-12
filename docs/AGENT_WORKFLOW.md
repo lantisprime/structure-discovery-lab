@@ -1,6 +1,8 @@
 # Agent Workflow — model-routed execution of the lab protocol
 
-Added: 2026-06-11. Maps the RUNBOOK's six phases onto three specialized agents with
+Added: 2026-06-11. Updated 2026-06-11: Phase 5 — Equation Discovery inserted
+(docs/EQUATION_DISCOVERY.md); Decide renumbered to Phase 6. Maps the RUNBOOK's
+seven phases (0–6) onto specialized agents with
 explicit model assignments and fallback chains, so any executor (Claude model, other
 LLM, or human) knows its role, its boundaries, and who verifies it.
 
@@ -11,16 +13,42 @@ The lab already requires two independent executors producing byte-identical numb
 makes executor independence structural instead of aspirational: the model that wrote
 an analysis is never the model that verifies or publishes it.
 
-## The three agents
+## The agent roster (expanded 2026-06-11 after review finding C2: the original
+## three-agent design was bypassed in practice by a single generalist session —
+## the roster below makes the separation structural, with an orchestrator that
+## coordinates but produces nothing)
 
 Definitions: `agents/*.md` (copy into `.claude/agents/` to activate as Claude Code
 subagents: `cp agents/*.md .claude/agents/`).
 
-| Agent | Phases | Primary model | Why this model | Escalation / fallback chain |
+| Agent | Role | Phases | Primary model (token economy) | Escalation chain |
 |---|---|---|---|---|
-| `theorem-dataset-onboarder` | 0–1 (acquire, validate, kb cards, dataset onboarding) | **Haiku** (token economy: clerical, format-bound, gate-checked work) | The gates catch format errors cheaply; escalate only when a gate fails | haiku → sonnet (gate failure or primary-source synthesis) → opus → **any LLM** via `admin_onboarding.html` wizard + human diff review |
-| `structure-analyst` | 2–4 (explore, register, confirm; admission trials, MC calibration, attribution, multiplicity) | **Fable** for *design & interpretation only*; **Haiku** for execute-only runs (re-runs, verification, confirmation triggers — deterministic scripts, output reported verbatim) | Reasoning errors here are the expensive ones (wrong null, multiplicity laundering, missed attribution); but most analyst-CPU is mechanical re-execution, which any model can do against a diff | design: fable → opus → sonnet; execution: haiku → sonnet → **any LLM, execute-only**; interpretation never falls below opus without human + registered protocol |
-| `docs-web-editor` | 5 + publication (RESULTS write-ups, ledger sync, README, lotto_picker.html, admin_onboarding.html) | **Sonnet** (token economy; the traceability + caveat rules constrain it tightly) | Numbers are copy-only by rule 1, so writing skill matters less than discipline; escalate for major narrative rewrites | sonnet → opus (large narrative restructuring, e.g. THEOREM_SYNTHESIS prose) → fable → **any LLM** with mandatory human diff review (highest drift risk) |
+| `lab-orchestrator` | **manages experiments**: routes phases, enforces gates + role-ID separation, maintains the run ledger; produces nothing itself | all (coordination only) | **Fable** — routing/gate errors are the expensive ones; footprint kept small (reads ledgers, not datasets) | fable → opus; never below |
+| `research-scout` | **researches**: literature, canonical references, dataset sources, prior art — sourced briefs with provenance | 0 (sourcing) | **Sonnet** — search + synthesis | sonnet → opus (contested literature) |
+| `data-reader` | **reads files**: extraction, row audits, schema checks, result-JSON lookups; read-only, no interpretation | 0–6 (support) | **Haiku** — most token spend is reading; it belongs at the cheapest tier | haiku → sonnet (ambiguous formats) |
+| `theorem-dataset-onboarder` | cards theorems + onboards datasets (gate-checked, clerical) | 0–1 | **Haiku** | haiku → sonnet (gate failure) → opus → any LLM via wizard + human diff |
+| `structure-analyst` | **analyzes**: null design, instrument implementation, real-data runs, attribution, multiplicity | 2–4 | **Fable** (design/interpretation); **Haiku** (execute-only re-runs) | design: fable → opus → sonnet; execution: haiku → any LLM execute-only |
+| `equation-analyst` | **derives equations**: candidate-family registration, null-equation generator, constrained fits, MDL selection, residual checks, equation verdicts (docs/EQUATION_DISCOVERY.md §6 contract); never detects, never decides | 5 | **Fable** (design/interpretation); **Haiku** (execute-only registered fits) | design: fable → opus → sonnet; execution: haiku → any LLM execute-only |
+| `docs-web-editor` | **generates files**: RESULTS docs, figures-from-JSON, ledger sync, web pages — numbers copy-only | 6 | **Sonnet** | sonnet → opus (narrative restructuring) → human diff review |
+| `independent-verifier` | **checks**: numeric + design verification, reproduction diffs, blind replication, ledger reconciliation; never verifies own authorship | all (after each) | **Haiku** (numeric/reproduction) / **Sonnet** (design interpretation) | identity rule has no fallback: a different instance than the author, always |
+
+**Role-ID separation (mechanical, recorded per run in `results/run_ledger.jsonl`):**
+
+```text
+onboarder_id != analyst_id
+analyst_id   != verifier_id
+editor_id    != analyst_id
+equation_analyst_id != detection_analyst_id   (per claim: the detector never
+                                               fits its own equations)
+equation_analyst_id != verifier_id
+verification_executor != script_author
+registration_approved_by_human = true   (for confirmation-family and
+                                         equation-family runs)
+```
+
+A run missing these fields, or violating them, is unpublishable. The
+orchestrator fills them at dispatch time; the verifier refuses self-verification
+even if asked.
 
 **Token-economy rule:** every task routes to the *cheapest* model whose gates it can
 pass; escalation happens on gate failure or on explicit task class (design,
@@ -34,6 +62,10 @@ deterministic pipeline without the diff catching it.
   statistics, `RESULTS_*`, web pages.
 - Analyst writes: `src/*`, `docs/RESULTS_*.md`, proposes `REGISTRATION_*.md` and
   ledger deltas. Never: kb cards, README, web pages.
+- Equation-analyst writes: `src/eq_*`, `docs/RESULTS_EQ_*.md`, proposes
+  equation `REGISTRATION_*.md` and ledger deltas. Never: detection
+  `RESULTS_*.md`, kb cards, README, web pages; never EV/action computations
+  (Phase 6 belongs to the decision layer).
 - Editor writes: `README.md`, `docs/RUNBOOK.md`, `docs/THEOREM_SYNTHESIS.md` prose,
   `docs/RESEARCH_NOTES.md`, `*.html`. Never: a number that isn't traceable to a
   script output or RESULTS table; never pick logic.
@@ -52,6 +84,38 @@ deterministic pipeline without the diff catching it.
 3. **Cross-role review:** the editor may not publish a number the analyst didn't
    log; the analyst may not run an instrument the onboarder didn't card; the
    onboarder may not card a theorem without a registered MC-derivable null.
+
+## Replay & audit (added 2026-06-11, lab-owner directive)
+
+Every agent dispatch must be **replayable**: an auditor reconstructs what an
+agent was asked, what it did, and what it produced — and can re-execute it.
+
+**Dispatch record** — for every dispatch, the orchestrator creates
+`results/agent_runs/<run_id>/` containing:
+
+```text
+prompt.md        exact dispatch prompt, saved BEFORE dispatch (commitment)
+agent.txt        agent name, model tier, agent-instance id, date
+report.md        the agent's final report, verbatim, saved on return
+files.txt        files the agent created/modified (from its report + diff
+                 against the commitment ledger)
+grade.json       eval grade when the dispatch is an eval (grade_agent_eval.py)
+```
+
+**Replay mechanics** (why re-execution reproduces the run):
+1. All analysis is in deterministic seeded scripts — replaying an analyst or
+   verifier run = re-running the script named in `report.md`; byte-identical
+   output is the pass condition.
+2. `_CHECKPOINT.md` files are append-only action logs (`[done] step -> files`)
+   — the step-by-step trace for troubleshooting partial runs.
+3. The commitment ledger snapshots file hashes; diffing snapshots brackets
+   exactly what changed during a dispatch window.
+4. The run ledger row links registration → script → output SHA → verifier
+   identity, closing the audit chain.
+
+**Eval gate**: agents are re-evaled (agents/evals/EVAL_SET.md) after any
+change to their definition file; eval grades live in the dispatch record and
+the EVAL_SET log. No eval pass, no dispatch.
 
 ## Checkpoint rule (added 2026-06-11 after a dropped onboarder run)
 

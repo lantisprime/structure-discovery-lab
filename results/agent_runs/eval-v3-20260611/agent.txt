@@ -1,0 +1,1 @@
+agent: independent-verifier | model: haiku | id: a1adfffd54451624e | eval: V-3 | 2026-06-11

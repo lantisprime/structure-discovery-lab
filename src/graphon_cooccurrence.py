@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Instrument B — Graphon limit test on the ball co-occurrence graph.
 Registered: docs/REGISTRATION_BATCH4.md. Theorem card: docs/kb/graphons-cut-norm.md.
 

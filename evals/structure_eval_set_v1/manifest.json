@@ -1,0 +1,29 @@
+{
+  "name": "structure_eval_set_v1",
+  "created_by": "ChatGPT",
+  "seed": 20260611,
+  "blind_folder": "blind/",
+  "answer_key_folder": "answer_key/",
+  "datasets": {
+    "draws": "blind/datasets/draws/draws_all.csv",
+    "sensors": "blind/datasets/sensors/sensor_panel.csv",
+    "series": [
+      "blind/datasets/series/series_wide.csv",
+      "blind/datasets/series/series_panel.csv"
+    ],
+    "clouds": [
+      "blind/datasets/clouds/cloud_X.csv",
+      "blind/datasets/clouds/cloud_Y.csv",
+      "blind/datasets/clouds/cloud_Z.csv"
+    ],
+    "graphs": [
+      "blind/datasets/graphs/graph_A_edges.csv",
+      "blind/datasets/graphs/graph_B_edges.csv",
+      "blind/datasets/graphs/graph_C_edges.csv"
+    ],
+    "matrices": [
+      "blind/datasets/matrices/matrix_M1.csv",
+      "blind/datasets/matrices/matrix_M2.csv"
+    ]
+  }
+}

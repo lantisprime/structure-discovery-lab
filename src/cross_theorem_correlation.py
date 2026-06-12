@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Cross-theorem correlation: structure invisible to any single instrument.
 
 Idea: each prior analysis assigns every ball a per-ball signal from a different

@@ -1,0 +1,1 @@
+agent: independent-verifier | model: haiku | id: ae820cd3825941c40 | eval: V-2 | 2026-06-11 | 18326 tok

@@ -1,0 +1,22 @@
+{
+  "n_tests": 136,
+  "ks_p": 0.11149719406885689,
+  "ks_stat": 0.10176470588235287,
+  "frac_le_05": 0.08823529411764706,
+  "frac_le_01": 0.007352941176470588,
+  "by_source_counts": {
+    "b5_crossgame_pairs": 10,
+    "firstrun_lotto_recovery": 6,
+    "pressure_cca": 5,
+    "pressure_scalar": 5,
+    "allgames_topology": 5,
+    "allgames_cca": 5,
+    "rem_presence_mc": 5,
+    "rem_lmax_m399": 5,
+    "rem_cca_splits": 15,
+    "rerun_b6_mmd": 30,
+    "rerun_b6_spectra": 30,
+    "rerun_b6_halves": 15
+  },
+  "note": "lotto-side real-data tests only; physical-series positives excluded by design"
+}

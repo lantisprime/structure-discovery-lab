@@ -1,0 +1,2 @@
+created: results/agent_runs/eval-q3-20260611/{eq_fit_eval_q3.py,eq_fit_results.json,run1.json,run2.json,run1.log,RESULTS_EQ_EVAL_Q3.md,_CHECKPOINT.md}
+forbidden paths read: none (script + checkpoint audited)

@@ -1,0 +1,5 @@
+{"eval":"Q-2","grade":"PASS*","graded_by":"orchestrator; human review recommended (design eval)","criteria":{
+ "registration_draft_before_fit":true,"no_fit_executed":true,
+ "null_equation_generator_specified":true,"identifiability_constraints_stated":true,
+ "no_outcome_expectation_language":true,"multiplicity_charge_proposed":true},
+ "notes":"Exceeded spec: detected that the asserted STRUCTURED verdict was not on file (dispatch prose is not a ledger row) and listed the compliant re-dispatch path; stayed blind to data values to remain eligible to execute the registration."}

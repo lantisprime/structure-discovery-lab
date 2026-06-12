@@ -1,0 +1,4 @@
+editor: docs-web-editor | sonnet | aff23e72163d0a13b | 62287 tok
+verifier: independent-verifier | haiku | a17438fc1d41f3085 | 26478 tok
+checks: 10/10 content-preservation; README domain refs pointer-only; 8/8 framework
+sections present; 4/4 case-study numbers match primary sources; lint PASS

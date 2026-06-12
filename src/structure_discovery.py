@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Structure discovery in apparently random data — theorem-based instruments.
 
 Dataset: 776 draws, treated purely as a sequence from an unknown source.

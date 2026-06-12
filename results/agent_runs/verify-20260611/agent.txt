@@ -1,0 +1,6 @@
+agent: independent-verifier
+model: haiku
+agent_instance_id: af802cdb3db289848
+script_author_id: fable session (orchestrator) — DIFFERENT, identity rule satisfied
+date: 2026-06-11
+tokens: 13979  tool_uses: 7  duration_ms: 24278

@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "date": "2026-06-11",
+    "seed": 20260611,
+    "design": "FROZEN pre-run (see module docstring)",
+    "card": "docs/kb/lagmax-crosscorrelation.md"
+  },
+  "negative_E1_independent_AR1": {
+    "n_trials": 200,
+    "fpr_at_alpha": 0.08,
+    "band_3se": 0.0462,
+    "lattice_chi2_p": 0.0425,
+    "passed": true
+  },
+  "positive_gate_sigma1.0": {
+    "sigma": 1.0,
+    "n_trials": 100,
+    "power_at_alpha": 0.58,
+    "median_p": 0.0325
+  },
+  "powercurve_sigma0.5": {
+    "sigma": 0.5,
+    "n_trials": 100,
+    "power_at_alpha": 0.94,
+    "median_p": 0.005
+  },
+  "powercurve_sigma2.0": {
+    "sigma": 2.0,
+    "n_trials": 100,
+    "power_at_alpha": 0.22,
+    "median_p": 0.25
+  },
+  "admission": {
+    "negative_passed": true,
+    "power_ok": false,
+    "ADMITTED": false
+  },
+  "benchmark_posthoc": {
+    "pairs": {
+      "S1|S2": 0.69,
+      "S3|S4": 0.19
+    },
+    "label": "POST-HOC instrument-development check on SOLVED benchmark (answer key already unsealed) \u2014 not a discovery, not counted in any ledger or accuracy figure"
+  }
+}

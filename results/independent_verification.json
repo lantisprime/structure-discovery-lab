@@ -1,0 +1,107 @@
+{
+  "task1": {
+    "series_A": {
+      "verdict": "NO DETECTED STRUCTURE",
+      "n": 155,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 13.3526, "p": 0.127},
+        "runs_test": {"runs": 75, "null_mean_runs": 78.46, "p_two_sided": 0.687},
+        "spectral_fisher_g": {"stat": 0.04417, "p": 0.719},
+        "lag1_spearman_abs": {"stat": 0.0259, "p": 0.752}
+      }
+    },
+    "series_B": {
+      "verdict": "STRUCTURED",
+      "n": 366,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 2599.7889, "p": 0.001},
+        "runs_test": {"runs": 7, "null_mean_runs": 184.0, "p_two_sided": 0.001},
+        "spectral_fisher_g": {"stat": 0.83664, "p": 0.001},
+        "lag1_spearman_abs": {"stat": 0.9952, "p": 0.001}
+      }
+    },
+    "series_C": {
+      "verdict": "NO DETECTED STRUCTURE",
+      "n": 156,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 12.3071, "p": 0.187},
+        "runs_test": {"runs": 84, "null_mean_runs": 78.99, "p_two_sided": 0.384},
+        "spectral_fisher_g": {"stat": 0.04129, "p": 0.789},
+        "lag1_spearman_abs": {"stat": 0.0563, "p": 0.495}
+      }
+    },
+    "series_D": {
+      "verdict": "NO DETECTED STRUCTURE",
+      "n": 155,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 8.5102, "p": 0.56},
+        "runs_test": {"runs": 75, "null_mean_runs": 78.49, "p_two_sided": 0.541},
+        "spectral_fisher_g": {"stat": 0.04382, "p": 0.733},
+        "lag1_spearman_abs": {"stat": 0.0036, "p": 0.958}
+      }
+    },
+    "series_E": {
+      "verdict": "NO DETECTED STRUCTURE",
+      "n": 154,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 14.4937, "p": 0.084},
+        "runs_test": {"runs": 78, "null_mean_runs": 77.97, "p_two_sided": 1.0},
+        "spectral_fisher_g": {"stat": 0.03862, "p": 0.849},
+        "lag1_spearman_abs": {"stat": 0.0107, "p": 0.895}
+      }
+    },
+    "series_F": {
+      "verdict": "STRUCTURED",
+      "n": 366,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 1746.2599, "p": 0.001},
+        "runs_test": {"runs": 23, "null_mean_runs": 183.95, "p_two_sided": 0.001},
+        "spectral_fisher_g": {"stat": 0.31151, "p": 0.001},
+        "lag1_spearman_abs": {"stat": 0.913, "p": 0.001}
+      }
+    },
+    "series_G": {
+      "verdict": "STRUCTURED",
+      "n": 366,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 1671.2772, "p": 0.001},
+        "runs_test": {"runs": 25, "null_mean_runs": 183.99, "p_two_sided": 0.001},
+        "spectral_fisher_g": {"stat": 0.5021, "p": 0.001},
+        "lag1_spearman_abs": {"stat": 0.9134, "p": 0.001}
+      }
+    },
+    "series_H": {
+      "verdict": "STRUCTURED",
+      "n": 365,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 245.3373, "p": 0.001},
+        "runs_test": {"runs": 137, "null_mean_runs": 183.49, "p_two_sided": 0.001},
+        "spectral_fisher_g": {"stat": 0.05279, "p": 0.009},
+        "lag1_spearman_abs": {"stat": 0.4569, "p": 0.001}
+      }
+    },
+    "series_I": {
+      "verdict": "NO DETECTED STRUCTURE",
+      "n": 156,
+      "tests": {
+        "acf_lb_lags1_10": {"stat": 8.8758, "p": 0.527},
+        "runs_test": {"runs": 75, "null_mean_runs": 78.7, "p_two_sided": 0.514},
+        "spectral_fisher_g": {"stat": 0.05545, "p": 0.332},
+        "lag1_spearman_abs": {"stat": 0.1295, "p": 0.11}
+      }
+    }
+  },
+  "task2": {
+    "with_all_rows": {"corr": 0.251, "p": 0.015},
+    "excluding_suspicious": {"corr": 0.154, "p": 0.115},
+    "n_rows": {
+      "grand_lotto_total": 156,
+      "excluding_suspicious": 153,
+      "suspicious_or_needs_review_excluded": 3,
+      "half_sizes_all": [78, 78],
+      "half_sizes_excluding": [76, 77]
+    },
+    "sensitivity_note": "Spec-mandated m=199, seed=2026 gives p=0.015 (all rows) and p=0.115 (excluding suspicious). A sensitivity rerun with m=999, seed=7 gives p=0.036 and p=0.122 respectively; the all-rows result is significant at 0.05 but is not robust below ~0.01, and the signal disappears once the 3 suspicious rows are removed."
+  },
+  "methods_note": "Independent blind review; no project docs, src, or prior results files were read, and results/blind/_key.json was never opened. TASK 1: For each series, values were tested against an exchangeable (i.i.d.-given-marginal) null via m=999 random permutations of the values (numpy default_rng, seed=12345 reset per series); p = (1+#{null>=obs})/(m+1). Four complementary statistics, all implemented from scratch: (1) Ljung-Box-style pooled autocorrelation, sum_{k=1..10} n*r_k^2 (one-sided large); (2) Wald-Wolfowitz runs test above/below the median, two-sided as |runs - null mean|; (3) Fisher's g spectral statistic, max periodogram ordinate / sum (one-sided large, detects periodicity); (4) absolute lag-1 Spearman rank autocorrelation (robust to nonlinearity/outliers). Verdict rule fixed before inspecting results: STRUCTURED if any raw p < 0.0125 (Bonferroni 0.05/4) or >=2 tests with raw p < 0.05; BORDERLINE if exactly one test with 0.0125 <= p < 0.05; otherwise NO DETECTED STRUCTURE. Verdicts: B, F, G, H STRUCTURED (all four tests p<=0.009; B/F/G show very strong serial dependence and dominant spectral peaks, H weaker but unambiguous); A, C, D, E, I NO DETECTED STRUCTURE (no test below 0.05). Task 1 verdicts were written down before any Task 2 work. TASK 2: From datasets/pcso-lotto/data_draws_1yr_audited.csv, Grand Lotto 6/55 rows (156) were date-sorted and split into halves; per-number deviation vector = counts of 1..55 minus n_draws*6/55; statistic = Pearson correlation between the two halves' deviation vectors. Monte-Carlo null: m=199 pairs of independent uniform 6-of-55 without-replacement simulated halves of matching sizes (numpy default_rng, seed=2026), p = (1+#{null>=obs})/(m+1). All rows: corr=0.251, p=0.015. Excluding Status=='suspicious_or_needs_review' (3 rows): corr=0.154, p=0.115. Reviewer interpretation: the half-vs-half frequency association in Grand Lotto 6/55 is borderline-significant at best and hinges on 3 rows already flagged as suspicious; after excluding them it is fully consistent with uniform i.i.d. draws. Analysis scripts: results/blind/_indep_task1.py and results/blind/_indep_task2.py; raw outputs in results/_indep_task1.json and results/_indep_task2.json."
+}

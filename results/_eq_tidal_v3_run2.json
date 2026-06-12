@@ -1,0 +1,639 @@
+{
+ "alpha_resid_gating": 0.01,
+ "claims": {
+  "eq.tidal-manila.phase.moondist.v3": {
+   "R1_v3_pass": false,
+   "coarse_R1_pass_v2_rule": false,
+   "coarse_R1_reproduced_byte_equal": true,
+   "distinct_refined_lines": [
+    {
+     "attributed": true,
+     "members_coarse_period_d": [
+      29.3,
+      32.55555555555556,
+      26.636363636363633,
+      24.416666666666668,
+      36.625,
+      41.857142857142854
+     ],
+     "members_refined_period_d": [
+      30.84210526315789,
+      30.84210526315789,
+      29.3,
+      26.636363636363633,
+      32.55555555555556,
+      36.625
+     ],
+     "n_members": 6,
+     "representative_fine_power": 4022.2508055944636,
+     "representative_refined_period_d": 30.84210526315789,
+     "whitelist_matches": [
+      "evection",
+      "synodic"
+     ]
+    },
+    {
+     "attributed": true,
+     "members_coarse_period_d": [
+      14.65,
+      15.421052631578945,
+      13.952380952380953
+     ],
+     "members_refined_period_d": [
+      14.742138364779874,
+      14.742138364779874,
+      14.65
+     ],
+     "n_members": 3,
+     "representative_fine_power": 690.3005953601853,
+     "representative_refined_period_d": 14.742138364779874,
+     "whitelist_matches": [
+      "variation"
+     ]
+    },
+    {
+     "attributed": false,
+     "members_coarse_period_d": [
+      22.538461538461537
+     ],
+     "members_refined_period_d": [
+      24.164948453608247
+     ],
+     "n_members": 1,
+     "representative_fine_power": 138.72812242410092,
+     "representative_refined_period_d": 24.164948453608247,
+     "whitelist_matches": []
+    },
+    {
+     "attributed": false,
+     "members_coarse_period_d": [
+      20.928571428571427,
+      19.533333333333335,
+      18.3125
+     ],
+     "members_refined_period_d": [
+      22.218009478672982,
+      20.651982378854626,
+      19.292181069958847
+     ],
+     "n_members": 3,
+     "representative_fine_power": 49.42570386829543,
+     "representative_refined_period_d": 22.218009478672982,
+     "whitelist_matches": []
+    },
+    {
+     "attributed": false,
+     "members_coarse_period_d": [
+      48.833333333333336,
+      58.6,
+      73.25,
+      97.66666666666667
+     ],
+     "members_refined_period_d": [
+      42.23423423423423,
+      48.833333333333336,
+      58.6,
+      73.25
+     ],
+     "n_members": 4,
+     "representative_fine_power": 47.33246878924609,
+     "representative_refined_period_d": 42.23423423423423,
+     "whitelist_matches": []
+    },
+    {
+     "attributed": false,
+     "members_coarse_period_d": [
+      16.27777777777778
+     ],
+     "members_refined_period_d": [
+      15.945578231292517
+     ],
+     "n_members": 1,
+     "representative_fine_power": 25.472343688529815,
+     "representative_refined_period_d": 15.945578231292517,
+     "whitelist_matches": []
+    },
+    {
+     "attributed": true,
+     "members_coarse_period_d": [
+      13.318181818181817
+     ],
+     "members_refined_period_d": [
+      13.205633802816902
+     ],
+     "n_members": 1,
+     "representative_fine_power": 14.139794930820875,
+     "representative_refined_period_d": 13.205633802816902,
+     "whitelist_matches": [
+      "anomalistic_2nd_harmonic"
+     ]
+    },
+    {
+     "attributed": false,
+     "members_coarse_period_d": [
+      17.235294117647058
+     ],
+     "members_refined_period_d": [
+      16.924187725631768
+     ],
+     "n_members": 1,
+     "representative_fine_power": 12.817806900912231,
+     "representative_refined_period_d": 16.924187725631768,
+     "whitelist_matches": []
+    }
+   ],
+   "failure_attribution": "R1 (unattributed distinct lines) + R3",
+   "fine_grid_peaks": [
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 1.8901249396001685e-11,
+     "coarse_period_d": 29.3,
+     "fine_power": 4022.2508055944636,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.03242320819112628,
+     "refined_period_d": 30.84210526315789,
+     "refined_whitelist_match": "evection"
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 3.640554924929977e-18,
+     "coarse_period_d": 32.55555555555556,
+     "fine_power": 4022.2508055944636,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.03242320819112628,
+     "refined_period_d": 30.84210526315789,
+     "refined_whitelist_match": "evection"
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 7.517963553897375e-13,
+     "coarse_period_d": 14.65,
+     "fine_power": 690.3005953601853,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.06783276450511945,
+     "refined_period_d": 14.742138364779874,
+     "refined_whitelist_match": "variation"
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 1.1910478760079285e-19,
+     "coarse_period_d": 26.636363636363633,
+     "fine_power": 1729.601113154071,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.034129692832764506,
+     "refined_period_d": 29.3,
+     "refined_whitelist_match": "evection"
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 2.0048483192121838e-06,
+     "coarse_period_d": 24.416666666666668,
+     "fine_power": 563.8599322971581,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.03754266211604096,
+     "refined_period_d": 26.636363636363633,
+     "refined_whitelist_match": "synodic"
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 6.113252009888613e-08,
+     "coarse_period_d": 36.625,
+     "fine_power": 1602.169522351303,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.030716723549488054,
+     "refined_period_d": 32.55555555555556,
+     "refined_whitelist_match": "evection"
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.00021561950032327078,
+     "coarse_period_d": 41.857142857142854,
+     "fine_power": 114.10839778591321,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.027303754266211604,
+     "refined_period_d": 36.625,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.002271436640919018,
+     "coarse_period_d": 22.538461538461537,
+     "fine_power": 138.72812242410092,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.04138225255972696,
+     "refined_period_d": 24.164948453608247,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.001271347484273031,
+     "coarse_period_d": 48.833333333333336,
+     "fine_power": 47.33246878924609,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.023677474402730377,
+     "refined_period_d": 42.23423423423423,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 0.00122672646992639,
+     "coarse_period_d": 15.421052631578945,
+     "fine_power": 690.3005953601853,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.06783276450511945,
+     "refined_period_d": 14.742138364779874,
+     "refined_whitelist_match": "variation"
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.0012050636020385882,
+     "coarse_period_d": 58.6,
+     "fine_power": 33.786105945215084,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.020477815699658702,
+     "refined_period_d": 48.833333333333336,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.0021731107313909246,
+     "coarse_period_d": 73.25,
+     "fine_power": 24.530051400332564,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.017064846416382253,
+     "refined_period_d": 58.6,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.0010428420615953176,
+     "coarse_period_d": 20.928571428571427,
+     "fine_power": 49.42570386829543,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.045008532423208195,
+     "refined_period_d": 22.218009478672982,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.00015592175548078083,
+     "coarse_period_d": 97.66666666666667,
+     "fine_power": 19.728811797024953,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.013651877133105802,
+     "refined_period_d": 73.25,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 0.003760932425047474,
+     "coarse_period_d": 13.318181818181817,
+     "fine_power": 14.139794930820875,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.07572525597269625,
+     "refined_period_d": 13.205633802816902,
+     "refined_whitelist_match": "anomalistic_2nd_harmonic"
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.0009733707394161891,
+     "coarse_period_d": 19.533333333333335,
+     "fine_power": 25.963107198028748,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.04842150170648464,
+     "refined_period_d": 20.651982378854626,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 0.002460690687139576,
+     "coarse_period_d": 13.952380952380953,
+     "fine_power": 668.3249498616759,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.06825938566552901,
+     "refined_period_d": 14.65,
+     "refined_whitelist_match": "variation"
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.0015501810865738291,
+     "coarse_period_d": 18.3125,
+     "fine_power": 16.36706959112524,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.05183447098976109,
+     "refined_period_d": 19.292181069958847,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.00018179335769390572,
+     "coarse_period_d": 16.27777777777778,
+     "fine_power": 25.472343688529815,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.06271331058020478,
+     "refined_period_d": 15.945578231292517,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.00012681138131212673,
+     "coarse_period_d": 17.235294117647058,
+     "fine_power": 12.817806900912231,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.05908703071672355,
+     "refined_period_d": 16.924187725631768,
+     "refined_whitelist_match": null
+    }
+   ],
+   "frozen_refit": {
+    "byte_equal_to_v2_json": true,
+    "matches_registration_section2": true,
+    "orig_units": {
+     "P_d": 27.60387627151598,
+     "a0": 385294.7950098205,
+     "a_sin": -19039.87882118035,
+     "b_cos": 11488.61399772309
+    },
+    "selected_family": "B1_harmonic_1freq_k1"
+   },
+   "n_distinct_refined_lines": 8,
+   "n_significant_coarse_peaks": 20,
+   "n_unattributed_distinct_lines": 5,
+   "outcome_branch": "outcome2_ladder_persists_leakage_hypothesis_dead",
+   "residual_checks_reverified": {
+    "R2_cusum": {
+     "byte_equal_v2": true,
+     "gating": true,
+     "p": 0.3781094527363184,
+     "pass": true,
+     "stat": 0.9297125623120343
+    },
+    "R3_tda_h1_absorption": {
+     "absorption_fraction": 0.212058386980851,
+     "byte_equal_v2": true,
+     "gating": true,
+     "max_h1_persistence_residual": 0.8856463730335236,
+     "p_perm_diagnostic": 0.01,
+     "pass": false,
+     "threshold_50pct": 0.562
+    },
+    "R4_compression": {
+     "byte_equal_v2": true,
+     "gating": false,
+     "p_more_compressible": 0.004975124378109453,
+     "zlib_bytes": 296
+    },
+    "diag_breusch_pagan": {
+     "LM": 12.534849080609735,
+     "byte_equal_v2": true,
+     "gating": false,
+     "p": 0.00039943187314383464
+    },
+    "diag_ljung_box_lag40": {
+     "Q": 3768.7605510124663,
+     "byte_equal_v2": true,
+     "gating": false,
+     "p": 0.0
+    },
+    "diag_mmd_vs_gaussian": {
+     "byte_equal_v2": true,
+     "gating": false,
+     "mmd2": 0.02138693223988619,
+     "p": 0.01990049751243781
+    }
+   },
+   "reverification_all_byte_equal": true,
+   "target": "Moon Dist (km)",
+   "verdict": "FAILED_EQUATION_SEARCH",
+   "verdict_note": "registration Section 6 binding fact: R3 fails (0.886 > 0.562) on every branch; no upgrade possible; batch5 detection verdict untouched"
+  },
+  "eq.tidal-manila.phase.v2.fine_grid_diagnostic": {
+   "R1_v3_pass": false,
+   "claimA_36p625_adjudication": {
+    "attributed": false,
+    "members_coarse_period_d": [
+     36.625,
+     32.55555555555556
+    ],
+    "members_refined_period_d": [
+     36.34108527131783,
+     36.34108527131783
+    ],
+    "n_members": 2,
+    "representative_fine_power": 77.62122523578388,
+    "representative_refined_period_d": 36.34108527131783,
+    "whitelist_matches": []
+   },
+   "coarse_R1_pass_v2_rule": false,
+   "coarse_R1_reproduced_byte_equal": true,
+   "distinct_refined_lines": [
+    {
+     "attributed": true,
+     "members_coarse_period_d": [
+      14.65,
+      13.952380952380953,
+      15.421052631578945
+     ],
+     "members_refined_period_d": [
+      14.65,
+      14.65,
+      14.65
+     ],
+     "n_members": 3,
+     "representative_fine_power": 832.8475000471446,
+     "representative_refined_period_d": 14.65,
+     "whitelist_matches": [
+      "variation"
+     ]
+    },
+    {
+     "attributed": false,
+     "members_coarse_period_d": [
+      36.625,
+      32.55555555555556
+     ],
+     "members_refined_period_d": [
+      36.34108527131783,
+      36.34108527131783
+     ],
+     "n_members": 2,
+     "representative_fine_power": 77.62122523578388,
+     "representative_refined_period_d": 36.34108527131783,
+     "whitelist_matches": []
+    },
+    {
+     "attributed": true,
+     "members_coarse_period_d": [
+      29.3,
+      26.636363636363633
+     ],
+     "members_refined_period_d": [
+      30.84210526315789,
+      29.3
+     ],
+     "n_members": 2,
+     "representative_fine_power": 66.9995202791082,
+     "representative_refined_period_d": 30.84210526315789,
+     "whitelist_matches": [
+      "evection"
+     ]
+    }
+   ],
+   "fine_grid_peaks": [
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 8.614008714580395e-21,
+     "coarse_period_d": 14.65,
+     "fine_power": 832.8475000471446,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.06825938566552901,
+     "refined_period_d": 14.65,
+     "refined_whitelist_match": "variation"
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 1.437079298865748e-08,
+     "coarse_period_d": 13.952380952380953,
+     "fine_power": 832.8475000471446,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.06825938566552901,
+     "refined_period_d": 14.65,
+     "refined_whitelist_match": "variation"
+    },
+    {
+     "coarse_attributed_v2": false,
+     "coarse_p": 0.003759044346404905,
+     "coarse_period_d": 36.625,
+     "fine_power": 77.62122523578388,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.027517064846416382,
+     "refined_period_d": 36.34108527131783,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 0.0016249335165501699,
+     "coarse_period_d": 15.421052631578945,
+     "fine_power": 832.8475000471446,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.06825938566552901,
+     "refined_period_d": 14.65,
+     "refined_whitelist_match": "variation"
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 0.0008610038737305056,
+     "coarse_period_d": 29.3,
+     "fine_power": 66.9995202791082,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.03242320819112628,
+     "refined_period_d": 30.84210526315789,
+     "refined_whitelist_match": "evection"
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 0.004743530975698209,
+     "coarse_period_d": 32.55555555555556,
+     "fine_power": 77.62122523578388,
+     "refined_attributed": false,
+     "refined_freq_cyc_d": 0.027517064846416382,
+     "refined_period_d": 36.34108527131783,
+     "refined_whitelist_match": null
+    },
+    {
+     "coarse_attributed_v2": true,
+     "coarse_p": 0.0010749909505186556,
+     "coarse_period_d": 26.636363636363633,
+     "fine_power": 66.10670768478934,
+     "refined_attributed": true,
+     "refined_freq_cyc_d": 0.034129692832764506,
+     "refined_period_d": 29.3,
+     "refined_whitelist_match": "evection"
+    }
+   ],
+   "frozen_refit": {
+    "byte_equal_to_v2_json": true,
+    "selected_family": "A2_harmonic_2freq_k1"
+   },
+   "n_distinct_refined_lines": 3,
+   "n_significant_coarse_peaks": 7,
+   "n_unattributed_distinct_lines": 1,
+   "residual_checks_reverified": {
+    "R2_cusum": {
+     "byte_equal_v2": true,
+     "gating": true,
+     "p": 0.004975124378109453,
+     "pass": false,
+     "stat": 4.784554426234796
+    },
+    "R3_tda_h1_absorption": {
+     "absorption_fraction": 0.4414082042263072,
+     "byte_equal_v2": true,
+     "gating": true,
+     "max_h1_persistence_residual": 0.6278571784496307,
+     "p_perm_diagnostic": 0.01,
+     "pass": false,
+     "threshold_50pct": 0.562
+    },
+    "R4_compression": {
+     "byte_equal_v2": true,
+     "gating": true,
+     "p_more_compressible": 0.009950248756218905,
+     "zlib_bytes": 302
+    },
+    "diag_breusch_pagan": {
+     "LM": 8.507146793386235,
+     "byte_equal_v2": true,
+     "gating": false,
+     "p": 0.0035375430729841974
+    },
+    "diag_ljung_box_lag40": {
+     "Q": 2388.5588482350577,
+     "byte_equal_v2": true,
+     "gating": false,
+     "p": 0.0
+    },
+    "diag_mmd_vs_gaussian": {
+     "byte_equal_v2": true,
+     "gating": false,
+     "mmd2": 0.008846601963396705,
+     "p": 0.07462686567164178
+    }
+   },
+   "reverification_all_byte_equal": true,
+   "scope_note": "claim A in scope by approver amendment (Section 8 option b, +0 charge): symmetric diagnostic on the 36.625 d peak; claim A verdict CANNOT improve (R2/R4 remain failed); no verdict issued here",
+   "target": "Total tidal accel (g)"
+  }
+ },
+ "data_file": "datasets/tidal-manila/tidal_derived.csv",
+ "independence": "executor is equation-analyst v3 execute dispatch; != batch5 detection analyst; != v2 same-claim independent verifier",
+ "leakage_collapse_rule": "refined lines collapse iff |f_i-f_j| <= 1/292 cyc/d (single-linkage); cluster attributed iff any member's refined period attributes (direct Rayleigh or, claim A only, merge zone)",
+ "n_rows": 366,
+ "oversample_factor": 16,
+ "predecessor": "eq_tidal_v2 (results/eq_tidal_v2.json)",
+ "rayleigh_T_d": 292.0,
+ "registration": "docs/REGISTRATION_EQ_TIDAL_V3.md sha256 4fc27d0e621d4250 (approved pre-execution 2026-06-12; claim-A 36.625d amendment in scope at +0)",
+ "script": "src/eq_tidal_v3.py",
+ "seed_base_v3": 20260613,
+ "seed_note": "v3 procedure deterministic; R2/R3/R4+diagnostics re-verified under the exact v2 rng stream (base 20260612, residuals offset 4) for byte-verification of published values",
+ "splits": {
+  "test": [
+   293,
+   366
+  ],
+  "train": [
+   0,
+   220
+  ],
+  "validation": [
+   220,
+   293
+  ]
+ },
+ "whitelist_periods_d": {
+  "anomalistic_2nd_harmonic": 13.777,
+  "evection": 31.812,
+  "synodic": 29.531,
+  "variation": 14.765
+ }
+}

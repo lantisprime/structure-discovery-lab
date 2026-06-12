@@ -1,0 +1,3 @@
+byte-identical (in-process double run, identical seeds)
+eq.tidal-manila.phase.v1 | family: A2_harmonic_2freq_k1 | verdict: FAILED_EQUATION_SEARCH | calibration: FAIL | periods: [27.487, 30.638]
+eq.tidal-manila.phase.moondist.v1 | family: B1_harmonic_1freq_k1 | verdict: FAILED_EQUATION_SEARCH | calibration: PASS | periods: [27.604]

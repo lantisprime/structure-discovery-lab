@@ -1,0 +1,5 @@
+agent: equation-analyst (eval Q-1)
+model tier: fable
+instance id: acb7be6c95e71437a
+date: 2026-06-11
+dispatched by: lab-orchestrator (cowork session); grader: orchestrator (behavioral)

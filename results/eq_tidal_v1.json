@@ -1,0 +1,583 @@
+{
+ "alpha_null": 0.01,
+ "alpha_resid_declared": 0.05,
+ "claims": {
+  "eq.tidal-manila.phase.moondist.v1": {
+   "bootstrap": {
+    "B": 500,
+    "block_d": 15,
+    "selected_family_fraction": 0.998,
+    "stable": true
+   },
+   "calibration": "PASS",
+   "coefficients_above_floor": [
+    {
+     "a_sin_orig": -19039.87882118035,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      19399.72284456967,
+      25228.162762519136
+     ],
+     "amplitude_cv_bootstrap": 0.0644474365523236,
+     "amplitude_orig_units": 22237.47371249511,
+     "b_cos_orig": 11488.61399772309,
+     "base_freq_index": 1,
+     "harmonic": 1,
+     "period_d": 27.60387627151598
+    }
+   ],
+   "coefficients_all": [
+    {
+     "a_sin_orig": -19039.87882118035,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      19399.72284456967,
+      25228.162762519136
+     ],
+     "amplitude_cv_bootstrap": 0.0644474365523236,
+     "amplitude_orig_units": 22237.47371249511,
+     "b_cos_orig": 11488.61399772309,
+     "base_freq_index": 1,
+     "harmonic": 1,
+     "period_d": 27.60387627151598
+    }
+   ],
+   "constituents": {
+    "freq1": {
+     "CI_contains_ground_truth": true,
+     "CI_within_tolerance_band": true,
+     "bootstrap_CI95_d": [
+      27.37078172980754,
+      27.845812971126872
+     ],
+     "ground_truth_d": 27.555,
+     "matched_constituent": "anomalistic",
+     "period_recovery_error_pct": 0.17737714213746833,
+     "recovered_period_d": 27.60387627151598,
+     "tolerance_band_d": [
+      26.18,
+      28.93
+     ],
+     "within_tolerance_band": true
+    }
+   },
+   "detectability_floor_amplitude_orig_units": 2330.519918321667,
+   "family_records": {
+    "B1_harmonic_1freq_k1": {
+     "J_val": 27.019113076667185,
+     "K": 1,
+     "coef": [
+      0.0034006432948845648,
+      -1.128511339883684,
+      0.6809408451462603
+     ],
+     "complexity": 5,
+     "freqs": [
+      0.03622679619933976
+     ],
+     "nll_test": 0.6648275168971214,
+     "nll_val": 13.53504421078628,
+     "periods_d": [
+      27.60387627151598
+     ],
+     "rmse_test": 0.24418447190356302,
+     "rmse_val": 0.2912634867684121,
+     "rss_train": 28.859215181764835
+    },
+    "B2_harmonic_1freq_k2": {
+     "J_val": 32.73523910343651,
+     "K": 2,
+     "coef": [
+      0.00343730311395717,
+      -1.1301048071307989,
+      0.6781826347808461,
+      0.02882930950691999,
+      0.0023177374267871398
+     ],
+     "complexity": 7,
+     "freqs": [
+      0.03622376261239854
+     ],
+     "nll_test": -1.4117033704819766,
+     "nll_val": 13.857542691203244,
+     "periods_d": [
+      27.60618797942662
+     ],
+     "rmse_test": 0.23733635239824857,
+     "rmse_val": 0.2925530733935893,
+     "rss_train": 28.767175821824157
+    }
+   },
+   "intercept_orig_units": 385294.7950098205,
+   "nulls": {
+    "AR_null": {
+     "B": 200,
+     "ar_order_p": 5,
+     "null_J_val_median": 114.72707701519315,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 5.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 26.606590090445696,
+      "q05": 23.831037181295432,
+      "q95": 30.34679270258131
+     },
+     "null_selected_family_counts": {
+      "B1_harmonic_1freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 184.58532095484043,
+      "median": 110.15841839384521,
+      "min": 5.76933448050848,
+      "q05": 53.36150661313999,
+      "q95": 153.10043560994112
+     },
+     "observed_test_nll": 0.6648275168971214
+    },
+    "permutation": {
+     "B": 200,
+     "null_J_val_median": 119.17430838564736,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 5.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 7.731423249367472,
+      "q05": 4.215382646519243,
+      "q95": 43.38191681521638
+     },
+     "null_selected_family_counts": {
+      "B1_harmonic_1freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 116.6624845823404,
+      "median": 105.95273947575771,
+      "min": 92.85227212191975,
+      "q05": 97.61659785386132,
+      "q95": 113.04303974131393
+     },
+     "observed_test_nll": 0.6648275168971214
+    },
+    "phase_randomized_surrogate": {
+     "B": 200,
+     "null_J_val_median": 73.66382188160779,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 5.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 28.131048572483454,
+      "q05": 27.59295427283996,
+      "q95": 28.77888121027253
+     },
+     "null_selected_family_counts": {
+      "B1_harmonic_1freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 142.2531373053992,
+      "median": 89.87272981185566,
+      "min": 0.7407144554027061,
+      "q05": 27.609932775392803,
+      "q95": 125.42995676398856
+     },
+     "observed_test_nll": 0.6648275168971214
+    }
+   },
+   "nulls_beaten_all_three": true,
+   "periods_within_tolerance": true,
+   "residual_checks": {
+    "1_ljung_box_lag40": {
+     "Q": 3768.7605510124663,
+     "p": 0.0,
+     "pass": false
+    },
+    "2_fisher_g_4_120d": {
+     "g": 0.33875795630868216,
+     "m_ordinates": 71,
+     "p": 1.8901249396001685e-11,
+     "pass": false,
+     "peak_period_d": 29.3
+    },
+    "3_mmd_vs_gaussian": {
+     "mmd2": 0.023672254940415804,
+     "p": 0.004975124378109453,
+     "pass": false
+    },
+    "4_breusch_pagan": {
+     "LM": 12.534849080609735,
+     "p": 0.00039943187314383464,
+     "pass": false
+    },
+    "5_cusum_changepoint": {
+     "p": 0.2935323383084577,
+     "pass": true,
+     "stat": 0.9297125623120343
+    },
+    "6_tda_h1_residuals": {
+     "loop_gone": false,
+     "max_h1_persistence": 0.8856463730335236,
+     "p_perm": 0.01,
+     "pass": false
+    },
+    "7_compression": {
+     "p_more_compressible": 0.004975124378109453,
+     "pass": false,
+     "zlib_bytes": 296
+    }
+   },
+   "residuals_pass": false,
+   "rmse_test_orig_units": 4119.801539200268,
+   "rmse_test_std_units": 0.24418447190356302,
+   "selected_complexity": 5,
+   "selected_family": "B1_harmonic_1freq_k1",
+   "sub_4d_constituent_flag": false,
+   "target": "Moon Dist (km)",
+   "train_residual_sigma_orig_units": 6110.674777931359,
+   "verdict": "FAILED_EQUATION_SEARCH"
+  },
+  "eq.tidal-manila.phase.v1": {
+   "bootstrap": {
+    "B": 500,
+    "block_d": 15,
+    "selected_family_fraction": 0.778,
+    "stable": false
+   },
+   "calibration": "FAIL",
+   "coefficients_above_floor": [
+    {
+     "a_sin_orig": 6.537377069871072e-16,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      8.314725823021901e-16,
+      9.76661710501197e-16
+     ],
+     "amplitude_cv_bootstrap": 0.04215404170469045,
+     "amplitude_orig_units": 8.973403218216658e-16,
+     "b_cos_orig": -6.146923324967134e-16,
+     "base_freq_index": 1,
+     "harmonic": 1,
+     "period_d": 27.486849651891614
+    },
+    {
+     "a_sin_orig": -3.6751222263932316e-16,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      3.040126392685149e-16,
+      4.448925901012336e-16
+     ],
+     "amplitude_cv_bootstrap": 0.09686575880664475,
+     "amplitude_orig_units": 3.6884606766312705e-16,
+     "b_cos_orig": -3.133987621635835e-17,
+     "base_freq_index": 2,
+     "harmonic": 1,
+     "period_d": 30.638450067711858
+    }
+   ],
+   "coefficients_all": [
+    {
+     "a_sin_orig": 6.537377069871072e-16,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      8.314725823021901e-16,
+      9.76661710501197e-16
+     ],
+     "amplitude_cv_bootstrap": 0.04215404170469045,
+     "amplitude_orig_units": 8.973403218216658e-16,
+     "b_cos_orig": -6.146923324967134e-16,
+     "base_freq_index": 1,
+     "harmonic": 1,
+     "period_d": 27.486849651891614
+    },
+    {
+     "a_sin_orig": -3.6751222263932316e-16,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      3.040126392685149e-16,
+      4.448925901012336e-16
+     ],
+     "amplitude_cv_bootstrap": 0.09686575880664475,
+     "amplitude_orig_units": 3.6884606766312705e-16,
+     "b_cos_orig": -3.133987621635835e-17,
+     "base_freq_index": 2,
+     "harmonic": 1,
+     "period_d": 30.638450067711858
+    }
+   ],
+   "constituents": {
+    "freq1": {
+     "CI_contains_ground_truth": true,
+     "CI_within_tolerance_band": true,
+     "bootstrap_CI95_d": [
+      27.283671747056093,
+      27.728236677281185
+     ],
+     "ground_truth_d": 27.555,
+     "matched_constituent": "anomalistic",
+     "period_recovery_error_pct": 0.2473247980707161,
+     "recovered_period_d": 27.486849651891614,
+     "tolerance_band_d": [
+      26.18,
+      28.93
+     ],
+     "within_tolerance_band": true
+    },
+    "freq2": {
+     "CI_contains_ground_truth": false,
+     "CI_within_tolerance_band": false,
+     "bootstrap_CI95_d": [
+      29.931700003043645,
+      31.227629440290457
+     ],
+     "ground_truth_d": 27.555,
+     "matched_constituent": "anomalistic",
+     "period_recovery_error_pct": 11.190165370030332,
+     "recovered_period_d": 30.638450067711858,
+     "tolerance_band_d": [
+      26.18,
+      28.93
+     ],
+     "within_tolerance_band": false
+    }
+   },
+   "detectability_floor_amplitude_orig_units": 6.525097716356602e-17,
+   "family_records": {
+    "A1_harmonic_1freq_k1": {
+     "J_val": 29.801308170998347,
+     "K": 1,
+     "coef": [
+      -0.003339225328550106,
+      1.0912073643311002,
+      -0.6707984409730043
+     ],
+     "complexity": 5,
+     "freqs": [
+      0.03622659992760441
+     ],
+     "nll_test": 8.124231362595948,
+     "nll_val": 16.31723930511744,
+     "periods_d": [
+      27.604025826282616
+     ],
+     "rmse_test": 0.27045550318436323,
+     "rmse_val": 0.30257844672718953,
+     "rss_train": 39.489843279316986
+    },
+    "A2_harmonic_2freq_k1": {
+     "J_val": 21.123506891952708,
+     "K": 1,
+     "coef": [
+      0.006865046381515984,
+      0.9118831502267034,
+      -0.8574196877224917,
+      -0.5126340422853609,
+      -0.04371524656822556
+     ],
+     "complexity": 9,
+     "freqs": [
+      0.03638103357294644,
+      0.03263872675641134
+     ],
+     "nll_test": 67.1013186368141,
+     "nll_val": -3.147817066632923,
+     "periods_d": [
+      27.486849651891614,
+      30.638450067711858
+     ],
+     "rmse_test": 0.6066869297229979,
+     "rmse_val": 0.231758519193139,
+     "rss_train": 12.529701765731865
+    },
+    "A3_harmonic_2freq_k2": {
+     "J_val": 42.14601177636133,
+     "K": 2,
+     "coef": [
+      0.014562243132227414,
+      0.7884409140444217,
+      -0.9288279604657611,
+      -0.12345369750161957,
+      -0.058372329176775664,
+      -0.4712697288450561,
+      0.29486712691724337,
+      -0.16377154985478146,
+      0.14952378364950528
+     ],
+     "complexity": 13,
+     "freqs": [
+      0.03636495300901595,
+      0.03354355538006711
+     ],
+     "nll_test": 36.64284275141719,
+     "nll_val": 7.087432725070978,
+     "periods_d": [
+      27.49900432298291,
+      29.811985899212072
+     ],
+     "rmse_test": 0.3997236749639442,
+     "rmse_val": 0.26664144820563157,
+     "rss_train": 7.121699332856634
+    }
+   },
+   "intercept_orig_units": 7.733039344344712e-15,
+   "nulls": {
+    "AR_null": {
+     "B": 200,
+     "ar_order_p": 1,
+     "null_J_val_median": 119.0823609093442,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 5.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 7.291842990801694,
+      "q05": 4.258562386343473,
+      "q95": 56.89387296029822
+     },
+     "null_selected_family_counts": {
+      "A1_harmonic_1freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 124.67181941595034,
+      "median": 106.05407884327991,
+      "min": 87.16439390303938,
+      "q05": 95.26813518632655,
+      "q95": 117.63949920698181
+     },
+     "observed_test_nll": 67.1013186368141
+    },
+    "permutation": {
+     "B": 200,
+     "null_J_val_median": 119.64362284482618,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 5.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 8.583017252063744,
+      "q05": 4.361646360376747,
+      "q95": 79.50067520275157
+     },
+     "null_selected_family_counts": {
+      "A1_harmonic_1freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 121.59088140786042,
+      "median": 105.14831909894176,
+      "min": 91.41117051394185,
+      "q05": 96.25791372013502,
+      "q95": 113.03752622179825
+     },
+     "observed_test_nll": 67.1013186368141
+    },
+    "phase_randomized_surrogate": {
+     "B": 200,
+     "null_J_val_median": 79.60650153234678,
+     "null_adjusted_p": 0.208955223880597,
+     "null_complexity_mean": 6.02,
+     "null_recovered_period_quantiles_d": {
+      "median": 28.01162905984105,
+      "q05": 25.11016379786127,
+      "q95": 28.895618876932833
+     },
+     "null_selected_family_counts": {
+      "A1_harmonic_1freq_k1": 153,
+      "A2_harmonic_2freq_k1": 43,
+      "A3_harmonic_2freq_k2": 4
+     },
+     "null_test_nll": {
+      "max": 145.33968388619425,
+      "median": 93.21378958032066,
+      "min": -2.027782605811196,
+      "q05": 44.31750786799064,
+      "q95": 128.8182659638809
+     },
+     "observed_test_nll": 67.1013186368141
+    }
+   },
+   "nulls_beaten_all_three": false,
+   "periods_within_tolerance": false,
+   "residual_checks": {
+    "1_ljung_box_lag40": {
+     "Q": 2388.5588482350577,
+     "p": 0.0,
+     "pass": false
+    },
+    "2_fisher_g_4_120d": {
+     "g": 0.513689632817856,
+     "m_ordinates": 71,
+     "p": 8.614008714580395e-21,
+     "pass": false,
+     "peak_period_d": 14.65
+    },
+    "3_mmd_vs_gaussian": {
+     "mmd2": 0.018055887275607918,
+     "p": 0.004975124378109453,
+     "pass": false
+    },
+    "4_breusch_pagan": {
+     "LM": 8.507146793386235,
+     "p": 0.0035375430729841974,
+     "pass": false
+    },
+    "5_cusum_changepoint": {
+     "p": 0.004975124378109453,
+     "pass": false,
+     "stat": 4.784554426234796
+    },
+    "6_tda_h1_residuals": {
+     "loop_gone": false,
+     "max_h1_persistence": 0.6278571784496307,
+     "p_perm": 0.01,
+     "pass": false
+    },
+    "7_compression": {
+     "p_more_compressible": 0.004975124378109453,
+     "pass": false,
+     "zlib_bytes": 302
+    }
+   },
+   "residuals_pass": false,
+   "rmse_test_orig_units": 4.3493963255879725e-16,
+   "rmse_test_std_units": 0.6066869297229979,
+   "selected_complexity": 9,
+   "selected_family": "A2_harmonic_2freq_k1",
+   "sub_4d_constituent_flag": false,
+   "target": "Total tidal accel (g)",
+   "train_residual_sigma_orig_units": 1.7108950550224136e-16,
+   "verdict": "FAILED_EQUATION_SEARCH"
+  }
+ },
+ "data_file": "datasets/tidal-manila/tidal_derived.csv",
+ "data_regimes": [
+  "all_rows"
+ ],
+ "date_range": [
+  "2025-06-11",
+  "2026-06-11"
+ ],
+ "implementation_notes": [
+  "scipy unavailable at dispatch -> installed scipy+ripser (same stack as batch5)",
+  "all series standardized by their own train mean/std inside the discovery procedure (identical for real and null series); coefficients reported back in original units",
+  "residual-check alpha declared 0.05 (stricter than 0.01 -> easier to demote -> conservative); raw p-values reported",
+  "frozen f* = selected family with train-fitted coefficients; residual checks on train+validation"
+ ],
+ "lambda": 2.696813773176181,
+ "n_rows": 366,
+ "registration": "docs/REGISTRATION_EQ_TIDAL.md sha256 9df78eca25e20ab5 (approved pre-fit)",
+ "script": "src/eq_tidal_v1.py",
+ "seed_scheme": {
+  "base": 20260611,
+  "stage_offsets": {
+   "bootstrap": 3,
+   "fit": 1,
+   "null_equation_generator": 0,
+   "nulls": 2,
+   "residuals": 4
+  }
+ },
+ "splits": {
+  "test": [
+   293,
+   366
+  ],
+  "train": [
+   0,
+   220
+  ],
+  "validation": [
+   220,
+   293
+  ]
+ },
+ "two_run_diff": "byte-identical (in-process double run, identical seeds)"
+}

@@ -1,0 +1,10 @@
+{
+  "eval": "V-3",
+  "checks": {
+    "found_planted_discrepancy_0.080_vs_0.04": true,
+    "key_path_cited": true,
+    "b6_2_verified_clean": true,
+    "copy_untouched_sha_match": true
+  },
+  "grade": "PASS"
+}

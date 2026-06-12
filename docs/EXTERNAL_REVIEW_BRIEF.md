@@ -1,8 +1,15 @@
 # External Review Brief — Structure Discovery Laboratory
 
+**Document**: EXTERNAL_REVIEW_BRIEF · **Version**: 1.1 · **Status**: active ·
+**Supersedes**: 1.0 (any earlier copy without this header) ·
+**SHA-256**: recorded in `results/commitment_ledger.txt`
+
 **Purpose**: hand this document (plus repository access) to an independent
 system or reviewer to audit the lab's processes, methodologies, and approaches.
-**Prepared**: 2026-06-11.
+**Prepared**: 2026-06-11. **v1.1 note**: one external review has been received
+and answered (`docs/RESPONSE_EXTERNAL_REVIEW.md`); a remediation batch
+(`docs/REMEDIATION_LOG.md`) post-dates the materials that review saw. New
+reviewers should still review independently before reading either.
 
 > **Anchoring control — read this first.** A self-review exists at
 > `docs/ADVERSARIAL_REVIEW.md`. Do **NOT** read it until you have completed and

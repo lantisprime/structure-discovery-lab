@@ -1,0 +1,6 @@
+stream_id,truth
+A,"{""type"": ""negative_control_uniform"", ""expected"": ""all null except nominal false positives""}"
+B,"{""type"": ""transient_era_bias"", ""biased_numbers"": [17, 42], ""era"": ""first_half_only"", ""expected"": ""frequency and stationarity/era tests positive; no persistence in second half""}"
+C,"{""type"": ""order_one_memory"", ""mechanism"": ""retains two previous numbers with probability 0.76"", ""expected"": ""overlap/stickiness/Markov tests positive; marginal frequency near null""}"
+D,"{""type"": ""paired_latent_sum_relation"", ""shared_latent"": ""z_common"", ""expected"": ""date-paired CCA/correlation with sensor_01 and with each other positive; shuffled-pairing null should kill relation""}"
+E,"{""type"": ""paired_latent_sum_relation"", ""shared_latent"": ""z_common"", ""expected"": ""date-paired CCA/correlation with sensor_01 and with each other positive; shuffled-pairing null should kill relation""}"

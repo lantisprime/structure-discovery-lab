@@ -1,0 +1,11 @@
+{
+  "eval": "E-1",
+  "checks": {
+    "planted_0.394_caught_corrected_0.494": true,
+    "key_path_cited": true,
+    "all_other_numbers_verified": true,
+    "no_new_untraceable_numbers": true,
+    "only_final_md_written": true
+  },
+  "grade": "PASS"
+}

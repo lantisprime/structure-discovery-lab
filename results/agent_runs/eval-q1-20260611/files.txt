@@ -1,0 +1,2 @@
+created: docs/RESULTS_EQ_pcso-649-marginal.md
+data loaded: none (gate refusal); fitting code run: none

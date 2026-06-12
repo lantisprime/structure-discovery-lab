@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# DOMAIN ARTIFACT (pcso-lotto application): verifies/transcribes this domain's recorded
+# results; domain vocabulary expected here. Neutral instruments live in src/core.
 """Generates the figure artifacts for the relational runs, entirely from the
 result JSONs (plus two recomputed persistence diagrams, seeded). Reproducible:
 rerun any time; figures land in results/figures/."""

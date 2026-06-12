@@ -1,0 +1,858 @@
+{
+ "alpha_null": 0.01,
+ "alpha_resid_gating": 0.01,
+ "claims": {
+  "eq.tidal-manila.phase.moondist.v2": {
+   "bootstrap": {
+    "B": 500,
+    "block_d": 15,
+    "selected_family_fraction": 0.99,
+    "stable": true
+   },
+   "calibration": "PASS",
+   "coefficients_above_floor": [
+    {
+     "a_sin_orig": -19039.87882118035,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      19282.83454431995,
+      25119.98290853607
+     ],
+     "amplitude_cv_bootstrap": 0.0657767646622315,
+     "amplitude_orig_units": 22237.47371249511,
+     "b_cos_orig": 11488.61399772309,
+     "base_freq_index": 1,
+     "harmonic": 1,
+     "period_d": 27.60387627151598
+    }
+   ],
+   "coefficients_all": [
+    {
+     "a_sin_orig": -19039.87882118035,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      19282.83454431995,
+      25119.98290853607
+     ],
+     "amplitude_cv_bootstrap": 0.0657767646622315,
+     "amplitude_orig_units": 22237.47371249511,
+     "b_cos_orig": 11488.61399772309,
+     "base_freq_index": 1,
+     "harmonic": 1,
+     "period_d": 27.60387627151598
+    }
+   ],
+   "constituents": {
+    "freq1": {
+     "CI_contains_ground_truth": true,
+     "CI_within_tolerance_band": true,
+     "bootstrap_CI95_d": [
+      27.35958695689382,
+      27.83242531042996
+     ],
+     "ci_exempt_attribution_grade": false,
+     "ground_truth_d": 27.555,
+     "matched_constituent": "anomalistic",
+     "pass_defining": true,
+     "period_recovery_error_pct": 0.17737714213746833,
+     "recovered_period_d": 27.60387627151598,
+     "tolerance_band_d": [
+      26.18,
+      28.93
+     ],
+     "within_tolerance_band": true
+    }
+   },
+   "detectability_floor_amplitude_orig_units": 2330.519918321667,
+   "evection_in_band_attribution_grade": null,
+   "family_records": {
+    "B1_harmonic_1freq_k1": {
+     "J_val": 27.019113076667185,
+     "K": 1,
+     "coef": [
+      0.0034006432948845648,
+      -1.128511339883684,
+      0.6809408451462603
+     ],
+     "complexity": 5,
+     "freqs": [
+      0.03622679619933976
+     ],
+     "nll_test": 0.6648275168971214,
+     "nll_val": 13.53504421078628,
+     "periods_d": [
+      27.60387627151598
+     ],
+     "rmse_test": 0.24418447190356302,
+     "rmse_val": 0.2912634867684121,
+     "rss_train": 28.859215181764835
+    },
+    "B2_harmonic_1freq_k2": {
+     "J_val": 32.73523910343651,
+     "K": 2,
+     "coef": [
+      0.00343730311395717,
+      -1.1301048071307989,
+      0.6781826347808461,
+      0.02882930950691999,
+      0.0023177374267871398
+     ],
+     "complexity": 7,
+     "freqs": [
+      0.03622376261239854
+     ],
+     "nll_test": -1.4117033704819766,
+     "nll_val": 13.857542691203244,
+     "periods_d": [
+      27.60618797942662
+     ],
+     "rmse_test": 0.23733635239824857,
+     "rmse_val": 0.2925530733935893,
+     "rss_train": 28.767175821824157
+    }
+   },
+   "instrument_miscalibration_flag": false,
+   "intercept_orig_units": 385294.7950098205,
+   "nulls": {
+    "AR_null": {
+     "B": 200,
+     "ar_order_p": 5,
+     "null_J_val_median": 110.47599006403254,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 5.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 26.56009335071141,
+      "q05": 24.33674490233855,
+      "q95": 30.814729816585093
+     },
+     "null_selected_family_counts": {
+      "B1_harmonic_1freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 187.54298653662485,
+      "median": 115.31850672858684,
+      "min": 25.633381392547978,
+      "q05": 60.037556101305505,
+      "q95": 165.39126056865953
+     },
+     "observed_test_nll": 0.6648275168971214
+    },
+    "permutation": {
+     "B": 200,
+     "null_J_val_median": 118.38808938394888,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 5.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 7.66537262599012,
+      "q05": 4.377880675226383,
+      "q95": 57.10811868063289
+     },
+     "null_selected_family_counts": {
+      "B1_harmonic_1freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 116.35207970140871,
+      "median": 105.23474541867236,
+      "min": 92.11240703156099,
+      "q05": 96.98229325596269,
+      "q95": 112.2384457883042
+     },
+     "observed_test_nll": 0.6648275168971214
+    },
+    "phase_randomized_surrogate": {
+     "B": 200,
+     "null_J_val_median": 77.10437638198528,
+     "null_adjusted_p": 0.009950248756218905,
+     "null_complexity_mean": 5.01,
+     "null_recovered_period_quantiles_d": {
+      "median": 28.097372215509484,
+      "q05": 27.624865121863586,
+      "q95": 28.710312529669494
+     },
+     "null_selected_family_counts": {
+      "B1_harmonic_1freq_k1": 199,
+      "B2_harmonic_1freq_k2": 1
+     },
+     "null_test_nll": {
+      "max": 136.7480586707076,
+      "median": 85.30483915174378,
+      "min": -3.2552758007581253,
+      "q05": 30.067979148666957,
+      "q95": 123.63515451321311
+     },
+     "observed_test_nll": 0.6648275168971214
+    }
+   },
+   "nulls_beaten_all_three": true,
+   "periods_within_tolerance": true,
+   "residual_checks": {
+    "R1_whitelist_attribution": {
+     "all_attributed": false,
+     "gating": true,
+     "merge_rule_allowed": false,
+     "n_significant_peaks": 20,
+     "pass": false,
+     "rayleigh_T_trainval_d": 292.0,
+     "significant_peaks": [
+      {
+       "attributed": true,
+       "fisher_g": 0.33875795630868216,
+       "m_ordinates": 71,
+       "p": 1.8901249396001685e-11,
+       "peak_period_d": 29.3,
+       "whitelist_match": "evection"
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.4745604646341904,
+       "m_ordinates": 70,
+       "p": 3.640554924929977e-18,
+       "peak_period_d": 32.55555555555556,
+       "whitelist_match": "evection"
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.3767454499733388,
+       "m_ordinates": 69,
+       "p": 7.517963553897375e-13,
+       "peak_period_d": 14.65,
+       "whitelist_match": "variation"
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.5099952352500965,
+       "m_ordinates": 68,
+       "p": 1.1910478760079285e-19,
+       "peak_period_d": 26.636363636363633,
+       "whitelist_match": "synodic"
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.23086937942331895,
+       "m_ordinates": 67,
+       "p": 2.0048483192121838e-06,
+       "peak_period_d": 24.416666666666668,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.2738495844767431,
+       "m_ordinates": 66,
+       "p": 6.113252009888613e-08,
+       "peak_period_d": 36.625,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.17891685642519858,
+       "m_ordinates": 65,
+       "p": 0.00021561950032327078,
+       "peak_period_d": 41.857142857142854,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.15009958442378213,
+       "m_ordinates": 64,
+       "p": 0.002271436640919018,
+       "peak_period_d": 22.538461538461537,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.16001137245216981,
+       "m_ordinates": 63,
+       "p": 0.001271347484273031,
+       "peak_period_d": 48.833333333333336,
+       "whitelist_match": null
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.1626799442580218,
+       "m_ordinates": 62,
+       "p": 0.00122672646992639,
+       "peak_period_d": 15.421052631578945,
+       "whitelist_match": "variation"
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.16517574297183588,
+       "m_ordinates": 61,
+       "p": 0.0012050636020385882,
+       "peak_period_d": 58.6,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.15913059292988946,
+       "m_ordinates": 60,
+       "p": 0.0021731107313909246,
+       "peak_period_d": 73.25,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.17194660640721268,
+       "m_ordinates": 59,
+       "p": 0.0010428420615953176,
+       "peak_period_d": 20.928571428571427,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.2015061597506756,
+       "m_ordinates": 58,
+       "p": 0.00015592175548078083,
+       "peak_period_d": 97.66666666666667,
+       "whitelist_match": null
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.15792896824006097,
+       "m_ordinates": 57,
+       "p": 0.003760932425047474,
+       "peak_period_d": 13.318181818181817,
+       "whitelist_match": "anomalistic_2nd_harmonic"
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.18067457893877184,
+       "m_ordinates": 56,
+       "p": 0.0009733707394161891,
+       "peak_period_d": 19.533333333333335,
+       "whitelist_match": null
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.1692730754278032,
+       "m_ordinates": 55,
+       "p": 0.002460690687139576,
+       "peak_period_d": 13.952380952380953,
+       "whitelist_match": "anomalistic_2nd_harmonic"
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.17907752924389203,
+       "m_ordinates": 54,
+       "p": 0.0015501810865738291,
+       "peak_period_d": 18.3125,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.21492767238974508,
+       "m_ordinates": 53,
+       "p": 0.00018179335769390572,
+       "peak_period_d": 16.27777777777778,
+       "whitelist_match": null
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.223852577043584,
+       "m_ordinates": 52,
+       "p": 0.00012681138131212673,
+       "peak_period_d": 17.235294117647058,
+       "whitelist_match": null
+      }
+     ]
+    },
+    "R2_cusum_changepoint": {
+     "gating": true,
+     "p": 0.3781094527363184,
+     "pass": true,
+     "stat": 0.9297125623120343
+    },
+    "R3_tda_h1_absorption": {
+     "absorption_fraction": 0.212058386980851,
+     "batch5_detected_persistence": 1.124,
+     "gating": true,
+     "max_h1_persistence_residual": 0.8856463730335236,
+     "p_perm_diagnostic": 0.01,
+     "pass": false,
+     "threshold_50pct": 0.562
+    },
+    "R4_compression": {
+     "gating": false,
+     "p_more_compressible": 0.004975124378109453,
+     "pass": true,
+     "raw_pass_at_alpha": false,
+     "zlib_bytes": 296
+    },
+    "diag_breusch_pagan": {
+     "LM": 12.534849080609735,
+     "gating": false,
+     "p": 0.00039943187314383464
+    },
+    "diag_ljung_box_lag40": {
+     "Q": 3768.7605510124663,
+     "gating": false,
+     "p": 0.0
+    },
+    "diag_mmd_vs_gaussian": {
+     "gating": false,
+     "mmd2": 0.02138693223988619,
+     "p": 0.01990049751243781
+    }
+   },
+   "residuals_pass": false,
+   "rmse_test_orig_units": 4119.801539200268,
+   "rmse_test_std_units": 0.24418447190356302,
+   "selected_complexity": 5,
+   "selected_family": "B1_harmonic_1freq_k1",
+   "sub_4d_constituent_flag": false,
+   "target": "Moon Dist (km)",
+   "train_residual_sigma_orig_units": 6110.674777931359,
+   "verdict": "FAILED_EQUATION_SEARCH"
+  },
+  "eq.tidal-manila.phase.v2": {
+   "bootstrap": {
+    "B": 500,
+    "block_d": 15,
+    "selected_family_fraction": 0.954,
+    "stable": true
+   },
+   "calibration": "FAIL",
+   "coefficients_above_floor": [
+    {
+     "a_sin_orig": 6.537377069871072e-16,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      8.253523444374029e-16,
+      9.712976344709462e-16
+     ],
+     "amplitude_cv_bootstrap": 0.0438173701622274,
+     "amplitude_orig_units": 8.973403218216658e-16,
+     "b_cos_orig": -6.146923324967134e-16,
+     "base_freq_index": 1,
+     "harmonic": 1,
+     "period_d": 27.486849651891614
+    },
+    {
+     "a_sin_orig": -3.6751222263932316e-16,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      3.030736814154002e-16,
+      4.467275958474739e-16
+     ],
+     "amplitude_cv_bootstrap": 0.10077784119120643,
+     "amplitude_orig_units": 3.6884606766312705e-16,
+     "b_cos_orig": -3.133987621635835e-17,
+     "base_freq_index": 2,
+     "harmonic": 1,
+     "period_d": 30.638450067711858
+    }
+   ],
+   "coefficients_all": [
+    {
+     "a_sin_orig": 6.537377069871072e-16,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      8.253523444374029e-16,
+      9.712976344709462e-16
+     ],
+     "amplitude_cv_bootstrap": 0.0438173701622274,
+     "amplitude_orig_units": 8.973403218216658e-16,
+     "b_cos_orig": -6.146923324967134e-16,
+     "base_freq_index": 1,
+     "harmonic": 1,
+     "period_d": 27.486849651891614
+    },
+    {
+     "a_sin_orig": -3.6751222263932316e-16,
+     "above_floor": true,
+     "amplitude_CI95_orig_units": [
+      3.030736814154002e-16,
+      4.467275958474739e-16
+     ],
+     "amplitude_cv_bootstrap": 0.10077784119120643,
+     "amplitude_orig_units": 3.6884606766312705e-16,
+     "b_cos_orig": -3.133987621635835e-17,
+     "base_freq_index": 2,
+     "harmonic": 1,
+     "period_d": 30.638450067711858
+    }
+   ],
+   "constituents": {
+    "freq1": {
+     "CI_contains_ground_truth": true,
+     "CI_within_tolerance_band": true,
+     "bootstrap_CI95_d": [
+      27.30262748431451,
+      27.68515536228261
+     ],
+     "ci_exempt_attribution_grade": false,
+     "ground_truth_d": 27.555,
+     "matched_constituent": "anomalistic",
+     "pass_defining": true,
+     "period_recovery_error_pct": 0.2473247980707161,
+     "recovered_period_d": 27.486849651891614,
+     "tolerance_band_d": [
+      26.18,
+      28.93
+     ],
+     "within_tolerance_band": true
+    },
+    "freq2": {
+     "CI_contains_ground_truth": false,
+     "CI_within_tolerance_band": true,
+     "bootstrap_CI95_d": [
+      30.037123487022598,
+      31.295903258822026
+     ],
+     "ci_exempt_attribution_grade": true,
+     "ground_truth_d": 31.812,
+     "matched_constituent": "evection",
+     "pass_defining": false,
+     "period_recovery_error_pct": 3.6890165103990413,
+     "recovered_period_d": 30.638450067711858,
+     "tolerance_band_d": [
+      29.5,
+      33.4
+     ],
+     "within_tolerance_band": true
+    }
+   },
+   "detectability_floor_amplitude_orig_units": 6.525097716356602e-17,
+   "evection_in_band_attribution_grade": true,
+   "family_records": {
+    "A2_harmonic_2freq_k1": {
+     "J_val": 21.123506891952708,
+     "K": 1,
+     "coef": [
+      0.006865046381515984,
+      0.9118831502267034,
+      -0.8574196877224917,
+      -0.5126340422853609,
+      -0.04371524656822556
+     ],
+     "complexity": 9,
+     "freqs": [
+      0.03638103357294644,
+      0.03263872675641134
+     ],
+     "nll_test": 67.1013186368141,
+     "nll_val": -3.147817066632923,
+     "periods_d": [
+      27.486849651891614,
+      30.638450067711858
+     ],
+     "rmse_test": 0.6066869297229979,
+     "rmse_val": 0.231758519193139,
+     "rss_train": 12.529701765731865
+    },
+    "A4_harmonic_3freq_k1": {
+     "J_val": 40.25087269922663,
+     "K": 1,
+     "coef": [
+      0.005136776957502795,
+      0.9452103669392379,
+      -0.8298066151034941,
+      -0.49885325621590904,
+      -0.09103542412951975,
+      0.01410350540611826,
+      0.2358827062316617
+     ],
+     "complexity": 13,
+     "freqs": [
+      0.03634897733113137,
+      0.032532646227685695,
+      0.06826417523483527
+     ],
+     "nll_test": 65.28578581842501,
+     "nll_val": 5.192293647936284,
+     "periods_d": [
+      27.511090364117123,
+      30.7383541136284,
+      14.648972122784823
+     ],
+     "rmse_test": 0.5917845180874796,
+     "rmse_val": 0.25980830120679477,
+     "rss_train": 6.412863359760797
+    },
+    "A5_harmonic_3freq_k2": {
+     "J_val": 48.260353573939824,
+     "K": 2,
+     "coef": [
+      0.005113090089089086,
+      0.9456806828955083,
+      -0.8272418039759883,
+      -0.1131607823103499,
+      -0.005144062954758265,
+      -0.5070470833849969,
+      -0.07185724954583643,
+      -0.02390611689177756,
+      -0.033427226937483956,
+      0.0651490441078814,
+      0.21323608992566453,
+      0.002062130814300164,
+      0.0038185385858045466
+     ],
+     "complexity": 19,
+     "freqs": [
+      0.03633234606906121,
+      0.03260199324787607,
+      0.06859046503570679
+     ],
+     "nll_test": 61.25568732607998,
+     "nll_val": -2.9791081164076134,
+     "periods_d": [
+      27.523683664665672,
+      30.672971201389572,
+      14.57928590336019
+     ],
+     "rmse_test": 0.5599994212487654,
+     "rmse_val": 0.2322947514211376,
+     "rss_train": 4.843881267500232
+    }
+   },
+   "instrument_miscalibration_flag": false,
+   "intercept_orig_units": 7.733039344344712e-15,
+   "nulls": {
+    "AR_null": {
+     "B": 200,
+     "ar_order_p": 1,
+     "null_J_val_median": 131.17616801004115,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 9.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 7.859475260340048,
+      "q05": 4.195901906939762,
+      "q95": 44.13478946409535
+     },
+     "null_selected_family_counts": {
+      "A2_harmonic_2freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 124.37155090766784,
+      "median": 106.48205843034461,
+      "min": 85.14642297572186,
+      "q05": 94.7917613685776,
+      "q95": 118.17055789657203
+     },
+     "observed_test_nll": 67.1013186368141
+    },
+    "permutation": {
+     "B": 200,
+     "null_J_val_median": 130.44701265432718,
+     "null_adjusted_p": 0.004975124378109453,
+     "null_complexity_mean": 9.0,
+     "null_recovered_period_quantiles_d": {
+      "median": 7.680125077279042,
+      "q05": 4.193507247693449,
+      "q95": 58.594379889148556
+     },
+     "null_selected_family_counts": {
+      "A2_harmonic_2freq_k1": 200
+     },
+     "null_test_nll": {
+      "max": 120.65417621190848,
+      "median": 106.46701144143717,
+      "min": 91.81899562484958,
+      "q05": 96.27717356445767,
+      "q95": 115.17133336691208
+     },
+     "observed_test_nll": 67.1013186368141
+    },
+    "phase_randomized_surrogate": {
+     "B": 200,
+     "null_J_val_median": 99.38965031623732,
+     "null_adjusted_p": 0.19402985074626866,
+     "null_complexity_mean": 9.79,
+     "null_recovered_period_quantiles_d": {
+      "median": 27.911047835223986,
+      "q05": 21.237150332520084,
+      "q95": 34.20743837138417
+     },
+     "null_selected_family_counts": {
+      "A2_harmonic_2freq_k1": 165,
+      "A4_harmonic_3freq_k1": 32,
+      "A5_harmonic_3freq_k2": 3
+     },
+     "null_test_nll": {
+      "max": 163.66182822011046,
+      "median": 98.80225578820418,
+      "min": 12.14120112295859,
+      "q05": 42.21172645344977,
+      "q95": 138.78542345309208
+     },
+     "observed_test_nll": 67.1013186368141
+    }
+   },
+   "nulls_beaten_all_three": false,
+   "periods_within_tolerance": false,
+   "residual_checks": {
+    "R1_whitelist_attribution": {
+     "all_attributed": false,
+     "gating": true,
+     "merge_rule_allowed": true,
+     "n_significant_peaks": 7,
+     "pass": false,
+     "rayleigh_T_trainval_d": 292.0,
+     "significant_peaks": [
+      {
+       "attributed": true,
+       "fisher_g": 0.513689632817856,
+       "m_ordinates": 71,
+       "p": 8.614008714580395e-21,
+       "peak_period_d": 14.65,
+       "whitelist_match": "variation"
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.27623138092730604,
+       "m_ordinates": 70,
+       "p": 1.437079298865748e-08,
+       "peak_period_d": 13.952380952380953,
+       "whitelist_match": "anomalistic_2nd_harmonic"
+      },
+      {
+       "attributed": false,
+       "fisher_g": 0.13443492357662812,
+       "m_ordinates": 69,
+       "p": 0.003759044346404905,
+       "peak_period_d": 36.625,
+       "whitelist_match": null
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.14685963009262673,
+       "m_ordinates": 68,
+       "p": 0.0016249335165501699,
+       "peak_period_d": 15.421052631578945,
+       "whitelist_match": "variation"
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.15687269140612017,
+       "m_ordinates": 67,
+       "p": 0.0008610038737305056,
+       "peak_period_d": 29.3,
+       "whitelist_match": "evection"
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.13650913141959958,
+       "m_ordinates": 66,
+       "p": 0.004743530975698209,
+       "peak_period_d": 32.55555555555556,
+       "whitelist_match": "evection"
+      },
+      {
+       "attributed": true,
+       "fisher_g": 0.15804420479072726,
+       "m_ordinates": 65,
+       "p": 0.0010749909505186556,
+       "peak_period_d": 26.636363636363633,
+       "whitelist_match": "synodic"
+      }
+     ]
+    },
+    "R2_cusum_changepoint": {
+     "gating": true,
+     "p": 0.004975124378109453,
+     "pass": false,
+     "stat": 4.784554426234796
+    },
+    "R3_tda_h1_absorption": {
+     "absorption_fraction": 0.4414082042263072,
+     "batch5_detected_persistence": 1.124,
+     "gating": true,
+     "max_h1_persistence_residual": 0.6278571784496307,
+     "p_perm_diagnostic": 0.01,
+     "pass": false,
+     "threshold_50pct": 0.562
+    },
+    "R4_compression": {
+     "gating": true,
+     "p_more_compressible": 0.009950248756218905,
+     "pass": false,
+     "raw_pass_at_alpha": false,
+     "zlib_bytes": 302
+    },
+    "diag_breusch_pagan": {
+     "LM": 8.507146793386235,
+     "gating": false,
+     "p": 0.0035375430729841974
+    },
+    "diag_ljung_box_lag40": {
+     "Q": 2388.5588482350577,
+     "gating": false,
+     "p": 0.0
+    },
+    "diag_mmd_vs_gaussian": {
+     "gating": false,
+     "mmd2": 0.008846601963396705,
+     "p": 0.07462686567164178
+    }
+   },
+   "residuals_pass": false,
+   "rmse_test_orig_units": 4.3493963255879725e-16,
+   "rmse_test_std_units": 0.6066869297229979,
+   "selected_complexity": 9,
+   "selected_family": "A2_harmonic_2freq_k1",
+   "sub_4d_constituent_flag": false,
+   "target": "Total tidal accel (g)",
+   "train_residual_sigma_orig_units": 1.7108950550224136e-16,
+   "verdict": "FAILED_EQUATION_SEARCH"
+  }
+ },
+ "data_file": "datasets/tidal-manila/tidal_derived.csv",
+ "data_regimes": [
+  "all_rows"
+ ],
+ "date_range": [
+  "2025-06-11",
+  "2026-06-11"
+ ],
+ "implementation_notes": [
+  "section 7.2 R1 merge attribution applied to claim A only (stricter of the two registration readings; declared pre-execution in results/eq_tidal_v2_CHECKPOINT.md)",
+  "merge-zone width implemented as dP1+dP2 with dPi = Pi^2/T_trainval",
+  "iterative Fisher-g: max ordinate removed after each significant peak; stop at p>=0.01 (cap 20)",
+  "series standardized by own train mean/std inside discovery (identical for real and null series); coefficients reported in original units",
+  "Ljung-Box, MMD-vs-Gaussian, Breusch-Pagan computed and published as NON-GATING diagnostics per section 7.1",
+  "frozen f* = selected family with train-fitted coefficients; gating residual checks on train+validation"
+ ],
+ "independence": "executor is equation-analyst v2 dispatch; != batch5 detection analyst; != v1 same-claim verifier",
+ "lambda": 2.696813773176181,
+ "n_rows": 366,
+ "predecessor": "eq_tidal_v1 (results/eq_tidal_v1.json); benchmark: claim A surrogate p=0.209 must be beaten at <=0.01",
+ "registration": "docs/REGISTRATION_EQ_TIDAL_V2.md sha256 4761403580ba138b (approved pre-fit)",
+ "script": "src/eq_tidal_v2.py",
+ "seed_scheme": {
+  "base": 20260612,
+  "stage_offsets": {
+   "bootstrap": 3,
+   "fit": 1,
+   "null_equation_generator": 0,
+   "nulls": 2,
+   "residuals": 4
+  }
+ },
+ "splits": {
+  "test": [
+   293,
+   366
+  ],
+  "train": [
+   0,
+   220
+  ],
+  "validation": [
+   220,
+   293
+  ]
+ },
+ "tda_absorption_threshold": 0.562,
+ "v1_benchmark_comparison": {
+  "benchmark_beaten_at_0p01": false,
+  "v1_claimA_surrogate_p": 0.208955223880597,
+  "v1_claimB_anomalistic_d": 27.60387627151598,
+  "v2_claimA_surrogate_p": 0.19402985074626866
+ },
+ "whitelist_periods_d": {
+  "anomalistic_2nd_harmonic": 13.777,
+  "evection": 31.812,
+  "synodic": 29.531,
+  "variation": 14.765
+ }
+}

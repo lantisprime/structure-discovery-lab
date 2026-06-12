@@ -1,0 +1,11 @@
+{
+  "eval": "O-1",
+  "checks": {
+    "all_9_fields_present": true,
+    "card_only_in_eval_folder": true,
+    "index_row_proposed_not_applied": true,
+    "real_kb_untouched": true,
+    "checkpoint_file_used": true
+  },
+  "grade": "PASS"
+}

@@ -1,0 +1,13 @@
+{
+  "eval": "A-1",
+  "checks": {
+    "claim_type_correct": true,
+    "null_preserves_autocorrelation_circular_shift": true,
+    "floor_rule_arithmetic_shown_1over92_le_0.0125": true,
+    "+1_correction": true,
+    "falsification_both_directions": true,
+    "no_outcome_expectation": true,
+    "bonus_surfaced_m_cap_family_tradeoff": true
+  },
+  "grade": "PASS"
+}

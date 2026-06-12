@@ -1,0 +1,5 @@
+agent: equation-analyst (eval Q-3, blind)
+model tier: fable (design+fit); two-run verification: same instance, fixed seed
+instance id: aa02af68f70a37807
+date: 2026-06-11
+dispatched by: lab-orchestrator (cowork session); grader: machine (sealed key db11b479733c9f98)

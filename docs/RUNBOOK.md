@@ -12,8 +12,14 @@ the null          audit)             suite, MC-          pre-commit)       data 
                                      calibrated)              │                │
                                           │                   │                ▼
                                           ▼                   │           PHASE 5
-                                     ADVERSARIAL ◄────────────┘           DECIDE
-                                     REVIEW (always)                      (EV/Kelly layer)
+                                     ADVERSARIAL ◄────────────┘           EQUATION
+                                     REVIEW (always)                      (candidate
+                                                                           governing eqs)
+                                                                                │
+                                                                                ▼
+                                                                           PHASE 6
+                                                                           DECIDE
+                                                                           (EV/Kelly layer)
 ```
 
 ---
@@ -87,7 +93,25 @@ the null          audit)             suite, MC-          pre-commit)       data 
     Sequential testing without alpha-spending guarantees eventual false positives —
     the fixed registered family is the protection.
 
-## Phase 5 — Decide (the theorems about action)
+## Phase 5 — Equation discovery (candidate governing equations)
+
+Full specification: `docs/EQUATION_DISCOVERY.md`. Summary:
+
+13a. **Gate**: only confirmed STRUCTURED claims enter; everything else is
+     `NO_EQUATION_ATTEMPTED`. Detection verdicts are never upgraded by a good fit.
+13b. Register the candidate equation family BEFORE fitting (human-approved,
+     commitment-hashed, multiplicity-charged) including a **null-equation
+     generator**: the same discovery procedure run on matched synthetic nulls —
+     equation searches on noise return equations, so only the null distribution of
+     recovered-equation scores calibrates the claim.
+13c. Select by held-out skill + MDL penalty (λ declared at registration); require
+     bootstrap parameter stability, clean residuals, and per-data-regime
+     coefficient reports. Verdict labels: CANDIDATE_EQUATION →
+     PREDICTIVE_EQUATION → MECHANISM_SUPPORTED → GOVERNING_LAW_CONFIRMED;
+     FAILED_EQUATION_SEARCH is publishable.
+13d. A PREDICTIVE_EQUATION confers no action license — Phase 6 still gates.
+
+## Phase 6 — Decide (the theorems about action)
 
 14. Convert verdicts to decisions through the decision layer, never directly:
     - **Doob / optional stopping**: fair process ⇒ no strategy. Full stop.
@@ -123,7 +147,7 @@ the null          audit)             suite, MC-          pre-commit)       data 
   survives costs out-of-sample."
 - Non-stationarity is worse than lotteries: regimes die like hot-45 did. Rolling-window
   persistence (Phase 2) becomes the central instrument, not a side check.
-- Phase 5 gains a costs model (spread/fees/slippage) before EV, and Kelly fractions
+- Phase 6 gains a costs model (spread/fees/slippage) before EV, and Kelly fractions
   shrink under estimation error (use fractional Kelly).
 - Decision output is information for the human; not personalized financial advice.
 

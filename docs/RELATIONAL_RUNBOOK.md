@@ -34,8 +34,16 @@ Every relational hypothesis is registered with exactly these fields:
 3. **Instrument + statistic** — from the admitted list; sidedness declared.
 4. **Matched null** — from the null table (framework §6.2); state what it preserves
    and the one thing it destroys.
-5. **Expected outcome** — written down in advance (the first run's H-R1…H-R4 are the
-   template). A predicted *negative* is a registrable expectation.
+5. **Decision rule & falsification criteria** — what statistic, what threshold,
+   what would count against the null AND against the alternative.
+   **(Amended 2026-06-11, lab-owner directive + ADVERSARIAL_REVIEW bias
+   finding): discovery tests carry NO outcome expectations.** Predicted results
+   are forbidden in registrations; they bias design and reading. Mechanism
+   predictions are permitted only as *instrument-validity controls* ("the
+   pipeline must detect X or the pipeline is broken"), clearly labeled as
+   calibration, never as discovery. Registrations are **git-committed before
+   the run script produces results** (C1 remediation); results commits
+   reference the registration SHA.
 6. **Multiplicity charge** — which equivalence class this run joins; new m if a new
    class is created (A3).
 7. **Era/freeze declaration** — which rows are exploration, which are confirmation
@@ -63,6 +71,43 @@ seeded and deterministic; the +1 permutation correction; results written to
 from a JSON the script wrote (no hand-transcribed values; each results doc carries
 its recompute snippet, as `ADMISSION_RELATIONAL.md` does).
 
+Added by REMEDIATION_LOG (2026-06-11):
+- **Floor rule (M3)**: the permutation count m must satisfy
+  1/(m+1) ≤ corrected-threshold/2, or the run is inadmissible.
+- **Gate rule (M2)**: negative-control gates use ≥200 trials; calibration is
+  checked with the lattice-aware χ² (KS against continuous uniform is invalid
+  for discrete permutation p-values).
+- **Meta panel (M6)**: every batch appends its real-data p-values to the
+  global meta-uniformity panel (`src/meta_uniformity.py`).
+- **Data-regime sensitivity (M4)**: every hit-count statistic reports
+  {all / ex-suspicious / verified-only} variants.
+- **Stability vs power (M5)**: per-seed rates on one dataset are reported as
+  seed-stability, never as power.
+- **Instrument status (M2/A4)**: GW is exploratory-only — its
+  moment-matched-regeneration null is FPR-correct at α=0.05 but fails
+  full-distribution calibration at n=200; redesign pending.
+
+Added from the external review (RESPONSE_EXTERNAL_REVIEW.md, 2026-06-11):
+- **Design verifier**: `src/design_verifier.py` must PASS before any results
+  doc is published (claim↔method map, floor rule per family, sensitivity
+  presence). Complements the numeric verifier.
+- **Global ledgers** (three levels, cross-checked):
+  *run-level* — `results/run_ledger.jsonl` (one row per experiment execution:
+  script, stages, seeds, registration artifact, output SHA, verifiers, grade;
+  append-only via `build_run_ledger.append_run`, duplicate run_ids refused);
+  *test-level* — `results/multiplicity_ledger.jsonl` (one row per real-data
+  p-value; totals must reconcile with the run ledger);
+  *file-level* — `results/commitment_ledger.txt` (SHA-256 hashes).
+- **Evidence grades**: every claim carries a G0–G6 grade (ladder in
+  RESPONSE_EXTERNAL_REVIEW.md).
+- **Shape fields**: result tables carry `admitted_for_shape` /
+  `real_data_shape` / `shape_match`.
+- **Environment capture**: `results/environment.json` regenerated with each
+  ledger rebuild.
+- **Domain neutrality (SANITIZATION.md, 2026-06-11)**: new scripts import only
+  `src/core` + one `src/domains/<domain>.py`; `src/lint_domain_neutrality.py`
+  must PASS before publication. Historical scripts are FROZEN records.
+
 ## Phase 3 — Mandatory checks before any verdict (the §6.3 checklist, ordered)
 
 1. Permutation/randomization p, +1-corrected, at the A3-corrected threshold.
@@ -87,6 +132,50 @@ power curve is the reference) · curve shape classification for recovery claims
 strong / strongest-practical). Negative results are first-class deliverables and use
 the same template (see `RESULTS_RELATIONAL_FIRSTRUN.md` — three positives, three
 predicted-and-confirmed nulls).
+
+### Five-tier verdict taxonomy (adopted 2026-06-11, admin recommendation)
+
+Every reported verdict is assigned exactly one of the following tiers. Tier
+annotations for the blind-eval baseline live in
+`results/blind_eval_verdict_tiers.json`.
+
+| Tier | Definition | Counts in accuracy? |
+|---|---|---|
+| **STRUCTURED** | Instrument returned p ≤ corrected α; verdict stands. | Yes (TP) |
+| **NULL** | Instrument returned p > corrected α at tested resolution. Does not prove absence — bounded by admission power curves. Qualifier: "below detection at these shapes, not proof of absence." | Yes (TN or FN) |
+| **NEAR_MISS_REGISTERED_SIGNAL** | Raw p below 0.10 but above corrected α. Signal may be real (near-threshold FN) or a noise excursion on null data (correctly held below verdict). Triggers pre-registered replication or follow-up; never used in public claims. | No — reported separately |
+| **EXPLORATORY_ONLY** | GW (G0) or any instrument not yet admitted. Real signal may be present but the instrument cannot issue a verdict pending calibration completion. | No — reported separately |
+| **OUT_OF_SCOPE** | Structure type is real but no registered claim covers it (coverage gap, instrument-gap, or registration-scope limitation). Not scored as FN. | No — reported as scope gap |
+
+**Rules (non-negotiable):**
+
+1. **NEAR_MISS never STRUCTURED.** A NEAR_MISS_REGISTERED_SIGNAL result never counts
+   as STRUCTURED in any accuracy table, public report, web deliverable, or
+   decision-layer document. It triggers a pre-registered replication experiment only.
+
+2. **NEAR_MISS triggers replication.** When a NEAR_MISS involves a real signal
+   (ground truth STRUCTURED and raw p below 0.10), it triggers a pre-registered
+   follow-up experiment charged to the multiplicity ledger. The follow-up is registered
+   before it runs (C1 rule); its design cannot be adjusted after the near-miss is seen.
+
+3. **NEAR_MISS never public.** Near-miss results are never cited in public claims,
+   press releases, web deliverables, or decision-layer documents. They appear only in
+   internal runbook records and the tier annotation file.
+
+4. **Latent-triangulation sub-tag (LATENT-SUPPORTED/NEEDS-CONFIRMATION).** When
+   instrument pairs confirm: (A-Z STRUCTURED) AND (B-Z STRUCTURED) AND (A-B is
+   NEAR_MISS_REGISTERED_SIGNAL), the tag LATENT-SUPPORTED/NEEDS-CONFIRMATION may be
+   applied to the A-B claim. This sub-tag signals that a shared latent mechanism is
+   plausible and warrants a direct A-B test at higher power. It is never
+   auto-upgraded to STRUCTURED; it is never used in public claims; it registers a
+   pre-registration target only.
+
+5. **Coverage reporting separation.** Registered-claim accuracy (TP/TN/FP/FN) is
+   reported separately from each of: coverage gaps (OUT_OF_SCOPE), instrument-blocked
+   detections (EXPLORATORY_ONLY), near-threshold detections
+   (NEAR_MISS_REGISTERED_SIGNAL), and out-of-scope structures. These four categories
+   are never pooled with the accuracy tally. Every eval report must include a
+   "Coverage and gaps" section alongside the confusion matrix.
 
 ## Phase 5 — Ledger and synthesis integration
 

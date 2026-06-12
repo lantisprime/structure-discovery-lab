@@ -1,0 +1,160 @@
+{
+  "seed": 20260611,
+  "datasets": {
+    "draws.A": {
+      "truth": "pure 6-of-60 uniform negative control",
+      "expected": [
+        "marginal null",
+        "memory null",
+        "sensor null"
+      ]
+    },
+    "draws.B": {
+      "truth": "transient first-half marginal bias",
+      "mechanism": "numbers 17 and 42 upweighted in first half only",
+      "expected": [
+        "frequency positive",
+        "stationarity/era positive",
+        "second half null",
+        "row/number trace to 17 and 42"
+      ]
+    },
+    "draws.C": {
+      "truth": "memory with exact-balanced marginals",
+      "mechanism": "near-exact equal number counts but elevated consecutive overlap",
+      "expected": [
+        "marginal null",
+        "Markov/overlap/stickiness positive"
+      ]
+    },
+    "draws.D": {
+      "truth": "date-paired latent relation",
+      "mechanism": "draw-sum responds to z_common",
+      "expected": [
+        "CCA/correlation with sensor_01 positive",
+        "paired relationship with E positive",
+        "shuffled-pairing null kills signal"
+      ]
+    },
+    "draws.E": {
+      "truth": "date-paired latent relation",
+      "mechanism": "same z_common as D",
+      "expected": [
+        "CCA/correlation with sensor_01 positive",
+        "paired relationship with D positive",
+        "shuffled-pairing null kills signal"
+      ]
+    },
+    "sensors.sensor_01": {
+      "truth": "noisy proxy for z_common",
+      "expected": [
+        "positive with D/E draw sums"
+      ]
+    },
+    "sensors.sensor_02": {
+      "truth": "periodic proxy related to z_common cycle",
+      "expected": [
+        "weaker positive with D/E"
+      ]
+    },
+    "sensors.sensor_03": {
+      "truth": "independent noise",
+      "expected": [
+        "null with all draw streams"
+      ]
+    },
+    "sensors.sensor_04": {
+      "truth": "regime step aligned with first/second half",
+      "expected": [
+        "may help detect B era split; not causal"
+      ]
+    },
+    "series.S1": {
+      "truth": "periodic cycle",
+      "expected": [
+        "subset-to-whole positive after moderate k",
+        "periodogram positive",
+        "delay-embedding H1 loop"
+      ]
+    },
+    "series.S2": {
+      "truth": "different view of related periodic cycle",
+      "expected": [
+        "subset-to-whole positive",
+        "cross-series relation with S1",
+        "topological loop"
+      ]
+    },
+    "series.S3": {
+      "truth": "iid noise matched scale",
+      "expected": [
+        "null"
+      ]
+    },
+    "series.S4": {
+      "truth": "regime/changepoint series",
+      "expected": [
+        "cross-segment MMD positive",
+        "subset recovery moderate",
+        "no clean loop"
+      ]
+    },
+    "cloud.X": {
+      "truth": "noisy circle in 2D",
+      "expected": [
+        "H1 loop",
+        "GW/TDA positive with Y"
+      ]
+    },
+    "cloud.Y": {
+      "truth": "same circle latent geometry embedded nonlinearly in 5D and row-shuffled",
+      "expected": [
+        "H1 loop",
+        "GW/TDA positive with X",
+        "CCA by row order invalid/null"
+      ]
+    },
+    "cloud.Z": {
+      "truth": "matched Gaussian blob control",
+      "expected": [
+        "no H1 loop",
+        "null vs X/Y under topology/geometry tests"
+      ]
+    },
+    "graph.A": {
+      "truth": "4-community stochastic block model",
+      "expected": [
+        "community/spectral structure",
+        "similar to graph.B"
+      ]
+    },
+    "graph.B": {
+      "truth": "4-community stochastic block model with different size/labels",
+      "expected": [
+        "community/spectral structure",
+        "similar to graph.A"
+      ]
+    },
+    "graph.C": {
+      "truth": "Erdos-Renyi density-matched control",
+      "expected": [
+        "no community structure",
+        "null vs A/B under degree-preserving/community tests"
+      ]
+    },
+    "matrix.M1": {
+      "truth": "rank-3 matrix plus noise",
+      "expected": [
+        "low-rank spectrum",
+        "matrix completion beats null"
+      ]
+    },
+    "matrix.M2": {
+      "truth": "iid Gaussian matrix",
+      "expected": [
+        "no recoverable low-rank structure",
+        "matrix completion near null"
+      ]
+    }
+  }
+}

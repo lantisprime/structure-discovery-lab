@@ -1,0 +1,1 @@
+agent: research-scout | model: sonnet | id: ac2aaeb0c75d63f20 | eval: R-1 | 2026-06-11

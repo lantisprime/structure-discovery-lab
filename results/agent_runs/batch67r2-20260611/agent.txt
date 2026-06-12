@@ -1,0 +1,4 @@
+executor: structure-analyst exec-mode | haiku | ac5f8f7b17f869fa0 | 18978 tok
+editor (results doc): docs-web-editor | sonnet | acf3e81e383e1176c | 33028 tok
+orchestrator: fable session (routing, ledgers, verifier maintenance only)
+registration 2709deedb274f0f6 committed PRE-RUN -> first G3-grade batch

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Independent Markov-chain bias detection for PCSO lotto draws.
 
 Tests for MEMORY in the draw sequence (i.i.d. uniform => memoryless).

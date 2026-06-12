@@ -1,0 +1,4 @@
+editor: docs-web-editor | sonnet | a1a5f598370dcc237 | 95058 tok, 34 calls
+verifier: independent-verifier | haiku | ad94505beec27a536 | 64831 tok, 33 calls
+role separation: editor != verifier != orchestrator (fable session, routed only)
+verification: 18 numeric claims checked, 0 mismatches; 3 gates PASS; 4/4 caveats present

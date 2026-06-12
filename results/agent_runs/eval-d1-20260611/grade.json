@@ -1,0 +1,3 @@
+{"eval": "D-1+D-2", "checks": {"six_values_exact": true, "provenance_on_every_value": true,
+ "status_counts_total_156": true, "no_interpretation_language": true,
+ "absent_value_refused_not_fabricated": true}, "grade": "PASS"}

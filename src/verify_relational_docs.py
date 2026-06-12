@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# DOMAIN ARTIFACT (pcso-lotto application): verifies/transcribes this domain's recorded
+# results; domain vocabulary expected here. Neutral instruments live in src/core.
 """Re-derives every number quoted in ADMISSION_RELATIONAL.md,
 RESULTS_RELATIONAL_FIRSTRUN.md and THEOREM_SYNTHESIS rows 29-31 from the raw
 result JSONs. Exits nonzero on any mismatch. Run after any rerun of the
@@ -196,4 +198,76 @@ chk('GW pressure-tidal p', gw['pressure|tidal']['p'], 1.0)
 chk('GW pressure-tidal dist', round(-gw['pressure|tidal']['score'], 3), 0.173, 5e-4)
 
 print("PRESSURE + BATCH7 VERIFIED" if ok else "PRESSURE FAILURES FOUND")
+
+# ---- Remediation R1 checks (REMEDIATION_LOG.md, ledger rows 38-39) ---------
+M = json.load(open('results/remediation_r1.json'))
+chk('rem presence min_p', round(M['presence_mc']['min_p'], 3), 0.23, 5e-3)
+chk('rem presence joint null', M['presence_mc']['joint_verdict_null'], True)
+chk('rem lmax 655', round(M['floors_lmax']['per_game']['Grand Lotto 6/55']['p'], 4), 0.0010, 5e-5)
+chk('rem lmax 645', round(M['floors_lmax']['per_game']['Mega Lotto 6/45']['p'], 4), 0.0150, 5e-5)
+chk('rem lmax corrected rejections', M['floors_lmax']['n_corrected_rejections'], 1)
+chk('rem gw tidal-moon p', M['floors_gw']['pairs']['tidal|moon']['p'], 0.01)
+chk('rem gw pressure-lotto p', round(M['floors_gw']['pairs']['pressure|lotto655_sum']['p'], 2), 0.28, 5e-3)
+chk('gate quarter fpr', M['gate_quarter']['fpr_at_alpha'], 0.035)
+chk('gate quarter passed', M['gate_quarter']['gate_passed'], True)
+chk('gate gw fpr', M['gate_gw']['fpr_at_alpha'], 0.055)
+chk('gate gw FAILED (the flag)', M['gate_gw']['gate_passed'], False)
+chk('pc r1 power@0.25', M['pc_r1']['power_by_shift']['0.25'], 0.2)
+chk('pc r5 power@0.10', M['pc_r5']['power_by_p_in']['0.1'], 0.08)
+sens = M['sensitivity']
+chk('sens 655 all corr', sens['Grand Lotto 6/55']['all']['corr'], 0.251)
+chk('sens 655 ex corr', sens['Grand Lotto 6/55']['ex_suspicious']['corr'], 0.154)
+chk('sens 655 lmax ex-suspicious p', round(sens['lambda_max_655_ex_suspicious']['p'], 4), 0.0025, 5e-5)
+U = json.load(open('results/meta_uniformity.json'))
+chk('meta n', U['n_tests'], 136)
+chk('meta ks p', round(U['ks_p'], 3), 0.111, 5e-4)
+chk('meta frac05', round(U['frac_le_05'], 3), 0.088, 5e-4)
+IV = json.load(open('results/independent_verification.json'))
+blind_key = json.load(open('results/blind/_key.json'))
+conc = 0
+for L, truth in blind_key.items():
+    v = IV['task1'][f'series_{L}']['verdict']
+    conc += (v == 'NO DETECTED STRUCTURE') == truth.startswith('drawsum')
+chk('blind concordance', conc, 9)
+chk('indep replication corr all', round(IV['task2']['with_all_rows']['corr'], 3), 0.251, 5e-4)
+chk('indep replication corr ex', round(IV['task2']['excluding_suspicious']['corr'], 3), 0.154, 5e-4)
+
+print("REMEDIATION VERIFIED" if ok else "REMEDIATION FAILURES FOUND")
+
+# ---- External-review adoptions ---------------------------------------------
+L = [json.loads(l) for l in open('results/multiplicity_ledger.jsonl')]
+chk('ledger size', len(L), 248)
+chk('ledger frac<=.05', round(sum(r['raw_p']<=0.05 for r in L)/len(L), 3), 0.073, 5e-4)
+D = json.load(open('results/design_verifier_report.json'))
+chk('design verifier verdict', D['verdict'], 'PASS')
+chk('design verifier violations', len(D['violations']), 0)
+import os
+chk('environment captured', os.path.exists('results/environment.json'), True)
+RL = [json.loads(l) for l in open('results/run_ledger.jsonl')]
+chk('run ledger size', len(RL), 12)
+chk('run/test ledger reconcile', sum(r['real_data_tests'] for r in RL), len(L))
+import json as _j
+BS=open('results/blind_eval_score.md').read()
+chk('blind eval zero FP', 'FP=0' in BS and 'specificity 1.000' in BS, True)
+print("EXTERNAL-REVIEW ADOPTIONS VERIFIED" if ok else "ADOPTION FAILURES")
+
+# ---- batch67_r2 rerun checks ------------------------------------------------
+RR = json.load(open('results/rerun_batch67.json'))
+chk('r2 mmd joint null', RR['b6_mmd']['joint_verdict_null'], True)
+chk('r2 mmd min_p', round(RR['b6_mmd']['min_p'], 3), 0.049, 5e-4)
+chk('r2 spectra joint null', RR['b6_spectra']['joint_verdict_null_so_far'], True)
+chk('r2 halves 6/55 corr', RR['b6_halves']['per_game']['Grand Lotto 6/55']['all']['corr'], 0.251)
+chk('r2 halves 6/55 ex corr', RR['b6_halves']['per_game']['Grand Lotto 6/55']['ex_suspicious']['corr'], 0.154)
+chk('r2 seasons 6/6 corrected', RR['b7_seasons']['n_corrected_rejections'], 6)
+chk('r2 sunmoon median p', RR['b7_cca']['tests']['pressure_vs_sunmoon']['median_p'], 0.005)
+chk('r2 kp median p', round(RR['b7_cca']['tests']['pressure_vs_kp']['median_p'], 2), 0.43, 5e-3)
+chk('r2 gw status is G0', 'G0 EXPLORATORY' in RR['b7_gw']['status'], True)
+print("BATCH67_R2 VERIFIED" if ok else "BATCH67_R2 FAILURES")
+
+R8 = json.load(open('results/r8_admission.json'))
+chk('r8 NOT admitted', R8['admission']['ADMITTED'], False)
+chk('r8 negative passed', R8['negative_E1_independent_AR1']['passed'], True)
+chk('r8 gate power', R8['positive_gate_sigma1.0']['power_at_alpha'], 0.58)
+chk('r8 posthoc S1|S2', R8['benchmark_posthoc']['pairs']['S1|S2'], 0.69)
+print("R8 ATTEMPT VERIFIED" if ok else "R8 FAILURES")
 sys.exit(0 if ok else 1)

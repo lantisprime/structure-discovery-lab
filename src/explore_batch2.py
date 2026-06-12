@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# FROZEN HISTORICAL RECORD: reproduces hash-ledgered results; domain-specific by nature.
+# Do not modify. New experiments use src/core (neutral) + src/domains/<domain>.py.
 """Exploration batch 2 — five untouched structural angles, all MC-calibrated.
 
 E1  DRAW-ORDER POSITION EFFECTS: N1..N6 is the physical exit order from the

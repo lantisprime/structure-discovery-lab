@@ -1,0 +1,4 @@
+editor: docs-web-editor | sonnet | ad0f8c68da6925154 | 36434 tok | smoke test PASSED
+orchestrator post-fix (disclosed): one footer clause re-bound — 7.3% is the
+248-row ledger fraction (incl. superseded originals); 8.8%/KS p=0.111 belong to
+the 136-test current-best panel. Sources: multiplicity_ledger.jsonl + meta_uniformity.json.
