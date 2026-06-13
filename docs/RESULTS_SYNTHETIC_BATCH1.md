@@ -77,9 +77,21 @@ for single-ball, ~−10% for multi-ball mode; see registration §Bias injection)
 - Feeds Experiment C: δ₀ will be set at r = 0.8 (detectable at n_e = 400 with
   power ≈ 0.89, closest registered cell to the 0.8 target).
 
-## Experiment C — Era half-life (pending)
+## Experiment C — Era half-life (complete → `RESULTS_SYNTHETIC_BATCH1_CD.md`)
 
-## Experiment D — Instrument power map (pending)
+Run under the expectation-free re-registration `REGISTRATION_SYNTHETIC_BATCH1_CD.md`
+(git `69d39e2`), which supersedes the parent registration's §C. Outcome:
+**τ_min = none** — no registered τ reaches confirmation-survival 0.8, and the
+no-decay ceiling itself is only S(∞) = 0.526, bound by the n_c = 200 confirmation
+window rather than the decay. The τ=∞ validity control PASSED. Full grid, I4
+persistence curve, and carried-instrument distribution in the C/D results doc.
+
+## Experiment D — Instrument power map (complete → `RESULTS_SYNTHETIC_BATCH1_CD.md`)
+
+Same re-registration (supersedes parent §D). Outcome: at fixed r=0.40 mass the
+sparse/dense instrument ranking **inverts** with spread (I2 max-dev leads at c=1,
+I1 omnibus χ² overtakes by c=2), and detectability dies by c ≥ 4–8. c=0 FPR and
+c=1 cross-experiment consistency controls both PASSED. Full table in the C/D doc.
 
 ## Registration deviations (logged, not tuned away)
 
@@ -119,6 +131,10 @@ n_min ≈ 2.7× the 1-df oracle), which stands as the batch's primary yield.
 
 ## Ledger / synthesis updates
 
-Deferred until C and D complete; candidate ledger rows: sparse-scan frontier
-(new equation), λ* df correction (amends KB card 19 interpretation), I2
-dominance for sparse bias (instrument power map, partial).
+**C and D are now complete** (`RESULTS_SYNTHETIC_BATCH1_CD.md`, git `856322c`;
+both validity controls PASS). Candidate ledger rows, now supported across A+C+D
+and itemized in the C/D doc — **flagged for review, not yet promoted**:
+sparse-scan vs df-54 omnibus frontier crossover (A varying n, D varying spread),
+λ\* df correction (amends KB card 19 interpretation), the n_c-bound on era
+confirmation (τ_min governed by confirmation-window size, not decay alone), and
+I4 persistence as a τ-monotone complement to the single-window family.
