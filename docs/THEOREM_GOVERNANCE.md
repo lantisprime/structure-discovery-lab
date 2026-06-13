@@ -91,9 +91,23 @@ representation bundle R_i is declared per dataset *before* the run (registration
 the A3 budget counts **representation × method × metric** classes, not raw tests. One
 declared representation per claim; extras are charged.
 
+### C11. Deterministic mathematics vs the MC-null premise  *(added 2026-06-13 with the riemann-zero-lab module)*
+A1/A2 require every instrument's null to be *simulated* from a constrained generative H₀.
+For a deterministic mathematical object there is no such sampling model: "is t_n a zero of
+ζ?" has a definite yes/no answer, not a null distribution, and Monte-Carlo calibration of it
+is undefined — there is nothing random to resample. Naively forcing the MC-null frame here
+would either **stall** the module (no H₀ simulator can be written, so dataset onboarding halts
+at Part 4 Step D1) or **invite a fake one** (resampling something irrelevant to manufacture a
+p-value — the deterministic form of C2's imported-baseline error). **The conflict is between
+the calibration premise and the kind of object, not between two theorems.** Resolution: **A8**
+— deterministic claims are admitted on a *verification certificate* instead of an MC-null,
+while the MC-null discipline is retained **unchanged** for any genuinely stochastic
+sub-question layered on top (here: zero-spacing vs Poisson). A7's one-way flow keeps the two
+layers apart.
+
 ---
 
-## Part 2 — Harmonization constitution (seven articles)
+## Part 2 — Harmonization constitution (seven articles, plus a deterministic-math extension A8)
 
 **A1. One generative null, many lenses.** Every instrument's null distribution is
 derived from the SAME constrained generative model (here: 6-without-replacement,
@@ -131,6 +145,26 @@ registered binomial test on post-freeze draws settles it, not us.)
 era attribution) → decision (Doob gate → EV measure → Kelly size). Information flows
 forward only; decisions never feed back into detection choices; each theorem is asked
 only the question of its own layer. *Dissolves C7, C8.*
+
+**A8. Deterministic-certificate substitution.** *(deterministic-math extension, added
+2026-06-13.)* When a claim is a *deterministic mathematical fact* — no sampling model exists
+for its truth — A1/A2's simulated null is replaced by a **verification certificate** with
+three required legs:
+(i) **exact / high-precision computation** to a declared tolerance — the analogue of a fixed
+seed: the tolerance, not a p-value, is what gets pre-registered;
+(ii) **independent recomputation** — ≥2 distinct algorithms or code paths must agree to the
+declared precision, executed by a *different* instance than the author (the A4 / role-ID
+analogue: a certificate, not a vote, defeats doubt);
+(iii) an **analytic invariant cross-check** — a count or identity that must hold exactly
+(e.g. located zero count = N(T) = the argument-principle contour integral).
+A deterministic claim missing any leg is inadmissible, exactly as an estimator missing its
+null trial is under A2. A8 does **not** weaken A1: the MC-null machinery applies *unchanged*
+to every genuinely **stochastic** question the work raises — above all the zero-spacing
+comparison, where Poisson is the true null, GUE the alternative, and A4's asymmetric-verdict
+and power-statement rules bind as usual. A7's layered flow keeps the two honest:
+deterministic-certificate layer (does the object exist / equal the count) → statistical-
+structure layer (how is it distributed), one way only. *Resolves C11; first applied in
+`riemann-zero-lab` Batch 1 — 200 ζ-zeros admitted by certificate, spacing admitted by MC-null.*
 
 ---
 
@@ -249,3 +283,10 @@ differ at §1 (block-bootstrap null), §5 (era registry becomes central), and §
 *Adopted Jun 11, 2026 (Parts 1–3); Part 4 added same day. Applies to this project and
 to any RUNBOOK-based successor (including the markets application, where C5 —
 stationarity — is expected to be the dominant conflict rather than an edge case).*
+
+*Amended Jun 13, 2026: conflict **C11** (deterministic mathematics vs the MC-null premise)
+and article **A8** (deterministic-certificate substitution) added with the `riemann-zero-lab`
+module, which extends the lab from stochastic datasets to deterministic mathematical structure.
+A8 leaves A1–A7 intact for all stochastic questions; it only supplies an admission path for
+claims that have no sampling model. See `riemann-zero-lab/docs/kb/INDEX.md` §Governance and
+`riemann-zero-lab/docs/RESULTS_ZETA_ZERO_BATCH1.md`.*

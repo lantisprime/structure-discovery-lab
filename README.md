@@ -18,7 +18,7 @@ or a subset determines the whole). Source: `docs/CROSS_DATASET_FRAMEWORK.md §0`
 
 - [Why this lab exists](#why-this-lab-exists)
 - [Research questions the framework answers](#research-questions-the-framework-answers)
-- [The constitution: articles A1–A7 and conflict registry C1–C10](#the-constitution-articles-a1a7-and-conflict-registry-c1c10)
+- [The constitution: articles A1–A8 and conflict registry C1–C11](#the-constitution-articles-a1a8-and-conflict-registry-c1c11)
 - [Instrument inventory](#instrument-inventory)
 - [The theorem arsenal — how each instrument is used](#the-theorem-arsenal--how-each-instrument-is-used)
 - [Equation discovery — Phase 5](#equation-discovery--phase-5)
@@ -28,6 +28,7 @@ or a subset determines the whole). Source: `docs/CROSS_DATASET_FRAMEWORK.md §0`
 - [Independently verified performance](#independently-verified-performance)
 - [Evidence-grade ladder G0–G6](#evidence-grade-ladder-g0g6)
 - [Domain architecture](#domain-architecture)
+- [Module: riemann-zero-lab (deterministic mathematics)](#module-riemann-zero-lab-deterministic-mathematics)
 - [Repository guide](#repository-guide)
 - [Limitations](#limitations)
 - [Reviews and audits trail](#reviews-and-audits-trail)
@@ -81,11 +82,11 @@ before they are ever trusted on real data.
 
 ---
 
-## The constitution: articles A1–A7 and conflict registry C1–C10
+## The constitution: articles A1–A8 and conflict registry C1–C11
 
 Source: `docs/THEOREM_GOVERNANCE.md`.
 
-### Seven harmonization articles
+### Harmonization articles (A1–A7, plus deterministic-math extension A8)
 
 **A1. One generative null, many lenses.** Every instrument's null distribution is
 derived by Monte Carlo from the same constrained generative model — never from textbook
@@ -114,7 +115,15 @@ pre-registered; the held-out confirmation test is the only arbiter, never argume
 **A7. Layered one-way flow.** Detection → interpretation → decision. Information flows
 forward only; each theorem is asked only the question of its own layer.
 
-### Conflict registry: C1–C10
+**A8. Deterministic-certificate substitution** *(deterministic-math extension, 2026-06-13).*
+When a claim is a deterministic mathematical fact with no sampling model, the MC-null (A1/A2)
+is replaced by a three-leg **certificate**: exact computation to a declared tolerance,
+independent recomputation by a different instance, and an analytic invariant cross-check (e.g.
+located zero count = N(T) = argument-principle contour integral). A8 leaves A1–A7 intact for
+every stochastic question; it only supplies an admission path for claims that cannot be
+resampled. First applied in `riemann-zero-lab`.
+
+### Conflict registry: C1–C11
 
 The ten recorded collisions between theorem families (source: `docs/THEOREM_GOVERNANCE.md`):
 
@@ -130,6 +139,7 @@ The ten recorded collisions between theorem families (source: `docs/THEOREM_GOVE
 | C8 | Universality vs bias-hunting | A7: universality fixes null fluctuation laws; bias detection hunts deviations from those laws |
 | C9 | Relational double counting — one anomaly, many faces | Mandatory row-trace before any relational flag is reported; if driving rows underlie a known anomaly the flag joins that equivalence class |
 | C10 | Representation freedom as uncharged multiplicity | Representation bundle declared per dataset before the run; A3 budget counts representation × method × metric classes |
+| C11 | Deterministic mathematics vs the MC-null premise (no sampling model exists for "is t_n a zero of ζ?") | A8: admit deterministic claims on a verification certificate (exact computation + independent recomputation + analytic invariant count), MC-null retained for stochastic sub-questions (spacing vs Poisson) |
 
 ### Expectation-free registration protocol
 
@@ -737,6 +747,37 @@ machinery matters most in attribution and net-of-costs survival testing.
 
 ---
 
+## Module: riemann-zero-lab (deterministic mathematics)
+
+Source: `riemann-zero-lab/README.md`. Added 2026-06-13 — the lab's first **deterministic-
+mathematics** module. Instead of testing stochastic data for structure, it locates and verifies
+zeros of the Riemann zeta function ζ(s). It is **numerical discovery, never an RH proof**: RH is
+an infinite statement; the module touches finitely many zeros (`riemann-zero-lab/docs/kb/riemann-hypothesis.md`).
+
+**Batch 1** located and verified the first **200 non-trivial zeros** on the critical line
+(Hardy Z-function sign-change bracketing, mpmath dps=80): residuals ≤ 3.1e-47, precision-stable
+to 56–60 digits, two-run byte-identical. The located count equals N(T), `mpmath.nzeros`, and a
+contour argument-principle integral (no zero missed up to height ≈ 397 — a *finite* check, not
+RH). Unfolded nearest-neighbour spacings are decisively **non-Poisson** and **GUE-like**
+(KS D_GUE = 0.07 vs D_Poisson = 0.35), reported as descriptive at N = 199.
+
+**Why it fits the constitution (C11 / A8).** A1's "every null is Monte-Carlo-derived" is
+undefined for the *existence* of a zero — nothing random to resample. Conflict **C11** records
+this; article **A8 (deterministic-certificate substitution)** resolves it: deterministic claims
+are admitted on a three-leg certificate (exact computation to a declared tolerance, independent
+recomputation by a different instance, analytic invariant cross-check count = N(T) = contour
+integral), while the MC-null discipline (A1–A7) governs the one genuinely stochastic layer — the
+spacing-vs-Poisson comparison — unchanged. A methodology-change eval slice
+(`agents/evals/EVAL_SET.md` §Z: Z-V1/Z-V2/Z-O1) confirmed the verification and onboarding gates
+transfer: **3/3 PASS**.
+
+Same discipline as the rest of the lab — cards-first (`riemann-zero-lab/docs/kb/INDEX.md`, 7
+cards), registration committed before the first result run, JSON-from-scripts /
+results-from-JSON, role-separated independent verification, adversarial-review section, and a
+run-ledger row. Start at `riemann-zero-lab/README.md`.
+
+---
+
 ## Repository guide
 
 ### Framework documents (domain-agnostic, reading order)
@@ -745,8 +786,9 @@ machinery matters most in attribution and net-of-costs survival testing.
    equation discovery) + failure-mode gallery + domain-porting guide
 2. **docs/EVALUATION_PROTOCOL.md** — formula-level spec (E0–E9 evaluation, H1–H7
    harmonization); the deterministic guide for human or LLM executors
-3. **docs/THEOREM_GOVERNANCE.md** — conflict registry C1–C10, harmonization constitution
-   A1–A7, theorem onboarding (Part 3), dataset onboarding (Part 4)
+3. **docs/THEOREM_GOVERNANCE.md** — conflict registry C1–C11, harmonization constitution
+   A1–A8 (A8 = deterministic-certificate substitution), theorem onboarding (Part 3),
+   dataset onboarding (Part 4)
 4. **docs/THEOREM_SYNTHESIS.md** — the theory map: five faces of structure, the
    implication lattice, instrument correlation, the 40-row results ledger
 5. **docs/CROSS_DATASET_FRAMEWORK.md** — the relational extension (fifth face):

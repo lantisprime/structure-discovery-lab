@@ -191,9 +191,12 @@ Strongest objections considered, and their dispositions:
    pipeline byte-identical output is necessary, not sufficient; the *cross-executor* check
    (independent verifier, §4) is the substantive one, and it caught a real defect.
 6. **"Governance mismatch — the lab's MC-null premise (A1) doesn't fit deterministic math."**
-   Yes; this is the module's methodological departure, documented in `kb/INDEX.md` §Governance
-   and the registration. The MC-null machinery is confined to §2 (Poisson null); zero existence
-   is settled by computation, not sampling. This warrants the eval-set decision in §7.
+   Acknowledged and now **formally reconciled**, not just flagged: registered as conflict
+   **C11** and resolved by article **A8** (deterministic-certificate substitution) in
+   `docs/THEOREM_GOVERNANCE.md`. Zero existence is admitted by a three-leg certificate (exact
+   computation, independent recomputation, analytic invariant count = N(T) = contour integral);
+   the MC-null machinery is confined to §2 (Poisson null), where A1–A7 bind unchanged. The
+   deterministic-math eval slice (§7) confirmed the discipline transfers (3/3 PASS).
 
 ---
 

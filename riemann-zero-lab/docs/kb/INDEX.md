@@ -39,6 +39,13 @@ The main lab's Article A1 ("one generative null, many lenses, derived by Monte C
 written for stochastic datasets. ζ is deterministic: there is no sampling null for "is t_n a
 zero" — that is settled by computing |ζ(½+it_n)| to declared precision and by the N(T) count.
 The MC-null machinery applies **only** to the spacing analysis (cards 5–6), where Poisson is
-the genuine null and GUE the alternative. This boundary is stated in
-`REGISTRATION_ZETA_ZERO_BATCH1.md` §Governance and is the module's main methodological
-departure from the lottery batches — flagged to the lab owner for an eval-set decision.
+the genuine null and GUE the alternative.
+
+This is now **formally reconciled** in the constitution, not merely flagged: the conflict is
+registered as **C11** (deterministic mathematics vs the MC-null premise) and resolved by
+article **A8** (deterministic-certificate substitution) in `../../../docs/THEOREM_GOVERNANCE.md`.
+A8 admits a deterministic claim on a three-leg *certificate* — exact computation to a declared
+tolerance, independent recomputation by a different instance, and an analytic invariant
+cross-check (count = N(T) = contour integral) — instead of an MC-null, while leaving A1–A7
+unchanged for the stochastic spacing layer. The deterministic-math eval slice (Z-V1/Z-V2/Z-O1,
+`../../../agents/evals/EVAL_SET.md` §Z) confirmed the discipline transfers; **3/3 PASS**.
