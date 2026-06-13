@@ -1,0 +1,62 @@
+{
+  "module": "riemann-zero-lab",
+  "status": "DESCRIPTIVE / EXPLORATORY (N~200, low height t<=396.4; not confirmatory)",
+  "n_zeros": 200,
+  "n_spacings": 199,
+  "unfolding": "w_n = theta(gamma_n)/pi + 1 (Riemann-von Mangoldt smooth count)",
+  "mean_spacing": 0.998993,
+  "std_spacing": 0.363761,
+  "min_spacing": 0.324438,
+  "max_spacing": 1.956977,
+  "frac_below_0.5": {
+    "empirical": 0.0503,
+    "GUE_pred": 0.112,
+    "Poisson_pred": 0.3935
+  },
+  "ks_vs_GUE": {
+    "D": 0.0711,
+    "p_indicative": 0.258
+  },
+  "ks_vs_Poisson": {
+    "D": 0.3525,
+    "p_indicative": 0.0
+  },
+  "histogram": {
+    "edges": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0,
+      1.25,
+      1.5,
+      1.75,
+      2.0,
+      2.25,
+      2.5,
+      2.75,
+      3.0
+    ],
+    "counts": [
+      0,
+      10,
+      48,
+      53,
+      39,
+      29,
+      13,
+      7,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "verdict": "empirical spacing is closer to GUE (KS); small-gap fraction 0.050 supports level repulsion. Descriptive only.",
+  "caveats": [
+    "Asymptotic GUE law; at low height the empirical repulsion is biased weaker.",
+    "Consecutive spacings are weakly dependent => KS p-values are indicative only.",
+    "Endpoint spacings truncated; N-1 spacings reported.",
+    "A 'fails to reject Poisson' would be a power statement, not evidence of no repulsion (Article A4)."
+  ]
+}

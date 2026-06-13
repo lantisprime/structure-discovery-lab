@@ -1,0 +1,20 @@
+{
+  "module": "riemann-zero-lab",
+  "analytic_count": {
+    "T": "396.881854223",
+    "N_formula": "200.0",
+    "N_formula_round": 200,
+    "nzeros_mpmath": 200,
+    "located": 200,
+    "match": true
+  },
+  "contour_argument_principle": {
+    "T0": 31.0,
+    "integral": "4.000000 + -4.11e-27i",
+    "Nc_round": 4,
+    "located_below_T0": 4,
+    "match": true,
+    "note": "counts zeros in the whole strip 0<Re<1 up to T0; equal to the on-line count here => no zero missed in this strip up to T0 (finite check, not RH)."
+  },
+  "overall_pass": true
+}
