@@ -1,0 +1,309 @@
+{
+ "meta": {
+  "P": 55,
+  "K": 2000,
+  "R": 200,
+  "ball": 17,
+  "alpha": 0.05,
+  "m": 3,
+  "alpha_prime": 0.016952427508441503,
+  "master_seed": 20260612,
+  "registration": "REGISTRATION_SYNTHETIC_BATCH1_CD.md (git 69d39e2, sha256 380cc263da70e124)",
+  "seed_scheme": "C: rng=default_rng(MASTER*10**6+300000+tau_index); D: +400000+c. nulls +999000+tag"
+ },
+ "C": {
+  "null_n_e": 400,
+  "null_n_c": 200,
+  "delta0_r": 0.8,
+  "fair_control": {
+   "explore_fpr": 0.045,
+   "confirm_false_survival": 0.0,
+   "n_fired": 9
+  },
+  "ref_power_nc_r08_alpha05": {
+   "I1": 0.355,
+   "I2": 0.5,
+   "I3": 0.27
+  },
+  "cells": {
+   "25": {
+    "tau": 25,
+    "explore_power": 0.025,
+    "n_fired": 5,
+    "n_survive": 0,
+    "S": null,
+    "S_guarded": false,
+    "carried_counts": {
+     "I1": 1,
+     "I2": 3,
+     "I3": 1
+    },
+    "I4_persistence_power": 0.06
+   },
+   "50": {
+    "tau": 50,
+    "explore_power": 0.045,
+    "n_fired": 9,
+    "n_survive": 1,
+    "S": null,
+    "S_guarded": false,
+    "carried_counts": {
+     "I1": 4,
+     "I2": 4,
+     "I3": 1
+    },
+    "I4_persistence_power": 0.045
+   },
+   "100": {
+    "tau": 100,
+    "explore_power": 0.04,
+    "n_fired": 8,
+    "n_survive": 0,
+    "S": null,
+    "S_guarded": false,
+    "carried_counts": {
+     "I1": 3,
+     "I2": 3,
+     "I3": 2
+    },
+    "I4_persistence_power": 0.05
+   },
+   "200": {
+    "tau": 200,
+    "explore_power": 0.12,
+    "n_fired": 24,
+    "n_survive": 1,
+    "S": 0.041666666666666664,
+    "S_guarded": true,
+    "carried_counts": {
+     "I1": 2,
+     "I2": 15,
+     "I3": 7
+    },
+    "I4_persistence_power": 0.045
+   },
+   "400": {
+    "tau": 400,
+    "explore_power": 0.35,
+    "n_fired": 70,
+    "n_survive": 1,
+    "S": 0.014285714285714285,
+    "S_guarded": true,
+    "carried_counts": {
+     "I1": 7,
+     "I2": 59,
+     "I3": 4
+    },
+    "I4_persistence_power": 0.125
+   },
+   "800": {
+    "tau": 800,
+    "explore_power": 0.595,
+    "n_fired": 119,
+    "n_survive": 8,
+    "S": 0.06722689075630252,
+    "S_guarded": true,
+    "carried_counts": {
+     "I1": 8,
+     "I2": 110,
+     "I3": 1
+    },
+    "I4_persistence_power": 0.265
+   },
+   "inf": {
+    "tau": "inf",
+    "explore_power": 0.875,
+    "n_fired": 175,
+    "n_survive": 92,
+    "S": 0.5257142857142857,
+    "S_guarded": true,
+    "carried_counts": {
+     "I1": 2,
+     "I2": 173,
+     "I3": 0
+    },
+    "I4_persistence_power": 0.56
+   }
+  },
+  "tau_min": null,
+  "validity_tau_inf": {
+   "S_inf": 0.5257142857142857,
+   "carried_weighted_ref": 0.4983428571428571,
+   "match_ref_within_2se": true,
+   "fair_false_survival": 0.0,
+   "above_null_2se": true,
+   "PASS": true
+  }
+ },
+ "D": {
+  "n": 800,
+  "mass_r": 0.4,
+  "ball_sets": {
+   "0": [],
+   "1": [
+    17
+   ],
+   "2": [
+    17,
+    38
+   ],
+   "4": [
+    17,
+    38,
+    9,
+    46
+   ],
+   "8": [
+    17,
+    38,
+    9,
+    46,
+    3,
+    22,
+    31,
+    52
+   ],
+   "16": [
+    17,
+    38,
+    9,
+    46,
+    3,
+    22,
+    31,
+    52,
+    7,
+    14,
+    25,
+    33,
+    41,
+    48,
+    54,
+    11
+   ]
+  },
+  "A_ref_r0.4_n800": {
+   "I1": 0.235,
+   "I2": 0.495,
+   "I3": 0.155
+  },
+  "cells": {
+   "0": {
+    "c": 0,
+    "balls": [],
+    "power_I1": 0.025,
+    "power_I2": 0.005,
+    "power_I3": 0.02,
+    "max_realized_delta": 0.0
+   },
+   "1": {
+    "c": 1,
+    "balls": [
+     17
+    ],
+    "power_I1": 0.255,
+    "power_I2": 0.45,
+    "power_I3": 0.16,
+    "max_realized_delta": 0.042469090909090915
+   },
+   "2": {
+    "c": 2,
+    "balls": [
+     17,
+     38
+    ],
+    "power_I1": 0.115,
+    "power_I2": 0.08,
+    "power_I3": 0.065,
+    "max_realized_delta": 0.021814090909090908
+   },
+   "4": {
+    "c": 4,
+    "balls": [
+     17,
+     38,
+     9,
+     46
+    ],
+    "power_I1": 0.06,
+    "power_I2": 0.015,
+    "power_I3": 0.04,
+    "max_realized_delta": 0.011874090909090917
+   },
+   "8": {
+    "c": 8,
+    "balls": [
+     17,
+     38,
+     9,
+     46,
+     3,
+     22,
+     31,
+     52
+    ],
+    "power_I1": 0.035,
+    "power_I2": 0.005,
+    "power_I3": 0.025,
+    "max_realized_delta": 0.00665909090909092
+   },
+   "16": {
+    "c": 16,
+    "balls": [
+     17,
+     38,
+     9,
+     46,
+     3,
+     22,
+     31,
+     52,
+     7,
+     14,
+     25,
+     33,
+     41,
+     48,
+     54,
+     11
+    ],
+    "power_I1": 0.03,
+    "power_I2": 0.015,
+    "power_I3": 0.025,
+    "max_realized_delta": 0.004069090909090911
+   }
+  },
+  "validity": {
+   "c0_fpr_ok": true,
+   "c0_fpr": {
+    "I1": 0.025,
+    "I2": 0.005,
+    "I3": 0.02
+   },
+   "c1_consistency": {
+    "I1": {
+     "p_D": 0.255,
+     "p_A": 0.235,
+     "diff": 0.020000000000000018,
+     "tol_2se": 0.08601744009211156,
+     "PASS": true
+    },
+    "I2": {
+     "p_D": 0.45,
+     "p_A": 0.495,
+     "diff": 0.044999999999999984,
+     "tol_2se": 0.09984863544385572,
+     "PASS": true
+    },
+    "I3": {
+     "p_D": 0.16,
+     "p_A": 0.155,
+     "diff": 0.0050000000000000044,
+     "tol_2se": 0.07285430666748535,
+     "PASS": true
+    }
+   },
+   "PASS": true
+  }
+ }
+}
