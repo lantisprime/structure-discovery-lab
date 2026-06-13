@@ -107,6 +107,19 @@ def run_n(n):
          f"{time.time()-t0:.0f}s -> {os.path.basename(OUT)}")
 
 
+def lam_star(df, aprime, beta=0.20):
+    """Noncentrality lambda for a power-(1-beta) df-frontier: smallest lam such
+    that a noncentral chi2_df(lam) variate exceeds the central chi2_df upper-
+    alpha' critical value with probability 1-beta. Used for the dense-bias
+    (omnibus chi2, df = P-1) envelope; the df=1 oracle uses the Wald (z+z)^2
+    approximation instead (see `zsum2`)."""
+    from scipy.stats import chi2, ncx2
+    from scipy.optimize import brentq
+    crit = chi2.ppf(1 - aprime, df)
+    return float(brentq(lambda lam: ncx2.sf(crit, df, lam) - (1 - beta),
+                        1e-9, 1e4))
+
+
 def theory():
     from scipy.stats import norm
     out = load_out()
@@ -116,7 +129,7 @@ def theory():
     S = np.full((P, P), p2 - P0 ** 2)
     np.fill_diagonal(S, P0 * (1 - P0))
     Sp = np.linalg.pinv(S)
-    zsum2 = (norm.ppf(1 - aprime) + norm.ppf(0.80)) ** 2
+    zsum2 = (norm.ppf(1 - aprime) + norm.ppf(0.80)) ** 2   # 1-df oracle (Wald)
     for r in RS:
         if r == 0:
             continue
@@ -141,13 +154,33 @@ def theory():
         if emp is None and pw and pw[0][1] >= 0.8:
             emp = float(pw[0][0])  # already above 0.8 at smallest n
         out["theory"][str(r)]["n_min_empirical"] = emp
+    # Derived frontiers (now computed in-code; previously added out-of-band).
+    #  df54  : dense-bias omnibus chi2 envelope, exact ncx2 inversion over P-1 df
+    #  sparse: single-ball max-deviation scan, per-ball z-test Bonferroni over 2P
+    lam54 = lam_star(P - 1, aprime)
+    zss_scan = (norm.ppf(1 - aprime / (2 * P)) + norm.ppf(0.80)) ** 2
+    for r in RS:
+        if r == 0:
+            continue
+        t = out["theory"][str(r)]
+        t["n_min_theory_df54"] = float(lam54 / t["lambda1"])
+        t["n_min_theory_sparse_scan"] = float(
+            zss_scan * P0 * (1 - P0) / t["realized_hot_delta"] ** 2)
+    out["theory"]["_lambda_star"] = {
+        "df1": zsum2, "df54": lam54,
+        "note": "df-corrected frontier n_min = lambda*(df,alpha',beta=0.2)/ "
+                "(delta' Sigma0+ delta); lambda* from noncentral chi2 inversion"}
+    out["theory"]["_sparse_scan"] = {
+        "z_sum_sq": zss_scan,
+        "formula": "n_min ~ (z_{1-alpha'/(2P)} + z_{1-beta})^2 * p0(1-p0) / "
+                   "eps^2 (single-ball scan)"}
     with open(OUT, "w") as f:
         json.dump(out, f, indent=1)
     ckpt("[done] expA theory: realized delta-hat, Sigma0 pinv frontier, "
-         "empirical n_min interpolation")
+         "empirical n_min interpolation, df54 + sparse-scan frontiers (in-code)")
     for r, t in out["theory"].items():
         print(r, {k: (round(v, 1) if isinstance(v, float) and v > 1 else v)
-                  for k, v in t.items()})
+                  for k, v in (t.items() if isinstance(t, dict) else [])})
 
 
 if __name__ == "__main__":

@@ -8,3 +8,4 @@
 [done] expA theory: realized delta-hat, Sigma0 pinv frontier, empirical n_min interpolation
 [done] expA df-corrected frontier check (ncx2 inversion, df=54) -> updated theory block
 [done] expA sparse-scan frontier + per-instrument power decomposition -> theory block
+[done] expA theory: realized delta-hat, Sigma0 pinv frontier, empirical n_min interpolation, df54 + sparse-scan frontiers (in-code)

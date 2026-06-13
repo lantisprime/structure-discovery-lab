@@ -298,14 +298,18 @@
    "nominal_eps": 0.005454545454545455,
    "lambda1": 0.0007978668061224479,
    "n_min_theory": 11002.235042901251,
-   "n_min_empirical": null
+   "n_min_empirical": null,
+   "n_min_theory_df54": 47745.936645113645,
+   "n_min_theory_sparse_scan": 43860.28051525076
   },
   "0.1": {
    "realized_hot_delta": 0.011744090909090912,
    "nominal_eps": 0.01090909090909091,
    "lambda1": 0.001767776372448979,
    "n_min_theory": 4965.740164140277,
-   "n_min_empirical": null
+   "n_min_empirical": null,
+   "n_min_theory_df54": 21549.613723814524,
+   "n_min_theory_sparse_scan": 13953.564503091793
   },
   "0.2": {
    "realized_hot_delta": 0.021834090909090928,
@@ -313,7 +317,7 @@
    "lambda1": 0.005254150270408168,
    "n_min_theory": 1670.7398308206652,
    "n_min_empirical": null,
-   "n_min_theory_df54": 7250.439369980598,
+   "n_min_theory_df54": 7250.439369980595,
    "n_min_theory_sparse_scan": 4036.953478585529
   },
   "0.4": {
@@ -322,7 +326,7 @@
    "lambda1": 0.018904514739795906,
    "n_min_theory": 464.35035517779534,
    "n_min_empirical": 1246.6633274567998,
-   "n_min_theory_df54": 2015.1217050902658,
+   "n_min_theory_df54": 2015.1217050902649,
    "n_min_theory_sparse_scan": 1067.0334739121638
   },
   "0.8": {
@@ -331,12 +335,12 @@
    "lambda1": 0.07088070122448978,
    "n_min_theory": 123.84637824174241,
    "n_min_empirical": 341.8428697059597,
-   "n_min_theory_df54": 537.4509184906249,
+   "n_min_theory_df54": 537.4509184906246,
    "n_min_theory_sparse_scan": 280.6857638420035
   },
   "_lambda_star": {
    "df1": 8.778318133888096,
-   "df54": 38.09489797636159,
+   "df54": 38.09489797636157,
    "note": "df-corrected frontier n_min = lambda*(df,alpha',beta=0.2)/ (delta' Sigma0+ delta); lambda* from noncentral chi2 inversion"
   },
   "_sparse_scan": {

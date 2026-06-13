@@ -41,8 +41,11 @@ diagnosed rather than dismissed; the diagnosis is the batch's main yield.
 ### Diagnosis → three-frontier decomposition (durable artifact)
 
 The single number n_min(δ, α, β) is instrument-dependent. Empirically, for
-single-ball bias I2 (max per-ball deviation) dominates I1 and I3 at **every**
-(n, r) cell; the family frontier is I2's frontier.
+single-ball bias I2 (max per-ball deviation) dominates I1 and I3 in the
+detectable sparse-bias regime and determines the practical frontier; low-power
+cells fluctuate at Monte Carlo noise levels (where which instrument is nominally
+"highest" flips between I1/I2/I3 within ±0.02, i.e. ≤ 1 R=200 replicate). The
+family frontier is therefore I2's frontier wherever there is power to speak of.
 
 1. **Oracle lower bound (registered 1-df formula).** Valid only if the analyst
    knows in advance *which* ball is hot. n_min = (z₁₋α' + z₁₋β)² / (δᵀΣ₀⁺δ).
@@ -77,6 +80,42 @@ for single-ball, ~−10% for multi-ball mode; see registration §Bias injection)
 ## Experiment C — Era half-life (pending)
 
 ## Experiment D — Instrument power map (pending)
+
+## Registration deviations (logged, not tuned away)
+
+The approved registration `REGISTRATION_SYNTHETIC_BATCH1.md`
+(sha256 `edc59240deef22ed`) is left **byte-for-byte unmodified** — per the
+project rule that the registered past stays honestly labeled. The two gaps
+between that registration and what actually ran are recorded here instead.
+
+1. **I2 instrument identity.** Registration §Instruments calls I2
+   "Lasso sparse-bias support (`concentration_exclusion.py` A2 pattern)". The
+   committed run script `src/synthetic_batch1_expA.py` implements **max per-ball
+   count deviation** (`maxdev = |cnt − e|.max()`), a sparse-scan / max-deviation
+   statistic, not a lasso. No lasso was fit in this batch. All results text and
+   the derived frontier (§Diagnosis, item 3) therefore refer to I2 as
+   **"max-deviation / sparse scan"**; the registered "lasso" label is treated as
+   an unfulfilled intent, not a description of the run. A genuine lasso-support
+   instrument, if added later, would be onboarded as a separate I2′ and rerun —
+   it is not interchangeable with the committed max-deviation statistic.
+
+2. **Derived-frontier reproducibility.** The df-corrected (df-54, noncentral-χ²
+   inversion) and sparse-scan frontier fields in `synthetic_batch1_expA.json`
+   were originally added out-of-band (the checkpoint records the addition, but
+   the committed `theory()` did not compute them). `theory()` has now been
+   patched to compute all three frontiers, and `src/verify_synthetic_batch1.py`
+   recomputes the JSON's frontier fields from scratch and asserts agreement
+   (28/28 fields PASS). The published numbers are unchanged: the 1-df oracle,
+   sparse-scan, λ₁, and δ̂ fields reproduce bit-for-bit; the df-54 omnibus values
+   (λ\*=38.09 and the three `n_min_theory_df54`) match to machine precision
+   (≤5×10⁻¹⁶ relative — a single float ULP, the only difference between the
+   original out-of-band ncx2 solve and the in-code `brentq`). Regenerating also
+   filled in df-54 / sparse-scan fields for the r=0.05 and 0.10 cells, which the
+   out-of-band pass had left blank; no existing value moved. The patch only makes
+   the frontiers regenerable from source.
+
+Neither deviation touches the retained registered-prediction failure (empirical
+n_min ≈ 2.7× the 1-df oracle), which stands as the batch's primary yield.
 
 ## Ledger / synthesis updates
 
