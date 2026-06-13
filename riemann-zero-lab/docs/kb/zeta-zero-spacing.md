@@ -70,7 +70,8 @@ framework extends to higher correlations and to automorphic L-functions (Rudnick
 - existing project card [[../../../docs/kb/marchenko-pastur-tracy-widom]] (RMT in the lottery face).
 
 **Use in this project**: defines the secondary task of Batch 1. `src/spacing_analysis.py`
-unfolds the located ordinates, computes nearest-neighbour spacings, and compares the empirical
-distribution to the Poisson and GUE baselines (KS statistic to each), writing
+unfolds the located ordinates (via θ(t)/π, [[riemann-siegel-theta]]), computes nearest-neighbour
+spacings, and compares the empirical distribution to the Poisson and GUE baselines (KS statistic
+to each), writing
 `results/zeta_zero_spacing_batch1.json`. The random-matrix baseline detail lives in
 [[random-matrix-gue]]; the zero source is [[riemann-zeta]].

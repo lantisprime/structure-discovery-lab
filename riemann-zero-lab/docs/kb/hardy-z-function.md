@@ -4,7 +4,7 @@
 
 **Statement**:
 - Z(t) = e^{iθ(t)} ζ(1/2 + it), where θ(t) is the Riemann–Siegel theta function
-  θ(t) = arg Γ(1/4 + it/2) − (t/2) log π.
+  [[riemann-siegel-theta]], θ(t) = arg Γ(1/4 + it/2) − (t/2) log π.
 - **Key property**: Z(t) is **real** for real t (consequence of the functional equation),
   is an even, real-analytic function, and |Z(t)| = |ζ(1/2 + it)|.
 - Therefore the **real zeros of Z(t) are exactly the zeros of ζ on the critical line**.

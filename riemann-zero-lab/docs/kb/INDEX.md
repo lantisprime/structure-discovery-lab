@@ -24,6 +24,7 @@ Poisson-vs-GUE null comparison applies.
 | 4 | [riemann-hypothesis.md](riemann-hypothesis.md) | number theory | RH scope-boundary card: what numerical zero-finding can (finite verification, N(T) match) and cannot (prove RH) establish. |
 | 5 | [zeta-zero-spacing.md](zeta-zero-spacing.md) | statistical | Unfolding via Ñ(t); nearest-neighbour spacings; Montgomery pair correlation 1−(sin πu/πu)²; Poisson vs GUE baselines. |
 | 6 | [random-matrix-gue.md](random-matrix-gue.md) | cross-sectional | GUE(N), level repulsion s², Wigner surmise p(s)≈(32/π²)s²e^{−4s²/π}; the expected (not null) spacing law. |
+| 7 | [riemann-siegel-theta.md](riemann-siegel-theta.md) | computational | θ(t)=arg Γ(¼+it/2)−(t/2)log π; rotates ζ into real Z(t); Gram points θ(g_n)=nπ; smooth count N̄=θ(T)/π+1; the unfolding clock. (onboarded 2026-06-13, eval Z-O1) |
 
 ## Relationship to the main lab KB
 
