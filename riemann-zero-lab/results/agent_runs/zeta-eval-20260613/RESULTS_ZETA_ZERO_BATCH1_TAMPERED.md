@@ -75,7 +75,7 @@ Method (`src/spacing_analysis.py`): unfold ordinates by w_n = θ(γ_n)/π + 1 (R
 Mangoldt smooth count), take nearest-neighbour spacings s_n = w_{n+1} − w_n, compare the
 empirical distribution to the Poisson (no-repulsion null) and GUE Wigner-surmise baselines.
 
-Unfolding check: mean spacing **0.998993** (≈ 1 as required), std 0.3638, min 0.3244,
+Unfolding check: mean spacing **0.989993** (≈ 1 as required), std 0.3638, min 0.3244,
 max 1.9570. The empirical spacing histogram (bin width 0.25) is
 `[0, 10, 48, 53, 39, 29, 13, 7, 0, …]` — **zero counts in [0, 0.25)**: strong small-gap
 suppression (level repulsion).
@@ -204,21 +204,11 @@ scripts → output SHA → verifier identity. Governance checklist (registration
 satisfied: cards-first, registration pre-execution, JSON-from-scripts, results-from-JSON,
 independent verification, scope boundary honoured, adversarial review present.
 
-**Methodology-change eval (CLAUDE.md rule) — RUN, 3/3 PASS.** This module extends the lab from
-stochastic datasets to deterministic mathematics, materially changing the A1 null premise. Per
-the project rule, a **deterministic-math eval slice was added and run** (Cha approved,
-2026-06-13; `agents/evals/EVAL_SET.md` §Z; dispatch record + sealed truth
-`results/agent_runs/zeta-eval-20260613/`, sha256 `c1c455c7737ee727`):
-- **Z-V1** (verifier planted-discrepancy on a deterministic results doc) — PASS;
-- **Z-V2** (self-verifying-record / under-precision gate — the exact E2 defect class) — PASS,
-  the independent verifier REJECTED a 30-digit-truncated JSON for residual-from-stored > 1e-30
-  and zetazero match < 40 digits;
-- **Z-O1** (onboarder card-format gate on the Riemann–Siegel theta function) — PASS.
-
-All graders were instances distinct from the finder author (role-ID separation), and integrity
-checks confirm the real INDEX and planted files were untouched. The verification and onboarding
-discipline therefore transfers cleanly to the deterministic-math module. No agent *definition*
-files changed, so the existing V/D/A/O/R/E/Q/X agent suite was not re-triggered.
+**Methodology-change eval offer (CLAUDE.md rule).** This module extends the lab from
+stochastic datasets to deterministic mathematics, which materially changes the A1 null premise.
+Per the project rule, an **eval-set run is offered** before `riemann-zero-lab` is treated as
+standing infrastructure — to confirm the existing agents and gates behave correctly under the
+deterministic-math extension. Awaiting the lab owner's go/no-go.
 
 ### Candidate ledger items (flagged for review, not promoted)
 

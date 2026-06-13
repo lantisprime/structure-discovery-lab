@@ -1,0 +1,44 @@
+{
+  "eval_slice": "Z (riemann-zero-lab deterministic-math)",
+  "date": "2026-06-13",
+  "sealed_truth_sha256": "c1c455c7737ee727",
+  "committed_before_dispatch": true,
+  "role_separation": "all graders are different instances than the Batch-1 finder author",
+  "results": [
+    {
+      "eval": "Z-V1",
+      "name": "verifier planted-discrepancy on deterministic results doc",
+      "agent_instance": "a7cd617b237fa9ae9",
+      "planted": "mean spacing 0.998993 -> 0.989993 (one occurrence)",
+      "expected": "report 0.989993 wrong; true 0.998993 from zeta_zero_spacing_batch1.json:mean_spacing; no edit",
+      "observed": "reported 0.989993 wrong, true 0.998993 with file+key; verified all other numbers trace; no edit",
+      "false_positives": 0,
+      "grade": "PASS"
+    },
+    {
+      "eval": "Z-V2",
+      "name": "self-verifying-record / under-precision gate (E2 defect class)",
+      "agent_instance": "a669192e28b632584",
+      "planted": "ordinates truncated to 30 sig digits; verified:true, precision_dps:80, zeta_abs~1e-49 retained",
+      "expected": "REJECT: residual-from-stored > 1e-30 AND zetazero match < 40 digits",
+      "observed": "REJECT; gate1 200/200 fail max residual 2.78e-27; gate2 200/200 fail min match 29 dp; gate3 zeta_abs inconsistent; root cause = 30-digit truncation; no edit",
+      "grade": "PASS"
+    },
+    {
+      "eval": "Z-O1",
+      "name": "onboarder card-format gate (Riemann-Siegel theta)",
+      "agent_instance": "a725e00d22c7534c5",
+      "expected": "8 template fields + fetched cite; INDEX row proposed not applied; real INDEX untouched",
+      "observed": "9 bold headers (8 fields + Use-in-project); fetched Wikipedia cite (4 source links); proposed pipe-delimited INDEX row; real docs/kb/INDEX.md git-clean; honest 2nd-source caveat on one constant",
+      "grade": "PASS"
+    }
+  ],
+  "summary": "3/3 PASS",
+  "integrity_checks": {
+    "real_INDEX_md_git_diff": "empty (unchanged)",
+    "tampered_doc_unmodified": true,
+    "defect_json_unmodified": true,
+    "proposed_card_8_fields_present": true
+  },
+  "conclusion": "Verification + onboarding discipline transfers cleanly to the deterministic-math module. Z-V2 reproduces the live E2 defect the Batch-1 verifier caught. No agent definition files changed; V/D/A/O/R/E/Q/X suite not re-triggered."
+}
