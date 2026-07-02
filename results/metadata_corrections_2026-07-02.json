@@ -1,0 +1,32 @@
+{
+  "date": "2026-07-02",
+  "source": "AUDIT_CORRECTNESS_2026-07-02.md (minors #1, #2)",
+  "policy": "frozen files and hash-committed JSONs are NOT edited; corrections are recorded here and consumed by the ledger (schema v2 migration) and future runs",
+  "corrections": [
+    {
+      "artifact": "src/remediation_r1.py run_floors_lmax docstring",
+      "states": "m=399",
+      "actual": "range(999) in CURRENT source; floors_lmax p-values (0.001, 0.316, 0.494, 0.142) lie only on the /1000 lattice so the floors block genuinely ran 999 at execution. The sensitivity block did NOT (see correction 2) - the frozen source was edited after commitment.",
+      "consumed_by": "ledger lambda-max rows corrected m_perm 399->999"
+    },
+    {
+      "artifact": "results/remediation_r1.json sensitivity.lambda_max_655_ex_suspicious.m_null",
+      "states": 399,
+      "actual": "399 CONFIRMED at execution time (adversarial code review B1, 2026-07-02): raw_p 0.0025 = 1/400 lies only on the m=399 add-one lattice; the initial audit claim that range(999) governed this block was WRONG - it read the current source, which postdates execution (remediation_r1.py has 3 different commitment-ledger hashes). Ledger row reverted same day; at_floor flag added.",
+      "consumed_by": "ledger row REVERTED; p-lattice consistency check added to design_verifier (check 6)",
+      "correction_of_correction": true
+    },
+    {
+      "artifact": "src/remediation_r1.py run_presence_mc docstring",
+      "states": "m=29",
+      "actual": "range(199) executed; JSON m_null=199 is correct",
+      "consumed_by": "none (JSON and ledger were already right)"
+    },
+    {
+      "artifact": "src/remediation_r1.py:125 run_floors_gw",
+      "states": "outer rng consumed per pair",
+      "actual": "fresh default_rng(SEED+92) per pair -> identical null streams; pair p-values artificially correlated (individually valid)",
+      "consumed_by": "corrected pattern used in src/corrected_reruns.py and future runs"
+    }
+  ]
+}

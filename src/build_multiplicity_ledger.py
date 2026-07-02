@@ -112,12 +112,80 @@ def rows():
 
 
 def main():
+    # AUDIT G-1 (2026-07-02): this builder used to truncate-and-rewrite the
+    # ledger, deleting every row appended after the backfill (equation family
+    # charges, schema-v2 migration fields). It is now NON-DESTRUCTIVE:
+    #   - if a ledger exists on disk, it must be a superset of rows(); rows
+    #     not reproducible from rows() are preserved verbatim, and any
+    #     conflict on a reproducible row aborts the rebuild.
+    #   - the rebuild goes to a temp file and only replaces the ledger after
+    #     the invariant check passes.
     out = rows()
-    g = len(out)
-    with open(LEDGER, "w") as f:
-        for r in out:
-            r["global_m"] = g
+
+    def key(r):
+        return (r.get("run_id"), r.get("dataset"), r.get("method"),
+                r.get("data_filter"), r.get("family_id"), r.get("m_delta"))
+
+    preserved, disk_by_key = [], {}
+    if os.path.exists(LEDGER):
+        disk = [json.loads(l) for l in open(LEDGER)]
+        built_keys = {key(r) for r in out}
+        for r in disk:
+            if key(r) in built_keys:
+                disk_by_key.setdefault(key(r), []).append(r)
+            else:
+                preserved.append(r)     # appended rows (charges, eq tests, ...)
+        cursor = {k: 0 for k in disk_by_key}   # positional match within key group
+        for i_r, r in enumerate(out):
+            group = disk_by_key.get(key(r), [])
+            i = cursor.get(key(r), 0)
+            if i < len(group):
+                d = group[i]
+                cursor[key(r)] = i + 1
+                if abs(d.get("raw_p", -1) - r.get("raw_p", -1)) > 1e-9:
+                    raise SystemExit(
+                        f"ABORT: rebuilt row disagrees with ledger on disk for "
+                        f"{key(r)}: {d.get('raw_p')} != {r.get('raw_p')} — "
+                        f"append-only invariant would be violated")
+                # adversarial review B3: carry forward ALL disk fields (disk is
+                # the annotated record — corrections, quarantines, flags);
+                # rebuilt values win only for nothing: disk wins on conflicts
+                # except global_m which is recomputed below.
+                merged = {**r, **{k: v for k, v in d.items()
+                                  if k != "global_m"}}
+                out[i_r] = merged
+        # unconsumed disk rows in a key group are legitimately appended
+        # reruns sharing a key — preserve them (review B3 test 1)
+        for k, group in disk_by_key.items():
+            for d in group[cursor.get(k, 0):]:
+                preserved.append(d)
+    for r in out:
+        r.setdefault("row_type", "test")
+    # shared live definition (review M1): superseded and exploratory rows do
+    # NOT count toward global m — same rule as design_verifier/meta panel
+    live = [r for r in out + preserved
+            if r.get("row_type") == "test" and "superseded_by" not in r
+            and not r.get("exploratory")]
+    g = len(live)
+    tmp = LEDGER + ".tmp"
+    final = out + preserved
+    with open(tmp, "w") as f:
+        for r in final:
+            if r.get("row_type") == "test" and not r.get("exploratory"):
+                r["global_m"] = g
             f.write(json.dumps(r) + "\n")
+    # superset assertion (review B3): every disk row must survive the rebuild
+    if os.path.exists(LEDGER):
+        disk_ids = [(key(d), d.get("raw_p"), d.get("data_filter"))
+                    for d in (json.loads(l) for l in open(LEDGER))]
+        new_ids = [(key(d), d.get("raw_p"), d.get("data_filter")) for d in final]
+        missing = [t for t in disk_ids if disk_ids.count(t) > new_ids.count(t)]
+        if missing:
+            os.remove(tmp)
+            raise SystemExit(f"ABORT: rebuild would lose {len(missing)} disk "
+                             f"row(s), e.g. {missing[0]}")
+    os.replace(tmp, LEDGER)
+    print(f"preserved {len(preserved)} appended rows; global_m={g} live tests")
     small = [r for r in out if r["raw_p"] <= 0.05]
     print(f"ledger: {g} tests | raw p<=0.05: {len(small)} "
           f"({100*len(small)/g:.1f}%, expectation {0.05*g:.1f})")

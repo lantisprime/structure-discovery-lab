@@ -1,5 +1,12 @@
 {
-  "n_ledger_rows": 248,
+  "n_ledger_rows": 264,
+  "n_test_rows": 260,
+  "n_live_test_rows": 188,
+  "n_charge_rows": 4,
+  "reconciliation": {
+    "run_ledger_declared": 260,
+    "test_rows": 260
+  },
   "violations": [],
   "warnings": [
     "floor rule: firstrun/6/55/knn-recovery: p_floor 0.02 > corrected/2 (0.0043) at family m=6",
@@ -142,7 +149,12 @@
       "half-corr"
     ],
     "within-game-cooccurrence": [
+      "graphon-b1-attribution",
       "lambda-max"
+    ],
+    "equation_discovery": [
+      "frozen-equation-confirmation",
+      "null-equation-generator"
     ]
   },
   "verdict": "PASS"

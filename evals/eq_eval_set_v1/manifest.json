@@ -1,0 +1,23 @@
+{
+  "README.md": "9301153dd06c6c9c54f9bc0521f81a778cf150d0f693bff66a11b7adc012ac0b",
+  "SEAL_NOTICE.md": "266a1bd3281bc3bad4d8fe9ae598aa1144025b5a4c888c041e68f7cd77dbb0b4",
+  "answer_key/GROUND_TRUTH.md": "379e458988d941b529f7fc2e9bfc39e7bdf7cddd86e80485a6b3e192efbf5ae9",
+  "answer_key/ground_truth.json": "50dec6ade5d589e2f6ab711f93a75d700f3266c33273086789c5b3a88177cbf1",
+  "blind/README_FOR_LAB.md": "2242d905850bd740c266d33926e661eac82c87b8755620fa938c8896e86baaf4",
+  "blind/REGISTRATION_TEMPLATE.md": "004d02fe4b1debd1e5d94d5ccfe1ef158d3a1a5472c28b35ec10591fecc0f53e",
+  "blind/datasets/DATA_CARD.md": "6c3f191ad6747c277b540a59a3a9c877902436059af1c77484d2220b3fd68d88",
+  "blind/datasets/unit_01.csv": "82d5f8656284866e8a78460da6beb2ebceddfcda25fdf0893861d4b17f17d329",
+  "blind/datasets/unit_02.csv": "4023d75aeacaf99b7b451ea5842a4dc6b6cd6a225cb98e458051cf8fb87de935",
+  "blind/datasets/unit_03.csv": "25b4228479114ddc20750f2eb7aa9c2bbcdfcfb6eba0b207a15b7fbd3dad5fc0",
+  "blind/datasets/unit_04.csv": "07554b562fab75e28aa4c87f565a19d1823cd4f25f0a6931603eff34fa8efdee",
+  "blind/datasets/unit_05.csv": "acc6d1cad7cc9dcbd8bcd026c265960af53c9fa93c94c857738626cd142fd340",
+  "blind/datasets/unit_06.csv": "0f284d4d40607de115f5dd954b0c83b26ce0c12af78204c6d1a1a124f9871b26",
+  "blind/datasets/unit_07.csv": "2cdafd60d43bfbf79661c448a0bdf55491c2ef8ba3e4d9b6519909c95b6bfee8",
+  "blind/datasets/unit_08.csv": "8c8d1ba0e74ff8ec32884914959017ced63bf4f7204e92e0af68b29f4b92dd6d",
+  "blind/datasets/unit_09.csv": "56ba6b3ff82a4dc37f18823a56e99ebb60f811f566fbcc8f1c01386a1e7751e0",
+  "blind/datasets/unit_10.csv": "ad364496be14a5c4101862b521b97213be749fa157e2ba1b04bc7cc39a332658",
+  "blind/datasets/unit_11.csv": "3fd18f46a567ffbc9bd824eceb0c7f7b278071f3786399ca776b972698b40d8a",
+  "blind/datasets/unit_12.csv": "870cc4328fb91be0cef08b76a1484a9eab86b7812733f9d6b294dd08d2cb0228",
+  "src/generate_eq_eval.py": "71ed769feb48606b8901b77939f7eb30b42c80f59ed570426af346e86316216b",
+  "src/score_eq_eval.py": "460715f2e15fb81ad349d2d4612b0c6d7790d00123b153e47c810222482a72dc"
+}

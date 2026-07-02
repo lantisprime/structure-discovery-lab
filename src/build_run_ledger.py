@@ -36,7 +36,8 @@ def sha(path):
 
 def n_ledger_tests(run_id):
     path = os.path.join(ROOT, "results", "multiplicity_ledger.jsonl")
-    return sum(1 for l in open(path) if json.loads(l)["run_id"] == run_id)
+    # .get: family_charge rows (schema v2) carry no run_id
+    return sum(1 for l in open(path) if json.loads(l).get("run_id") == run_id)
 
 
 BACKFILL = [
@@ -154,14 +155,36 @@ def append_run(row):
 
 
 def main():
-    with open(LEDGER, "w") as f:
+    # AUDIT G-1 (2026-07-02): was a truncating write over the backfill while
+    # the live ledger held more rows — one rerun deleted every appended run
+    # (all Phase-5, remediation-era and riemann rows). Now non-destructive:
+    # rows beyond the backfill are preserved; conflicts on backfill rows abort.
+    preserved = []
+    if os.path.exists(LEDGER):
+        disk = [json.loads(l) for l in open(LEDGER)]
+        backfill_ids = {r["run_id"] for r in BACKFILL}
+        for d in disk:
+            if d["run_id"] not in backfill_ids:
+                preserved.append(d)
+            else:
+                b = next(r for r in BACKFILL if r["run_id"] == d["run_id"])
+                if b.get("real_data_tests") != d.get("real_data_tests"):
+                    raise SystemExit(
+                        f"ABORT: backfill disagrees with ledger on disk for "
+                        f"{d['run_id']} — append-only invariant violated")
+    tmp = LEDGER + ".tmp"
+    with open(tmp, "w") as f:
         for r in BACKFILL:
             outs = [o.strip() for o in r["output"].split("+")]
             r["output_sha256"] = {o: sha(o) for o in outs}
             f.write(json.dumps(r) + "\n")
-    total = sum(r["real_data_tests"] for r in BACKFILL)
-    print(f"run ledger: {len(BACKFILL)} runs, {total} real-data tests "
-          f"(matches multiplicity ledger)")
+        for d in preserved:
+            f.write(json.dumps(d) + "\n")
+    os.replace(tmp, LEDGER)
+    total = sum(r["real_data_tests"] for r in BACKFILL) + \
+        sum(d.get("real_data_tests", 0) for d in preserved)
+    print(f"run ledger: {len(BACKFILL)} backfill + {len(preserved)} preserved "
+          f"runs, {total} real-data tests")
     for r in BACKFILL:
         print(f"  {r['run_id']:<20} tests={r['real_data_tests']:>3}  grade={r['grade'].split()[0]}")
 

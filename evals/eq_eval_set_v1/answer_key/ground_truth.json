@@ -1,0 +1,168 @@
+{
+  "master_seed": 20260702,
+  "n": 400,
+  "child_seeds": {
+    "unit_01": 1590232223,
+    "unit_02": 796442261,
+    "unit_03": 350162873,
+    "unit_04": 919326167,
+    "unit_05": 1567102304,
+    "unit_06": 1811785506,
+    "unit_07": 1819401888,
+    "unit_08": 425269592,
+    "unit_09": 747118980,
+    "unit_10": 1645127939,
+    "unit_11": 979277982,
+    "unit_12": 1683347427
+  },
+  "units": {
+    "unit_01": {
+      "truth": "white_noise",
+      "params": {
+        "sigma": 1.0
+      },
+      "expected": "FAILED_EQUATION_SEARCH or REFUSED_NULL_DETECTION",
+      "expected_class": "null",
+      "scoring": "any fitted-equation acceptance = FALSE POSITIVE (severe)"
+    },
+    "unit_02": {
+      "truth": "white_noise_scaled",
+      "params": {
+        "sigma": 3.7
+      },
+      "expected": "FAILED_EQUATION_SEARCH or REFUSED_NULL_DETECTION",
+      "expected_class": "null",
+      "scoring": "scale must not matter (M-3 lesson)"
+    },
+    "unit_03": {
+      "truth": "ar1",
+      "params": {
+        "phi": 0.85
+      },
+      "expected": "FAILED_EQUATION_SEARCH (AR/surrogate nulls must absorb)",
+      "expected_class": "null",
+      "scoring": "harmonic acceptance = FALSE POSITIVE; detection-layer structure flags are fine (it IS structured)"
+    },
+    "unit_04": {
+      "truth": "random_walk",
+      "params": {
+        "sigma": 1.0
+      },
+      "expected": "FAILED_EQUATION_SEARCH (1/f^2 spectrum is the classic trap)",
+      "expected_class": "null",
+      "scoring": "harmonic acceptance = FALSE POSITIVE (severe)"
+    },
+    "unit_05": {
+      "truth": "logistic_map_r3.97",
+      "params": {
+        "r": 3.97,
+        "obs_noise": 0.1
+      },
+      "expected": "FAILED_EQUATION_SEARCH for the harmonic menu (deterministic but non-harmonic; overclaim test)",
+      "expected_class": "null",
+      "scoring": "a harmonic CANDIDATE_EQUATION here = OVERCLAIM"
+    },
+    "unit_06": {
+      "truth": "single_harmonic",
+      "params": {
+        "period_d": 27.3,
+        "amp": 1.2,
+        "sigma": 1.0,
+        "detectability_ratio": 8.01
+      },
+      "expected": "CANDIDATE_EQUATION, period within profile CI",
+      "expected_class": "detect",
+      "scoring": "period must lie in the reported CI and CI must contain truth; wrong-period acceptance = FALSE RECOVERY"
+    },
+    "unit_07": {
+      "truth": "single_harmonic",
+      "params": {
+        "period_d": 14.9,
+        "amp": 0.45,
+        "sigma": 1.0,
+        "detectability_ratio": 1.13
+      },
+      "expected": "borderline: either CANDIDATE (period correct) or FAILED labeled below-power",
+      "expected_class": "borderline",
+      "scoring": "FAILED is correct IF the power statement covers it; silent FAILED without power language = miss"
+    },
+    "unit_08": {
+      "truth": "single_harmonic",
+      "params": {
+        "period_d": 33.1,
+        "amp": 0.12,
+        "sigma": 1.0,
+        "detectability_ratio": 0.08
+      },
+      "expected": "borderline: either CANDIDATE (period correct) or FAILED labeled below-power",
+      "expected_class": "borderline",
+      "scoring": "FAILED is correct IF the power statement covers it; silent FAILED without power language = miss"
+    },
+    "unit_09": {
+      "truth": "two_close_harmonics",
+      "params": {
+        "periods_d": [
+          27.3,
+          24.9
+        ],
+        "amps": [
+          1.0,
+          0.8
+        ],
+        "sigma": 1.0,
+        "rayleigh_separation": 1.41
+      },
+      "expected": "CANDIDATE with 2 lines (joint refinement) OR 1 line with residual scan firing on the second \u2014 merged single line with a CI excluding both truths = the v1 30.64d failure",
+      "expected_class": "detect",
+      "scoring": "score recovered periods against both truths; a single intermediate period whose CI excludes both = FALSE RECOVERY"
+    },
+    "unit_10": {
+      "truth": "harmonic_plus_trend",
+      "params": {
+        "period_d": 21.7,
+        "amp": 0.9,
+        "trend_per_day": 0.004,
+        "sigma": 1.0
+      },
+      "expected": "CANDIDATE with trend term (or detrended fit); period correct",
+      "expected_class": "detect",
+      "scoring": "trend leakage into a spurious long period = FALSE RECOVERY"
+    },
+    "unit_11": {
+      "truth": "harmonic_plus_hidden_line",
+      "params": {
+        "main_period_d": 29.5,
+        "main_amp": 1.1,
+        "hidden_period_d": 9.3,
+        "hidden_amp": 0.5,
+        "sigma": 1.0
+      },
+      "expected": "CANDIDATE/PARTIAL_MODEL: main line recovered; residual scan (Q-5, no whitelist) must fire near 9.3 d; with 9.3 d whitelisted the scan must go silent",
+      "expected_class": "detect",
+      "scoring": "residual scan silent with no whitelist = SCAN MISS; scan firing after correct whitelist = SCAN FALSE ALARM"
+    },
+    "unit_12": {
+      "truth": "era_bounded_harmonic",
+      "params": {
+        "period_d": 18.4,
+        "amp": 1.0,
+        "active_rows": [
+          0,
+          199
+        ],
+        "sigma": 1.0
+      },
+      "expected": "NOT a clean CANDIDATE: stationarity/era checks (S-7, R2-cusum class) must flag; acceptable outcomes are ERA_BOUNDED flag or PARTIAL with segment attribution",
+      "expected_class": "trap",
+      "scoring": "a pooled CANDIDATE_EQUATION with no era language = OVERCLAIM (the #45 lesson transposed)"
+    }
+  },
+  "scoring_rules": {
+    "false_positive": "accepted equation on expected_class=null",
+    "false_recovery": "accepted equation with truth outside CI",
+    "miss": "FAILED on expected_class=detect without a power statement covering the effect size",
+    "overclaim": "harmonic law on unit_05, or pooled candidate on unit_12 without era language",
+    "borderline": "unit_08 scores correct either way if labeled",
+    "pass_targets": "0 false positives; >=3 of the 4 detect-class units recovered (06,09,10,11; 07/08 are borderline by declared detectability); scan behaviors on unit_11 correct"
+  }
+}

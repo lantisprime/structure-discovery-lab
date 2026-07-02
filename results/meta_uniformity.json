@@ -1,22 +1,75 @@
 {
-  "n_tests": 136,
-  "ks_p": 0.11149719406885689,
-  "ks_stat": 0.10176470588235287,
-  "frac_le_05": 0.08823529411764706,
-  "frac_le_01": 0.007352941176470588,
-  "by_source_counts": {
-    "b5_crossgame_pairs": 10,
-    "firstrun_lotto_recovery": 6,
-    "pressure_cca": 5,
-    "pressure_scalar": 5,
-    "allgames_topology": 5,
-    "allgames_cca": 5,
-    "rem_presence_mc": 5,
-    "rem_lmax_m399": 5,
-    "rem_cca_splits": 15,
-    "rerun_b6_mmd": 30,
-    "rerun_b6_spectra": 30,
-    "rerun_b6_halves": 15
+  "panel_version": 2,
+  "panel_sha": "67eaafb4248d72b7",
+  "n_tests": 126,
+  "ks_stat": 0.1225396825396825,
+  "p_meta_discrete": 0.04397801099450275,
+  "frac_le_05": 0.10317460317460317,
+  "frac_le_01": 0.015873015873015872,
+  "sim_frac_le_05_q05_q95": [
+    0.023809523809523808,
+    0.0873015873015873
+  ],
+  "sim_frac_le_01_q05_q95": [
+    0.0,
+    0.023809523809523808
+  ],
+  "n_sim": 2000,
+  "seed": 20260702,
+  "by_run_counts": {
+    "allgames": 10,
+    "batch5": 10,
+    "pressure": 10,
+    "remediation": 21,
+    "batch67_r2": 75
   },
-  "note": "lotto-side real-data tests only; physical-series positives excluded by design"
+  "exclusions": {
+    "median_based_methods": [
+      "knn-recovery"
+    ],
+    "non_lotto_run_prefixes": [
+      "eq_"
+    ],
+    "miscalibrated_null_pending_rerun": [
+      [
+        "remediation",
+        "matrix-completion"
+      ]
+    ],
+    "superseded": true,
+    "family_charges": true,
+    "gate_based": true
+  },
+  "exploratory_stratum": {
+    "n": 7,
+    "p_values": [
+      0.148,
+      0.28,
+      0.345,
+      0.355,
+      0.715,
+      0.725,
+      0.93
+    ],
+    "note": "unregistered shadow-run p's; reported so the panel is not blind to the exploratory class; not pooled"
+  },
+  "note": "lotto-side real-data tests only; discrete-lattice reference; entries dependent -> p_meta is descriptive",
+  "composition_sensitivity": {
+    "keep_first_dedup": {
+      "n": 126,
+      "frac_le_05": 0.1032
+    },
+    "eq_rows_included": {
+      "n": 128,
+      "frac_le_05": 0.1094
+    },
+    "miscalibrated_presence_included": {
+      "n": 131,
+      "frac_le_05": 0.0992
+    },
+    "drop_655_lambda_max_family": {
+      "n": 124,
+      "frac_le_05": 0.0887
+    }
+  }
 }

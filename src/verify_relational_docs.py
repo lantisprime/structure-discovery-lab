@@ -219,9 +219,21 @@ chk('sens 655 all corr', sens['Grand Lotto 6/55']['all']['corr'], 0.251)
 chk('sens 655 ex corr', sens['Grand Lotto 6/55']['ex_suspicious']['corr'], 0.154)
 chk('sens 655 lmax ex-suspicious p', round(sens['lambda_max_655_ex_suspicious']['p'], 4), 0.0025, 5e-5)
 U = json.load(open('results/meta_uniformity.json'))
-chk('meta n', U['n_tests'], 136)
-chk('meta ks p', round(U['ks_p'], 3), 0.111, 5e-4)
-chk('meta frac05', round(U['frac_le_05'], 3), 0.088, 5e-4)
+# panel v2.1 (audit M-5/M-6 + adversarial review M5, 2026-07-02):
+# ledger-driven; median-based, superseded, exploratory (separate stratum),
+# eq, and miscalibrated-null rows excluded; alias-normalized dedup;
+# discrete-lattice reference; composition sensitivity published.
+chk('meta panel version', U['panel_version'], 2)
+chk('meta panel sha', U['panel_sha'], '67eaafb4248d72b7')
+chk('meta n', U['n_tests'], 126)
+chk('meta p discrete', round(U['p_meta_discrete'], 3), 0.044, 5e-4)
+chk('meta frac05', round(U['frac_le_05'], 3), 0.103, 5e-4)
+chk('meta frac05 above band (concentrates in #45 family)',
+    U['frac_le_05'] > U['sim_frac_le_05_q05_q95'][1], True)
+chk('meta sensitivity: flag robust across compositions',
+    all(v['frac_le_05'] >= 0.088 for v in U['composition_sensitivity'].values()),
+    True)
+chk('meta exploratory stratum reported', U['exploratory_stratum']['n'], 7)
 IV = json.load(open('results/independent_verification.json'))
 blind_key = json.load(open('results/blind/_key.json'))
 conc = 0
@@ -234,18 +246,33 @@ chk('indep replication corr ex', round(IV['task2']['excluding_suspicious']['corr
 
 print("REMEDIATION VERIFIED" if ok else "REMEDIATION FAILURES FOUND")
 
-# ---- External-review adoptions ---------------------------------------------
+# ---- External-review adoptions (ledger schema v2, audit C-1 2026-07-02) ----
 L = [json.loads(l) for l in open('results/multiplicity_ledger.jsonl')]
-chk('ledger size', len(L), 248)
-chk('ledger frac<=.05', round(sum(r['raw_p']<=0.05 for r in L)/len(L), 3), 0.073, 5e-4)
+T = [r for r in L if r.get('row_type', 'test') == 'test']
+LIVE = [r for r in T if 'superseded_by' not in r and not r.get('exploratory')]
+chk('ledger rows', len(L), 264)
+chk('ledger test rows', len(T), 260)
+chk('ledger live test rows', len(LIVE), 188)
+chk('ledger exploratory rows', sum(1 for r in T if r.get('exploratory')), 7)
+chk('ledger charge rows', len(L) - len(T), 4)
+chk('ledger global_m pinned', {r.get('global_m') for r in LIVE}, {188})
+chk('ex-suspicious lmax row at m=399 (review B1)',
+    next((r['m_perm'], r['p_floor'], r.get('at_floor')) for r in T
+         if r.get('method') == 'lambda-max'
+         and r.get('data_filter') == 'ex_suspicious'), (399, 0.0025, True))
+chk('live frac<=.05', round(sum(r['raw_p'] <= 0.05 for r in LIVE
+                                if r.get('raw_p') is not None)/len(LIVE), 3),
+    0.096, 5e-4)
 D = json.load(open('results/design_verifier_report.json'))
 chk('design verifier verdict', D['verdict'], 'PASS')
 chk('design verifier violations', len(D['violations']), 0)
+chk('design verifier reconciliation', D['reconciliation']['run_ledger_declared'],
+    D['reconciliation']['test_rows'])
 import os
 chk('environment captured', os.path.exists('results/environment.json'), True)
 RL = [json.loads(l) for l in open('results/run_ledger.jsonl')]
-chk('run ledger size', len(RL), 12)
-chk('run/test ledger reconcile', sum(r['real_data_tests'] for r in RL), len(L))
+chk('run ledger size', len(RL), 21)
+chk('run/test ledger reconcile', sum(r['real_data_tests'] for r in RL), len(T))
 import json as _j
 BS=open('results/blind_eval_score.md').read()
 chk('blind eval zero FP', 'FP=0' in BS and 'specificity 1.000' in BS, True)

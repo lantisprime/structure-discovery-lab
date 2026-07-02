@@ -1,0 +1,157 @@
+{
+  "_design": {
+    "seed": 20260704,
+    "alpha": 0.05,
+    "n_neg": 200,
+    "n_pos": 100,
+    "m_null_min": 39,
+    "design_hash": "9f002ccb835e4bfa"
+  },
+  "R7_matrix_completion": {
+    "negative": {
+      "label": "negative control",
+      "n_trials": 200,
+      "fpr_at_alpha": 0.045,
+      "fpr_expected_lattice": 0.05,
+      "band_3se": 0.0462,
+      "lattice_chi2_p_mc": 0.8936,
+      "passed": true
+    },
+    "positive": {
+      "label": "positive control (declared effect)",
+      "n_trials": 100,
+      "power_at_alpha": 1.0,
+      "passed": true
+    },
+    "verdict": "ADMITTED_V2",
+    "m_null_min": 39,
+    "floor": 0.025,
+    "rng_streams": "split per-trial data/null streams (m6 fix; chunk-resumable, seed-derived)"
+  },
+  "R3_cca_family": {
+    "negative": {
+      "label": "negative control",
+      "n_trials": 200,
+      "fpr_at_alpha": 0.06,
+      "fpr_expected_lattice": 0.05,
+      "band_3se": 0.0462,
+      "lattice_chi2_p_mc": 0.8426,
+      "passed": true
+    },
+    "positive": {
+      "label": "positive control (declared effect)",
+      "n_trials": 100,
+      "power_at_alpha": 1.0,
+      "passed": true
+    },
+    "verdict": "ADMITTED_V2",
+    "m_null_min": 39,
+    "floor": 0.025,
+    "rng_streams": "split per-trial data/null streams (m6 fix; chunk-resumable, seed-derived)"
+  },
+  "R1_mmd_energy": {
+    "negative": {
+      "label": "negative control",
+      "n_trials": 200,
+      "fpr_at_alpha": 0.08,
+      "fpr_expected_lattice": 0.05,
+      "band_3se": 0.0462,
+      "lattice_chi2_p_mc": 0.917,
+      "passed": true
+    },
+    "positive": {
+      "label": "positive control (declared effect)",
+      "n_trials": 100,
+      "power_at_alpha": 0.99,
+      "passed": true
+    },
+    "verdict": "ADMITTED_V2",
+    "m_null_min": 39,
+    "floor": 0.025,
+    "rng_streams": "split per-trial data/null streams (m6 fix; chunk-resumable, seed-derived)"
+  },
+  "R6_coresets_landmarks_nystrom": {
+    "negative": {
+      "label": "negative control",
+      "n_trials": 200,
+      "fpr_at_alpha": 0.03,
+      "fpr_expected_lattice": 0.04,
+      "band_3se": 0.0416,
+      "lattice_chi2_p_mc": 0.0595,
+      "passed": true
+    },
+    "positive": {
+      "label": "positive control (declared effect)",
+      "n_trials": 100,
+      "power_at_alpha": 0.94,
+      "passed": true
+    },
+    "verdict": "ADMITTED_V2",
+    "m_null_min": 39,
+    "floor": 0.025,
+    "rng_streams": "split per-trial data/null streams (m6 fix; chunk-resumable, seed-derived)"
+  },
+  "R4_tda_persistence": {
+    "negative": {
+      "label": "negative control",
+      "n_trials": 200,
+      "fpr_at_alpha": 0.025,
+      "fpr_expected_lattice": 0.05,
+      "band_3se": 0.0462,
+      "lattice_chi2_p_mc": 0.5062,
+      "passed": true
+    },
+    "positive": {
+      "label": "positive control (declared effect)",
+      "n_trials": 100,
+      "power_at_alpha": 1.0,
+      "passed": true
+    },
+    "verdict": "ADMITTED_V2",
+    "m_null_min": 39,
+    "floor": 0.025,
+    "rng_streams": "split per-trial data/null streams (m6 fix; chunk-resumable, seed-derived)"
+  },
+  "R5_graph_matching_spectra": {
+    "negative": {
+      "label": "negative control",
+      "n_trials": 200,
+      "fpr_at_alpha": 0.05,
+      "fpr_expected_lattice": 0.05,
+      "band_3se": 0.0462,
+      "lattice_chi2_p_mc": 0.1944,
+      "passed": true
+    },
+    "positive": {
+      "label": "positive control (declared effect)",
+      "n_trials": 100,
+      "power_at_alpha": 0.99,
+      "passed": true
+    },
+    "verdict": "ADMITTED_V2",
+    "m_null_min": 39,
+    "floor": 0.025,
+    "rng_streams": "split per-trial data/null streams (m6 fix; chunk-resumable, seed-derived)"
+  },
+  "R2_gromov_wasserstein": {
+    "negative": {
+      "label": "negative control",
+      "n_trials": 200,
+      "fpr_at_alpha": 0.075,
+      "fpr_expected_lattice": 0.05,
+      "band_3se": 0.0462,
+      "lattice_chi2_p_mc": 0.4828,
+      "passed": true
+    },
+    "positive": {
+      "label": "positive control (declared effect)",
+      "n_trials": 100,
+      "power_at_alpha": 0.98,
+      "passed": true
+    },
+    "verdict": "ADMITTED_V2",
+    "m_null_min": 39,
+    "floor": 0.025,
+    "rng_streams": "split per-trial data/null streams (m6 fix; chunk-resumable, seed-derived)"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "select_family_pure_nll": "B",
+  "alpha_m10": 0.005116196891823743,
+  "b_required_m10": 390,
+  "adjudicate_v2B_B200": "FAIL_corrected",
+  "adjudicate_v2B_B399": "FAIL_corrected",
+  "scan_planted_line_p": 0.005,
+  "scan_prewhitened_p": 0.585,
+  "scan_ar1_h0_frac_le_05": 0.04,
+  "profile_ci_coverage_200reps": 0.965,
+  "baseline_pass_when_better": true,
+  "baseline_fail_when_worse": true,
+  "same_source_label_cap": "MECHANISM_CONSISTENT",
+  "seed": 20260705
+}

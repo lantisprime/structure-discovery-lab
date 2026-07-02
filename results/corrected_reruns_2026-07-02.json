@@ -1,0 +1,117 @@
+{
+  "m1_note": {
+    "estimator": "p = (1 + #{null >= obs}) / (1 + m)",
+    "replaces": [
+      "markov_analysis.mc_p (NSIM=4000)",
+      "cross_theorem_correlation.py:84 (NSIM=400)",
+      "powerlaw_sweep.py:51,58 (NSIM=600)"
+    ],
+    "verdict_impact": "add-one is strictly monotone increasing in p (p' = (c+1)/(m+1) > c/m); it can only weaken evidence, never strengthen it. The frozen runs' minimum recorded p-values were all non-significant already (markov min 0.053 of 15 tests; cross-theorem 0.09-0.93; powerlaw min 0.017 reported n.s. vs its multiplicity), so no published verdict changes; the defect matters for FUTURE reuse of those instruments, which must import mc_p_addone from this module."
+  },
+  "m4_attribution": {
+    "game": "Grand Lotto 6/55",
+    "lead_ball": 45,
+    "rows_removed": 35,
+    "B1_after_removal": 24.503315860140333,
+    "p": 0.148,
+    "K": 999,
+    "floor": 0.001,
+    "threshold": 0.0025,
+    "verdict": "fire dissolves after lead-ball removal",
+    "null": "constrained 6-of-(P-1) on remaining balls (audit M-4)",
+    "caveat": "consistent with same-driving-rows (C9) but does not exclude reduced power at the smaller T; corroborated independently by rho(lambda_max, B1)=0.988 under H0 (families.json) \u2014 the two flags were one instrument"
+  },
+  "m2_presence": {
+    "per_game": {
+      "Lotto 6/42": {
+        "skill_over_marginal": -0.015006862838768231,
+        "p": 0.725
+      },
+      "Mega Lotto 6/45": {
+        "skill_over_marginal": -0.014995237964718466,
+        "p": 0.93
+      },
+      "Super Lotto 6/49": {
+        "skill_over_marginal": -0.012345868805248517,
+        "p": 0.715
+      },
+      "Grand Lotto 6/55": {
+        "skill_over_marginal": -0.009676461410038417,
+        "p": 0.355
+      },
+      "Ultra Lotto 6/58": {
+        "skill_over_marginal": -0.009155391244276667,
+        "p": 0.28
+      }
+    },
+    "min_p": 0.28,
+    "sidak": 0.010206218313011495,
+    "joint_verdict_null": true,
+    "m_null": 199,
+    "observed_frac": 0.6,
+    "null": "constrained 6-of-P uniform, frozen mask (audit M-2)"
+  },
+  "m2_calibration": {
+    "n_trials": 15,
+    "m_null": 39,
+    "constrained_null_p": [
+      0.75,
+      0.575,
+      0.775,
+      0.425,
+      0.9,
+      0.325,
+      0.675,
+      0.525,
+      0.05,
+      0.425,
+      0.225,
+      0.325,
+      0.45,
+      0.525,
+      0.375
+    ],
+    "col_permuted_null_p": [
+      0.975,
+      0.95,
+      1.0,
+      0.95,
+      1.0,
+      0.975,
+      0.975,
+      0.975,
+      0.475,
+      0.975,
+      0.85,
+      0.9,
+      0.975,
+      0.975,
+      0.925
+    ],
+    "constrained_mean_p": 0.48833333333333334,
+    "col_permuted_mean_p": 0.925,
+    "note": "H0 observed vs both nulls; mean p far from 0.5 for the old null = ensemble mismatch (audit M-2). Measured direction is MASKING/conservative (mean p 0.925, not small-p inflation): the old null overstates achievable completion skill, so real structure would be hidden and the meta panel fed non-uniform high p's"
+  },
+  "m3_cca": {
+    "H_R3_draws_vs_covariates_std": {
+      "heldout_rho1": 0.0679824647293208,
+      "p_shuffled_pairing": 0.345,
+      "null_q95": 0.21041230898722418,
+      "n_train": 93,
+      "n_test": 63,
+      "m_perm": 199,
+      "standardized": true
+    },
+    "H_R4_tidal_vs_ephemerides_std": {
+      "heldout_rho1": 0.9918781347379884,
+      "p_shuffled_pairing": 0.005,
+      "null_q95": 0.13072864300379464,
+      "n_train": 219,
+      "n_test": 147,
+      "m_perm": 199,
+      "standardized": true
+    },
+    "note": "shadow rerun; frozen v1 gave HR3 rho=0.110 p=0.17 (null) and HR4 rho=0.9977 p=0.005 (mechanism); the fix targets POWER for small-unit covariates, calibration was intact"
+  },
+  "_status": "EXPLORATORY-ONLY (adversarial review M-B): none of these numbers is citable in verdict-bearing docs until the registered rerun executes; the registered rerun must use a fresh seed and disclose this look"
+}

@@ -504,3 +504,68 @@ f2cd8f5e48376951  docs/RESULTS_EQ_TIDAL_V3.md
 dcc567b4a942c349  src/eq_tidal_v3.py
 44bf0204bf727114  src/eq_moondist_confirm1.py
 9d6964e594638c62  results/verification_eq_v3_confirm1.md
+
+# Snapshot 2026-07-02 after audit remediation (AUDIT_CORRECTNESS_2026-07-02 / AUDIT_RESOLUTION_2026-07-02).
+839e1391820031b1  ./results/multiplicity_ledger.jsonl
+00dafbc991f9ace5  ./results/run_ledger.jsonl
+405258f4f9b772df  ./results/meta_uniformity.json
+c0069483b77216d7  ./results/design_verifier_report.json
+71d28fa905963bb1  ./results/corrected_reruns_2026-07-02.json
+dfeaca58f2186f2c  ./results/metadata_corrections_2026-07-02.json
+47f8f3a322f845a2  ./src/design_verifier.py
+decf5c146eced13b  ./src/meta_uniformity.py
+d9112e17e7afd0b3  ./src/verify_relational_docs.py
+70594324f9f37280  ./src/build_multiplicity_ledger.py
+e157e9776ed768b4  ./src/build_run_ledger.py
+a9bd4715d0fd8b1b  ./src/corrected_reruns.py
+ede4a16bef926cac  ./src/migrate_ledger_v2.py
+
+# Snapshot 2026-07-02 FINAL after audit remediation + adversarial review remediation (AUDIT_RESOLUTION_2026-07-02.md §5).
+41f4d75bff9068af  ./results/multiplicity_ledger.jsonl
+2fa6051bf9ae3676  ./results/run_ledger.jsonl
+00db0f11281a2ce7  ./results/meta_uniformity.json
+87bfb826bbe8b496  ./results/design_verifier_report.json
+fad21030243eb573  ./results/corrected_reruns_2026-07-02.json
+35f41d7ba78b03f7  ./results/eq_readjudication_2026-07-02.json
+6e2a493ec410717d  ./results/families.json
+8e47e26d5c0f3a5c  ./results/readmission_v2.json
+b454bfc1d1d50eb9  ./results/v4_smoke.json
+d134c4fdd3a213cc  ./results/metadata_corrections_2026-07-02.json
+8b88bcf966ba3229  ./src/design_verifier.py
+f7d88f5800d0cd37  ./src/meta_uniformity.py
+3c1665352fd0c637  ./src/verify_relational_docs.py
+f927d66c6cac6923  ./src/build_multiplicity_ledger.py
+e157e9776ed768b4  ./src/build_run_ledger.py
+147285fc4de8c286  ./src/corrected_reruns.py
+31a8f6db2c03f616  ./src/eq_verdict_correction.py
+454a96ca83706d51  ./src/eq_selection_v4.py
+ba65aaacec577949  ./src/test_v4_smoke.py
+a732afe316085a83  ./src/measure_equivalence.py
+9f002ccb835e4bfa  ./src/readmit_r1_r7.py
+e49421a42eda7e82  ./src/lint_frozen_imports.py
+953f282efe423315  ./src/core/stats.py
+f8367ff7daf3654e  ./docs/AUDIT_RESOLUTION_2026-07-02.md
+6b0fd9d826644aff  ./docs/RESULTS_EQ_READJUDICATION.md
+d99d1a9db5bdd199  ./docs/ADMISSION_RELATIONAL_V2.md
+5a574d02913a3fe5  ./docs/SUPERSEDED_LABELS.md
+
+# Snapshot 2026-07-02 eval-set rerun (RESULTS_EVAL_RERUN_2026-07-02.md).
+f3fb9bce9c268654  ./results/blind_eval_r2.json
+652c8a297d94f6c0  ./results/blind_eval_r2_corrected.json
+39411b9ea42de61c  ./evals/structure_eval_set_v1/src/run_blind_eval_r2.py
+297d0a686d783f43  ./docs/RESULTS_EVAL_RERUN_2026-07-02.md
+ce401c8414d6530d  ./results/run_ledger.jsonl
+
+# Snapshot 2026-07-02 ratification: owner (Cha) ratified the eq readjudication verdicts + correction convention v1.
+31e17a0455248f66  ./docs/RESULTS_EQ_READJUDICATION.md
+aae4a67d56fbef0f  ./results/eq_readjudication_2026-07-02.json
+68a5774e7521d330  ./docs/SUPERSEDED_LABELS.md
+65c14dec02028b57  ./docs/AUDIT_RESOLUTION_2026-07-02.md
+9eb67bb53ab0aa81  ./docs/PLAYBOOK_THEOREM_HARMONIZATION.md
+
+# Snapshot 2026-07-02 SEAL of eq_eval_set_v1 (builder: audit-remediation session; executor must be a fresh agent per SEAL_NOTICE.md). Manifest sha16 per file:
+5d7050e2fe92b849  ./evals/eq_eval_set_v1/manifest.json
+50dec6ade5d589e2  ./evals/eq_eval_set_v1/answer_key/ground_truth.json
+379e458988d941b5  ./evals/eq_eval_set_v1/answer_key/GROUND_TRUTH.md
+71ed769feb48606b  ./evals/eq_eval_set_v1/src/generate_eq_eval.py
+266a1bd3281bc3ba  ./evals/eq_eval_set_v1/SEAL_NOTICE.md

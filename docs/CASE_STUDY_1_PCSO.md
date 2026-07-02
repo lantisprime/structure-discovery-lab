@@ -448,7 +448,7 @@ positives, not in finding them.
 | `results/commitment_ledger.txt` | append-only hash ledger (3 snapshots + blind-eval chain) |
 | `results/run_ledger.jsonl` | 10 run records with executor identities |
 | `results/multiplicity_ledger.jsonl` | 173 real-data test rows |
-| `results/meta_uniformity.json` | global meta-uniformity panel (KS p = 0.385) |
+| `results/meta_uniformity.json` | global meta-uniformity panel v2.1 (126 tests, discrete-lattice meta p = 0.044 — flags a #45-family small-p excess, composition-robust; sha 67eaafb4248d72b7; stale 0.385 corrected 2026-07-02) |
 | `results/independent_verification.json` | blind 9/9 concordance + numerical replication |
 | `results/blind_eval_score.md` | 68-unit methodology benchmark (for framework-level validation) |
 | `datasets/pcso-lotto/` | DATASET.md card + canonical/audited/provenance CSVs |

@@ -1,0 +1,133 @@
+{
+  "correction_basis": "PRIMARY: Sidak, base alpha 0.05, cumulative family m at verdict time (ledger charges). DISCRETIONARY \u2014 full basis grid published per claim (adversarial review B-2); convention requires HUMAN-GATE ratification.",
+  "family": "eq.tidal-manila.harmonic",
+  "cumulative_m": {
+    "REGISTRATION_EQ_TIDAL.md": 5,
+    "REGISTRATION_EQ_TIDAL_V2.md": 8,
+    "REGISTRATION_EQ_TIDAL_V3.md": 9,
+    "REGISTRATION_EQ_MOONDIST_CONFIRM.md": 10
+  },
+  "claims": {
+    "eq_tidal_v1.claimA_tidal_phase": {
+      "claim_id": "eq.tidal-manila.phase.v1",
+      "binding_p": 0.208955223880597,
+      "m_family_at_verdict": 5,
+      "alpha_corrected": 0.010206218313011495,
+      "floor_B200": 0.004975124378109453,
+      "floor_rule_ok": true,
+      "B_required_for_floor_rule": 195,
+      "raw_verdict_was": "fail raw 0.01",
+      "corrected_status": "FAIL_corrected",
+      "basis_sensitivity": {
+        "sidak_.05_cumulative_m": "FAIL",
+        "sidak_.05_final_m10": "FAIL",
+        "bonferroni_.05_cumulative": "FAIL",
+        "bonferroni_declared_.01": "FAIL",
+        "per_run_within_m": "FAIL",
+        "playbook_H4_families_engaged_1": "FAIL"
+      }
+    },
+    "eq_tidal_v1.claimB_moondist": {
+      "claim_id": "eq.tidal-manila.phase.moondist.v1",
+      "binding_p": 0.004975124378109453,
+      "m_family_at_verdict": 5,
+      "alpha_corrected": 0.010206218313011495,
+      "floor_B200": 0.004975124378109453,
+      "floor_rule_ok": true,
+      "B_required_for_floor_rule": 195,
+      "raw_verdict_was": "pass raw 0.01",
+      "corrected_status": "AT_FLOOR_RESOLUTION_LIMITED",
+      "basis_sensitivity": {
+        "sidak_.05_cumulative_m": "pass",
+        "sidak_.05_final_m10": "pass",
+        "bonferroni_.05_cumulative": "pass",
+        "bonferroni_declared_.01": "FAIL",
+        "per_run_within_m": "pass",
+        "playbook_H4_families_engaged_1": "pass"
+      }
+    },
+    "eq_tidal_v2.claimA_tidal_phase": {
+      "claim_id": "eq.tidal-manila.phase.v2",
+      "binding_p": 0.19402985074626866,
+      "m_family_at_verdict": 8,
+      "alpha_corrected": 0.006391150954545011,
+      "floor_B200": 0.004975124378109453,
+      "floor_rule_ok": false,
+      "B_required_for_floor_rule": 312,
+      "raw_verdict_was": "fail raw 0.01",
+      "corrected_status": "FAIL_corrected",
+      "basis_sensitivity": {
+        "sidak_.05_cumulative_m": "FAIL",
+        "sidak_.05_final_m10": "FAIL",
+        "bonferroni_.05_cumulative": "FAIL",
+        "bonferroni_declared_.01": "FAIL",
+        "per_run_within_m": "FAIL",
+        "playbook_H4_families_engaged_1": "FAIL"
+      }
+    },
+    "eq_tidal_v2.claimB_moondist": {
+      "claim_id": "eq.tidal-manila.phase.moondist.v2",
+      "binding_p": 0.009950248756218905,
+      "m_family_at_verdict": 8,
+      "alpha_corrected": 0.006391150954545011,
+      "floor_B200": 0.004975124378109453,
+      "floor_rule_ok": false,
+      "B_required_for_floor_rule": 312,
+      "raw_verdict_was": "pass raw 0.01",
+      "corrected_status": "FAIL_corrected",
+      "basis_sensitivity": {
+        "sidak_.05_cumulative_m": "FAIL",
+        "sidak_.05_final_m10": "FAIL",
+        "bonferroni_.05_cumulative": "FAIL",
+        "bonferroni_declared_.01": "FAIL",
+        "per_run_within_m": "pass",
+        "playbook_H4_families_engaged_1": "pass"
+      }
+    }
+  },
+  "ratification": {
+    "status": "RATIFIED",
+    "by": "Cha (lab owner)",
+    "date": "2026-07-02",
+    "channel": "Cowork session",
+    "scope": [
+      "correction convention v1: Sidak .05, cumulative family m at verdict time",
+      "v1-B AT_FLOOR_RESOLUTION_LIMITED",
+      "v2-B FAIL_corrected",
+      "confirm1 UNCONFIRMED",
+      "v3 36.34d anomaly -> instrument artifact pending re-test"
+    ],
+    "note": "basis-sensitivity grid remains published (review B-2)"
+  },
+  "e1_reselection_pure_heldout_nll": {
+    "eq.tidal-manila.phase.moondist.v2": {
+      "selected_by_frozen_J": "B1_harmonic_1freq_k1",
+      "selected_by_pure_val_nll": "B1_harmonic_1freq_k1",
+      "val_nll": {
+        "B1_harmonic_1freq_k1": 13.53504421078628,
+        "B2_harmonic_1freq_k2": 13.857542691203244
+      },
+      "agrees": true
+    },
+    "eq.tidal-manila.phase.v2": {
+      "selected_by_frozen_J": "A2_harmonic_2freq_k1",
+      "selected_by_pure_val_nll": "A2_harmonic_2freq_k1",
+      "val_nll": {
+        "A2_harmonic_2freq_k1": -3.147817066632923,
+        "A4_harmonic_3freq_k1": 5.192293647936284,
+        "A5_harmonic_3freq_k2": -2.9791081164076134
+      },
+      "agrees": true
+    }
+  },
+  "confirm1": {
+    "published_verdict": "MECHANISM_SUPPORTED",
+    "pedigree_dependency": "v2 claim B binding surrogate p=0.00995 <= 0.01 (REGISTRATION_EQ_MOONDIST_CONFIRM.md:45)",
+    "pedigree_corrected_status": "FAIL_corrected",
+    "additional_defects": [
+      "no registered skill baselines (audit E-3)",
+      "fresh data from same DE441 integrator (registration concedes not independent)"
+    ],
+    "corrected_status": "UNCONFIRMED \u2014 pending v4: corrected selection criterion, B>=399, verdict-time correction in-run, >=2 registered baselines, independent source for any MECHANISM_SUPPORTED label"
+  }
+}
