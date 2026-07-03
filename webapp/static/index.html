@@ -1192,7 +1192,11 @@ ROUTES.admin=async(app)=>{
         ${["fast","balanced","deep"].map(e=>`<button class="${(r.effort||"balanced")===e?"on":""}"
           onclick="this.parentElement.querySelector('.on')?.classList.remove('on');this.classList.add('on')">${e}</button>`).join("")}
       </div>
-      <div class="pillrow"><button class="ghost" onclick="saveRole('${rid}')">Save ${esc(r.label.toLowerCase())}</button></div>
+      <div class="pillrow">
+        <button class="ghost" onclick="saveRole('${rid}')">Save ${esc(r.label.toLowerCase())}</button>
+        <button class="subtle" onclick="testRole('${rid}')">Test</button>
+        <span id="role-t-${rid}" class="small" style="align-self:center"></span>
+      </div>
     </div>`;};
   const provRow=p=>`
     <div class="rowline clickable" onclick="toggleProv('${p.id}')">
@@ -1215,8 +1219,25 @@ ROUTES.admin=async(app)=>{
         <button class="ghost" onclick="saveProv('${p.id}',false)">Save</button>
         <button onclick="saveProv('${p.id}',true)">Save & make active</button>
       </div></div>`;
+  const anyProv=P.providers.some(p=>p.configured&&!p.keyless)||
+    P.providers.some(p=>p.keyless);
+  const anyKey=P.providers.some(p=>p.configured&&!p.keyless);
+  const compReady=(()=>{const r=P.roles.companion;
+    const eff=P.providers.find(p=>p.id===(r.provider||P.active))||{};
+    return eff.configured;})();
   app.innerHTML=`
   <div class="hero"><h1>Admin</h1></div>
+  <div class="card noprint" style="margin-bottom:16px"><h2>Setup checklist</h2>
+    <div class="rowline"><span><b>1.</b> Pick a provider & save its API key
+      <span class="small">(section 1 below — or sign into a subscription CLI)</span></span>
+      <span class="badge ${anyKey?"ok":"warn"}">${anyKey?"✓ done":"start here"}</span></div>
+    <div class="rowline"><span><b>2.</b> Assign models to the agent roles
+      <span class="small">(section 2 — each role has a Test button)</span></span>
+      <span class="badge ${anyKey?"":"dim"} ${compReady&&anyKey?"ok":""}">${compReady&&anyKey?"✓ companion ready":"after step 1"}</span></div>
+    <div class="rowline"><span><b>3.</b> Press <b>Test</b> on each role you'll use
+      <span class="small">— a live one-word call proves the key+model work</span></span>
+      <span class="badge dim">verify</span></div>
+  </div>
   ${guide("⚙","Why this page exists",
     "Three decisions live here, top to bottom: <b>1)</b> how agents authenticate (subscription CLI or API key), <b>2)</b> which provider+model each agent role uses and how hard it thinks, <b>3)</b> lab settings. Everything sensitive stays local and obfuscated — never committed, served masked.",null,"admin")}
   <div class="card"><h2>1 · How should agents authenticate?</h2>
@@ -1334,6 +1355,16 @@ window.addDataset=async()=>{
       </div></div>`;
     toast("Dataset added");
   }catch(e){$("#ds-report").innerHTML=`<p class="small" style="color:var(--bad);margin-top:8px">✕ ${esc(e.message)}</p>`}};
+window.testRole=async rid=>{
+  const out=document.getElementById("role-t-"+rid);
+  out.textContent="testing…";
+  await saveRole(rid);            // test what's on screen, not stale config
+  try{const r=await api("/api/test_role",{method:"POST",
+      body:JSON.stringify({role:rid})});
+    out.innerHTML=r.ok
+      ?`<span class="badge ok">✓ works — ${esc(r.model)} answered in ${r.latency_ms} ms</span>`
+      :`<span class="badge bad">✕</span> ${esc(r.error)}`;
+  }catch(e){out.innerHTML=`<span class="badge bad">✕</span> ${esc(e.message)}`}};
 window.saveRole=async(rid,providerOnly)=>{
   const sel=document.getElementById("role-ms-"+rid);
   const custom=document.getElementById("role-mc-"+rid);
@@ -1433,10 +1464,18 @@ python3 webapp/server.py        # http://localhost:8787</pre>
 const CHAT={hist:JSON.parse(sessionStorage.getItem("labChat")||"[]"),busy:false};
 const STARTERS=["What should I do next?","How do I start an experiment?",
   "Explain the honesty meter","What can the Run centre do?"];
-function toggleChat(){
+async function toggleChat(){
   const p=$("#chatpanel");
   p.style.display=p.style.display==="none"?"flex":"none";
-  if(p.style.display==="flex"){renderChat();$("#chatin").focus();}
+  if(p.style.display==="flex"){
+    if(!CHAT.hist.length&&CHAT.needsSetup===undefined){
+      try{const P=await api("/api/providers");
+        const r=P.roles.companion,eff=P.providers.find(x=>x.id===(r.provider||P.active))||{};
+        CHAT.needsSetup=!eff.configured;
+      }catch(e){}
+    }
+    renderChat();$("#chatin").focus();
+  }
 }
 function renderChat(){
   const log=$("#chatlog");
