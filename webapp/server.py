@@ -29,7 +29,9 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.parse
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -824,31 +826,34 @@ PROVIDERS = {
     "openai": {"label": "OpenAI", "protocol": "openai",
                "base": "https://api.openai.com/v1",
                "get": "https://platform.openai.com/api-keys",
-               "models": ["gpt-4o", "gpt-4o-mini", "o3"]},
+               "models": ["gpt-5.5", "gpt-5.1", "gpt-5.5-pro"]},
     "openrouter": {"label": "OpenRouter", "protocol": "openai",
                    "base": "https://openrouter.ai/api/v1",
                    "get": "https://openrouter.ai/keys",
                    "models": ["anthropic/claude-sonnet-5",
-                              "google/gemini-2.5-pro", "openai/gpt-4o"]},
+                              "deepseek/deepseek-v4-flash",
+                              "openai/gpt-5.1"]},
     "google": {"label": "Google Gemini", "protocol": "openai",
                "base": "https://generativelanguage.googleapis.com/v1beta/openai",
                "get": "https://aistudio.google.com/apikey",
-               "models": ["gemini-2.5-pro", "gemini-2.5-flash"]},
+               "models": ["gemini-3.5-flash", "gemini-3.1-pro",
+                          "gemini-3.1-flash-lite"]},
     "groq": {"label": "Groq", "protocol": "openai",
              "base": "https://api.groq.com/openai/v1",
              "get": "https://console.groq.com/keys",
-             "models": ["llama-3.3-70b-versatile", "qwen-2.5-72b"]},
+             "models": ["openai/gpt-oss-120b", "openai/gpt-oss-20b",
+                        "qwen/qwen3.6-27b"]},
     "deepseek": {"label": "DeepSeek", "protocol": "openai",
                  "base": "https://api.deepseek.com/v1",
                  "get": "https://platform.deepseek.com/api_keys",
-                 "models": ["deepseek-chat", "deepseek-reasoner"]},
+                 "models": ["deepseek-v4-flash", "deepseek-v4-pro"]},
     "mistral": {"label": "Mistral", "protocol": "openai",
                 "base": "https://api.mistral.ai/v1",
                 "get": "https://console.mistral.ai/api-keys",
                 "models": ["mistral-large-latest", "codestral-latest"]},
     "xai": {"label": "xAI (Grok)", "protocol": "openai",
             "base": "https://api.x.ai/v1", "get": "https://console.x.ai",
-            "models": ["grok-3", "grok-3-mini"]},
+            "models": ["grok-4.3", "grok-4-fast"]},
     "together": {"label": "Together AI", "protocol": "openai",
                  "base": "https://api.together.xyz/v1",
                  "get": "https://api.together.ai/settings/api-keys",
@@ -864,7 +869,21 @@ PROVIDERS = {
     "moonshot": {"label": "Moonshot (Kimi)", "protocol": "openai",
                  "base": "https://api.moonshot.ai/v1",
                  "get": "https://platform.moonshot.ai/console/api-keys",
-                 "models": ["kimi-k2", "moonshot-v1-128k"]},
+                 "models": ["kimi-k2.6"]},
+    "minimax": {"label": "MiniMax", "protocol": "openai",
+                "base": "https://api.minimax.io/v1",
+                "get": "https://platform.minimax.io",
+                "models": ["MiniMax-M2.1", "MiniMax-M2"]},
+    "neuralwatt": {"label": "NeuralWatt", "protocol": "openai",
+                   "base": "https://api.neuralwatt.com/v1",
+                   "get": "https://portal.neuralwatt.com/",
+                   "models": ["glm-5.2", "glm-5.2-fast", "kimi-k2.6",
+                              "kimi-k2.7-code", "qwen3.5-397b",
+                              "qwen3.6-35b"]},
+    "opencode": {"label": "OpenCode Zen", "protocol": "openai",
+                 "base": "https://opencode.ai/zen/v1",
+                 "get": "https://opencode.ai/auth",
+                 "models": []},
     "ollama": {"label": "Ollama (local, keyless)", "protocol": "openai",
                "base": "http://localhost:11434/v1",
                "get": "https://ollama.com/download", "keyless": True,
@@ -911,6 +930,16 @@ SUBSCRIPTION_CLIS = {
                 "relogin": "copilot   →  then type: /logout, then /login",
                 "auth_files": ["~/.config/github-copilot/hosts.json",
                                "~/.config/github-copilot/apps.json"]},
+}
+
+
+CLI_PROVIDERS = {
+    "cli:claude": {"label": "Claude subscription (runs via claude CLI)",
+                   "cli": "claude", "sub": "claude",
+                   "models": ["sonnet", "opus", "haiku"]},
+    "cli:codex": {"label": "ChatGPT subscription (runs via codex CLI)",
+                  "cli": "codex", "sub": "codex",
+                  "models": []},
 }
 
 
@@ -964,6 +993,15 @@ def providers_get():
             "configured": key_set if not p.get("keyless") else True,
             "key_masked": _mask(cfg["api_keys"].get(
                 f"PROVIDER_{pid.upper()}_KEY"))})
+    for cid, cp in CLI_PROVIDERS.items():
+        inst, signed = _sub_status(SUBSCRIPTION_CLIS[cp["sub"]])
+        pst = st.get("providers", {}).get(cid, {})
+        out["providers"].append({
+            "id": cid, "label": cp["label"], "protocol": "cli",
+            "base": "", "get": SUBSCRIPTION_CLIS[cp["sub"]]["get"],
+            "models": cp["models"], "keyless": True, "role_only": True,
+            "model": pst.get("model", ""),
+            "configured": inst and signed, "key_masked": None})
     for sid, sc in SUBSCRIPTION_CLIS.items():
         installed, signed_in = _sub_status(sc)
         out["subscriptions"].append({
@@ -991,7 +1029,8 @@ def providers_set(payload):
         if r not in AGENT_ROLES:
             raise ValueError(f"unknown role {r}")
         rc = payload.get("config") or {}
-        if rc.get("provider") and rc["provider"] not in PROVIDERS:
+        if rc.get("provider") and rc["provider"] not in PROVIDERS \
+                and rc["provider"] not in CLI_PROVIDERS:
             raise ValueError(f"unknown provider {rc.get('provider')}")
         if rc.get("effort") and rc["effort"] not in EFFORTS:
             raise ValueError("effort must be fast | balanced | deep")
@@ -1000,7 +1039,7 @@ def providers_set(payload):
             if k in rc:
                 st["agent_roles"][r][k] = rc[k]
     if pid:
-        if pid not in PROVIDERS:
+        if pid not in PROVIDERS and pid not in CLI_PROVIDERS:
             raise ValueError(f"unknown provider {pid}")
         key = (payload.get("key") or "").strip()
         if key == "__delete__":
@@ -1035,6 +1074,15 @@ def resolve_provider(pid=None, role=None):
     role_cfg = st.get("agent_roles", {}).get(role or "", {})
     pid = pid or role_cfg.get("provider") or st.get("active_provider",
                                                     "anthropic")
+    if pid in CLI_PROVIDERS:
+        cp = CLI_PROVIDERS[pid]
+        inst, signed = _sub_status(SUBSCRIPTION_CLIS[cp["sub"]])
+        pst = st.get("providers", {}).get(pid, {})
+        return {"id": pid, "protocol": "cli", "cli": cp["cli"],
+                "base": "", "signed_in": signed and inst,
+                "model": role_cfg.get("model") or pst.get("model") or "",
+                "effort": role_cfg.get("effort", "balanced"),
+                "key": "subscription" if (signed and inst) else None}
     if pid not in PROVIDERS:
         raise ValueError(f"unknown provider {pid}")
     p = PROVIDERS[pid]
@@ -1322,10 +1370,27 @@ def test_role(payload):
         raise ValueError("unknown role")
     prov = resolve_provider(role=role)
     if not prov["key"]:
+        if prov["protocol"] == "cli":
+            return {"ok": False,
+                    "error": f"The {prov['cli']} CLI is not signed in — open "
+                             f"Terminal, run `{prov['cli']}` and complete the "
+                             f"login (see Admin → subscriptions for the "
+                             f"step-by-step flow)."}
         return {"ok": False,
                 "error": f"No API key for '{prov['id']}' — open that "
                          f"provider in the list above and paste a key."}
     t0 = time.time()
+    if prov["protocol"] == "cli":
+        argv = cli_argv(prov, "Reply with exactly: OK", oneshot=True)
+        r = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True,
+                           timeout=90)
+        if r.returncode != 0:
+            return {"ok": False,
+                    "error": f"{prov['cli']} CLI returned an error: "
+                             f"{(r.stderr or r.stdout)[-200:]}"}
+        return {"ok": True, "provider": prov["id"],
+                "model": prov["model"] or "(CLI default)",
+                "latency_ms": int((time.time() - t0) * 1000)}
     if prov["protocol"] == "anthropic":
         body = {"model": prov["model"], "max_tokens": 16,
                 "messages": [{"role": "user", "content": "Reply: OK"}]}
@@ -1346,6 +1411,32 @@ def test_role(payload):
     urllib.request.urlopen(req, timeout=30)
     return {"ok": True, "provider": prov["id"], "model": prov["model"],
             "latency_ms": int((time.time() - t0) * 1000)}
+
+
+def cli_argv(prov, prompt, oneshot=False):
+    """Build a headless subscription-CLI invocation. claude: -p one-shot with
+    a restricted tool allowlist; codex: exec with workspace sandbox and no
+    approval prompts. Effort maps to extended thinking / reasoning effort."""
+    if prov["cli"] == "claude":
+        argv = ["claude", "-p", prompt]
+        if prov.get("model"):
+            argv += ["--model", prov["model"]]
+        argv += (["--allowedTools", ""] if oneshot else
+                 ["--allowedTools", "Read Bash(python3:*)"])
+        if prov.get("effort") == "deep" and not oneshot:
+            argv[2] = "Think hard and take your time.\n\n" + prompt
+        return argv
+    if prov["cli"] == "codex":
+        argv = ["codex", "exec", "--skip-git-repo-check",
+                "--sandbox", "read-only" if oneshot else "workspace-write"]
+        eff = {"fast": "low", "balanced": "medium",
+               "deep": "high"}.get(prov.get("effort"))
+        if eff:
+            argv += ["-c", f"model_reasoning_effort=\"{eff}\""]
+        if prov.get("model"):
+            argv += ["-m", prov["model"]]
+        return argv + [prompt]
+    raise ValueError(f"unknown cli {prov['cli']}")
 
 
 _COMP_CALLS = []
@@ -1391,6 +1482,18 @@ def companion_chat(payload):
            f"they can see and do right there, and say where to go if the "
            f"action lives elsewhere.]")
     sysmsg = COMPANION_SYSTEM + "\n\n" + ctx
+    if prov["protocol"] == "cli":
+        convo = "\n".join(f"{m['role'].upper()}: {m['content']}"
+                          for m in msgs[-8:])
+        prompt = (sysmsg + "\n\nConversation so far:\n" + convo +
+                  "\n\nReply as the guide (plain text, short):")
+        r = subprocess.run(cli_argv(prov, prompt, oneshot=True), cwd=ROOT,
+                           capture_output=True, text=True, timeout=120)
+        if r.returncode != 0:
+            raise ValueError(f"{prov['cli']} CLI error: "
+                             f"{(r.stderr or r.stdout)[-200:]}")
+        return {"reply": r.stdout.strip()[-4000:], "provider": prov["id"],
+                "model": prov["model"] or "(CLI default)"}
     if prov["protocol"] == "anthropic":
         body = {"model": prov["model"], "max_tokens": 700,
                 "system": sysmsg, "messages": msgs}

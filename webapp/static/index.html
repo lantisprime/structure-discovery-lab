@@ -1169,9 +1169,10 @@ ROUTES.admin=async(app)=>{
       <div class="small">${esc(r.desc)}</div>
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
         <div><label style="margin-top:0">Provider
-          ${info("Only providers with a saved API key (or local keyless ones) appear here. Subscription CLI sign-ins don't — those run in Terminal only.")}</label>
+          ${info("Everything usable appears here: signed-in subscription CLIs (they run through the CLI on this Mac) and providers with a saved API key or local keyless servers.")}</label>
           <select id="role-p-${rid}" onchange="saveRole('${rid}',true)">
-            ${usable.map(p=>`<option value="${p.id}" ${effId===p.id?"selected":""}>${esc(p.label)}</option>`).join("")}
+            ${(list=>list.length?`<optgroup label="Subscriptions (signed-in CLIs)">${list.map(p=>`<option value="${p.id}" ${effId===p.id?"selected":""}>${esc(p.label)}</option>`).join("")}</optgroup>`:"")(usable.filter(p=>p.role_only))}
+            ${(list=>list.length?`<optgroup label="API-key providers">${list.map(p=>`<option value="${p.id}" ${effId===p.id?"selected":""}>${esc(p.label)}</option>`).join("")}</optgroup>`:"")(usable.filter(p=>!p.role_only))}
           </select></div>
         <div><label style="margin-top:0">Model
           ${info("Which model of "+(eff.label||"the provider")+" to use. Pick from its known models, or choose Custom to type any model id.")}</label>
@@ -1213,8 +1214,8 @@ ROUTES.admin=async(app)=>{
       <input id="pm-${p.id}" list="pml-${p.id}" value="${esc(p.model||"")}"
         placeholder="${p.models[0]||"model id"}" autocapitalize="off">
       <datalist id="pml-${p.id}">${p.models.map(m=>`<option value="${esc(m)}">`).join("")}</datalist>
-      ${p.id==="custom"||p.keyless?`<label>Base URL</label>
-        <input id="pb-${p.id}" value="${esc(p.base)}" autocapitalize="off">`:""}
+      <label>Base URL ${info("The API endpoint. Prefilled with the provider's standard URL - only change it if your provider documents a different one.")}</label>
+      <input id="pb-${p.id}" value="${esc(p.base)}" autocapitalize="off">
       <div class="pillrow">
         <button class="ghost" onclick="saveProv('${p.id}',false)">Save</button>
         <button onclick="saveProv('${p.id}',true)">Save & make active</button>
@@ -1284,7 +1285,13 @@ ROUTES.admin=async(app)=>{
       below (and the companion). Pick a provider, paste its key, save —
       it immediately becomes selectable for every role. Subscription CLI
       sign-ins do <b>not</b> appear here; they're Terminal-only.</p>
-      ${P.providers.map(provRow).join("")}
+      <input id="prov-search" placeholder="Search providers (e.g. deepseek, router, mini)…"
+        oninput="filterProviders(this.value)" autocomplete="off" style="margin:8px 0">
+      ${P.providers.filter(p=>!p.role_only)
+        .sort((a,b)=>(b.configured-a.configured)||a.label.localeCompare(b.label))
+        .map(p=>`<div class="prov-item" data-q="${esc((p.id+' '+p.label).toLowerCase())}">${provRow(p)}</div>`).join("")}
+      <p class="small" id="prov-noresult" style="display:none">No provider
+      matches — pick <b>Custom OpenAI-compatible</b> and set its base URL.</p>
     </div>
   </div>
   <div class="card" style="margin-top:16px"><h2>2 · Who does what — agent roles</h2>
@@ -1339,6 +1346,13 @@ window.setAuth=async a=>{
   try{await api("/api/providers",{method:"POST",
     body:JSON.stringify({auth_method:a})});route();}
   catch(e){toast(e.message)}};
+window.filterProviders=q=>{
+  q=(q||"").trim().toLowerCase();let hits=0;
+  document.querySelectorAll(".prov-item").forEach(el=>{
+    const show=!q||el.dataset.q.includes(q);
+    el.style.display=show?"":"none";if(show)hits++;});
+  const nr=document.getElementById("prov-noresult");
+  if(nr)nr.style.display=hits?"none":"block";};
 window.toggleProv=id=>{const el=document.getElementById("prov-"+id);
   el.style.display=el.style.display==="none"?"block":"none";};
 window.saveProv=async(id,makeActive)=>{

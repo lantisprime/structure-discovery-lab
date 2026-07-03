@@ -34,7 +34,7 @@ import urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 sys.path.insert(0, HERE)
-from server import JOB_DEFS, job_argv, get_api_key, jd  # noqa: E402
+from server import JOB_DEFS, job_argv, get_api_key, jd, cli_argv  # noqa: E402
 
 STATUS = os.path.join(ROOT, "results", "agent_status.json")
 READ_PREFIXES = ("docs/", "results/", "src/", "evals/", "tools/", "README")
@@ -196,57 +196,88 @@ def main():
     print(f"agent: role={a.role or '(none)'} provider={prov['id']} "
           f"model={prov['model'] or '(default)'} effort={prov.get('effort')}")
     print(f"task: {a.task}\n")
+    prior = None
     if a.resume:
-        tpath = os.path.join(ROOT, a.resume) if not os.path.isabs(a.resume) \
-            else a.resume
+        tpath = a.resume if os.path.isabs(a.resume) else \
+            os.path.join(ROOT, a.resume)
         prior = json.load(open(tpath))
-        messages = prior["messages"]
-        messages.append({"role": "user", "content":
-                         "AUDIT FOLLOW-UP from the lab owner: " + a.task})
-        print("(resuming transcript for audit — prior turns:",
-              len(messages), ")\n")
-    else:
-        messages = [{"role": "user", "content": a.task}]
     final = None
-    for turn in range(MAX_TURNS):
-        try:
-            text, calls, raw = (call_anthropic
-                                if prov["protocol"] == "anthropic"
-                                else call_openai)(prov, messages)
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode(errors="replace")[:400]
-            raise SystemExit(
-                f"Provider '{prov['id']}' rejected the request "
-                f"(HTTP {e.code}). Check the API key and model on the Admin "
-                f"page.\n{detail}")
-        except urllib.error.URLError as e:
-            raise SystemExit(
-                f"Could not reach provider '{prov['id']}' at {prov['base']} "
-                f"({e.reason}). Check your network, or the base URL on the "
-                f"Admin page.")
-        if text.strip():
-            print(f"--- agent (turn {turn+1}) ---\n{text}\n", flush=True)
-        if not calls:
-            final = text
-            break
-        if prov["protocol"] == "anthropic":
-            messages.append({"role": "assistant", "content": raw["content"]})
-            results = []
-            for c in calls:
-                print(f">>> {c['name']}({json.dumps(c['args'])[:120]})",
-                      flush=True)
-                out = do_tool(c["name"], c["args"])
-                results.append({"type": "tool_result", "tool_use_id": c["id"],
-                                "content": out[:12000]})
-            messages.append({"role": "user", "content": results})
+    if prov["protocol"] == "cli":
+        # Subscription CLIs are complete agents themselves — run the task
+        # through the signed-in CLI with a restricted tool surface and the
+        # lab's governance preamble. Output streams into this job's log.
+        if not prov.get("key"):
+            raise SystemExit(f"The {prov['cli']} CLI is not installed or not "
+                             f"signed in — see Admin > subscriptions.")
+        preamble = (SYSTEM + "\n\nWork from the repo root. Prefer running "
+                    "the gate scripts via python3. TASK:\n")
+        if prior:
+            prev = "\n".join(f"{m['role'].upper()}: {str(m['content'])[:2000]}"
+                             for m in prior["messages"][-6:])
+            preamble += ("(AUDIT FOLLOW-UP; previous run transcript "
+                         "below)\n" + prev + "\n\nOWNER ASKS: ")
+        argv = cli_argv(prov, preamble + a.task)
+        print(f">>> {' '.join(argv[:4])} …", flush=True)
+        r = subprocess.run(argv, cwd=ROOT, text=True, capture_output=True,
+                           timeout=3600)
+        print(r.stdout[-12000:], flush=True)
+        if r.stderr.strip():
+            print("[stderr]", r.stderr[-2000:], flush=True)
+        final = r.stdout.strip()[-8000:] or None
+        new_msgs = [{"role": "user", "content": a.task},
+                    {"role": "assistant", "content": final or ""}]
+        messages = (prior["messages"] + new_msgs) if prior else new_msgs
+    else:
+        if prior:
+            messages = prior["messages"]
+            messages.append({"role": "user", "content":
+                             "AUDIT FOLLOW-UP from the lab owner: " + a.task})
+            print("(resuming transcript for audit — prior turns:",
+                  len(messages), ")\n")
         else:
-            messages.append(raw)
-            for c in calls:
-                print(f">>> {c['name']}({json.dumps(c['args'])[:120]})",
-                      flush=True)
-                out = do_tool(c["name"], c["args"])
-                messages.append({"role": "tool", "tool_call_id": c["id"],
-                                 "content": out[:12000]})
+            messages = [{"role": "user", "content": a.task}]
+        for turn in range(MAX_TURNS):
+            try:
+                text, calls, raw = (call_anthropic
+                                    if prov["protocol"] == "anthropic"
+                                    else call_openai)(prov, messages)
+            except urllib.error.HTTPError as e:
+                detail = e.read().decode(errors="replace")[:400]
+                raise SystemExit(
+                    f"Provider '{prov['id']}' rejected the request "
+                    f"(HTTP {e.code}). Check the API key and model on the "
+                    f"Admin page.\n{detail}")
+            except urllib.error.URLError as e:
+                raise SystemExit(
+                    f"Could not reach provider '{prov['id']}' at "
+                    f"{prov['base']} ({e.reason}). Check your network, or "
+                    f"the base URL on the Admin page.")
+            if text.strip():
+                print(f"--- agent (turn {turn+1}) ---\n{text}\n", flush=True)
+            if not calls:
+                final = text
+                break
+            if prov["protocol"] == "anthropic":
+                messages.append({"role": "assistant",
+                                 "content": raw["content"]})
+                results = []
+                for c in calls:
+                    print(f">>> {c['name']}({json.dumps(c['args'])[:120]})",
+                          flush=True)
+                    out = do_tool(c["name"], c["args"])
+                    results.append({"type": "tool_result",
+                                    "tool_use_id": c["id"],
+                                    "content": out[:12000]})
+                messages.append({"role": "user", "content": results})
+            else:
+                messages.append(raw)
+                for c in calls:
+                    print(f">>> {c['name']}({json.dumps(c['args'])[:120]})",
+                          flush=True)
+                    out = do_tool(c["name"], c["args"])
+                    messages.append({"role": "tool",
+                                     "tool_call_id": c["id"],
+                                     "content": out[:12000]})
     os.makedirs(os.path.join(ROOT, "results", "agent_runs"), exist_ok=True)
     stamp = time.strftime('%Y%m%d-%H%M%S')
     if a.resume:
