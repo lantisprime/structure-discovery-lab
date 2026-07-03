@@ -1394,11 +1394,15 @@ window.saveRole=async(rid,providerOnly)=>{
   const model=sel&&sel.value==="__custom__"?(custom?.value.trim()||"")
     :(sel?.value||"");
   const cfg={provider:document.getElementById("role-p-"+rid).value};
-  if(!providerOnly){cfg.model=model;
+  if(providerOnly){
+    // switching provider: never carry the old provider's model across —
+    // reset to the new provider's default so a stale id can't be sent
+    cfg.model="";
+  }else{cfg.model=model;
     cfg.effort=document.querySelector("#role-e-"+rid+" .on")?.textContent||"balanced";}
   try{await api("/api/providers",{method:"POST",
       body:JSON.stringify({role:rid,config:cfg})});
-    toast(providerOnly?"Provider set — model list updated":"Role saved");
+    toast(providerOnly?"Provider set — model reset to its default":"Role saved");
     if(providerOnly)route();
   }catch(e){toast(e.message)}};
 window.saveKeys=async keys=>{

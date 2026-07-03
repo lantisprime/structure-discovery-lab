@@ -1035,6 +1035,13 @@ def providers_set(payload):
         if rc.get("effort") and rc["effort"] not in EFFORTS:
             raise ValueError("effort must be fast | balanced | deep")
         st.setdefault("agent_roles", {}).setdefault(r, {})
+        # models are provider-specific: if the role's provider changes and
+        # the caller didn't pick a model for the new provider, drop the old
+        # one so a stale id is never sent to the wrong provider
+        if rc.get("provider") \
+                and rc["provider"] != st["agent_roles"][r].get("provider") \
+                and "model" not in rc:
+            st["agent_roles"][r].pop("model", None)
         for k in ("provider", "model", "effort"):
             if k in rc:
                 st["agent_roles"][r][k] = rc[k]
