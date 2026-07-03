@@ -12,12 +12,16 @@ if [ -z "$PY" ]; then
   echo "python3 not found — install Python 3 first."; read -r; exit 1
 fi
 
-# already running? just open the browser
-if curl -s -o /dev/null --max-time 1 "http://localhost:$PORT/api/state"; then
-  echo "Console already running — opening browser."
-  (command -v open >/dev/null && open "http://localhost:$PORT") || \
-  (command -v xdg-open >/dev/null && xdg-open "http://localhost:$PORT")
-  exit 0
+# Always run the CURRENT code: if any server (possibly an outdated one) is
+# holding the port, stop it first. This makes double-clicking this file a
+# true restart.
+OLD_PIDS=$(lsof -ti tcp:$PORT 2>/dev/null)
+if [ -n "$OLD_PIDS" ]; then
+  echo "Stopping the previous console (pid $OLD_PIDS)…"
+  kill $OLD_PIDS 2>/dev/null
+  sleep 1
+  kill -9 $(lsof -ti tcp:$PORT 2>/dev/null) 2>/dev/null
+  sleep 0.5
 fi
 
 echo "Starting Structure Discovery Lab console…"
