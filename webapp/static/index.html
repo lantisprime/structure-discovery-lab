@@ -122,6 +122,18 @@ details[open] summary:before{content:"▾ "}
 .kpi + .small{margin-top:2px}
 .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 
+.guide{background:var(--tint);border:1px solid transparent;border-radius:var(--radius);
+  padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
+.guide .gico{font-size:20px;line-height:1.3}
+.guide b{color:var(--accent)}
+.guide .small{margin-top:2px}
+.nextchip{display:inline-flex;align-items:center;gap:8px;background:var(--accent);
+  color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;
+  cursor:pointer;white-space:nowrap}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;display:flex;
+  align-items:center;justify-content:center;padding:20px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.overlay .card{max-width:440px;width:100%}
 nav.tabbar{display:none}
 @media (max-width:760px){
   main{padding:18px 14px 90px}
@@ -236,6 +248,62 @@ window.addEventListener("hashchange",route);
 <script id="routes-and-pages">
 "use strict";
 /* ============================ shared widgets ============================ */
+/* guided experience: every page opens with WHY it exists + WHAT to do next */
+function nextAction(st){
+  const cur=st?.pipeline?.current;
+  return {
+    rerun:{label:"Approve & run the corrected rerun",hash:"approvals"},
+    ratify:{label:"Ratify the pending verdicts",hash:"approvals"},
+    eq_eval:{label:"Next: run the blind eval pack in a FRESH agent session",hash:"help"},
+    eq_v4:{label:"Next: draft the equation-v4 registration",hash:"new"},
+  }[cur]||{label:"Start a new experiment",hash:"new"};
+}
+function guide(icon,title,lines,cta){
+  return `<div class="guide noprint"><div class="gico">${icon}</div>
+    <div style="flex:1"><b>${title}</b>
+      <div class="small">${lines}</div>
+      ${cta?`<div class="pillrow" style="margin-top:8px">${cta}</div>`:""}
+    </div></div>`;
+}
+function ctaBtn(label,hash){
+  return `<span class="nextchip" onclick="location.hash='${hash}'">${esc(label)} →</span>`;
+}
+function interpretRun(r,tests){
+  const s=[],grade=(r.grade||""),st=(r.status||"");
+  if(/G0/.test(grade))s.push("This was an <b>exploratory</b> run: its numbers are for orientation only and can never support a claim.");
+  else if(/G1/.test(grade))s.push("This run validated <b>instruments</b> on synthetic data — it says the tools are calibrated, not anything about the real world.");
+  else if(/G2|registered/i.test(grade))s.push("This was a <b>registered</b> experiment: the design was committed before execution, so its p-values are citable evidence.");
+  const ps=tests.map(t=>t.raw_p).filter(p=>p!=null);
+  if(ps.length){
+    const small=ps.filter(p=>p<=.05).length;
+    s.push(`It contributed <b>${ps.length}</b> p-value${ps.length>1?"s":""} to the ledger; ${small===0?"none":small} fell below raw 0.05${small?" (raw — the corrected threshold is stricter, so check the family correction before reading anything into it)":""}.`);
+  }
+  if(/NULL/i.test(st))s.push("Bottom line: <b>no structure beyond chance</b> was found — in this lab a clean null is a successful, publishable result.");
+  if(/positive control/i.test(st))s.push("A physical positive control detected its known mechanism, which certifies the pipeline had power — the nulls are not for lack of trying.");
+  if(/dissolv/i.test(st))s.push("An earlier flag traced back to already-known rows rather than new structure.");
+  if(/ADMITTED/i.test(st))s.push("Verdict class: instruments re-admitted under tightened calibration gates.");
+  return s.join(" ")||"No interpretation available for this run.";
+}
+function drawBars(canvas,labels,values,color){
+  const dpr=devicePixelRatio||1,W=canvas.clientWidth||600,Hh=220;
+  canvas.width=W*dpr;canvas.height=Hh*dpr;
+  const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);
+  const css=getComputedStyle(document.documentElement);
+  const ink2=css.getPropertyValue("--ink2"),line=css.getPropertyValue("--line");
+  const hi=Math.max(...values,1e-9),pad=26,bw=(W-pad-10)/values.length;
+  ctx.strokeStyle=line;ctx.beginPath();ctx.moveTo(pad,Hh-24);ctx.lineTo(W-6,Hh-24);ctx.stroke();
+  ctx.fillStyle=color||css.getPropertyValue("--accent").trim()||"#0071e3";
+  values.forEach((v,i)=>{
+    const h=(Hh-50)*(v/hi);
+    ctx.beginPath();
+    if(ctx.roundRect)ctx.roundRect(pad+i*bw+2,Hh-24-h,Math.max(bw-4,2),h,4);
+    else ctx.rect(pad+i*bw+2,Hh-24-h,Math.max(bw-4,2),h);
+    ctx.fill();});
+  ctx.fillStyle=ink2;ctx.font="10px -apple-system,sans-serif";
+  ctx.fillText(String(hi),2,16);
+  labels.forEach((l,i)=>{ if(labels.length<=14||i%Math.ceil(labels.length/14)===0)
+    ctx.fillText(String(l).slice(0,7),pad+i*bw+2,Hh-10);});
+}
 function stepList(pipe){
   return `<div class="steps">`+pipe.steps.map((s,i)=>`
     <div class="step ${s.status}">
@@ -311,11 +379,28 @@ const ROUTES={};
 ROUTES.home=async(app)=>{
   const st=await loadState(true);
   const L=st.ledger,run=st.runs[0]||{};
+  const na=nextAction(st);
   app.innerHTML=`
+  ${localStorage.getItem("labIntroSeen")?"":`
+  <div class="overlay" id="intro"><div class="card">
+    <h2>Welcome to your lab 👋</h2>
+    <p class="small" style="margin:8px 0">Three things to know:</p>
+    <p class="small"><b>1 · The journey card</b> always shows where the lab is
+      and the single next action — when in doubt, come back to Overview.</p>
+    <p class="small"><b>2 · Nothing runs unregistered.</b> “New experiment”
+      drafts a registration; you approve it in Approvals; the Run centre
+      executes it. That order is the lab's integrity.</p>
+    <p class="small"><b>3 · Every page starts with a blue guide</b> telling
+      you what the page is for and what to do on it.</p>
+    <div class="pillrow" style="margin-top:14px">
+      <button onclick="localStorage.setItem('labIntroSeen','1');document.getElementById('intro').remove()">Got it</button>
+    </div></div></div>`}
   <div class="hero"><h1>Structure Discovery Lab</h1>
     <p>Mathematical-theorem instruments, pre-registered experiments, and a
-    multiplicity ledger — one console. The wizard below shows exactly where
-    the lab is and what happens next.</p></div>
+    multiplicity ledger — one console.</p></div>
+  ${guide("🧭","Right now, the lab wants one thing from you",
+    esc((st.pipeline.steps.find(s=>s.id===st.pipeline.current)||{}).detail||""),
+    ctaBtn(na.label,na.hash))}
   <div class="grid g3">
     <div class="card"><div class="kpi">${st.runs.length}</div>
       <div class="small">experiments in the run ledger</div></div>
@@ -328,7 +413,8 @@ ROUTES.home=async(app)=>{
   <div class="grid g2" style="margin-top:16px">
     <div class="card"><h2>Lab journey</h2>${stepList(st.pipeline)}
       <div class="pillrow noprint">
-        <button onclick="location.hash='approvals'">Review approvals</button>
+        <button onclick="location.hash='new'">New experiment</button>
+        <button class="ghost" onclick="location.hash='approvals'">Review approvals</button>
         <button class="ghost" onclick="location.hash='help'">How this lab works</button>
       </div></div>
     <div class="card"><h2>Latest experiment</h2>
@@ -355,24 +441,34 @@ ROUTES.experiments=async(app,rest)=>{
     <div class="hero"><a href="#experiments" class="noprint">‹ Experiments</a>
       <h1>${esc(run.run_id)}</h1>
       <p class="small">${esc(run.date||"")} · ${esc(run.grade||"")}</p></div>
-    <div class="card"><h2>Summary</h2>
+    <div class="card"><h2>What this experiment means</h2>
+      <p class="small">${interpretRun(run,tests)}</p></div>
+    <div class="card" style="margin-top:16px"><h2>Summary</h2>
       ${["status","script","stages","seed_scheme","registration","output","real_data_tests"]
         .map(k=>`<div class="rowline"><span class="small">${k}</span>
           <span style="text-align:right">${esc(run[k])}</span></div>`).join("")}
       <div class="pillrow noprint">
         <button onclick="exportPDF()">Export to PDF</button></div></div>
     ${tests.length?`<div class="card" style="margin-top:16px">
-      <h2>Ledgered p-values (recent window)</h2><div class="tablewrap"><table>
+      <h2>Ledgered p-values (recent window)</h2>
+      <canvas id="run-chart"></canvas>
+      <p class="small">Bars = p-values (taller is closer to 1 = more null).
+      Short bars are the interesting ones — but only below the family-corrected
+      threshold, not raw 0.05.</p>
+      <div class="tablewrap"><table>
       <tr><th>dataset</th><th>method</th><th>p</th><th>m</th><th>family</th></tr>
       ${tests.map(t=>`<tr><td>${esc(t.dataset)}</td><td>${esc(t.method)}</td>
         <td class="mono">${fmtp(t.raw_p)}</td><td>${t.m_perm??"gate"}</td>
         <td>${esc(t.family_id)}</td></tr>`).join("")}</table></div></div>`:""}`;
+    if(tests.length)drawBars($("#run-chart"),
+      tests.map(t=>t.dataset.split(" ").pop()),tests.map(t=>t.raw_p??0));
     return;
   }
   app.innerHTML=`
-  <div class="hero"><h1>Experiments</h1>
-    <p>Every execution in the run ledger — newest first. Tap a row for detail
-    and PDF export.</p></div>
+  <div class="hero"><h1>Experiments</h1></div>
+  ${guide("▤","Why this page exists",
+    "Every past execution, newest first — the lab's memory. Tap any row for a plain-language interpretation, its p-values, and PDF export. Start something new with the button below.",
+    ctaBtn("＋ New experiment","new"))}
   <div class="card"><div class="tablewrap"><table>
     <tr><th>run</th><th>date</th><th>tests</th><th>grade</th><th>status</th></tr>
     ${st.runs.map(r=>`<tr class="clickable" onclick="location.hash='experiments/${encodeURIComponent(r.run_id)}'">
@@ -399,9 +495,10 @@ ROUTES.equations=async(app)=>{
     eval_unit_10:"Eval unit 10 (blind)",eval_unit_11:"Eval unit 11 (blind)"})
     .map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
   app.innerHTML=`
-  <div class="hero"><h1>Equations</h1>
-    <p>The equation program's candidates with their ratified statuses, and a
-    sandbox where you can try any harmonic hypothesis against real series.</p></div>
+  <div class="hero"><h1>Equations</h1></div>
+  ${guide("ƒ","Why this page exists",
+    "Left: the equation program's real candidates and what survived scrutiny. Right: a safe sandbox — pick a series, type periods, press <b>Fit</b> to see if your hypothesis beats a dumb baseline. Play freely: it charges nothing and can't contaminate the lab.",
+    ctaBtn("Try the moon-distance candidate","equations")+`<span class="small" style="align-self:center">then press <b>Try it</b> on a candidate</span>`)}
   <div class="grid g2">
     <div class="card"><h2>Candidate equations</h2>${eqRows||
       '<p class="small">No stored candidates.</p>'}
@@ -439,38 +536,246 @@ window.runEq=async()=>{
       body:JSON.stringify({series:$("#eq-series").value,periods_d:periods,
         trend:$("#eq-trend").checked})});
     const beat=r.beats_climatology;
+    window._eqR=r;
+    const gain=(1-r.rmse_holdout/r.rmse_climatology_holdout)*100;
+    const interp=beat
+      ?`Your hypothesis explains real variation: on data it never saw, it predicts
+        ${gain.toFixed(0)}% better than just guessing the average. The residual's
+        strongest leftover rhythm is ~${r.residual_top_period_d} days${r.residual_top_share>0.1
+        ?" and it is prominent — worth trying as an extra period":""}. If this
+        keeps looking good, the honest next step is a registration (New
+        experiment), not a bigger sandbox fit.`
+      :`On held-out data your hypothesis predicts <i>worse</i> than a flat
+        average — with these periods there is no usable signal here. That is a
+        perfectly good finding: the lab publishes nulls at full volume.`;
     $("#eq-out").innerHTML=`
     <div class="card" style="margin-top:16px"><h2>Fit — ${esc(r.label)}</h2>
+      <div class="seg noprint" id="eq-seg" style="margin:6px 0 10px">
+        <button class="on" data-m="fit">Data + fit</button>
+        <button data-m="resid">Residuals</button>
+        <button data-m="spec">Residual spectrum</button></div>
       <canvas id="eq-chart"></canvas>
+      <p class="small" id="eq-chart-cap"></p>
       <div class="grid g3" style="margin-top:12px">
         <div><div class="kpi">${r.rmse_holdout.toPrecision(4)}</div>
           <div class="small">hold-out RMSE (last 20%)</div></div>
         <div><div class="kpi">${r.rmse_climatology_holdout.toPrecision(4)}</div>
           <div class="small">climatology baseline RMSE</div></div>
         <div><div class="kpi">${beat?"beats":"loses to"}</div>
-          <div class="small">${beat?"":"the mean — "}baseline
-          ${verdictBadge(beat?"skill":"no skill")}</div></div>
+          <div class="small">baseline ${verdictBadge(beat?"skill":"no skill")}</div></div>
       </div>
+      <div class="guide" style="margin-top:12px"><div class="gico">💡</div>
+        <div><b>What this means</b><div class="small">${interp}</div></div></div>
       <div class="rowline"><span class="small">recovered amplitudes</span>
         <span class="mono">${r.amplitudes.map(a=>`${a.period_d}d: ${a.amp.toPrecision(3)}`).join(" · ")}</span></div>
-      <div class="rowline"><span class="small">residual top period</span>
-        <span class="mono">${r.residual_top_period_d} d (share ${r.residual_top_share})</span></div>
       <p class="small">${esc(r.disclaimer)}</p></div>`;
-    const c=$("#eq-chart");
-    drawChart(c,r.plot.dates,[
-      {data:r.plot.y,color:"#8e8e93",width:1.1},
-      {data:r.plot.fit,color:getComputedStyle(document.documentElement)
-        .getPropertyValue("--accent").trim()||"#0071e3",width:2}]);
+    $("#eq-seg").addEventListener("click",e=>{
+      if(!e.target.dataset.m)return;
+      $("#eq-seg .on").classList.remove("on");e.target.classList.add("on");
+      renderEqChart(e.target.dataset.m);});
+    renderEqChart("fit");
     $("#eq-out").scrollIntoView({behavior:"smooth"});
   }catch(e){toast(e.message)}
+};
+function renderEqChart(mode){
+  const r=window._eqR;if(!r)return;
+  const c=$("#eq-chart"),cap=$("#eq-chart-cap");
+  const accent=getComputedStyle(document.documentElement)
+    .getPropertyValue("--accent").trim()||"#0071e3";
+  if(mode==="fit"){
+    drawChart(c,r.plot.dates,[{data:r.plot.y,color:"#8e8e93",width:1.1},
+      {data:r.plot.fit,color:accent,width:2}]);
+    cap.textContent="Grey = observed series · blue = your equation. The last 20% was never used for fitting.";
+  }else if(mode==="resid"){
+    const res=r.plot.y.map((v,i)=>v-r.plot.fit[i]);
+    drawChart(c,r.plot.dates,[{data:res,color:accent,width:1.4}]);
+    cap.textContent="What your equation leaves unexplained. Structure here (waves, drift) = something the hypothesis misses.";
+  }else{
+    const res=r.plot.y.map((v,i)=>v-r.plot.fit[i]);
+    const mu=res.reduce((a,b)=>a+b,0)/res.length,n=res.length;
+    const P=[],L=[];
+    for(let k=1;k<=Math.floor(n/2);k++){
+      let re=0,im=0;
+      for(let t=0;t<n;t++){const w=2*Math.PI*k*t/n;
+        re+=(res[t]-mu)*Math.cos(w);im+=(res[t]-mu)*Math.sin(w);}
+      P.push(re*re+im*im);L.push((n/k).toFixed(0));
+    }
+    drawBars(c,L,P);
+    cap.textContent="Residual periodogram by period (days). A dominant bar = a leftover rhythm your equation doesn't capture.";
+  }
+}
+
+/* ---------------- new-experiment wizard ---------------- */
+const WIZ={step:0,opts:null,data:{run_id:"",hypothesis:"",author:"Cha (lab owner)",
+  seed:null,claims:[]}};
+ROUTES.new=async(app)=>{
+  if(!WIZ.opts){WIZ.opts=await api("/api/experiment_options");
+    if(WIZ.data.seed==null)WIZ.data.seed=WIZ.opts.suggested_seed;}
+  renderWiz(app);
+};
+function wizFamilies(){
+  return [...new Set(WIZ.data.claims.map(c=>WIZ.opts.instruments[c.instrument].family))];
+}
+function wizMath(){
+  const nf=Math.max(wizFamilies().length,1);
+  const a=1-Math.pow(0.95,1/nf);
+  return {nf,a,mMin:Math.ceil(2/a)-1};
+}
+function renderWiz(app){
+  app=app||$("#app");
+  const steps=["Name & question","Claims","Design","Declare outcomes","Review"];
+  const d=WIZ.data,o=WIZ.opts,{nf,a,mMin}=wizMath();
+  const dots=steps.map((s,i)=>`<div class="step ${i<WIZ.step?"done":i===WIZ.step?"next":""}"
+    style="padding:4px 0"><div class="dot">${i<WIZ.step?"✓":i+1}</div>
+    <div class="body"><h3 style="font-size:14px">${s}</h3></div></div>`).join("");
+  let body="";
+  if(WIZ.step===0)body=`
+    <h2>What are you asking?</h2>
+    <label>Run id (a-z, 0-9, _)</label>
+    <input id="w-id" value="${esc(d.run_id)}" placeholder="e.g. b8_pressure_memory"
+      autocapitalize="off" autocomplete="off">
+    <p class="small">Existing ids: ${o.used_run_ids.slice(-6).join(", ")}…</p>
+    <label>The question under test (plain language, no outcome expectation)</label>
+    <textarea id="w-hyp" rows="3" placeholder="e.g. Do the 6/49 draw sums share distributional structure across quarters?">${esc(d.hypothesis)}</textarea>
+    <label>Drafted by</label><input id="w-author" value="${esc(d.author)}">`;
+  if(WIZ.step===1)body=`
+    <h2>Pick your claims</h2>
+    <p class="small">Instrument × dataset pairs. Same-family instruments count
+    as one family for the correction — the math updates live below.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="w-inst" style="flex:2;min-width:170px">
+        ${Object.entries(o.instruments).map(([k,v])=>
+          `<option value="${k}">${k} — ${v.claim_type}</option>`).join("")}</select>
+      <select id="w-ds" style="flex:2;min-width:170px">
+        ${Object.entries(o.datasets).map(([k,v])=>
+          `<option value="${esc(k)}">${esc(k)}</option>`).join("")}</select>
+      <button class="ghost" onclick="wizAddClaim()">Add</button>
+    </div>
+    ${d.claims.length?`<div class="tablewrap" style="margin-top:12px"><table>
+      <tr><th>#</th><th>instrument</th><th>dataset</th><th>family</th><th></th></tr>
+      ${d.claims.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.instrument)}</td>
+        <td>${esc(c.dataset)}</td><td>${esc(o.instruments[c.instrument].family)}</td>
+        <td><button class="subtle" onclick="WIZ.data.claims.splice(${i},1);renderWiz()">✕</button></td></tr>`).join("")}
+      </table></div>
+      <p class="small">Families engaged: <b>${nf}</b> → Šidák α′ =
+      <b>${a.toFixed(4)}</b> → minimum m = <b>${mMin}</b></p>`
+      :'<p class="small" style="margin-top:12px">No claims yet.</p>'}`;
+  if(WIZ.step===2)body=`
+    <h2>Design</h2>
+    <label>Seed (must be fresh — pre-checked against the run ledger)</label>
+    <input id="w-seed" value="${d.seed}" inputmode="numeric">
+    <label>Monte-Carlo m per claim (floor rule: m ≥ ${mMin} at α′ = ${a.toFixed(4)})</label>
+    ${d.claims.map((c,i)=>`<div class="rowline">
+      <span class="small">${esc(c.instrument)} · ${esc(c.dataset)}</span>
+      <input style="width:110px" inputmode="numeric" id="w-m-${i}"
+        value="${c.m||Math.max(399,mMin)}"></div>`).join("")}
+    <p class="small">Locked by contract: convention v1 correction, S-5 verdict
+    tiers, era gate, two-run byte-identity, everything ledgered.</p>`;
+  if(WIZ.step===3)body=`
+    <h2>Declare both outcomes now</h2>
+    <p class="small">Expectation-free protocol: you commit to publishing
+    either branch at the same volume, before seeing any data.</p>
+    <div class="rowline"><span><b>NULL</b> — published as a null result;
+      coverage matrix updated.</span></div>
+    <div class="rowline"><span><b>Corrected rejection</b> — row-traced (S-6)
+      against the anomaly registry before any anomaly language; same-family
+      co-fires count once.</span></div>
+    <label style="display:flex;gap:8px;align-items:flex-start;margin-top:14px">
+      <input type="checkbox" id="w-ack" style="width:auto;margin-top:3px">
+      I accept both branches and will not edit this registration after
+      approval.</label>`;
+  if(WIZ.step===4)body=`
+    <h2>Review</h2>
+    <div class="rowline"><span class="small">run id</span><b>${esc(d.run_id)}</b></div>
+    <div class="rowline"><span class="small">question</span>
+      <span style="text-align:right;max-width:60%">${esc(d.hypothesis)}</span></div>
+    <div class="rowline"><span class="small">claims</span>
+      <span>${d.claims.length} (${wizFamilies().join(", ")})</span></div>
+    <div class="rowline"><span class="small">α′ / min m</span>
+      <span>${a.toFixed(4)} / ${mMin}</span></div>
+    <div class="rowline"><span class="small">seed</span><span class="mono">${d.seed}</span></div>
+    <p class="small">Creating writes <span class="mono">docs/REGISTRATION_${esc((d.run_id||"").toUpperCase())}.md</span>
+    as a DRAFT. It then appears under <b>Approvals</b>; after you approve and
+    commit, an executor script or agent runs it. The wizard itself never
+    executes anything — registration-before-run is the whole point.</p>`;
+  app.innerHTML=`
+  <div class="hero"><h1>New experiment</h1>
+    <p>Wizard-guided registration. Five steps, and the governance math is
+    done for you.</p></div>
+  <div class="grid" style="grid-template-columns:200px 1fr;gap:16px">
+    <div class="card noprint" style="align-self:start">${dots}</div>
+    <div class="card">${body}
+      <div class="pillrow noprint" style="margin-top:16px">
+        ${WIZ.step>0?'<button class="subtle" onclick="wizNav(-1)">Back</button>':""}
+        ${WIZ.step<4?'<button onclick="wizNav(1)">Continue</button>'
+          :'<button onclick="wizSubmit()">Create registration draft</button>'}
+      </div></div>
+  </div>
+  <style>@media(max-width:760px){.grid[style*="200px"]{grid-template-columns:1fr !important}}</style>`;
+}
+window.wizAddClaim=()=>{
+  WIZ.data.claims.push({instrument:$("#w-inst").value,dataset:$("#w-ds").value});
+  renderWiz();
+};
+window.wizNav=dir=>{
+  const d=WIZ.data;
+  if(dir>0){ // validate current step
+    if(WIZ.step===0){
+      d.run_id=$("#w-id").value.trim().toLowerCase();
+      d.hypothesis=$("#w-hyp").value.trim();
+      d.author=$("#w-author").value.trim();
+      if(!/^[a-z0-9_]{3,40}$/.test(d.run_id))return toast("Run id: 3-40 chars, a-z 0-9 _");
+      if(WIZ.opts.used_run_ids.includes(d.run_id))return toast("That run id already exists");
+      if(d.hypothesis.length<20)return toast("Describe the question (≥20 chars)");
+    }
+    if(WIZ.step===1&&!d.claims.length)return toast("Add at least one claim");
+    if(WIZ.step===2){
+      d.seed=parseInt($("#w-seed").value,10);
+      const {mMin}=wizMath();
+      for(let i=0;i<d.claims.length;i++){
+        d.claims[i].m=parseInt($("#w-m-"+i).value,10)||0;
+        if(d.claims[i].m<mMin)return toast(`Claim ${i+1}: m must be ≥ ${mMin}`);
+      }
+      if(!d.seed)return toast("Seed required");
+    }
+    if(WIZ.step===3&&!$("#w-ack").checked)return toast("Accept both outcome branches to continue");
+  }
+  WIZ.step=Math.max(0,Math.min(4,WIZ.step+dir));
+  renderWiz();
+};
+window.wizSubmit=async()=>{
+  try{
+    const r=await api("/api/new_experiment",{method:"POST",
+      body:JSON.stringify(WIZ.data)});
+    STATE=null;WIZ.step=0;WIZ.data={run_id:"",hypothesis:"",
+      author:WIZ.data.author,seed:null,claims:[]};WIZ.opts=null;
+    toast("Registration draft created");
+    const app=$("#app");
+    app.innerHTML=`<div class="hero"><h1>Draft created</h1></div>
+    <div class="card"><h2>${esc(r.doc)}</h2>
+      <p class="small">${esc(r.next)}</p>
+      <div class="rowline"><span class="small">families engaged</span>
+        <span>${r.families_engaged.join(", ")}</span></div>
+      <div class="rowline"><span class="small">Šidák α′ / min m</span>
+        <span>${r.alpha_corrected} / ${r.m_min}</span></div>
+      <div class="pillrow">
+        <button onclick="location.hash='approvals'">Go approve it</button>
+        <button class="ghost" onclick="viewDocInline('${esc(r.doc)}')">Read the draft</button>
+      </div><div id="doc-view"></div></div>`;
+  }catch(e){toast(e.message)}
+};
+window.viewDocInline=async name=>{
+  const dv=await api("/api/doc?name="+encodeURIComponent(name));
+  $("#doc-view").innerHTML=mdlite(dv.body);
 };
 
 ROUTES.theorems=async(app)=>{
   if(!KB)KB=await api("/api/kb");
   const faces=[...new Set(KB.map(k=>k.face).filter(Boolean))];
   app.innerHTML=`
-  <div class="hero"><h1>Theorem arsenal</h1>
-    <p>${KB.length} knowledge-base cards. Governance rule: no card, no test.</p></div>
+  <div class="hero"><h1>Theorem arsenal</h1></div>
+  ${guide("∑","Why this page exists",
+    KB.length+" theorem cards — the lab's rulebook: an instrument may only touch data if its card exists here (<i>no card, no test</i>). Use it to answer “which tool sees what?”: search anything (a theorem, a statistic, a blind spot), filter by face, tap a card to read it or export it to PDF.")}
   <div class="searchbar noprint">
     <input id="kb-q" placeholder="Search theorems, statistics, blind spots…" autocomplete="off">
   </div>
@@ -515,9 +820,16 @@ ROUTES.ledger=async(app)=>{
   const cur=st.pipeline.steps.find(s=>s.id===st.pipeline.current)||{};
   const nxt=st.pipeline.steps[st.pipeline.steps.findIndex(s=>s.id===cur.id)+1];
   app.innerHTML=`
-  <div class="hero"><h1>Ledger</h1>
-    <p>Every real-data p-value the lab has ever produced, and the honesty
-    meter that watches them all.</p></div>
+  <div class="hero"><h1>Ledger</h1></div>
+  ${guide("☰","Why this page exists",
+    "The lab's accounting: every real-data p-value ever produced, what counts toward the global correction, and the honesty meter watching the whole population. Come here to answer “can I trust a result?” — pick a graph below to see the evidence at a glance.")}
+  <div class="card noprint"><h2>Explore the p-values</h2>
+    <div class="seg" id="lg-seg" style="margin:6px 0 10px">
+      <button class="on" data-m="hist">Histogram</button>
+      <button data-m="fam">By family</button>
+      <button data-m="seq">In sequence</button></div>
+    <canvas id="lg-chart"></canvas>
+    <p class="small" id="lg-cap"></p></div>
   <div class="grid g2">
     <div class="card"><h2>Where the lab is</h2>
       <div class="rowline"><span class="small">current step</span>
@@ -557,43 +869,136 @@ ROUTES.ledger=async(app)=>{
       <span class="small">· ${esc(v.class)}</span></summary>
       <p class="small">members: ${v.members.join(", ")}</p>
       <p class="small">${esc(v.status)}</p></details>`).join("")}</div>`;
+  const live=st.ledger.recent.filter(t=>t.raw_p!=null&&!t.exploratory);
+  const renderLg=m=>{
+    const c=$("#lg-chart"),cap=$("#lg-cap");if(!c)return;
+    if(m==="hist"){
+      const bins=Array(20).fill(0);
+      live.forEach(t=>bins[Math.min(19,Math.floor(t.raw_p*20))]++);
+      drawBars(c,bins.map((_,i)=>(i/20).toFixed(2)),bins);
+      cap.textContent="Recent live p-values in 0.05 bins. Honest nulls look roughly flat; a tall leftmost bar means flags to investigate.";
+    }else if(m==="fam"){
+      const f={};live.forEach(t=>f[t.family_id]=(f[t.family_id]||0)+1);
+      drawBars(c,Object.keys(f),Object.values(f));
+      cap.textContent="How the recent testing effort splits across instrument families — the m the correction must pay for.";
+    }else{
+      drawChart(c,null,[{data:live.map(t=>t.raw_p),
+        color:getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()||"#0071e3",width:1.4}]);
+      cap.textContent="p-values in ledger order (recent window). Sustained low stretches = a run that kept flagging; random scatter = business as usual.";
+    }
+  };
+  $("#lg-seg").addEventListener("click",e=>{
+    if(!e.target.dataset.m)return;
+    $("#lg-seg .on").classList.remove("on");e.target.classList.add("on");
+    renderLg(e.target.dataset.m);});
+  renderLg("hist");
 };
 
+const CAT_META={
+  gates:["🛡","Gates & health","Run before publishing anything — all three must PASS."],
+  executors:["▶","Registered executors","Real experiments. Each is self-gated: it refuses to run without an approved registration."],
+  analysis:["📊","Analysis tools","Rebuild the lab's registries and monitors."],
+  maintenance:["🧹","Maintenance","Git hygiene and ledger upkeep."]};
 ROUTES.agents=async(app)=>{
+  app.innerHTML=`<div class="hero"><h1>Run centre</h1></div>
+  ${guide("◎","Why this page exists",
+    "This is the lab's cockpit: launch gates, registered executors, analysis tools and maintenance jobs — then watch their live logs right here. Anything running (including agent sessions started elsewhere) shows under <b>Running now</b>. Refreshes every 5 s.")}
+  <div id="jobs-box"></div><div id="agents-box"></div>`;
   const render=async()=>{
-    const a=await api("/api/agents");
-    const box=$("#agents-box"); if(!box)return;
-    box.innerHTML=`
-    <div class="card"><h2>Running now</h2>
+    if(!(location.hash||"").includes("agents"))return clearInterval(window._agTimer);
+    const [J,a]=await Promise.all([api("/api/jobs"),api("/api/agents")]);
+    const jb=$("#jobs-box"),ab=$("#agents-box");if(!jb)return;
+    const active=J.jobs.filter(j=>j.status==="running");
+    jb.innerHTML=`
+    ${J.jobs.length?`<div class="card" style="margin-bottom:16px"><h2>Jobs</h2>
+      ${J.jobs.slice(0,8).map(j=>`<div class="rowline">
+        <div><b>${esc(j.label)}</b><div class="small">${esc(j.id)} · started ${esc(j.started)}</div></div>
+        <div style="text-align:right">${verdictBadge(j.status)}
+          <div class="noprint" style="margin-top:4px">
+            <button class="subtle" onclick="showLog('${esc(j.id)}')">Log</button>
+            ${j.status==="running"?`<button class="subtle" onclick="cancelJob('${esc(j.id)}')">Stop</button>`:""}
+          </div></div></div>`).join("")}
+      <div id="log-view"></div></div>`:""}
+    <div class="grid g2">
+      ${Object.entries(J.defs).map(([cat,defs])=>{
+        const [ico,title,desc]=CAT_META[cat]||["·",cat,""];
+        return `<div class="card"><h2>${ico} ${title}</h2>
+          <p class="small">${desc}</p>
+          ${defs.map(d=>d.needs.includes("task")?`
+            <div style="border-top:1px solid var(--line);padding:10px 0">
+              <b>${esc(d.label)}</b><div class="small">${esc(d.desc)}</div>
+              <textarea id="agent-task" rows="2" style="margin-top:8px"
+                placeholder="e.g. Run all three gates, then rebuild the honesty meter and summarize what changed"></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <select id="agent-provider" style="flex:1">
+                  <option value="anthropic">Anthropic (Claude API)</option>
+                  <option value="openai">OpenAI-compatible</option></select>
+                <button class="ghost" onclick="runAgentTask()">Launch agent</button>
+              </div>
+              <p class="small" style="margin-top:6px">Runs standalone off your
+              Admin-page keys — Claude Desktop/CLI not required.</p></div>`
+          :`<div class="rowline">
+            <div><b>${esc(d.label)}</b><div class="small">${esc(d.desc)}</div></div>
+            <button class="ghost" onclick="runJob('${d.name}',${JSON.stringify(d.needs).replace(/"/g,"&quot;")})">Run</button>
+          </div>`).join("")}</div>`;}).join("")}
+    </div>`;
+    ab.innerHTML=`
+    <div class="card" style="margin-top:16px"><h2>Running now (all processes)</h2>
       ${a.running_processes.length?a.running_processes.map(p=>`
         <div class="rowline"><span class="badge ok">running · ${esc(p.elapsed)}</span>
           <span class="mono" style="text-align:right">${esc(p.cmd)}</span></div>`).join("")
-        :'<p class="small">No lab scripts executing right now.</p>'}
+        :'<p class="small">Nothing executing outside the jobs above.</p>'}
       ${Object.keys(a.declared_status).length?
         `<h3 style="margin-top:14px">Declared agent status</h3>
          <pre class="mono">${esc(JSON.stringify(a.declared_status,null,1))}</pre>`:""}
-    </div>
-    <div class="card" style="margin-top:16px"><h2>Last five runs</h2>
-      ${a.last_runs.map(r=>`<div class="rowline"><b>${esc(r.run_id)}</b>
-        <span class="small">${esc((r.status||"").slice(0,70))}</span></div>`).join("")}
       <p class="small" style="margin-top:8px">${esc(a.note)}</p></div>`;
+    if(window._openLog)showLog(window._openLog,true);
   };
-  app.innerHTML=`<div class="hero"><h1>Agents</h1>
-    <p>Live view of lab scripts and agent sessions. Refreshes every 5 s.</p></div>
-    <div id="agents-box"></div>`;
   await render();
   clearInterval(window._agTimer);
-  window._agTimer=setInterval(()=>{
-    if((location.hash||"").includes("agents"))render();
-    else clearInterval(window._agTimer);},5000);
+  window._agTimer=setInterval(render,5000);
+};
+window.runJob=async(name,needs)=>{
+  const params={};
+  if((needs||[]).includes("message")){
+    const m=prompt("Commit message:");
+    if(!m)return; params.message=m;
+  }
+  try{const j=await api("/api/jobs",{method:"POST",
+      body:JSON.stringify({job:name,params})});
+    toast(`Started: ${j.label}`);window._openLog=j.id;route();
+  }catch(e){toast(e.message)}
+};
+window.runAgentTask=async()=>{
+  const task=$("#agent-task").value.trim();
+  if(task.length<10)return toast("Describe the task (≥10 characters)");
+  try{const j=await api("/api/jobs",{method:"POST",body:JSON.stringify(
+      {job:"agent_task",params:{task,provider:$("#agent-provider").value}})});
+    toast("Agent launched — watch its log");window._openLog=j.id;route();
+  }catch(e){toast(e.message)}
+};
+window.showLog=async(id,quiet)=>{
+  window._openLog=id;
+  try{const l=await api("/api/joblog?id="+encodeURIComponent(id));
+    const v=$("#log-view");if(!v)return;
+    v.innerHTML=`<h3 style="margin-top:12px">Log — ${esc(id)}
+        ${verdictBadge(l.status)}</h3>
+      <pre class="mono" style="background:var(--line);border-radius:12px;
+        padding:12px;max-height:300px;overflow:auto">${esc(l.log)}</pre>`;
+    if(!quiet)v.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }catch(e){if(!quiet)toast(e.message)}
+};
+window.cancelJob=async id=>{
+  try{await api("/api/jobs/cancel",{method:"POST",body:JSON.stringify({id})});
+    toast("Stopped");route();}catch(e){toast(e.message)}
 };
 
 ROUTES.approvals=async(app)=>{
   const a=await api("/api/approvals");
   app.innerHTML=`
-  <div class="hero"><h1>Approvals</h1>
-    <p>The HUMAN-GATE, on your phone. Approving here appends to an
-    append-only audit log and fills the registration's approval line.</p></div>
+  <div class="hero"><h1>Approvals</h1></div>
+  ${guide("✓","Why this page exists",
+    "You are the lab's HUMAN-GATE: nothing registered runs without a signature here. Read the draft, tap Approve — the signature lands in an append-only audit log and the registration's approval line is filled. Then execute it from the <a href='#agents'>Run centre</a>.")}
   <div class="card"><h2>Awaiting your signature</h2>
     ${a.pending.length?a.pending.map(p=>`
       <div class="rowline"><div><b>${esc(p.title)}</b>
@@ -629,20 +1034,79 @@ window.viewDoc=async name=>{
 
 ROUTES.admin=async(app)=>{
   const c=await api("/api/config");
-  const keys=["ANTHROPIC_API_KEY","OPENMETEO_API_KEY","JPL_HORIZONS_KEY","GFZ_API_KEY"];
-  app.innerHTML=`
-  <div class="hero"><h1>Admin</h1>
-    <p>Infrastructure for the agents. Keys are stored locally in
-    <span class="mono">${esc(c.config_path)}</span>, never committed, served masked.</p></div>
-  <div class="card"><h2>Agent API keys</h2>
-    ${keys.map(k=>`<label>${k}
-      ${c.api_keys[k]?`<span class="badge ok">set · ${esc(c.api_keys[k])}</span>`:'<span class="badge dim">not set</span>'}</label>
+  const KEYDEFS=[
+    {k:"ANTHROPIC_API_KEY",label:"Anthropic (Claude agents)",
+     get:"https://console.anthropic.com/settings/keys",
+     hint:"powers Claude-based lab agents"},
+    {k:"OPENAI_COMPAT_API_KEY",label:"OpenAI-compatible provider",
+     get:"https://platform.openai.com/api-keys",
+     hint:"any OpenAI-compatible API: OpenAI, OpenRouter (openrouter.ai/keys), "+
+          "Groq (console.groq.com/keys), or a local Ollama server (no key needed)"},
+  ];
+  const keyRow=d=>`<label>${d.label}
+      ${c.api_keys[d.k]?`<span class="badge ok">set · ${esc(c.api_keys[d.k])}</span>`:'<span class="badge dim">not set</span>'}
+      <a href="${d.get}" target="_blank" style="font-weight:500;margin-left:6px">get a key ↗</a></label>
       <div style="display:flex;gap:8px">
-        <input id="key-${k}" type="password" placeholder="${c.api_keys[k]?"(unchanged)":"paste key"}" autocomplete="off">
-        ${c.api_keys[k]?`<button class="subtle" onclick="delKey('${k}')">Remove</button>`:""}
-      </div>`).join("")}
-    <div class="pillrow"><button onclick="saveKeys(${JSON.stringify(keys).replace(/"/g,"&quot;")})">Save keys</button></div>
+        <input id="key-${d.k}" type="password" placeholder="${c.api_keys[d.k]?"(unchanged)":"paste key"}" autocomplete="off">
+        ${c.api_keys[d.k]?`<button class="subtle" onclick="delKey('${d.k}')">Remove</button>`:""}
+      </div><p class="small" style="margin-top:4px">${d.hint}</p>`;
+  app.innerHTML=`
+  <div class="hero"><h1>Admin</h1></div>
+  ${guide("⚙","Why this page exists",
+    "One-time setup lives here: keys for the LLM agents that operate the lab, and lab-wide settings. Everything sensitive stays in <span class='mono'>"+esc(c.config_path)+"</span> — never committed, always served masked.")}
+  <div class="card"><h2>Agent brains (LLM keys)</h2>
+    <p class="small">Only needed when you want LLM agents to run lab sessions.
+    The console itself and every analysis script work fully offline.</p>
+    ${KEYDEFS.map(keyRow).join("")}
+    <label>Anthropic model</label>
+    <input id="set-ant-model" list="ant-models" autocapitalize="off"
+      placeholder="pick or type a model id"
+      value="${esc(c.settings.anthropic_model||"")}">
+    <datalist id="ant-models">
+      <option value="claude-fable-5">most capable</option>
+      <option value="claude-opus-4-8"></option>
+      <option value="claude-sonnet-5">balanced</option>
+      <option value="claude-haiku-4-5-20251001">fast/cheap — good executor</option>
+    </datalist>
+    <label>OpenAI-compatible base URL</label>
+    <input id="set-oai-url" list="oai-urls" placeholder="https://api.openai.com/v1"
+      value="${esc(c.settings.openai_base_url||"")}" autocapitalize="off">
+    <datalist id="oai-urls">
+      <option value="https://api.openai.com/v1">OpenAI</option>
+      <option value="https://openrouter.ai/api/v1">OpenRouter</option>
+      <option value="https://api.groq.com/openai/v1">Groq</option>
+      <option value="http://localhost:11434/v1">Ollama (local, keyless)</option>
+    </datalist>
+    <label>OpenAI-compatible model</label>
+    <input id="set-oai-model" list="oai-models" autocapitalize="off"
+      placeholder="pick or type a model id"
+      value="${esc(c.settings.openai_model||"")}">
+    <datalist id="oai-models">
+      <option value="gpt-4o"></option><option value="gpt-4o-mini"></option>
+      <option value="o3"></option>
+      <option value="llama-3.3-70b-versatile">Groq</option>
+      <option value="deepseek-chat"></option>
+      <option value="qwen2.5:72b">Ollama</option>
+      <option value="mistral-large-latest"></option>
+    </datalist>
+    <p class="small">Suggested split: a capable model as analyst/reviewer, a
+    fast one as execute-only runner (the lab's role-separation pattern).</p>
+    <div class="pillrow"><button onclick="saveKeys(['ANTHROPIC_API_KEY','OPENAI_COMPAT_API_KEY'])">Save keys & models</button></div>
   </div>
+  <div class="card" style="margin-top:16px"><h2>Data sources — no keys needed</h2>
+    <p class="small">All datasets are already downloaded into the repo, and
+    every source is a free public service, so there is nothing to configure:</p>
+    <div class="rowline"><span>PCSO lotto draws</span>
+      <span class="small">local · <span class="mono">datasets/pcso-lotto/</span></span></div>
+    <div class="rowline"><span>JPL Horizons sun/moon ephemerides</span>
+      <span class="small">local · public API, keyless (<a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank">ssd.jpl.nasa.gov ↗</a>)</span></div>
+    <div class="rowline"><span>Open-Meteo Manila pressure</span>
+      <span class="small">local · free tier, keyless (<a href="https://open-meteo.com" target="_blank">open-meteo.com ↗</a>)</span></div>
+    <div class="rowline"><span>GFZ Kp geomagnetic index</span>
+      <span class="small">local · public, keyless (<a href="https://kp.gfz-potsdam.de" target="_blank">kp.gfz.de ↗</a>)</span></div>
+    <p class="small" style="margin-top:8px">To refresh a dataset, run its
+    fetcher in <span class="mono">datasets/&lt;name&gt;/</span> — still no key
+    required.</p></div>
   <div class="card" style="margin-top:16px"><h2>Lab settings</h2>
     <label>Default Monte-Carlo m for new exploratory fits</label>
     <input id="set-m" value="${esc(c.settings.default_m||399)}">
@@ -650,17 +1114,21 @@ ROUTES.admin=async(app)=>{
     <input id="set-owner" value="${esc(c.settings.owner||"Cha (lab owner)")}">
     <div class="pillrow"><button onclick="saveSettings()">Save settings</button></div>
   </div>
-  <div class="card" style="margin-top:16px"><h2>Gate scripts</h2>
-    <p class="small">Run these from the repo root before publishing anything:</p>
+  <div class="card" style="margin-top:16px"><h2>Health gates</h2>
+    <p class="small">Run all three from the <a href="#agents">Run centre</a>
+    before publishing anything — or from a terminal:</p>
     <pre class="mono">python3 src/design_verifier.py
 python3 src/verify_relational_docs.py
 python3 src/lint_frozen_imports.py</pre></div>`;
 };
 window.saveKeys=async keys=>{
-  const payload={api_keys:{}};
+  const payload={api_keys:{},settings:{
+    anthropic_model:$("#set-ant-model")?.value.trim()||"",
+    openai_base_url:$("#set-oai-url")?.value.trim()||"",
+    openai_model:$("#set-oai-model")?.value.trim()||""}};
   keys.forEach(k=>{const v=$("#key-"+k).value.trim();if(v)payload.api_keys[k]=v;});
   await api("/api/config",{method:"POST",body:JSON.stringify(payload)});
-  toast("Keys saved locally");route();
+  toast("Saved — keys stay on this machine");route();
 };
 window.delKey=async k=>{
   await api("/api/config",{method:"POST",body:JSON.stringify({api_keys:{[k]:"__delete__"}})});
@@ -687,14 +1155,22 @@ ROUTES.help=async(app)=>{
       dishonesty. Flags become anomalies only after row-tracing; anomalies
       become discoveries only after confirmation on fresh data.</p></div>
     <div class="card"><h2>Your journey</h2>
-      <p class="small"><b>Overview</b> shows where the lab is and the exact
-      next step. <b>Experiments</b> lists every past run — tap for details
-      and PDF export. <b>Equations</b> lets you replay candidate equations or
-      try your own hypothesis (sandbox — charges nothing). <b>Theorems</b> is
-      the searchable arsenal. <b>Ledger</b> shows every p-value plus the
-      honesty meter. <b>Agents</b> shows what's executing right now.
-      <b>Approvals</b> is where you sign registrations. <b>Admin</b> holds
-      keys and settings.</p></div>
+      <p class="small">The loop is always: <b>New experiment</b> (wizard
+      drafts a registration) → <b>Approvals</b> (you sign) → <b>Run centre</b>
+      (execute, watch live logs) → <b>Experiments</b> (read the interpreted
+      result) → <b>Ledger</b> (see it priced into the global correction).
+      <b>Overview</b> always shows the single next action; <b>Equations</b>
+      is the free sandbox; <b>Theorems</b> the searchable rulebook;
+      <b>Admin</b> holds keys and settings. Every page opens with a blue
+      guide saying what to do on it.</p></div>
+    <div class="card"><h2>Standalone agents</h2>
+      <p class="small">From the Run centre you can launch an LLM agent that
+      operates the lab <b>without Claude Desktop or any CLI</b> — it calls
+      the Anthropic or OpenAI-compatible API directly with the keys and
+      models you set in Admin, and it can only act through the same
+      whitelisted jobs you see in the Run centre. Its progress and final
+      report appear live in the job log and
+      <span class="mono">results/agent_runs/</span>.</p></div>
     <div class="card"><h2>Approving from your phone</h2>
       <p class="small">Open Approvals, read the registration, tap Approve.
       The signature is appended to an audit log

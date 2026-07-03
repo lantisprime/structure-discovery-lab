@@ -271,6 +271,176 @@ def try_equation(payload):
     return out
 
 
+# ---------------------------------------------------------------- new experiment
+DATASETS = {
+    "Lotto 6/42": "pcso-lotto draws (P=42)",
+    "Mega Lotto 6/45": "pcso-lotto draws (P=45)",
+    "Super Lotto 6/49": "pcso-lotto draws (P=49)",
+    "Grand Lotto 6/55": "pcso-lotto draws (P=55)",
+    "Ultra Lotto 6/58": "pcso-lotto draws (P=58)",
+    "moon_distance": "JPL Horizons moon distance (daily)",
+    "tidal_accel": "Manila total tidal acceleration (daily)",
+    "pressure": "Manila MSL pressure (daily)",
+    "kp_index": "GFZ Kp geomagnetic index (daily)",
+}
+INSTRUMENTS = {   # method -> (family, claim_type, null description)
+    "mmd": ("two-sample", "distributional",
+            "pool-and-relabel between declared segments"),
+    "cooc-spectra": ("graph", "cross-dataset-similarity",
+                     "independent constrained 6-of-P pairs"),
+    "matrix-completion": ("recovery", "subset-to-whole",
+                          "constrained 6-of-P uniform, frozen mask"),
+    "knn-recovery": ("recovery", "subset-to-whole",
+                     "within-series value permutation"),
+    "cca-covariates": ("cca", "latent-sharing",
+                       "shuffled held-out pairing"),
+    "delay-embed-H1": ("tda", "topological",
+                       "within-series permutation, same embedding"),
+    "lambda-max": ("hit-count-cooc", "within-game-cooccurrence",
+                   "constrained 6-of-P uniform"),
+    "half-corr": ("hit-count-temporal", "frequency-bias-generalization",
+                  "constrained generator per half"),
+}
+
+
+def used_seeds_and_runs():
+    runs = jl("results/run_ledger.jsonl")
+    ids = {r["run_id"] for r in runs}
+    seeds = set()
+    for r in runs:
+        for m in re.findall(r"20\d{6,8}", r.get("seed_scheme", "")):
+            seeds.add(int(m))
+    seeds.update({20260611, 20260702, 20260703, 20260704, 20260711, 20260712})
+    return seeds, ids
+
+
+def experiment_options():
+    seeds, ids = used_seeds_and_runs()
+    sug = int(time.strftime("%Y%m%d")) * 100
+    while sug in seeds:
+        sug += 1
+    fams = jd("results/families.json", {}).get("families", {})
+    return {"datasets": DATASETS,
+            "instruments": {k: {"family": v[0], "claim_type": v[1],
+                                "null": v[2],
+                                "family_status": (fams.get(v[0], {})
+                                                  .get("status", ""))[:120]}
+                            for k, v in INSTRUMENTS.items()},
+            "used_run_ids": sorted(ids), "suggested_seed": sug,
+            "alpha": 0.05}
+
+
+def sidak(alpha, m):
+    return 1 - (1 - alpha) ** (1.0 / m)
+
+
+def create_experiment(p):
+    """Validate a wizard submission and write a DRAFT registration doc.
+    Never executes anything: the draft enters the Approvals queue, and the
+    run itself is done by an executor script/agent after approval."""
+    rid = re.sub(r"[^a-z0-9_]", "", (p.get("run_id") or "").lower())
+    if not (3 <= len(rid) <= 40):
+        raise ValueError("run id: 3-40 chars, a-z 0-9 _")
+    seeds, ids = used_seeds_and_runs()
+    if rid in ids:
+        raise ValueError(f"run id '{rid}' already exists in the run ledger")
+    seed = int(p.get("seed") or 0)
+    if seed in seeds:
+        raise ValueError(f"seed {seed} was already used — pick a fresh one")
+    if not (10_000_000 <= seed <= 9_999_999_999):
+        raise ValueError("seed should be an 8-10 digit integer")
+    claims = p.get("claims") or []
+    if not (1 <= len(claims) <= 12):
+        raise ValueError("select 1-12 instrument × dataset claims")
+    fams_engaged = sorted({INSTRUMENTS[c["instrument"]][0] for c in claims
+                           if c.get("instrument") in INSTRUMENTS})
+    if not fams_engaged:
+        raise ValueError("no valid instruments selected")
+    a_corr = sidak(0.05, len(fams_engaged))
+    import math
+    m_min = math.ceil(2 / a_corr) - 1
+    rows = []
+    for i, c in enumerate(claims, 1):
+        inst = c["instrument"]
+        if inst not in INSTRUMENTS:
+            raise ValueError(f"unknown instrument {inst}")
+        if c.get("dataset") not in DATASETS:
+            raise ValueError(f"unknown dataset {c.get('dataset')}")
+        m = int(c.get("m") or 0)
+        if m < m_min:
+            raise ValueError(f"claim {i}: m={m} violates the floor rule — "
+                             f"need m ≥ {m_min} at α'={a_corr:.4f}")
+        fam, ct, null = INSTRUMENTS[inst]
+        rows.append(f"| {i} | {ct}, {c['dataset']} | `{inst}` | {null} | "
+                    f"{m} | {fam} | floor {1/(m+1):.4f} ≤ {a_corr/2:.4f} ✓ |")
+    hypothesis = (p.get("hypothesis") or "").strip()
+    if len(hypothesis) < 20:
+        raise ValueError("describe the question in at least 20 characters")
+    doc = f"docs/REGISTRATION_{rid.upper()}.md"
+    path = os.path.join(ROOT, doc)
+    if os.path.exists(path):
+        raise ValueError(f"{doc} already exists")
+    body = f"""# Registration — {rid} (drafted via web console wizard)
+
+**Status: DRAFT — awaiting HUMAN-GATE approval. Do not execute before this
+doc is approved and committed (commit timestamp must precede the first
+results artifact).**
+
+Date drafted: {time.strftime('%Y-%m-%d')} · Protocol: RELATIONAL_RUNBOOK
+Phase 1, expectation-free (no outcome expectations for any discovery test).
+Drafted by: {esc_md(p.get('author') or 'web console')} · channel: webapp wizard
+
+## 0. Question under test
+
+{hypothesis}
+
+## 1. Claim table
+
+| # | claim | instrument | null (invariants preserved) | m_null | family | floor check |
+|---|---|---|---|---|---|---|
+{chr(10).join(rows)}
+
+Families engaged: {len(fams_engaged)} ({', '.join(fams_engaged)}) →
+Šidák α' = {a_corr:.4f}; minimum m = {m_min}.
+
+## 2. Fixed design
+
+- **Seed: {seed}** (verified fresh against the run ledger at draft time).
+- Correction basis: convention v1 (Šidák .05, families engaged this run).
+- Verdict tiers per playbook S-5, applied in-run; era gate per S-7;
+  any hit-count flag reports 3 data regimes (M4).
+- Every p ledgered (schema v2, row_type test); run-ledger row `{rid}`;
+  design_verifier + verify_relational_docs must PASS pre-publication.
+- Two-run rule: executor runs twice; byte-identical JSONs required.
+
+## 3. Outcome branches (both declared)
+
+- **NULL**: publish as a null result at full volume; coverage matrix updated.
+- **Corrected rejection**: row-trace (S-6) against ANOMALY_REGISTRY before
+  any anomaly language; same-family co-fires count as ONE flag.
+
+## 4. Multiplicity
+
+{len(claims)} test rows charged to the families above. No family_charge rows.
+
+## 5. Approval
+
+- approved_by_human: ____________  date: ____________
+- registration_sha (at commit): recorded in results/commitment_ledger.txt
+"""
+    with open(path, "w") as f:
+        f.write(body)
+    return {"doc": doc, "families_engaged": fams_engaged,
+            "alpha_corrected": round(a_corr, 4), "m_min": m_min,
+            "next": ("Draft created. It now appears in Approvals; after "
+                     "approval + commit, hand it to an executor "
+                     "script/agent — the wizard never runs experiments.")}
+
+
+def esc_md(s):
+    return re.sub(r"[<>]", "", str(s))
+
+
 # ---------------------------------------------------------------- approvals
 BLANK_APPROVAL = re.compile(r"approved_by_human:\s*(?:_{4,}|\(name, date\).*)?$")
 
@@ -288,8 +458,9 @@ def approvals_list():
                      if "approved_by_human" in l), None)
         if line is None:
             continue
-        val = line.split(":", 1)[1].strip().strip("_ ")
-        if not val or val.startswith("(name"):
+        val = line.split(":", 1)[1].strip()
+        # blank if only underscores/spaces/'date:' scaffolding or template text
+        if re.fullmatch(r"[_\s]*(date:[_\s]*)?", val) or val.startswith("(name"):
             pending.append({"doc": f"docs/{f}",
                             "title": txt.splitlines()[0].lstrip("# ")})
     return {"pending": pending, "recorded": list(reversed(recorded))[:20]}
@@ -326,6 +497,168 @@ def record_approval(payload):
     return entry
 
 
+# ---------------------------------------------------------------- jobs
+JOBLOGS = os.path.join(HERE, "joblogs")
+PY = sys.executable or "python3"
+JOB_DEFS = {
+    # gates & health -------------------------------------------------------
+    "design_verifier": {
+        "argv": [PY, "src/design_verifier.py"], "cat": "gates",
+        "label": "Design verifier",
+        "desc": "6-check publication gate over the multiplicity ledger"},
+    "verify_docs": {
+        "argv": [PY, "src/verify_relational_docs.py"], "cat": "gates",
+        "label": "Numeric verifier",
+        "desc": "re-derives every published number from the raw JSONs"},
+    "lint_frozen": {
+        "argv": [PY, "src/lint_frozen_imports.py"], "cat": "gates",
+        "label": "Frozen-import lint",
+        "desc": "blocks live code from importing known-defective frozen modules"},
+    # analysis -------------------------------------------------------------
+    "meta_panel": {
+        "argv": [PY, "src/meta_uniformity.py"], "cat": "analysis",
+        "label": "Rebuild honesty meter",
+        "desc": "meta-uniformity panel over all live ledger p-values"},
+    "families_measure": {
+        "argv": [PY, "src/measure_equivalence.py"], "cat": "analysis",
+        "label": "Re-measure instrument families",
+        "desc": "H-protocol null correlations -> results/families.json"},
+    "r5_coupling": {
+        "argv": [PY, "src/measure_r5_coupling.py"], "cat": "analysis",
+        "label": "R5 re-shadow measurement",
+        "desc": "cross-game spectra vs lambda_max coupling under H0"},
+    # registered executors ---------------------------------------------------
+    "corrected_rerun": {
+        "argv": [PY, "src/corrected_rerun_registered.py"], "cat": "executors",
+        "label": "Corrected-instrument rerun (registered)",
+        "desc": "self-gated: refuses to run unless its registration is approved"},
+    "readmit_all": {
+        "argv": [PY, "-u", "src/readmit_r1_r7.py"], "cat": "executors",
+        "label": "Re-admit instruments R1-R7",
+        "desc": "200-trial calibration + power gates (long; chunk-resumes)"},
+    "eval_regression": {
+        "argv": [PY, "-u", "evals/structure_eval_set_v1/src/run_blind_eval_r2.py",
+                 "regression", "draws_marg", "draws_mem", "draws_stat",
+                 "draws_cross", "draws_sensor", "draws_subset_A",
+                 "draws_subset_B", "draws_subset_C", "draws_subset_D",
+                 "draws_subset_E", "sensors", "series_rec", "series_pair",
+                 "series_seg", "series_tda_a", "series_tda_b", "clouds",
+                 "graphs", "matrices"], "cat": "executors",
+        "label": "Detection eval battery (regression)",
+        "desc": "structure_eval_set_v1, must match the frozen run bit-for-bit"},
+    # maintenance ------------------------------------------------------------
+    "gitsweep": {
+        "argv": ["sh", "tools/gitsweep.sh", "-f"], "cat": "maintenance",
+        "label": "Sweep git locks",
+        "desc": "moves stale sandbox locks/litter into .git/sandbox-trash"},
+    "git_status": {
+        "argv": ["sh", "tools/git-sandbox.sh", "status", "--short"],
+        "cat": "maintenance", "label": "Git status",
+        "desc": "working-tree state via the self-cleaning wrapper"},
+    "git_commit": {
+        "argv": None, "cat": "maintenance", "label": "Commit lab changes",
+        "desc": "add + commit docs/ results/ src/ evals/ tools/ webapp/ "
+                "(needs a message)", "needs": ["message"]},
+    "ledger_rebuild": {
+        "argv": [PY, "src/build_multiplicity_ledger.py"], "cat": "maintenance",
+        "label": "Rebuild multiplicity ledger",
+        "desc": "non-destructive rebuild (aborts rather than lose a row)"},
+    "agent_task": {
+        "argv": None, "cat": "executors", "label": "Standalone agent task",
+        "desc": "an LLM agent (your configured keys — no Claude Desktop "
+                "needed) operates the lab through whitelisted jobs and "
+                "reports back", "needs": ["task", "provider"]},
+}
+JOBS = {}          # id -> record; Popen handles kept in-process
+_PROCS = {}
+
+
+def job_argv(name, params):
+    d = JOB_DEFS[name]
+    if name == "agent_task":
+        task = (params.get("task") or "").strip()
+        if len(task) < 10:
+            raise ValueError("describe the agent task (≥10 characters)")
+        prov = params.get("provider") or "anthropic"
+        if prov not in ("anthropic", "openai"):
+            raise ValueError("provider must be anthropic or openai")
+        return [PY, "-u", "webapp/agent_runner.py", "--provider", prov,
+                "--task", task]
+    if name == "git_commit":
+        msg = (params.get("message") or "").strip()
+        if not (5 <= len(msg) <= 400):
+            raise ValueError("commit message: 5-400 characters")
+        return ["sh", "-c",
+                'sh tools/git-sandbox.sh add docs results src evals tools '
+                'webapp README.md .gitignore && '
+                'sh tools/git-sandbox.sh commit -m "$1"', "gitc", msg]
+    return list(d["argv"])
+
+
+def start_job(payload):
+    name = payload.get("job")
+    if name not in JOB_DEFS:
+        raise ValueError(f"unknown job '{name}' (whitelist only)")
+    for j in JOBS.values():
+        if j["job"] == name and j["status"] == "running":
+            raise ValueError(f"'{name}' is already running (job {j['id']})")
+    os.makedirs(JOBLOGS, exist_ok=True)
+    jid = time.strftime("%Y%m%d-%H%M%S") + "-" + name
+    log = os.path.join(JOBLOGS, jid + ".log")
+    argv = job_argv(name, payload.get("params") or {})
+    f = open(log, "w")
+    p = subprocess.Popen(argv, cwd=ROOT, stdout=f, stderr=subprocess.STDOUT,
+                         start_new_session=True)
+    JOBS[jid] = {"id": jid, "job": name, "label": JOB_DEFS[name]["label"],
+                 "status": "running", "started": time.strftime("%H:%M:%S"),
+                 "pid": p.pid, "rc": None}
+    _PROCS[jid] = p
+    return JOBS[jid]
+
+
+def refresh_jobs():
+    for jid, p in list(_PROCS.items()):
+        rc = p.poll()
+        if rc is not None and JOBS[jid]["status"] == "running":
+            JOBS[jid]["status"] = "done" if rc == 0 else f"failed (rc {rc})"
+            JOBS[jid]["rc"] = rc
+
+
+def jobs_state():
+    refresh_jobs()
+    cats = {}
+    for k, d in JOB_DEFS.items():
+        cats.setdefault(d["cat"], []).append(
+            {"name": k, "label": d["label"], "desc": d["desc"],
+             "needs": d.get("needs", [])})
+    return {"defs": cats,
+            "jobs": sorted(JOBS.values(), key=lambda j: j["id"],
+                           reverse=True)[:20]}
+
+
+def job_log(jid, tail=120):
+    if not re.fullmatch(r"[\w\-]+", jid or ""):
+        raise ValueError("bad job id")
+    path = os.path.join(JOBLOGS, jid + ".log")
+    if not os.path.exists(path):
+        return {"id": jid, "log": "(no output yet)"}
+    lines = open(path, errors="replace").read().splitlines()
+    refresh_jobs()
+    return {"id": jid, "status": JOBS.get(jid, {}).get("status", "unknown"),
+            "log": "\n".join(lines[-tail:])}
+
+
+def job_cancel(payload):
+    jid = payload.get("id")
+    p = _PROCS.get(jid)
+    if not p or p.poll() is not None:
+        raise ValueError("job not running")
+    import signal
+    os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+    JOBS[jid]["status"] = "cancelled"
+    return JOBS[jid]
+
+
 # ---------------------------------------------------------------- agents
 LAB_SCRIPTS = ("readmit_r1_r7", "corrected_rerun", "run_blind_eval",
                "eq_tidal", "relational_", "remediation", "measure_",
@@ -355,31 +688,88 @@ def agent_status():
 
 
 # ---------------------------------------------------------------- config
-def config_get():
-    cfg = {}
-    if os.path.exists(CONFIG):
-        cfg = json.load(open(CONFIG))
-    masked = {}
-    for k, v in cfg.get("api_keys", {}).items():
-        masked[k] = (v[:4] + "…" + v[-4:]) if len(v) > 8 else "set"
-    return {"api_keys": masked,
-            "settings": cfg.get("settings", {}),
-            "config_path": "webapp/config.local.json (gitignored)"}
+# Keys are OBFUSCATED AT REST (XOR with a machine-local random salt held in
+# webapp/.keysalt, mode 0600, gitignored) and NEVER served in plaintext —
+# the API returns only a short mask. This protects against casual exposure
+# (backups, screen shares, grep); it is not vault-grade encryption, which
+# would need a passphrase — keys for anything critical should be revocable.
+import base64
+SALT_FILE = os.path.join(HERE, ".keysalt")
 
 
-def config_set(payload):
+def _salt():
+    if not os.path.exists(SALT_FILE):
+        with open(SALT_FILE, "wb") as f:
+            f.write(os.urandom(64))
+        os.chmod(SALT_FILE, 0o600)
+    return open(SALT_FILE, "rb").read()
+
+
+def _obf(s):
+    salt = _salt()
+    raw = s.encode()
+    return "enc1:" + base64.b64encode(
+        bytes(b ^ salt[i % len(salt)] for i, b in enumerate(raw))).decode()
+
+
+def _deobf(s):
+    if not s.startswith("enc1:"):
+        return s                       # legacy plaintext (migrated on save)
+    salt = _salt()
+    raw = base64.b64decode(s[5:])
+    return bytes(b ^ salt[i % len(salt)] for i, b in enumerate(raw)).decode()
+
+
+def get_api_key(name):
+    """Plaintext for in-process use by executors/agents only — never returned
+    over HTTP."""
+    cfg = json.load(open(CONFIG)) if os.path.exists(CONFIG) else {}
+    v = cfg.get("api_keys", {}).get(name)
+    return _deobf(v) if v else None
+
+
+def _load_cfg():
     cfg = json.load(open(CONFIG)) if os.path.exists(CONFIG) else {}
     cfg.setdefault("api_keys", {})
     cfg.setdefault("settings", {})
+    # migrate any legacy plaintext keys to obfuscated form
+    changed = False
+    for k, v in list(cfg["api_keys"].items()):
+        if v and not str(v).startswith("enc1:"):
+            cfg["api_keys"][k] = _obf(str(v))
+            changed = True
+    if changed:
+        _write_cfg(cfg)
+    return cfg
+
+
+def _write_cfg(cfg):
+    with open(CONFIG, "w") as f:
+        json.dump(cfg, f, indent=2)
+    os.chmod(CONFIG, 0o600)
+
+
+def config_get():
+    cfg = _load_cfg()
+    masked = {}
+    for k, v in cfg["api_keys"].items():
+        plain = _deobf(v)
+        masked[k] = (plain[:3] + "…" + plain[-2:]) if len(plain) > 8 else "set"
+    return {"api_keys": masked,
+            "settings": cfg.get("settings", {}),
+            "config_path": "webapp/config.local.json (gitignored; keys "
+                           "obfuscated at rest, served masked)"}
+
+
+def config_set(payload):
+    cfg = _load_cfg()
     for k, v in (payload.get("api_keys") or {}).items():
         if v == "__delete__":
             cfg["api_keys"].pop(k, None)
         elif v and "…" not in v:
-            cfg["api_keys"][k] = v
+            cfg["api_keys"][k] = _obf(v)
     cfg["settings"].update(payload.get("settings") or {})
-    with open(CONFIG, "w") as f:
-        json.dump(cfg, f, indent=2)
-    os.chmod(CONFIG, 0o600)
+    _write_cfg(cfg)
     return config_get()
 
 
@@ -425,6 +815,13 @@ class H(BaseHTTPRequestHandler):
                 return self.send_json(approvals_list())
             if u.path == "/api/config":
                 return self.send_json(config_get())
+            if u.path == "/api/experiment_options":
+                return self.send_json(experiment_options())
+            if u.path == "/api/jobs":
+                return self.send_json(jobs_state())
+            if u.path == "/api/joblog":
+                return self.send_json(job_log(q.get("id"),
+                                              int(q.get("tail", 120))))
             if u.path == "/api/doc":
                 name = q.get("name", "")
                 if ".." in name or not name.startswith(DOC_WHITELIST_DIRS):
@@ -440,6 +837,12 @@ class H(BaseHTTPRequestHandler):
         try:
             if self.path == "/api/try_equation":
                 return self.send_json(try_equation(payload))
+            if self.path == "/api/new_experiment":
+                return self.send_json(create_experiment(payload))
+            if self.path == "/api/jobs":
+                return self.send_json(start_job(payload))
+            if self.path == "/api/jobs/cancel":
+                return self.send_json(job_cancel(payload))
             if self.path == "/api/approvals":
                 return self.send_json(record_approval(payload))
             if self.path == "/api/config":
