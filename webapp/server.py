@@ -450,9 +450,25 @@ class H(BaseHTTPRequestHandler):
 
 
 def main():
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
-    srv = ThreadingHTTPServer(("127.0.0.1", port), H)
+    args = [a for a in sys.argv[1:]]
+    lan = "--lan" in args
+    ports = [a for a in args if a.isdigit()]
+    port = int(ports[0]) if ports else 8787
+    host = "0.0.0.0" if lan else "127.0.0.1"
+    srv = ThreadingHTTPServer((host, port), H)
     print(f"Structure Discovery Lab console: http://localhost:{port}")
+    if lan:
+        import socket
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            print(f"LAN mode: on your phone open http://{ip}:{port} "
+                  f"(same Wi-Fi). Approvals/admin are exposed to your "
+                  f"network — use only on networks you trust.")
+        except OSError:
+            print("LAN mode: bound to 0.0.0.0 (could not detect LAN IP)")
     srv.serve_forever()
 
 

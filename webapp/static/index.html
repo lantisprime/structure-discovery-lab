@@ -196,14 +196,36 @@ async function route(){
   nav(); const app=$("#app");
   const [page,...rest]=(location.hash||"#home").slice(1).split("/");
   app.innerHTML='<div class="hero"><h1 class="small">Loading…</h1></div>';
+  if(location.protocol==="file:"){
+    app.innerHTML=`<div class="card"><h2>Open me through the server</h2>
+      <p>This console needs its local server for live lab data — opening the
+      HTML file directly can't reach it.</p>
+      <p class="small" style="margin-top:10px"><b>1.</b> In Terminal, from the
+      repo folder:</p>
+      <pre class="mono">python3 webapp/server.py</pre>
+      <p class="small"><b>2.</b> Then visit
+      <a href="http://localhost:8787">http://localhost:8787</a></p>
+      <p class="small" style="margin-top:10px">On your phone (same Wi-Fi):
+      start with <code>python3 webapp/server.py --lan</code> and visit
+      <code>http://&lt;your-mac-ip&gt;:8787</code>.</p></div>`;
+    return;
+  }
   try{
     const fn = ROUTES[page]||ROUTES.home;
     await fn(app,rest);
   }catch(e){
+    const netfail=/load failed|failed to fetch|networkerror/i.test(e.message);
     app.innerHTML=`<div class="card"><h2>Something went wrong</h2>
       <p class="small">${esc(e.message)}</p>
-      <p class="small">Is the server running from the repo root?
-      <code>python3 webapp/server.py</code></p></div>`;
+      ${netfail?`<p class="small">The API didn't answer. Start the server
+        from the repo folder and reload:</p>
+        <pre class="mono">python3 webapp/server.py</pre>
+        <p class="small">Viewing from a phone? The server binds localhost by
+        default — start it with <code>--lan</code> to allow your Wi-Fi
+        network, then open <code>http://&lt;your-mac-ip&gt;:8787</code>.</p>`
+      :`<p class="small">Is the server running from the repo root?
+        <code>python3 webapp/server.py</code></p>`}
+      <button class="ghost" onclick="route()">Retry</button></div>`;
   }
   window.scrollTo(0,0);
 }

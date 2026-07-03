@@ -937,8 +937,12 @@ script and found byte-level discrepancy; the panel was refreshed to KS p = 0.385
 Local, zero-dependency console for the lab (Python stdlib only):
 
 ```
-python3 webapp/server.py        # http://localhost:8787
+python3 webapp/server.py          # http://localhost:8787
+python3 webapp/server.py --lan    # + phone access on the same Wi-Fi
 ```
+
+Or just double-click **Start Lab Console.command** (macOS) — it starts the
+server and opens the browser; close the Terminal window to stop.
 
 Apple-style, mobile-friendly SPA: pipeline wizard with the lab's current and
 next step, past experiments with PDF export, candidate equations with a
