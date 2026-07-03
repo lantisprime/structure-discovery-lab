@@ -145,6 +145,27 @@ details[open] summary:before{content:"▾ "}
   align-items:center;justify-content:center;padding:20px;
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .overlay .card{max-width:440px;width:100%}
+.fab{position:fixed;right:18px;bottom:18px;z-index:55;width:52px;height:52px;
+  border-radius:50%;background:var(--accent);color:#fff;font-size:24px;border:0;
+  box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer;display:flex;
+  align-items:center;justify-content:center}
+.chatpanel{position:fixed;right:18px;bottom:80px;z-index:56;width:min(360px,calc(100vw - 36px));
+  max-height:min(520px,70vh);background:var(--card);border:1px solid var(--line);
+  border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,.3);display:flex;
+  flex-direction:column;overflow:hidden}
+.chatpanel header{position:static;display:flex;justify-content:space-between;
+  align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);
+  background:var(--card)}
+.chatlog{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:85%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.45}
+.msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--line);border-bottom-left-radius:4px}
+.chatin{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.chatin input{flex:1}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px}
+.chips button{background:var(--tint);color:var(--accent);font-size:12px;padding:6px 10px}
+@media (max-width:760px){.fab{bottom:calc(74px + env(safe-area-inset-bottom))}
+  .chatpanel{bottom:calc(136px + env(safe-area-inset-bottom))}}
 nav.tabbar{display:none}
 @media (max-width:760px){
   main{padding:18px 14px 90px}
@@ -180,6 +201,18 @@ nav.tabbar{display:none}
 <main id="app"><div class="hero"><h1>Loading…</h1></div></main>
 
 <nav class="tabbar" id="tabbar"></nav>
+<button class="fab noprint" id="fab" onclick="toggleChat()" title="Ask the companion">💬</button>
+<div class="chatpanel noprint" id="chatpanel" style="display:none">
+  <header><b>💬 Lab companion</b>
+    <button class="subtle" style="padding:4px 12px" onclick="toggleChat()">✕</button></header>
+  <div class="chatlog" id="chatlog"></div>
+  <div class="chips" id="chatchips"></div>
+  <div class="chatin">
+    <input id="chatin" placeholder="Ask anything about the lab…"
+      onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()">↑</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -502,12 +535,9 @@ ROUTES.equations=async(app)=>{
         <div class="noprint" style="margin-top:6px">
         <button class="ghost" onclick="prefillEq('${e.series}','${e.periods_d.join(",")}')">
           Try it</button></div></div></div>`).join("");
-  const opts=Object.entries({moon_distance:"Moon distance (km)",
-    tidal_accel:"Tidal acceleration (g)",pressure:"Manila pressure (hPa)",
-    kp_index:"Kp geomagnetic index",
-    eval_unit_06:"Eval unit 06 (blind)",eval_unit_09:"Eval unit 09 (blind)",
-    eval_unit_10:"Eval unit 10 (blind)",eval_unit_11:"Eval unit 11 (blind)"})
-    .map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+  const SL=await api("/api/series_list");
+  const opts=Object.entries(SL)
+    .map(([v,l])=>`<option value="${v}">${esc(l)}</option>`).join("");
   app.innerHTML=`
   <div class="hero"><h1>Equations</h1></div>
   ${guide("ƒ","Why this page exists",
@@ -798,7 +828,29 @@ ROUTES.theorems=async(app)=>{
     ${faces.map(f=>`<button class="ghost" data-face="${esc(f)}">${esc(f)}</button>`).join("")}
   </div>
   <div id="kb-list" class="grid g2" style="margin-top:14px"></div>
-  <div id="kb-detail"></div>`;
+  <div id="kb-detail"></div>
+  <div class="card noprint" style="margin-top:16px"><h2>＋ Propose a theorem card</h2>
+    <p class="small">Adds a PROPOSED card to the arsenal. Governance: no card,
+    no test — but a card alone admits nothing; it still needs a calibration
+    gate and a family placement before real data.</p>
+    <label>Title ${info("Human-readable theorem/instrument name, e.g. 'Runs test — Wald–Wolfowitz'")}</label>
+    <input id="kb-title">
+    <label>Face ${info("Which aspect of randomness it interrogates — helps the coverage audit find blind spots")}</label>
+    <select id="kb-face"><option>statistical</option><option>dynamical</option>
+      <option>algorithmic</option><option>cross-sectional/physical</option>
+      <option>relational</option></select>
+    <label>Statement ${info("The theorem in one or two sentences")}</label>
+    <textarea id="kb-stmt" rows="2"></textarea>
+    <label>Null value under H0 ${info("What the statistic equals/looks like when the data is truly random — the calibration target")}</label>
+    <textarea id="kb-h0" rows="2"></textarea>
+    <label>Detects ${info("Structures this instrument has power against")}</label>
+    <input id="kb-det">
+    <label>Blind to ${info("What it cannot see — another instrument must cover this")}</label>
+    <input id="kb-blind">
+    <label>Finite-sample cautions (optional)</label><input id="kb-caut">
+    <label>References (optional)</label><input id="kb-ref">
+    <div class="pillrow"><button onclick="addKB()">Create PROPOSED card</button></div>
+  </div>`;
   const render=()=>{
     const q=($("#kb-q").value||"").toLowerCase();
     const face=($("#kb-faces .on")||{}).dataset?.face||"";
@@ -818,6 +870,20 @@ ROUTES.theorems=async(app)=>{
     e.target.classList.add("on"); render();});
   render();
 };
+window.addKB=async()=>{
+  try{const r=await api("/api/kb",{method:"POST",body:JSON.stringify({
+      title:$("#kb-title").value,face:$("#kb-face").value,
+      statement:$("#kb-stmt").value,h0:$("#kb-h0").value,
+      detects:$("#kb-det").value,blind:$("#kb-blind").value,
+      cautions:$("#kb-caut").value,references:$("#kb-ref").value})});
+    KB=null;toast("Card created — now harmonize it");
+    const app=$("#app");await ROUTES.theorems(app);
+    $("#kb-detail").innerHTML=`<div class="card guide" style="margin-top:16px">
+      <div class="gico">🧬</div><div><b>Next: harmonize</b>
+      <div class="small">${esc(r.next)}</div>
+      <div class="pillrow"><button onclick="location.hash='agents'">Open Run centre</button></div>
+      </div></div>`;
+  }catch(e){toast(e.message)}};
 window.showKB=slug=>{
   const k=KB.find(x=>x.slug===slug);
   $("#kb-detail").innerHTML=`<div class="card" style="margin-top:16px">
@@ -1162,7 +1228,20 @@ ROUTES.admin=async(app)=>{
       <span class="small">local · public, keyless (<a href="https://kp.gfz-potsdam.de" target="_blank">kp.gfz.de ↗</a>)</span></div>
     <p class="small" style="margin-top:8px">To refresh a dataset, run its
     fetcher in <span class="mono">datasets/&lt;name&gt;/</span> — still no key
-    required.</p></div>
+    required.</p>
+    <details><summary>＋ Add a dataset (validated)</summary>
+      <label>Name ${info("Shown everywhere the dataset appears (sandbox, wizard)")}</label>
+      <input id="ds-name" placeholder="e.g. Manila rainfall daily">
+      <label>Source / provenance ${info("Where the data came from — recorded in DATASET.md; registered claims later need a row-integrity audit")}</label>
+      <input id="ds-src" placeholder="URL or description">
+      <label>Description (optional)</label><input id="ds-desc">
+      <label>CSV ${info("Requirements: a 'date' column (YYYY-MM-DD, ascending) + at least one numeric column; ≥50 rows; ≤5% missing. Validation runs before anything is saved.")}</label>
+      <textarea id="ds-csv" rows="5" placeholder="date,value&#10;2025-01-01,12.3&#10;…" class="mono"></textarea>
+      <input type="file" id="ds-file" accept=".csv" style="border:0;padding:6px 0"
+        onchange="this.files[0]&&this.files[0].text().then(t=>{document.getElementById('ds-csv').value=t;toast('CSV loaded — press Validate & add')})">
+      <div class="pillrow"><button onclick="addDataset()">Validate & add</button></div>
+      <div id="ds-report"></div>
+    </details></div>
   <div class="card" style="margin-top:16px"><h2>Lab settings</h2>
     <label>Default Monte-Carlo m for new exploratory fits</label>
     <input id="set-m" value="${esc(c.settings.default_m||399)}">
@@ -1192,6 +1271,21 @@ window.saveProv=async(id,makeActive)=>{
   try{await api("/api/providers",{method:"POST",body:JSON.stringify(body)});
     toast(makeActive?"Saved & set active":"Saved");route();
   }catch(e){toast(e.message)}};
+window.addDataset=async()=>{
+  try{const r=await api("/api/datasets",{method:"POST",body:JSON.stringify({
+      name:$("#ds-name").value,source:$("#ds-src").value,
+      description:$("#ds-desc").value,csv_text:$("#ds-csv").value})});
+    STATE=null;
+    $("#ds-report").innerHTML=`<div class="guide" style="margin-top:10px">
+      <div class="gico">✅</div><div><b>Validated & added</b>
+      <div class="small">${r.validation.rows} rows ·
+      ${esc(r.validation.date_range.join(" → "))} · column
+      “${esc(r.validation.value_column)}” · ${(r.validation.missing_frac*100).toFixed(1)}% missing
+      · ${r.validation.duplicate_dates} duplicate dates<br>${esc(r.next)}</div>
+      <div class="pillrow"><button class="ghost" onclick="location.hash='equations'">Try it in the sandbox</button></div>
+      </div></div>`;
+    toast("Dataset added");
+  }catch(e){$("#ds-report").innerHTML=`<p class="small" style="color:var(--bad);margin-top:8px">✕ ${esc(e.message)}</p>`}};
 window.saveRole=async rid=>{
   const cfg={provider:document.getElementById("role-p-"+rid).value,
     model:document.getElementById("role-m-"+rid).value.trim(),
@@ -1280,6 +1374,60 @@ python3 webapp/server.py        # http://localhost:8787</pre>
     <p class="small">Read-only by design except approvals (audit-logged) and
     admin config (local, gitignored). The server binds 127.0.0.1 only.</p></div>`;
 };
+
+/* ---------------- AI companion ---------------- */
+const CHAT={hist:JSON.parse(sessionStorage.getItem("labChat")||"[]"),busy:false};
+const STARTERS=["What should I do next?","How do I start an experiment?",
+  "Explain the honesty meter","What can the Run centre do?"];
+function toggleChat(){
+  const p=$("#chatpanel");
+  p.style.display=p.style.display==="none"?"flex":"none";
+  if(p.style.display==="flex"){renderChat();$("#chatin").focus();}
+}
+function renderChat(){
+  const log=$("#chatlog");
+  if(!CHAT.hist.length){
+    log.innerHTML=`<div class="msg bot">Hi! I'm your lab companion — ask me
+      what to do next, or how any part of the console works.</div>`;
+  }else{
+    log.innerHTML=CHAT.hist.map(m=>
+      `<div class="msg ${m.role==="user"?"user":"bot"}">${esc(m.content)}</div>`).join("");
+  }
+  if(CHAT.needsSetup)log.innerHTML+=`<div class="msg bot" style="background:var(--tint)">
+    <b>Set me up in 30 seconds:</b><br>Admin → pick a provider → paste its key
+    → under “agent roles” give <b>Companion</b> a fast model.<br>
+    <button style="margin-top:8px" onclick="CHAT.needsSetup=false;toggleChat();location.hash='admin'">
+    Open Admin →</button></div>`;
+  if(CHAT.busy)log.innerHTML+='<div class="msg bot">…</div>';
+  $("#chatchips").innerHTML=CHAT.hist.length?"":STARTERS.map(q=>
+    `<button onclick="askChat('${q.replace(/'/g,"\\'")}')">${q}</button>`).join("");
+  log.scrollTop=log.scrollHeight;
+}
+window.askChat=q=>{$("#chatin").value=q;sendChat();};
+window.sendChat=async()=>{
+  const inp=$("#chatin"),q=inp.value.trim();
+  if(!q||CHAT.busy)return;
+  inp.value="";CHAT.hist.push({role:"user",content:q});
+  CHAT.busy=true;renderChat();
+  try{
+    const r=await api("/api/companion",{method:"POST",
+      body:JSON.stringify({messages:CHAT.hist.slice(-12),
+        page:(location.hash||"#home").slice(1)})});
+    if(r.setup_needed){
+      CHAT.hist.push({role:"assistant",content:r.hint});
+      CHAT.needsSetup=true;
+    }else{
+      CHAT.hist.push({role:"assistant",content:r.reply});
+    }
+  }catch(e){
+    CHAT.hist.push({role:"assistant",content:"I couldn't reach my model: "+
+      e.message});
+  }
+  CHAT.busy=false;
+  sessionStorage.setItem("labChat",JSON.stringify(CHAT.hist.slice(-20)));
+  renderChat();
+};
+window.toggleChat=toggleChat;
 
 window.exportPDF=()=>{toast("Opening print dialog — choose “Save as PDF”");
   setTimeout(()=>window.print(),350);};
