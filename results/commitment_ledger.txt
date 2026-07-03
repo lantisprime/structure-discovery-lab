@@ -569,3 +569,6 @@ aae4a67d56fbef0f  ./results/eq_readjudication_2026-07-02.json
 379e458988d941b5  ./evals/eq_eval_set_v1/answer_key/GROUND_TRUTH.md
 71ed769feb48606b  ./evals/eq_eval_set_v1/src/generate_eq_eval.py
 266a1bd3281bc3ba  ./evals/eq_eval_set_v1/SEAL_NOTICE.md
+
+# Snapshot 2026-07-03 REGISTRATION approved pre-run (corrected_rerun_r1).
+6668daa4bd5f38a5  ./docs/REGISTRATION_CORRECTED_RERUN.md
