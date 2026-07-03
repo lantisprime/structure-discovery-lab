@@ -931,3 +931,20 @@ script and found byte-level discrepancy; the panel was refreshed to KS p = 0.385
 ---
 
 *Protocol v2.1 · Jun 11, 2026*
+
+## Web console (`webapp/`)
+
+Local, zero-dependency console for the lab (Python stdlib only):
+
+```
+python3 webapp/server.py        # http://localhost:8787
+```
+
+Apple-style, mobile-friendly SPA: pipeline wizard with the lab's current and
+next step, past experiments with PDF export, candidate equations with a
+try-it sandbox (descriptive fits only — 0 multiplicity, never citable),
+searchable theorem arsenal (docs/kb), multiplicity ledger + honesty meter,
+live agent/script status, HUMAN-GATE approvals (append-only audit log at
+`results/webapp_approvals.jsonl`; fills blank `approved_by_human` lines),
+and an admin page whose API keys live in `webapp/config.local.json`
+(gitignored, masked when served). Binds 127.0.0.1 only. Help page inside.

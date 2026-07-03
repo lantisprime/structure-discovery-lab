@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Structure Discovery Lab</title>
+<style>
+:root{
+  --bg:#f5f5f7; --card:#ffffff; --ink:#1d1d1f; --ink2:#6e6e73; --line:#e8e8ed;
+  --accent:#0071e3; --accent-ink:#ffffff; --ok:#34c759; --warn:#ff9f0a;
+  --bad:#ff3b30; --tint:rgba(0,113,227,.08); --nav:rgba(251,251,253,.8);
+  --radius:18px; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#000; --card:#1c1c1e; --ink:#f5f5f7; --ink2:#98989d;
+    --line:#2c2c2e; --tint:rgba(10,132,255,.16); --nav:rgba(22,22,23,.8);
+    --accent:#0a84ff; --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.4);}
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+a{color:var(--accent);text-decoration:none}
+h1{font-size:32px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+h2{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px}
+h3{font-size:16px;font-weight:600}
+.small{font-size:13px;color:var(--ink2)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+
+header{position:sticky;top:0;z-index:40;background:var(--nav);
+  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--line)}
+.nav{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:18px;
+  padding:10px 20px}
+.brand{font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.brand span{color:var(--accent)}
+.navlinks{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.navlinks::-webkit-scrollbar{display:none}
+.navlinks a{padding:6px 12px;border-radius:999px;color:var(--ink2);
+  font-size:13.5px;font-weight:500;white-space:nowrap}
+.navlinks a.on{background:var(--tint);color:var(--accent)}
+
+main{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+.hero{margin:14px 0 26px}
+.hero p{color:var(--ink2);max-width:640px;margin-top:6px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:20px;border:1px solid var(--line)}
+.card h2{display:flex;align-items:center;gap:8px}
+.rowline{display:flex;justify-content:space-between;gap:12px;padding:9px 0;
+  border-bottom:1px solid var(--line);align-items:baseline}
+.rowline:last-child{border-bottom:0}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;
+  font-weight:600;background:var(--tint);color:var(--accent);white-space:nowrap}
+.badge.ok{background:rgba(52,199,89,.14);color:var(--ok)}
+.badge.warn{background:rgba(255,159,10,.15);color:var(--warn)}
+.badge.bad{background:rgba(255,59,48,.13);color:var(--bad)}
+.badge.dim{background:var(--line);color:var(--ink2)}
+button,.btn{font:inherit;font-weight:600;font-size:14px;border:0;cursor:pointer;
+  background:var(--accent);color:var(--accent-ink);padding:10px 18px;
+  border-radius:999px;transition:transform .06s ease,opacity .15s}
+button:active{transform:scale(.97)}
+button.ghost{background:var(--tint);color:var(--accent)}
+button.subtle{background:var(--line);color:var(--ink)}
+button:disabled{opacity:.45;cursor:default}
+input,select,textarea{font:inherit;width:100%;padding:10px 14px;border-radius:12px;
+  border:1px solid var(--line);background:var(--card);color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+label{font-size:13px;font-weight:600;color:var(--ink2);display:block;margin:12px 0 5px}
+
+.steps{display:flex;flex-direction:column;gap:0;position:relative}
+.step{display:flex;gap:14px;padding:14px 0;position:relative}
+.step .dot{width:26px;height:26px;border-radius:50%;flex:0 0 26px;display:flex;
+  align-items:center;justify-content:center;font-size:13px;font-weight:700;
+  background:var(--line);color:var(--ink2);z-index:1}
+.step.done .dot{background:var(--ok);color:#fff}
+.step.next .dot{background:var(--accent);color:#fff;box-shadow:0 0 0 5px var(--tint)}
+.step.waiting-human .dot{background:var(--warn);color:#fff}
+.step:not(:last-child):before{content:"";position:absolute;left:12px;top:40px;
+  bottom:-14px;width:2px;background:var(--line)}
+.step .body{flex:1}
+.step .body .small{margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);
+  text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.clickable{cursor:pointer}
+.clickable:hover{background:var(--tint)}
+
+.seg{display:inline-flex;background:var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{background:transparent;color:var(--ink2);padding:6px 14px;font-size:13px}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+
+.searchbar{display:flex;gap:10px;margin:14px 0}
+.searchbar input{flex:1}
+canvas{width:100%;height:220px;display:block}
+details{border-top:1px solid var(--line);padding:10px 0}
+details summary{cursor:pointer;font-weight:600;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary:before{content:"▸ ";color:var(--ink2)}
+details[open] summary:before{content:"▾ "}
+.md{font-size:14px}
+.md h1,.md h2,.md h3{margin:18px 0 8px}
+.md h1{font-size:22px}.md h2{font-size:18px}.md h3{font-size:15px}
+.md p,.md li{margin:6px 0;color:var(--ink)}
+.md code{background:var(--tint);border-radius:6px;padding:1px 6px;font-size:12.5px;
+  font-family:ui-monospace,Menlo,monospace}
+.md pre{background:var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.md table{margin:10px 0}
+.toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:60;
+  background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:999px;
+  font-size:14px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;
+  max-width:88vw;text-align:center}
+.toast.show{opacity:1}
+.kpi{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.kpi + .small{margin-top:2px}
+.pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+nav.tabbar{display:none}
+@media (max-width:760px){
+  main{padding:18px 14px 90px}
+  h1{font-size:26px}
+  .navlinks{display:none}
+  nav.tabbar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;
+    background:var(--nav);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-top:1px solid var(--line);justify-content:space-around;
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  nav.tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;
+    font-size:10px;color:var(--ink2);padding:4px 6px;border-radius:10px;min-width:52px}
+  nav.tabbar a.on{color:var(--accent)}
+  nav.tabbar .ico{font-size:20px;line-height:1}
+}
+@media print{
+  header,nav.tabbar,.noprint,button{display:none !important}
+  body{background:#fff;color:#000;padding:0}
+  .card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}
+  main{max-width:100%}
+  .printonly{display:block !important}
+}
+.printonly{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <div class="brand">Structure<span> Lab</span></div>
+    <div class="navlinks" id="navlinks"></div>
+  </div>
+</header>
+
+<main id="app"><div class="hero"><h1>Loading…</h1></div></main>
+
+<nav class="tabbar" id="tabbar"></nav>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============================ shell ============================ */
+const PAGES = [
+  ["home","Overview","⌂"],["experiments","Experiments","▤"],
+  ["equations","Equations","ƒ"],["theorems","Theorems","∑"],
+  ["ledger","Ledger","☰"],["agents","Agents","◎"],
+  ["approvals","Approvals","✓"],["admin","Admin","⚙"],["help","Help","?"]
+];
+const MOBILE_TABS = ["home","experiments","equations","theorems","ledger","help"];
+const $ = s => document.querySelector(s);
+const el = (t,c,h) => {const e=document.createElement(t); if(c)e.className=c;
+  if(h!==undefined)e.innerHTML=h; return e;};
+const esc = s => String(s??"").replace(/[&<>"]/g,
+  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtp = p => p==null?"—":(+p).toFixed(p<0.01?4:3);
+let STATE=null, KB=null;
+
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600);}
+async function api(path,opts){const r=await fetch(path,opts);
+  const j=await r.json(); if(j&&j.error)throw new Error(j.error); return j;}
+async function loadState(force){ if(!STATE||force)STATE=await api("/api/state");
+  return STATE;}
+
+function nav(){
+  const cur=(location.hash||"#home").slice(1).split("/")[0];
+  $("#navlinks").innerHTML=PAGES.map(([id,label])=>
+    `<a href="#${id}" class="${id===cur?'on':''}">${label}</a>`).join("");
+  $("#tabbar").innerHTML=PAGES.filter(p=>MOBILE_TABS.includes(p[0]))
+    .map(([id,label,ico])=>`<a href="#${id}" class="${id===cur?'on':''}">
+      <span class="ico">${ico}</span>${label}</a>`).join("");
+}
+async function route(){
+  nav(); const app=$("#app");
+  const [page,...rest]=(location.hash||"#home").slice(1).split("/");
+  app.innerHTML='<div class="hero"><h1 class="small">Loading…</h1></div>';
+  try{
+    const fn = ROUTES[page]||ROUTES.home;
+    await fn(app,rest);
+  }catch(e){
+    app.innerHTML=`<div class="card"><h2>Something went wrong</h2>
+      <p class="small">${esc(e.message)}</p>
+      <p class="small">Is the server running from the repo root?
+      <code>python3 webapp/server.py</code></p></div>`;
+  }
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",route);
+
+/* ROUTES defined in the second script block */
+</script>
+<script id="routes-and-pages">
+"use strict";
+/* ============================ shared widgets ============================ */
+function stepList(pipe){
+  return `<div class="steps">`+pipe.steps.map((s,i)=>`
+    <div class="step ${s.status}">
+      <div class="dot">${s.status==="done"?"✓":i+1}</div>
+      <div class="body"><h3>${esc(s.title)}
+        ${s.id===pipe.current?'<span class="badge">you are here</span>':""}
+        ${s.status==="waiting-human"?'<span class="badge warn">needs owner</span>':""}
+      </h3><div class="small">${esc(s.detail)}</div></div>
+    </div>`).join("")+`</div>`;
+}
+function verdictBadge(v){
+  if(!v)return '<span class="badge dim">—</span>';
+  const s=String(v);
+  const cls=/NULL|FAIL|UNCONF|artifact|dissolv/i.test(s)?"dim":
+            /ADMITTED|SUPPORTED|PASS|done|✓/i.test(s)?"ok":
+            /FLOOR|pending|EXPLORATORY|IN_PROG/i.test(s)?"warn":"";
+  return `<span class="badge ${cls}">${esc(s)}</span>`;
+}
+function mdlite(src){
+  const lines=src.split("\n"); let out=[],inCode=false,inTable=false;
+  const inline=s=>esc(s)
+    .replace(/`([^`]+)`/g,"<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+  for(const ln of lines){
+    if(ln.startsWith("```")){inCode=!inCode;out.push(inCode?"<pre>":"</pre>");continue;}
+    if(inCode){out.push(esc(ln)+"\n");continue;}
+    if(/^\s*\|/.test(ln)){
+      if(/^\s*\|[\s\-|:]+\|\s*$/.test(ln))continue;
+      const cells=ln.trim().replace(/^\||\|$/g,"").split("|").map(c=>inline(c.trim()));
+      if(!inTable){out.push("<table>");inTable=true;
+        out.push("<tr>"+cells.map(c=>`<th>${c}</th>`).join("")+"</tr>");}
+      else out.push("<tr>"+cells.map(c=>`<td>${c}</td>`).join("")+"</tr>");
+      continue;
+    } else if(inTable){out.push("</table>");inTable=false;}
+    const h=ln.match(/^(#{1,3})\s+(.*)/);
+    if(h){out.push(`<h${h[1].length+1}>${inline(h[2])}</h${h[1].length+1}>`);continue;}
+    if(/^\s*[-*]\s+/.test(ln)){out.push(`<li>${inline(ln.replace(/^\s*[-*]\s+/,""))}</li>`);continue;}
+    if(ln.trim()==="")out.push("");
+    else out.push(`<p>${inline(ln)}</p>`);
+  }
+  if(inTable)out.push("</table>");
+  return `<div class="md">${out.join("")}</div>`;
+}
+function drawChart(canvas,dates,series){
+  const dpr=devicePixelRatio||1, W=canvas.clientWidth||600, Hh=220;
+  canvas.width=W*dpr; canvas.height=Hh*dpr;
+  const ctx=canvas.getContext("2d"); ctx.scale(dpr,dpr);
+  const css=getComputedStyle(document.documentElement);
+  const line=css.getPropertyValue("--line"), ink2=css.getPropertyValue("--ink2");
+  const all=series.flatMap(s=>s.data).filter(v=>isFinite(v));
+  const lo=Math.min(...all), hi=Math.max(...all), pad=28;
+  const X=i=>pad+ (W-pad-10)*(i/(series[0].data.length-1||1));
+  const Y=v=>Hh-22-(Hh-40)*((v-lo)/((hi-lo)||1));
+  ctx.strokeStyle=line;ctx.lineWidth=1;
+  for(let g=0;g<4;g++){const y=18+g*(Hh-40)/3;ctx.beginPath();ctx.moveTo(pad,y);
+    ctx.lineTo(W-8,y);ctx.stroke();}
+  ctx.fillStyle=ink2;ctx.font="10px -apple-system,sans-serif";
+  ctx.fillText(hi.toPrecision(4),2,20);ctx.fillText(lo.toPrecision(4),2,Hh-20);
+  if(dates&&dates.length){ctx.fillText(dates[0],pad,Hh-6);
+    const last=dates[dates.length-1];
+    ctx.fillText(last,W-8-ctx.measureText(last).width,Hh-6);}
+  for(const s of series){
+    ctx.strokeStyle=s.color;ctx.lineWidth=s.width||1.6;ctx.beginPath();
+    s.data.forEach((v,i)=>{i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v));});
+    ctx.stroke();
+  }
+}
+
+/* ============================ pages ============================ */
+const ROUTES={};
+
+ROUTES.home=async(app)=>{
+  const st=await loadState(true);
+  const L=st.ledger,run=st.runs[0]||{};
+  app.innerHTML=`
+  <div class="hero"><h1>Structure Discovery Lab</h1>
+    <p>Mathematical-theorem instruments, pre-registered experiments, and a
+    multiplicity ledger — one console. The wizard below shows exactly where
+    the lab is and what happens next.</p></div>
+  <div class="grid g3">
+    <div class="card"><div class="kpi">${st.runs.length}</div>
+      <div class="small">experiments in the run ledger</div></div>
+    <div class="card"><div class="kpi">${L.live}</div>
+      <div class="small">live tests toward global m (${(L.frac_le_05*100).toFixed(1)}% ≤ .05)</div></div>
+    <div class="card"><div class="kpi">${fmtp(st.meta_panel.p_meta_discrete)}</div>
+      <div class="small">meta-panel honesty p (v${st.meta_panel.panel_version},
+      ${st.meta_panel.n_tests} tests)</div></div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h2>Lab journey</h2>${stepList(st.pipeline)}
+      <div class="pillrow noprint">
+        <button onclick="location.hash='approvals'">Review approvals</button>
+        <button class="ghost" onclick="location.hash='help'">How this lab works</button>
+      </div></div>
+    <div class="card"><h2>Latest experiment</h2>
+      <div class="rowline"><b>${esc(run.run_id||"—")}</b>${verdictBadge(run.grade)}</div>
+      <p class="small">${esc(run.status||"")}</p>
+      <div class="rowline"><span class="small">script</span>
+        <span class="mono">${esc(run.script||"")}</span></div>
+      <div class="rowline"><span class="small">registration</span>
+        <span class="small">${esc((run.registration||"").slice(0,60))}</span></div>
+      <div class="pillrow noprint">
+        <button class="ghost" onclick="location.hash='experiments'">All experiments</button>
+        <button class="ghost" onclick="location.hash='agents'">Agent status</button>
+      </div></div>
+  </div>`;
+};
+
+ROUTES.experiments=async(app,rest)=>{
+  const st=await loadState();
+  if(rest[0]){ // detail
+    const run=st.runs.find(r=>r.run_id===decodeURIComponent(rest[0]));
+    if(!run)return app.innerHTML='<div class="card">Not found.</div>';
+    const tests=st.ledger.recent.filter(t=>t.run_id===run.run_id);
+    app.innerHTML=`
+    <div class="hero"><a href="#experiments" class="noprint">‹ Experiments</a>
+      <h1>${esc(run.run_id)}</h1>
+      <p class="small">${esc(run.date||"")} · ${esc(run.grade||"")}</p></div>
+    <div class="card"><h2>Summary</h2>
+      ${["status","script","stages","seed_scheme","registration","output","real_data_tests"]
+        .map(k=>`<div class="rowline"><span class="small">${k}</span>
+          <span style="text-align:right">${esc(run[k])}</span></div>`).join("")}
+      <div class="pillrow noprint">
+        <button onclick="exportPDF()">Export to PDF</button></div></div>
+    ${tests.length?`<div class="card" style="margin-top:16px">
+      <h2>Ledgered p-values (recent window)</h2><div class="tablewrap"><table>
+      <tr><th>dataset</th><th>method</th><th>p</th><th>m</th><th>family</th></tr>
+      ${tests.map(t=>`<tr><td>${esc(t.dataset)}</td><td>${esc(t.method)}</td>
+        <td class="mono">${fmtp(t.raw_p)}</td><td>${t.m_perm??"gate"}</td>
+        <td>${esc(t.family_id)}</td></tr>`).join("")}</table></div></div>`:""}`;
+    return;
+  }
+  app.innerHTML=`
+  <div class="hero"><h1>Experiments</h1>
+    <p>Every execution in the run ledger — newest first. Tap a row for detail
+    and PDF export.</p></div>
+  <div class="card"><div class="tablewrap"><table>
+    <tr><th>run</th><th>date</th><th>tests</th><th>grade</th><th>status</th></tr>
+    ${st.runs.map(r=>`<tr class="clickable" onclick="location.hash='experiments/${encodeURIComponent(r.run_id)}'">
+      <td><b>${esc(r.run_id)}</b></td><td>${esc(r.date||"")}</td>
+      <td>${r.real_data_tests??0}</td><td>${verdictBadge((r.grade||"").split(" ")[0])}</td>
+      <td class="small">${esc((r.status||"").slice(0,90))}</td></tr>`).join("")}
+  </table></div></div>`;
+};
+
+ROUTES.equations=async(app)=>{
+  const st=await loadState();
+  const eqRows=st.equations.map(e=>`
+    <div class="rowline"><div><b>${esc(e.id)}</b>
+      <div class="small">${esc(e.target||"")} · family ${esc(e.selected_family||"")}
+        · periods ${e.periods_d.join(", ")} d</div></div>
+      <div style="text-align:right">${verdictBadge(e.corrected_status||e.frozen_verdict)}
+        <div class="noprint" style="margin-top:6px">
+        <button class="ghost" onclick="prefillEq('${e.series}','${e.periods_d.join(",")}')">
+          Try it</button></div></div></div>`).join("");
+  const opts=Object.entries({moon_distance:"Moon distance (km)",
+    tidal_accel:"Tidal acceleration (g)",pressure:"Manila pressure (hPa)",
+    kp_index:"Kp geomagnetic index",
+    eval_unit_06:"Eval unit 06 (blind)",eval_unit_09:"Eval unit 09 (blind)",
+    eval_unit_10:"Eval unit 10 (blind)",eval_unit_11:"Eval unit 11 (blind)"})
+    .map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+  app.innerHTML=`
+  <div class="hero"><h1>Equations</h1>
+    <p>The equation program's candidates with their ratified statuses, and a
+    sandbox where you can try any harmonic hypothesis against real series.</p></div>
+  <div class="grid g2">
+    <div class="card"><h2>Candidate equations</h2>${eqRows||
+      '<p class="small">No stored candidates.</p>'}
+      <details><summary class="small">Why statuses changed (readjudication)</summary>
+        <p class="small">Ratified 2026-07-03: verdict-time multiplicity was
+        applied (convention v1). See docs → RESULTS_EQ_READJUDICATION.md.</p>
+        <button class="ghost noprint" onclick="location.hash='ledger'">Open ledger</button>
+      </details></div>
+    <div class="card"><h2>Try an equation</h2>
+      <label>Series</label><select id="eq-series">${opts}</select>
+      <label>Periods (days, comma-separated, 1–5)</label>
+      <input id="eq-periods" placeholder="27.555, 13.7" value="27.555">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="eq-trend" style="width:auto"> include linear trend</label>
+      <div class="pillrow noprint"><button onclick="runEq()">Fit hypothesis</button>
+        <button class="subtle" onclick="exportPDF()">Export to PDF</button></div>
+      <p class="small" style="margin-top:10px">Sandbox only: descriptive fit +
+      80/20 hold-out. Charges 0 multiplicity and is never citable — a real
+      claim goes through registration and the v4 null-equation generator.</p>
+    </div>
+  </div>
+  <div id="eq-out"></div>`;
+};
+window.prefillEq=(series,periods)=>{
+  $("#eq-series").value=series; $("#eq-periods").value=periods;
+  $("#eq-periods").scrollIntoView({behavior:"smooth",block:"center"});
+  toast("Loaded into the sandbox — press Fit");
+};
+window.runEq=async()=>{
+  const periods=$("#eq-periods").value.split(",").map(s=>parseFloat(s)).filter(x=>x>0);
+  if(!periods.length)return toast("Enter at least one period in days");
+  toast("Fitting…");
+  try{
+    const r=await api("/api/try_equation",{method:"POST",
+      body:JSON.stringify({series:$("#eq-series").value,periods_d:periods,
+        trend:$("#eq-trend").checked})});
+    const beat=r.beats_climatology;
+    $("#eq-out").innerHTML=`
+    <div class="card" style="margin-top:16px"><h2>Fit — ${esc(r.label)}</h2>
+      <canvas id="eq-chart"></canvas>
+      <div class="grid g3" style="margin-top:12px">
+        <div><div class="kpi">${r.rmse_holdout.toPrecision(4)}</div>
+          <div class="small">hold-out RMSE (last 20%)</div></div>
+        <div><div class="kpi">${r.rmse_climatology_holdout.toPrecision(4)}</div>
+          <div class="small">climatology baseline RMSE</div></div>
+        <div><div class="kpi">${beat?"beats":"loses to"}</div>
+          <div class="small">${beat?"":"the mean — "}baseline
+          ${verdictBadge(beat?"skill":"no skill")}</div></div>
+      </div>
+      <div class="rowline"><span class="small">recovered amplitudes</span>
+        <span class="mono">${r.amplitudes.map(a=>`${a.period_d}d: ${a.amp.toPrecision(3)}`).join(" · ")}</span></div>
+      <div class="rowline"><span class="small">residual top period</span>
+        <span class="mono">${r.residual_top_period_d} d (share ${r.residual_top_share})</span></div>
+      <p class="small">${esc(r.disclaimer)}</p></div>`;
+    const c=$("#eq-chart");
+    drawChart(c,r.plot.dates,[
+      {data:r.plot.y,color:"#8e8e93",width:1.1},
+      {data:r.plot.fit,color:getComputedStyle(document.documentElement)
+        .getPropertyValue("--accent").trim()||"#0071e3",width:2}]);
+    $("#eq-out").scrollIntoView({behavior:"smooth"});
+  }catch(e){toast(e.message)}
+};
+
+ROUTES.theorems=async(app)=>{
+  if(!KB)KB=await api("/api/kb");
+  const faces=[...new Set(KB.map(k=>k.face).filter(Boolean))];
+  app.innerHTML=`
+  <div class="hero"><h1>Theorem arsenal</h1>
+    <p>${KB.length} knowledge-base cards. Governance rule: no card, no test.</p></div>
+  <div class="searchbar noprint">
+    <input id="kb-q" placeholder="Search theorems, statistics, blind spots…" autocomplete="off">
+  </div>
+  <div class="pillrow noprint" id="kb-faces">
+    <button class="ghost on" data-face="">All</button>
+    ${faces.map(f=>`<button class="ghost" data-face="${esc(f)}">${esc(f)}</button>`).join("")}
+  </div>
+  <div id="kb-list" class="grid g2" style="margin-top:14px"></div>
+  <div id="kb-detail"></div>`;
+  const render=()=>{
+    const q=($("#kb-q").value||"").toLowerCase();
+    const face=($("#kb-faces .on")||{}).dataset?.face||"";
+    const hits=KB.filter(k=>(!face||k.face.includes(face))&&
+      (!q||(k.title+k.body).toLowerCase().includes(q)));
+    $("#kb-list").innerHTML=hits.map(k=>`
+      <div class="card clickable" onclick="showKB('${k.slug}')">
+        <h3>${esc(k.title)}</h3>
+        ${k.face?`<span class="badge">${esc(k.face)}</span>`:""}
+        <p class="small" style="margin-top:8px">${esc(k.preview.slice(0,180))}…</p>
+      </div>`).join("")||'<p class="small">No matches.</p>';
+  };
+  $("#kb-q").addEventListener("input",render);
+  $("#kb-faces").addEventListener("click",e=>{
+    if(e.target.dataset.face===undefined)return;
+    $("#kb-faces .on")?.classList.remove("on");
+    e.target.classList.add("on"); render();});
+  render();
+};
+window.showKB=slug=>{
+  const k=KB.find(x=>x.slug===slug);
+  $("#kb-detail").innerHTML=`<div class="card" style="margin-top:16px">
+    <div class="noprint" style="display:flex;justify-content:space-between">
+      <span class="badge">${esc(k.face||"card")}</span>
+      <button class="subtle" onclick="exportPDF()">Export to PDF</button></div>
+    ${mdlite(k.body)}</div>`;
+  $("#kb-detail").scrollIntoView({behavior:"smooth"});
+};
+
+ROUTES.ledger=async(app)=>{
+  const st=await loadState(true);
+  const L=st.ledger,M=st.meta_panel;
+  const cur=st.pipeline.steps.find(s=>s.id===st.pipeline.current)||{};
+  const nxt=st.pipeline.steps[st.pipeline.steps.findIndex(s=>s.id===cur.id)+1];
+  app.innerHTML=`
+  <div class="hero"><h1>Ledger</h1>
+    <p>Every real-data p-value the lab has ever produced, and the honesty
+    meter that watches them all.</p></div>
+  <div class="grid g2">
+    <div class="card"><h2>Where the lab is</h2>
+      <div class="rowline"><span class="small">current step</span>
+        <b>${esc(cur.title||"—")}</b></div>
+      <div class="rowline"><span class="small">next</span>
+        <span>${esc(nxt?nxt.title:"—")}</span></div>
+      <p class="small">${esc(cur.detail||"")}</p>
+      <button class="ghost noprint" onclick="location.hash='home'">Full journey</button></div>
+    <div class="card"><h2>Honesty meter (meta panel v${M.panel_version})</h2>
+      <div class="rowline"><span class="small">discrete meta p</span>
+        <b>${fmtp(M.p_meta_discrete)}</b></div>
+      <div class="rowline"><span class="small">share ≤ .05</span>
+        <span>${(M.frac_le_05*100).toFixed(1)}% (null band
+        ${(M.sim_frac_le_05_q05_q95||[0,0]).map(x=>(x*100).toFixed(1)).join("–")}%)</span></div>
+      <div class="rowline"><span class="small">panel sha</span>
+        <span class="mono">${esc(M.panel_sha)}</span></div>
+      <p class="small">The small-p excess is measured, composition-robust,
+      and concentrates in the traced #45 family — a known, era-bounded
+      anomaly, not a new discovery.</p></div>
+  </div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><div class="kpi">${L.tests}</div><div class="small">test rows</div></div>
+    <div class="card"><div class="kpi">${L.live}</div><div class="small">live toward global m = ${L.global_m}</div></div>
+    <div class="card"><div class="kpi">${L.exploratory}</div><div class="small">exploratory (never pooled)</div></div>
+  </div>
+  <div class="card" style="margin-top:16px"><h2>Recent test rows</h2>
+    <div class="tablewrap"><table>
+    <tr><th>run</th><th>dataset</th><th>method</th><th>p</th><th>m</th><th>flags</th></tr>
+    ${L.recent.map(t=>`<tr><td>${esc(t.run_id)}</td><td>${esc(t.dataset)}</td>
+      <td>${esc(t.method)}</td><td class="mono">${fmtp(t.raw_p)}</td>
+      <td>${t.m_perm??"gate"}</td><td>${t.exploratory?'<span class="badge warn">exploratory</span>':""}
+      ${t.at_floor?'<span class="badge warn">at floor</span>':""}</td></tr>`).join("")}
+    </table></div>
+    <div class="pillrow noprint"><button class="subtle" onclick="exportPDF()">Export to PDF</button></div></div>
+  <div class="card" style="margin-top:16px"><h2>Instrument families</h2>
+    ${Object.entries(st.families).map(([k,v])=>`<details><summary>${esc(k)}
+      <span class="small">· ${esc(v.class)}</span></summary>
+      <p class="small">members: ${v.members.join(", ")}</p>
+      <p class="small">${esc(v.status)}</p></details>`).join("")}</div>`;
+};
+
+ROUTES.agents=async(app)=>{
+  const render=async()=>{
+    const a=await api("/api/agents");
+    const box=$("#agents-box"); if(!box)return;
+    box.innerHTML=`
+    <div class="card"><h2>Running now</h2>
+      ${a.running_processes.length?a.running_processes.map(p=>`
+        <div class="rowline"><span class="badge ok">running · ${esc(p.elapsed)}</span>
+          <span class="mono" style="text-align:right">${esc(p.cmd)}</span></div>`).join("")
+        :'<p class="small">No lab scripts executing right now.</p>'}
+      ${Object.keys(a.declared_status).length?
+        `<h3 style="margin-top:14px">Declared agent status</h3>
+         <pre class="mono">${esc(JSON.stringify(a.declared_status,null,1))}</pre>`:""}
+    </div>
+    <div class="card" style="margin-top:16px"><h2>Last five runs</h2>
+      ${a.last_runs.map(r=>`<div class="rowline"><b>${esc(r.run_id)}</b>
+        <span class="small">${esc((r.status||"").slice(0,70))}</span></div>`).join("")}
+      <p class="small" style="margin-top:8px">${esc(a.note)}</p></div>`;
+  };
+  app.innerHTML=`<div class="hero"><h1>Agents</h1>
+    <p>Live view of lab scripts and agent sessions. Refreshes every 5 s.</p></div>
+    <div id="agents-box"></div>`;
+  await render();
+  clearInterval(window._agTimer);
+  window._agTimer=setInterval(()=>{
+    if((location.hash||"").includes("agents"))render();
+    else clearInterval(window._agTimer);},5000);
+};
+
+ROUTES.approvals=async(app)=>{
+  const a=await api("/api/approvals");
+  app.innerHTML=`
+  <div class="hero"><h1>Approvals</h1>
+    <p>The HUMAN-GATE, on your phone. Approving here appends to an
+    append-only audit log and fills the registration's approval line.</p></div>
+  <div class="card"><h2>Awaiting your signature</h2>
+    ${a.pending.length?a.pending.map(p=>`
+      <div class="rowline"><div><b>${esc(p.title)}</b>
+        <div class="small mono">${esc(p.doc)}</div></div>
+        <div class="noprint">
+          <button onclick="doApprove('${esc(p.doc)}')">Approve</button>
+          <button class="subtle" onclick="viewDoc('${esc(p.doc)}')">Read</button>
+        </div></div>`).join("")
+      :'<p class="small">Nothing pending — all registrations are signed.</p>'}
+    <label>Sign as</label><input id="appr-name" placeholder="Cha (lab owner)" value="Cha (lab owner)">
+  </div>
+  <div class="card" style="margin-top:16px"><h2>Audit log</h2>
+    ${a.recorded.length?a.recorded.map(r=>`<div class="rowline">
+      <span class="small mono">${esc(r.doc)}</span>
+      <span class="small">${esc(r.name)} · ${esc(r.decision)} · ${esc(r.ts)}</span>
+    </div>`).join(""):'<p class="small">No webapp approvals recorded yet.</p>'}
+  </div>
+  <div id="doc-view"></div>`;
+};
+window.doApprove=async doc=>{
+  try{
+    const r=await api("/api/approvals",{method:"POST",body:JSON.stringify(
+      {doc,name:$("#appr-name").value,decision:"approve"})});
+    toast(r.doc_patched?"Approved — registration line signed":"Approved — recorded to audit log");
+    route();
+  }catch(e){toast(e.message)}
+};
+window.viewDoc=async name=>{
+  const d=await api("/api/doc?name="+encodeURIComponent(name));
+  $("#doc-view").innerHTML=`<div class="card" style="margin-top:16px">${mdlite(d.body)}</div>`;
+  $("#doc-view").scrollIntoView({behavior:"smooth"});
+};
+
+ROUTES.admin=async(app)=>{
+  const c=await api("/api/config");
+  const keys=["ANTHROPIC_API_KEY","OPENMETEO_API_KEY","JPL_HORIZONS_KEY","GFZ_API_KEY"];
+  app.innerHTML=`
+  <div class="hero"><h1>Admin</h1>
+    <p>Infrastructure for the agents. Keys are stored locally in
+    <span class="mono">${esc(c.config_path)}</span>, never committed, served masked.</p></div>
+  <div class="card"><h2>Agent API keys</h2>
+    ${keys.map(k=>`<label>${k}
+      ${c.api_keys[k]?`<span class="badge ok">set · ${esc(c.api_keys[k])}</span>`:'<span class="badge dim">not set</span>'}</label>
+      <div style="display:flex;gap:8px">
+        <input id="key-${k}" type="password" placeholder="${c.api_keys[k]?"(unchanged)":"paste key"}" autocomplete="off">
+        ${c.api_keys[k]?`<button class="subtle" onclick="delKey('${k}')">Remove</button>`:""}
+      </div>`).join("")}
+    <div class="pillrow"><button onclick="saveKeys(${JSON.stringify(keys).replace(/"/g,"&quot;")})">Save keys</button></div>
+  </div>
+  <div class="card" style="margin-top:16px"><h2>Lab settings</h2>
+    <label>Default Monte-Carlo m for new exploratory fits</label>
+    <input id="set-m" value="${esc(c.settings.default_m||399)}">
+    <label>Owner name for approvals</label>
+    <input id="set-owner" value="${esc(c.settings.owner||"Cha (lab owner)")}">
+    <div class="pillrow"><button onclick="saveSettings()">Save settings</button></div>
+  </div>
+  <div class="card" style="margin-top:16px"><h2>Gate scripts</h2>
+    <p class="small">Run these from the repo root before publishing anything:</p>
+    <pre class="mono">python3 src/design_verifier.py
+python3 src/verify_relational_docs.py
+python3 src/lint_frozen_imports.py</pre></div>`;
+};
+window.saveKeys=async keys=>{
+  const payload={api_keys:{}};
+  keys.forEach(k=>{const v=$("#key-"+k).value.trim();if(v)payload.api_keys[k]=v;});
+  await api("/api/config",{method:"POST",body:JSON.stringify(payload)});
+  toast("Keys saved locally");route();
+};
+window.delKey=async k=>{
+  await api("/api/config",{method:"POST",body:JSON.stringify({api_keys:{[k]:"__delete__"}})});
+  toast(k+" removed");route();
+};
+window.saveSettings=async()=>{
+  await api("/api/config",{method:"POST",body:JSON.stringify({settings:{
+    default_m:+$("#set-m").value||399,owner:$("#set-owner").value}})});
+  toast("Settings saved");
+};
+
+ROUTES.help=async(app)=>{
+  app.innerHTML=`
+  <div class="hero"><h1>Help</h1>
+    <p>How to use this lab without fooling yourself — the console in five
+    minutes.</p></div>
+  <div class="grid g2">
+    <div class="card"><h2>The idea in one paragraph</h2>
+      <p class="small">The lab tests stochastic datasets against a fully
+      specified null using ~30 theorem-backed instruments. Nothing counts
+      unless it was <b>registered before it ran</b>, every p-value lands in
+      the <b>multiplicity ledger</b>, corrections are applied at verdict
+      time, and a <b>meta panel</b> watches the whole p-value population for
+      dishonesty. Flags become anomalies only after row-tracing; anomalies
+      become discoveries only after confirmation on fresh data.</p></div>
+    <div class="card"><h2>Your journey</h2>
+      <p class="small"><b>Overview</b> shows where the lab is and the exact
+      next step. <b>Experiments</b> lists every past run — tap for details
+      and PDF export. <b>Equations</b> lets you replay candidate equations or
+      try your own hypothesis (sandbox — charges nothing). <b>Theorems</b> is
+      the searchable arsenal. <b>Ledger</b> shows every p-value plus the
+      honesty meter. <b>Agents</b> shows what's executing right now.
+      <b>Approvals</b> is where you sign registrations. <b>Admin</b> holds
+      keys and settings.</p></div>
+    <div class="card"><h2>Approving from your phone</h2>
+      <p class="small">Open Approvals, read the registration, tap Approve.
+      The signature is appended to an audit log
+      (<span class="mono">results/webapp_approvals.jsonl</span>) and the
+      registration's blank approval line is filled. Executors refuse to run
+      unapproved registrations — the gate is code, not convention.</p></div>
+    <div class="card"><h2>Exporting to PDF</h2>
+      <p class="small">Every page has an <b>Export to PDF</b> button (or use
+      ⌘P / Ctrl-P). The print stylesheet strips navigation and buttons and
+      keeps cards intact, so the result reads as a clean report.</p></div>
+    <div class="card"><h2>Trying an equation, honestly</h2>
+      <p class="small">Pick a series, type periods in days, fit. You get
+      hold-out RMSE vs a climatology baseline, recovered amplitudes, and the
+      residual's dominant period. This is deliberately <i>not</i> a discovery
+      test: no multiplicity is charged and results are never citable. If a
+      hypothesis looks interesting, the path is: registration → v4
+      null-equation generator → verdict-time correction.</p></div>
+    <div class="card"><h2>Golden rules</h2>
+      <p class="small">1 · No card, no test — every instrument needs a
+      theorem card. 2 · No registration, no run. 3 · Every p on its lattice,
+      every test in the ledger. 4 · k co-firing instruments on the same rows
+      = one anomaly. 5 · Failures are published as loudly as successes.
+      6 · The blind eval pack must be run by a fresh session that has never
+      seen the answer key.</p></div>
+  </div>
+  <div class="card" style="margin-top:16px"><h2>Start the console</h2>
+    <pre class="mono">cd structure-discovery-lab
+python3 webapp/server.py        # http://localhost:8787</pre>
+    <p class="small">Read-only by design except approvals (audit-logged) and
+    admin config (local, gitignored). The server binds 127.0.0.1 only.</p></div>`;
+};
+
+window.exportPDF=()=>{toast("Opening print dialog — choose “Save as PDF”");
+  setTimeout(()=>window.print(),350);};
+
+route();
+</script>
+</body>
+</html>
