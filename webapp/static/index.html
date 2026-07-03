@@ -1153,26 +1153,26 @@ ROUTES.admin=async(app)=>{
   const P=await api("/api/providers");
   window._prov=P;
   const roleRow=(rid,r)=>{
-    const activeP=P.providers.find(p=>p.id===P.active)||{};
-    const effId=r.provider||P.active;
+    const usable=P.providers.filter(p=>p.configured);
+    const effId=r.provider||(usable[0]||{}).id||"";
     const eff=P.providers.find(p=>p.id===effId)||{};
     const models=eff.models||[];
     const knownModel=!r.model||models.includes(r.model);
-    const provOpts=P.providers.filter(p=>p.configured)
-      .map(p=>`<option value="${p.id}" ${r.provider===p.id?"selected":""}>${esc(p.label)}</option>`).join("");
+    if(!usable.length)return `<div style="border-top:1px solid var(--line);padding:12px 0">
+      <b>${r.icon} ${esc(r.label)}</b>
+      <div class="small">${esc(r.desc)}</div>
+      <p class="small" style="margin-top:8px;color:var(--warn)">⚠ No usable
+      provider yet. Save an API key in section 1 above (or start Ollama
+      locally) and this role becomes configurable.</p></div>`;
     return `<div style="border-top:1px solid var(--line);padding:12px 0">
       <b>${r.icon} ${esc(r.label)}</b>
       <div class="small">${esc(r.desc)}</div>
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
         <div><label style="margin-top:0">Provider
-          ${info("Which AI service this role uses. 'Follow the active provider' means it automatically uses whichever provider you marked Active in the list above — change the active provider once and every role following it switches too.")}</label>
+          ${info("Only providers with a saved API key (or local keyless ones) appear here. Subscription CLI sign-ins don't — those run in Terminal only.")}</label>
           <select id="role-p-${rid}" onchange="saveRole('${rid}',true)">
-            <option value="">Follow the active provider (${esc(activeP.label||P.active)})</option>
-            ${provOpts}</select>
-          ${!eff.configured&&!eff.keyless?`<p class="small" style="color:var(--warn)">
-            ⚠ ${esc(eff.label||effId)} has no API key yet — set it in the
-            provider list above or this role can't run.</p>`:""}
-        </div>
+            ${usable.map(p=>`<option value="${p.id}" ${effId===p.id?"selected":""}>${esc(p.label)}</option>`).join("")}
+          </select></div>
         <div><label style="margin-top:0">Model
           ${info("Which model of "+(eff.label||"the provider")+" to use. Pick from its known models, or choose Custom to type any model id.")}</label>
           <select id="role-ms-${rid}" onchange="
@@ -1246,6 +1246,13 @@ ROUTES.admin=async(app)=>{
       <button onclick="setAuth('subscription')" class="${P.auth_method==="subscription"?"on":""}">Use a subscription</button>
     </div>
     <div id="auth-sub" style="display:${P.auth_method==="subscription"?"block":"none"}">
+      <div class="guide" style="margin:8px 0"><div class="gico">☝️</div>
+        <div><b>Important: subscriptions and API keys are separate</b>
+        <div class="small">Being signed in here powers agents you run
+        yourself in <b>Terminal</b> (claude / codex). It does <b>not</b>
+        appear in the agent-role dropdowns below — those only work with an
+        API key. Want in-console agents and the companion? Switch to
+        “Use an API key” and save one.</div></div></div>
       <p class="small">Subscription sign-ins can only happen in
       <b>Terminal</b> — no website (including this one) can do it for you.
       The lab shows each CLI's true state and the exact command to run.
@@ -1273,8 +1280,10 @@ ROUTES.admin=async(app)=>{
       centre, use an API key instead.</p>
     </div>
     <div id="auth-api" style="display:${P.auth_method==="api_key"?"block":"none"}">
-      <p class="small">Pick a provider, paste its key, choose a model. The
-      <b>active</b> provider is the default; roles below can override it.</p>
+      <p class="small">These are the brains available to the agent roles
+      below (and the companion). Pick a provider, paste its key, save —
+      it immediately becomes selectable for every role. Subscription CLI
+      sign-ins do <b>not</b> appear here; they're Terminal-only.</p>
       ${P.providers.map(provRow).join("")}
     </div>
   </div>

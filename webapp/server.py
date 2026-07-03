@@ -1014,6 +1014,14 @@ def providers_set(payload):
             st["providers"][pid]["base"] = payload["base"].strip()
         if payload.get("active"):
             st["active_provider"] = pid
+        # user-friendliness: the first provider that gets a key becomes the
+        # default brain for every role that doesn't have one yet
+        if key and "…" not in key and key != "__delete__":
+            st.setdefault("agent_roles", {})
+            for r in AGENT_ROLES:
+                st["agent_roles"].setdefault(r, {})
+                if not st["agent_roles"][r].get("provider"):
+                    st["agent_roles"][r]["provider"] = pid
     _write_cfg(cfg)
     return providers_get()
 
