@@ -112,6 +112,7 @@ details[open] summary:before{content:"▾ "}
 .md code{background:var(--tint);border-radius:6px;padding:1px 6px;font-size:12.5px;
   font-family:ui-monospace,Menlo,monospace}
 .md pre{background:var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+pre{white-space:pre-wrap;word-break:break-word;max-width:100%}
 .md table{margin:10px 0}
 .toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:60;
   background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:999px;
@@ -1216,8 +1217,13 @@ ROUTES.admin=async(app)=>{
             <span class="badge ${sc.installed?"ok":"dim"}">${sc.installed?"✓ installed":"not installed"}</span>
             <span class="badge ${sc.signed_in?"ok":"warn"}">${sc.signed_in?"✓ signed in":"not signed in"}</span>
           </span></div>
-        ${sc.installed?`<p class="small" style="margin-top:6px">To ${sc.signed_in?"re-":""}sign in, run in Terminal:</p>
-          <pre class="mono" style="margin:4px 0">${esc(sc.login)}</pre>`
+        ${sc.installed?`
+          ${sc.signed_in?"":`<p class="small" style="margin-top:6px">To sign in, run in Terminal:</p>
+          <pre class="mono" style="margin:4px 0">${esc(sc.cmd)}</pre>
+          <p class="small">${esc(sc.flow)}</p>`}
+          ${sc.signed_in?`<details><summary class="small">Need to re-authenticate or switch account?</summary>
+            <pre class="mono" style="margin:6px 0">${esc(sc.relogin)}</pre>
+            <p class="small">${esc(sc.flow)}</p></details>`:""}`
         :`<p class="small" style="margin-top:6px">Not installed —
           <a href="${sc.get}" target="_blank">installation guide ↗</a></p>`}
         <a class="small" href="${sc.get}" target="_blank">docs ↗</a>

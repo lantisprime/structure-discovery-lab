@@ -881,28 +881,34 @@ SUBSCRIPTION_CLIS = {
     "claude": {"label": "Anthropic — Claude Pro/Max (Claude Code CLI)",
                "cmds": ["claude"],
                "get": "https://code.claude.com/docs/en/quickstart",
-               "login": "claude   (choose 'Use a subscription' — it opens "
-                        "a claude.ai OAuth page in your browser; complete "
-                        "the login there. Headless machine? Cmd+click the "
-                        "printed URL elsewhere and paste the final redirect "
-                        "URL back into the terminal)",
+               "cmd": "claude",
+               "flow": "Choose 'Use a subscription' — a claude.ai OAuth page "
+                       "opens in your browser; complete the login there. On "
+                       "a headless machine, open the printed URL on any "
+                       "device and paste the final redirect URL back into "
+                       "the terminal.",
+               "relogin": "claude /logout   →  then run: claude",
                "auth_files": ["~/.claude/.credentials.json", "~/.claude.json"]},
     "codex": {"label": "OpenAI — ChatGPT Plus/Pro (Codex CLI)",
               "cmds": ["codex"],
               "get": "https://developers.openai.com/codex/cli",
-              "login": "codex   (pick a login method: 'Browser login' "
-                       "opens ChatGPT authentication in your browser and "
-                       "completes automatically via a localhost callback. "
-                       "Headless machine? Choose 'Device code login' — it "
-                       "shows a short code to enter on chatgpt.com/codex "
-                       "from any device)",
+              "cmd": "codex",
+              "flow": "Pick a login method: 'Browser login' opens ChatGPT "
+                      "authentication and completes automatically via a "
+                      "localhost callback. On a headless machine choose "
+                      "'Device code login' — it shows a short code to enter "
+                      "on chatgpt.com/codex from any device.",
+              "relogin": "codex logout   →  then run: codex login",
               "auth_files": ["~/.codex/auth.json"]},
     "copilot": {"label": "GitHub Copilot (Copilot CLI)",
                 "cmds": ["copilot", "github-copilot-cli"],
                 "get": "https://docs.github.com/en/copilot/how-tos/"
                        "use-copilot-agents/use-copilot-cli",
-                "login": "copilot   (then /login — opens GitHub device "
-                         "authentication)",
+                "cmd": "copilot",
+                "flow": "Type /login inside the session — it opens GitHub "
+                        "device authentication (enter the shown code on "
+                        "github.com/login/device).",
+                "relogin": "copilot   →  then type: /logout, then /login",
                 "auth_files": ["~/.config/github-copilot/hosts.json",
                                "~/.config/github-copilot/apps.json"]},
 }
@@ -962,7 +968,7 @@ def providers_get():
         installed, signed_in = _sub_status(sc)
         out["subscriptions"].append({
             "id": sid, "label": sc["label"], "get": sc["get"],
-            "login": sc["login"],
+            "cmd": sc["cmd"], "flow": sc["flow"], "relogin": sc["relogin"],
             "installed": installed, "signed_in": signed_in})
     return out
 
