@@ -881,8 +881,11 @@ SUBSCRIPTION_CLIS = {
     "claude": {"label": "Anthropic — Claude Pro/Max (Claude Code CLI)",
                "cmds": ["claude"],
                "get": "https://code.claude.com/docs/en/quickstart",
-               "login": "claude   (then choose 'Use a subscription' and "
-                        "sign in with your Claude account)",
+               "login": "claude   (choose 'Use a subscription' — it opens "
+                        "a claude.ai OAuth page in your browser; complete "
+                        "the login there. Headless machine? Cmd+click the "
+                        "printed URL elsewhere and paste the final redirect "
+                        "URL back into the terminal)",
                "auth_files": ["~/.claude/.credentials.json", "~/.claude.json"]},
     "codex": {"label": "OpenAI — ChatGPT Plus/Pro (Codex CLI)",
               "cmds": ["codex"],
