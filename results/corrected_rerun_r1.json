@@ -1,0 +1,72 @@
+{
+  "_meta": {
+    "registration": "docs/REGISTRATION_CORRECTED_RERUN.md",
+    "seed": 20260711,
+    "approved_by": "Cha (lab owner, via Cowork session)  : 2026-07-03",
+    "prior_look": "audit_shadow_2026-07-02 (disclosed, \u00a70)"
+  },
+  "presence_mc": {
+    "per_game": {
+      "Lotto 6/42": {
+        "skill_over_marginal": -0.010696932868804299,
+        "p": 0.0475
+      },
+      "Mega Lotto 6/45": {
+        "skill_over_marginal": -0.011687528222111998,
+        "p": 0.2625
+      },
+      "Super Lotto 6/49": {
+        "skill_over_marginal": -0.011810046697415366,
+        "p": 0.585
+      },
+      "Grand Lotto 6/55": {
+        "skill_over_marginal": -0.00945415532298427,
+        "p": 0.2875
+      },
+      "Ultra Lotto 6/58": {
+        "skill_over_marginal": -0.011667473546317253,
+        "p": 0.9575
+      }
+    },
+    "min_p": 0.0475,
+    "sidak": 0.010206218313011495,
+    "joint_verdict_null": true,
+    "m_null": 399,
+    "observed_frac": 0.6,
+    "null": "constrained 6-of-P uniform, frozen mask (audit M-2)"
+  },
+  "cca_std": {
+    "H_R3_draws_vs_covariates_std": {
+      "heldout_rho1": 0.0679824647293208,
+      "p_shuffled_pairing": 0.3,
+      "null_q95": 0.19993382418823044,
+      "n_train": 93,
+      "n_test": 63,
+      "m_perm": 199,
+      "standardized": true
+    },
+    "H_R4_tidal_vs_ephemerides_std": {
+      "heldout_rho1": 0.9918781347379884,
+      "p_shuffled_pairing": 0.005,
+      "null_q95": 0.13943674603485254,
+      "n_train": 219,
+      "n_test": 147,
+      "m_perm": 199,
+      "standardized": true
+    },
+    "note": "shadow rerun; frozen v1 gave HR3 rho=0.110 p=0.17 (null) and HR4 rho=0.9977 p=0.005 (mechanism); the fix targets POWER for small-unit covariates, calibration was intact"
+  },
+  "attribution_655_ex45": {
+    "game": "Grand Lotto 6/55",
+    "lead_ball": 45,
+    "rows_removed": 35,
+    "B1_after_removal": 24.503315860140333,
+    "p": 0.12,
+    "K": 999,
+    "floor": 0.001,
+    "threshold": 0.0025,
+    "verdict": "fire dissolves after lead-ball removal",
+    "caveat": "consistent with same-driving-rows (C9) but does not exclude reduced power at the smaller T; corroborated independently by rho(lambda_max, B1)=0.988 under H0 (families.json) \u2014 the two flags were one instrument",
+    "null": "constrained 6-of-(P-1) on remaining balls (audit M-4)"
+  }
+}

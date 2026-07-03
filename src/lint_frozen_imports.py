@@ -39,6 +39,7 @@ CORE_SHIM_DEBT = {"core/recovery.py", "core/completion.py",
 # read-only wrappers sanctioned to import frozen code (audit resolution R-A)
 ALLOWLIST = {
     "corrected_reruns", "measure_equivalence", "readmit_r1_r7",
+    "measure_r5_coupling", "corrected_rerun_registered",
     "remediation_r1",          # frozen itself; imports other frozen modules
     "rerun_batch67", "relational_pressure", "relational_batch7",
     "relational_batch5", "relational_allgames", "relational_subsets",

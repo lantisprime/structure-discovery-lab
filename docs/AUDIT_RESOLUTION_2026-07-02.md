@@ -268,8 +268,13 @@ non-blocking; tracked for the next infrastructure pass.
    four verdict changes and the correction convention (Šidák .05,
    cumulative m — standing convention v1); recorded in
    RESULTS_EQ_READJUDICATION.md and the JSON artifact.
-8. **R5-vs-hit-count-cooc H-protocol measurement** (the audit's original
-   G-5 target) — still open.
+8. **R5-vs-hit-count-cooc H-protocol measurement — EXECUTED 2026-07-03**
+   (`results/r5_coupling_measurement.json`): all |ρ| < 0.5 under H0, and the
+   direct re-shadow probe is NEGATIVE — a planted #45-style pair affinity
+   fires λ_max at the floor while the R5 pair statistic's flag rate drops to
+   zero (anti-shadow direction). Families stay separate; families.json
+   'graph' entry updated; design_verifier check 7 now enforces registry
+   consumption (review M-D's designed-not-wired gap closed).
 9. **Sealed equation eval pack — BUILT 2026-07-02**: `evals/eq_eval_set_v1`
    (12 units: 5 nulls/traps-for-noise, 4 detect-class, 2 declared-borderline,
    1 era-bounded trap; deterministic seed 20260702; answer key + generator

@@ -1,0 +1,35 @@
+{
+  "seed": 20260712,
+  "n_sim": 200,
+  "inject_trials": 60,
+  "scope": "real per-game (T,P); same caveat as families.json",
+  "h0_coupling": {
+    "spearman_pairstat_vs_member_lmax": 0.293,
+    "spearman_pairstat_vs_max_member_lmax": -0.369,
+    "per_game_presence_vs_lmax": {
+      "Lotto 6/42": 0.467,
+      "Mega Lotto 6/45": 0.353,
+      "Super Lotto 6/49": 0.175,
+      "Grand Lotto 6/55": -0.369,
+      "Ultra Lotto 6/58": -0.437
+    }
+  },
+  "reshadow_probe_655_planted_pair_affinity": {
+    "boost_0.0": {
+      "lambda_max_median_p": 0.5348258706467661,
+      "r5_target_pair_flag_rate": 0.033,
+      "r5_other_pair_flag_rate": 0.061
+    },
+    "boost_0.15": {
+      "lambda_max_median_p": 0.004975124378109453,
+      "r5_target_pair_flag_rate": 0.0,
+      "r5_other_pair_flag_rate": 0.025
+    },
+    "boost_0.35": {
+      "lambda_max_median_p": 0.004975124378109453,
+      "r5_target_pair_flag_rate": 0.0,
+      "r5_other_pair_flag_rate": 0.053
+    }
+  },
+  "interpretation_rule": "|rho| >= 0.90 -> merge families; 0.5-0.9 -> reported coupling + mandatory row-trace; < 0.5 AND probe target-rate ~ other-rate -> independent"
+}

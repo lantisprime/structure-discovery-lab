@@ -572,3 +572,20 @@ aae4a67d56fbef0f  ./results/eq_readjudication_2026-07-02.json
 
 # Snapshot 2026-07-03 REGISTRATION approved pre-run (corrected_rerun_r1).
 6668daa4bd5f38a5  ./docs/REGISTRATION_CORRECTED_RERUN.md
+
+# Snapshot 2026-07-03 corrected_rerun_r1 executed (registered, NULL branch) + R5 coupling measured (no re-shadow) + families registry wired into verifier.
+6668daa4bd5f38a5  ./docs/REGISTRATION_CORRECTED_RERUN.md
+33c3898128935e2e  ./docs/RESULTS_CORRECTED_RERUN.md
+c85b1bd1dd38439b  ./results/corrected_rerun_r1.json
+ffbec12e9af96435  ./results/multiplicity_ledger.jsonl
+72c51b80dcbb4cf4  ./results/run_ledger.jsonl
+021c37ddcfc3d6eb  ./results/meta_uniformity.json
+b965987948b56132  ./results/r5_coupling_measurement.json
+c636f779e1270fc1  ./results/families.json
+a4e4292458e83379  ./src/corrected_rerun_registered.py
+d343ab7204d9cb11  ./src/measure_r5_coupling.py
+91f4b7f415c410ac  ./src/design_verifier.py
+c76e5053add8c02a  ./src/verify_relational_docs.py
+96ee848ce38fb5ae  ./src/lint_frozen_imports.py
+1d2810810ab0c64d  ./src/measure_equivalence.py
+696acab005b0b9de  ./docs/AUDIT_RESOLUTION_2026-07-02.md

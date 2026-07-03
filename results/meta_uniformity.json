@@ -1,24 +1,25 @@
 {
   "panel_version": 2,
-  "panel_sha": "67eaafb4248d72b7",
-  "n_tests": 126,
-  "ks_stat": 0.1225396825396825,
-  "p_meta_discrete": 0.04397801099450275,
-  "frac_le_05": 0.10317460317460317,
-  "frac_le_01": 0.015873015873015872,
+  "panel_sha": "8c7891b558ab8a28",
+  "n_tests": 132,
+  "ks_stat": 0.12457878787878784,
+  "p_meta_discrete": 0.03248375812093953,
+  "frac_le_05": 0.10606060606060606,
+  "frac_le_01": 0.015151515151515152,
   "sim_frac_le_05_q05_q95": [
-    0.023809523809523808,
-    0.0873015873015873
+    0.022727272727272728,
+    0.08333333333333333
   ],
   "sim_frac_le_01_q05_q95": [
     0.0,
-    0.023809523809523808
+    0.030303030303030304
   ],
   "n_sim": 2000,
   "seed": 20260702,
   "by_run_counts": {
-    "allgames": 10,
+    "corrected_rerun_r1": 7,
     "batch5": 10,
+    "allgames": 9,
     "pressure": 10,
     "remediation": 21,
     "batch67_r2": 75
@@ -56,20 +57,20 @@
   "note": "lotto-side real-data tests only; discrete-lattice reference; entries dependent -> p_meta is descriptive",
   "composition_sensitivity": {
     "keep_first_dedup": {
-      "n": 126,
-      "frac_le_05": 0.1032
+      "n": 132,
+      "frac_le_05": 0.1061
     },
     "eq_rows_included": {
-      "n": 128,
-      "frac_le_05": 0.1094
+      "n": 134,
+      "frac_le_05": 0.1119
     },
     "miscalibrated_presence_included": {
-      "n": 131,
-      "frac_le_05": 0.0992
+      "n": 132,
+      "frac_le_05": 0.1061
     },
     "drop_655_lambda_max_family": {
-      "n": 124,
-      "frac_le_05": 0.0887
+      "n": 130,
+      "frac_le_05": 0.0923
     }
   }
 }

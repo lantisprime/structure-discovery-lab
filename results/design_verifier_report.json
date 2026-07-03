@@ -1,11 +1,11 @@
 {
-  "n_ledger_rows": 264,
-  "n_test_rows": 260,
-  "n_live_test_rows": 188,
+  "n_ledger_rows": 271,
+  "n_test_rows": 267,
+  "n_live_test_rows": 195,
   "n_charge_rows": 4,
   "reconciliation": {
-    "run_ledger_declared": 260,
-    "test_rows": 260
+    "run_ledger_declared": 267,
+    "test_rows": 267
   },
   "violations": [],
   "warnings": [

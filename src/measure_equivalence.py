@@ -139,11 +139,17 @@ def main():
             "two-sample": {"members": ["mmd"], "class": "distributional",
                            "status": "declared (no shared scalar on one game)"},
             "graph": {"members": ["cooc-spectra"], "class": "cross-game-spectra",
-                      "status": "declared; R5-vs-hit-count-cooc coupling — the "
-                                "audit G-5 headline risk — remains UNMEASURED "
-                                "(cross-game statistic has no shared scalar on "
-                                "one game; needs a dedicated H-protocol run); "
-                                "flags must row-trace meanwhile"},
+                      "status": "MEASURED@real(T,P) 2026-07-03 "
+                                "(results/r5_coupling_measurement.json): all "
+                                "|rho| < 0.5 vs lambda_max; re-shadow probe "
+                                "NEGATIVE — a planted #45-style pair affinity "
+                                "fires lambda_max at floor while the R5 pair "
+                                "statistic flag rate drops to 0 (anti-shadow "
+                                "direction: within-game anomalies REDUCE "
+                                "cross-game similarity). Families stay "
+                                "separate; per-game lambda_max sub-outputs of "
+                                "any crossgame run remain charged to "
+                                "hit-count-cooc (C9, as batch5 already did)"},
             "tda": {"members": ["delay-embed-H1"], "class": "topological",
                     "status": "declared ({R2,R4} constitutional class)"},
             "cca": {"members": ["cca-covariates", "cca-pressure",

@@ -161,6 +161,18 @@ def main():
                    f"only {have} though quarantined rows exist")
             (warnings if run in HISTORICAL else violations).append(msg)
 
+    # -- check 7: family-registry consumption (review M-D: families.json was
+    # documentation-not-gate until this check existed) ----------------------
+    fam_path = os.path.join(ROOT, "results", "families.json")
+    if os.path.exists(fam_path):
+        registry = set(json.load(open(fam_path))["families"])
+        for fid in {r["family_id"] for r in tests}:
+            if fid not in registry:
+                violations.append(f"family registry: ledger family_id '{fid}' "
+                                  f"not in results/families.json")
+    else:
+        warnings.append("families.json missing — family registry unenforced")
+
     # -- check 5: run-ledger reconciliation (audit G-3) ---------------------
     rl_path = os.path.join(ROOT, "results", "run_ledger.jsonl")
     recon = None
