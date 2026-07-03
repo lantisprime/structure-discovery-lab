@@ -891,9 +891,11 @@ SUBSCRIPTION_CLIS = {
               "cmds": ["codex"],
               "get": "https://developers.openai.com/codex/cli",
               "login": "codex   (pick a login method: 'Browser login' "
-                       "opens ChatGPT authentication in your browser; "
-                       "'Device code login' gives a code for headless "
-                       "machines)",
+                       "opens ChatGPT authentication in your browser and "
+                       "completes automatically via a localhost callback. "
+                       "Headless machine? Choose 'Device code login' — it "
+                       "shows a short code to enter on chatgpt.com/codex "
+                       "from any device)",
               "auth_files": ["~/.codex/auth.json"]},
     "copilot": {"label": "GitHub Copilot (Copilot CLI)",
                 "cmds": ["copilot", "github-copilot-cli"],
