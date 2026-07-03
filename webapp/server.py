@@ -878,13 +878,37 @@ PROVIDERS = {
                "models": []},
 }
 SUBSCRIPTION_CLIS = {
-    "claude": {"label": "Anthropic (Claude Pro/Max via Claude Code CLI)",
-               "cmd": "claude", "get": "https://claude.com/claude-code"},
-    "codex": {"label": "ChatGPT Plus/Pro (Codex CLI)",
-              "cmd": "codex", "get": "https://github.com/openai/codex"},
-    "copilot": {"label": "GitHub Copilot CLI", "cmd": "gh",
-                "get": "https://github.com/features/copilot"},
+    "claude": {"label": "Anthropic — Claude Pro/Max (Claude Code CLI)",
+               "cmds": ["claude"],
+               "get": "https://code.claude.com/docs/en/quickstart",
+               "login": "claude   (then choose 'Use a subscription' and "
+                        "sign in with your Claude account)",
+               "auth_files": ["~/.claude/.credentials.json", "~/.claude.json"]},
+    "codex": {"label": "OpenAI — ChatGPT Plus/Pro (Codex CLI)",
+              "cmds": ["codex"],
+              "get": "https://developers.openai.com/codex/cli",
+              "login": "codex   (pick a login method: 'Browser login' "
+                       "opens ChatGPT authentication in your browser; "
+                       "'Device code login' gives a code for headless "
+                       "machines)",
+              "auth_files": ["~/.codex/auth.json"]},
+    "copilot": {"label": "GitHub Copilot (Copilot CLI)",
+                "cmds": ["copilot", "github-copilot-cli"],
+                "get": "https://docs.github.com/en/copilot/how-tos/"
+                       "use-copilot-agents/use-copilot-cli",
+                "login": "copilot   (then /login — opens GitHub device "
+                         "authentication)",
+                "auth_files": ["~/.config/github-copilot/hosts.json",
+                               "~/.config/github-copilot/apps.json"]},
 }
+
+
+def _sub_status(s):
+    import shutil as _sh
+    installed = any(_sh.which(c) for c in s["cmds"])
+    signed_in = any(os.path.exists(os.path.expanduser(f))
+                    for f in s["auth_files"])
+    return installed, signed_in
 
 
 AGENT_ROLES = {
@@ -929,10 +953,12 @@ def providers_get():
             "configured": key_set if not p.get("keyless") else True,
             "key_masked": _mask(cfg["api_keys"].get(
                 f"PROVIDER_{pid.upper()}_KEY"))})
-    for sid, s in SUBSCRIPTION_CLIS.items():
+    for sid, sc in SUBSCRIPTION_CLIS.items():
+        installed, signed_in = _sub_status(sc)
         out["subscriptions"].append({
-            "id": sid, "label": s["label"], "get": s["get"],
-            "detected": bool(_sh.which(s["cmd"]))})
+            "id": sid, "label": sc["label"], "get": sc["get"],
+            "login": sc["login"],
+            "installed": installed, "signed_in": signed_in})
     return out
 
 

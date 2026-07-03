@@ -1205,16 +1205,26 @@ ROUTES.admin=async(app)=>{
       <button onclick="setAuth('subscription')" class="${P.auth_method==="subscription"?"on":""}">Use a subscription</button>
     </div>
     <div id="auth-sub" style="display:${P.auth_method==="subscription"?"block":"none"}">
-      <p class="small">Subscription agents authenticate through their own CLI
-      login — tokens can't be reused by third-party tools, so the lab detects
-      the CLIs and you run them in a terminal at the repo root:</p>
-      ${P.subscriptions.map(sc=>`<div class="rowline">
-        <div><b>${esc(sc.label)}</b>
-          <div class="small"><a href="${sc.get}" target="_blank">set up ↗</a></div></div>
-        <span class="badge ${sc.detected?"ok":"dim"}">${sc.detected?"✓ detected":"not installed"}</span>
+      <p class="small">Subscription sign-ins can only happen in
+      <b>Terminal</b> — no website (including this one) can do it for you.
+      The lab shows each CLI's true state and the exact command to run.
+      ${info("'Installed' means the program exists on this Mac. 'Signed in' means its saved login was found. To sign in, open Terminal in this repo folder and run the command shown.")}</p>
+      ${P.subscriptions.map(sc=>`<div style="border-top:1px solid var(--line);padding:10px 0">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+          <b>${esc(sc.label)}</b>
+          <span>
+            <span class="badge ${sc.installed?"ok":"dim"}">${sc.installed?"✓ installed":"not installed"}</span>
+            <span class="badge ${sc.signed_in?"ok":"warn"}">${sc.signed_in?"✓ signed in":"not signed in"}</span>
+          </span></div>
+        ${sc.installed?`<p class="small" style="margin-top:6px">To ${sc.signed_in?"re-":""}sign in, run in Terminal:</p>
+          <pre class="mono" style="margin:4px 0">${esc(sc.login)}</pre>`
+        :`<p class="small" style="margin-top:6px">Not installed —
+          <a href="${sc.get}" target="_blank">installation guide ↗</a></p>`}
+        <a class="small" href="${sc.get}" target="_blank">docs ↗</a>
       </div>`).join("")}
-      <p class="small" style="margin-top:8px">For in-console agents (Run
-      centre), use an API key instead.</p>
+      <p class="small" style="margin-top:8px">Subscription CLIs run as their
+      own agents in Terminal. For agents launched from this console's Run
+      centre, use an API key instead.</p>
     </div>
     <div id="auth-api" style="display:${P.auth_method==="api_key"?"block":"none"}">
       <p class="small">Pick a provider, paste its key, choose a model. The
