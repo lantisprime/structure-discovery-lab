@@ -270,6 +270,19 @@ async function route(){
     const fn = ROUTES[page]||ROUTES.home;
     await fn(app,rest);
   }catch(e){
+    if(/^not found$/i.test(e.message)){
+      app.innerHTML=`<div class="card"><h2>Restart the server</h2>
+        <p>This page is newer than the server process that's running — it's
+        answering, but it doesn't know the newer features yet (that's why
+        some tabs say “not found”).</p>
+        <p class="small" style="margin-top:10px"><b>Fix (10 seconds):</b> go
+        to the Terminal window running the lab, press <b>Ctrl-C</b>, then
+        start it again — or double-click <b>Start Lab Console.command</b> —
+        and reload this page.</p>
+        <button class="ghost" onclick="route()">I restarted it — retry</button>
+      </div>`;
+      return;
+    }
     const netfail=/load failed|failed to fetch|networkerror/i.test(e.message);
     app.innerHTML=`<div class="card"><h2>Something went wrong</h2>
       <p class="small">${esc(e.message)}</p>
