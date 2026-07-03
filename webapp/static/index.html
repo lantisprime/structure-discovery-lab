@@ -1153,22 +1153,41 @@ ROUTES.admin=async(app)=>{
   const P=await api("/api/providers");
   window._prov=P;
   const roleRow=(rid,r)=>{
+    const activeP=P.providers.find(p=>p.id===P.active)||{};
+    const effId=r.provider||P.active;
+    const eff=P.providers.find(p=>p.id===effId)||{};
+    const models=eff.models||[];
+    const knownModel=!r.model||models.includes(r.model);
     const provOpts=P.providers.filter(p=>p.configured)
       .map(p=>`<option value="${p.id}" ${r.provider===p.id?"selected":""}>${esc(p.label)}</option>`).join("");
-    const models=(P.providers.find(p=>p.id===r.provider)||{}).models||[];
     return `<div style="border-top:1px solid var(--line);padding:12px 0">
       <b>${r.icon} ${esc(r.label)}</b>
       <div class="small">${esc(r.desc)}</div>
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-        <div><label style="margin-top:0">Provider</label>
-          <select id="role-p-${rid}" onchange="renderAdmin()">
-            <option value="">(use active provider)</option>${provOpts}</select></div>
-        <div><label style="margin-top:0">Model</label>
-          <input id="role-m-${rid}" list="role-ml-${rid}" value="${esc(r.model||"")}"
-            placeholder="${models[0]||"model id"}" autocapitalize="off">
-          <datalist id="role-ml-${rid}">${models.map(m=>`<option value="${esc(m)}">`).join("")}</datalist></div>
+        <div><label style="margin-top:0">Provider
+          ${info("Which AI service this role uses. 'Follow the active provider' means it automatically uses whichever provider you marked Active in the list above — change the active provider once and every role following it switches too.")}</label>
+          <select id="role-p-${rid}" onchange="saveRole('${rid}',true)">
+            <option value="">Follow the active provider (${esc(activeP.label||P.active)})</option>
+            ${provOpts}</select>
+          ${!eff.configured&&!eff.keyless?`<p class="small" style="color:var(--warn)">
+            ⚠ ${esc(eff.label||effId)} has no API key yet — set it in the
+            provider list above or this role can't run.</p>`:""}
+        </div>
+        <div><label style="margin-top:0">Model
+          ${info("Which model of "+(eff.label||"the provider")+" to use. Pick from its known models, or choose Custom to type any model id.")}</label>
+          <select id="role-ms-${rid}" onchange="
+            document.getElementById('role-mc-${rid}').style.display=
+              this.value==='__custom__'?'block':'none'">
+            <option value="">${models.length?`Provider default (${esc(models[0])})`:"Provider default"}</option>
+            ${models.map(m=>`<option value="${esc(m)}" ${r.model===m?"selected":""}>${esc(m)}</option>`).join("")}
+            <option value="__custom__" ${!knownModel?"selected":""}>Custom model id…</option>
+          </select>
+          <input id="role-mc-${rid}" value="${esc(!knownModel?r.model:"")}"
+            placeholder="type any model id" autocapitalize="off"
+            style="margin-top:6px;display:${!knownModel?"block":"none"}">
+        </div>
       </div>
-      <label>Thinking effort</label>
+      <label>Thinking effort ${info("How hard the model reasons. Fast = quick and cheap; Deep = extended thinking for hard analysis (slower, costlier). Executor and Companion do fine on Fast.")}</label>
       <div class="seg" id="role-e-${rid}">
         ${["fast","balanced","deep"].map(e=>`<button class="${(r.effort||"balanced")===e?"on":""}"
           onclick="this.parentElement.querySelector('.on')?.classList.remove('on');this.classList.add('on')">${e}</button>`).join("")}
@@ -1315,13 +1334,19 @@ window.addDataset=async()=>{
       </div></div>`;
     toast("Dataset added");
   }catch(e){$("#ds-report").innerHTML=`<p class="small" style="color:var(--bad);margin-top:8px">✕ ${esc(e.message)}</p>`}};
-window.saveRole=async rid=>{
-  const cfg={provider:document.getElementById("role-p-"+rid).value,
-    model:document.getElementById("role-m-"+rid).value.trim(),
-    effort:document.querySelector("#role-e-"+rid+" .on")?.textContent||"balanced"};
+window.saveRole=async(rid,providerOnly)=>{
+  const sel=document.getElementById("role-ms-"+rid);
+  const custom=document.getElementById("role-mc-"+rid);
+  const model=sel&&sel.value==="__custom__"?(custom?.value.trim()||"")
+    :(sel?.value||"");
+  const cfg={provider:document.getElementById("role-p-"+rid).value};
+  if(!providerOnly){cfg.model=model;
+    cfg.effort=document.querySelector("#role-e-"+rid+" .on")?.textContent||"balanced";}
   try{await api("/api/providers",{method:"POST",
       body:JSON.stringify({role:rid,config:cfg})});
-    toast("Role saved");}catch(e){toast(e.message)}};
+    toast(providerOnly?"Provider set — model list updated":"Role saved");
+    if(providerOnly)route();
+  }catch(e){toast(e.message)}};
 window.saveKeys=async keys=>{
   const payload={api_keys:{},settings:{
     anthropic_model:$("#set-ant-model")?.value.trim()||"",
