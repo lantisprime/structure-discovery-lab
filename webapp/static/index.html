@@ -122,6 +122,17 @@ details[open] summary:before{content:"▾ "}
 .kpi + .small{margin-top:2px}
 .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 
+.info{display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;border-radius:50%;background:var(--line);color:var(--ink2);
+  font-size:11px;font-weight:700;cursor:help;position:relative;vertical-align:1px;
+  margin-left:5px;outline:none}
+.info:hover,.info:focus{background:var(--accent);color:#fff}
+.info::after{content:attr(data-tip);position:absolute;bottom:130%;left:50%;
+  transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:8px 12px;border-radius:10px;font-size:12px;font-weight:400;
+  width:max-content;max-width:min(280px,80vw);white-space:normal;line-height:1.4;
+  opacity:0;pointer-events:none;transition:opacity .15s;z-index:65;text-align:left}
+.info:hover::after,.info:focus::after{opacity:1}
 .guide{background:var(--tint);border:1px solid transparent;border-radius:var(--radius);
   padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
 .guide .gico{font-size:20px;line-height:1.3}
@@ -258,12 +269,15 @@ function nextAction(st){
     eq_v4:{label:"Next: draft the equation-v4 registration",hash:"new"},
   }[cur]||{label:"Start a new experiment",hash:"new"};
 }
-function guide(icon,title,lines,cta){
+function info(tip){return `<span class="info" tabindex="0" data-tip="${esc(tip)}">i</span>`;}
+function guide(icon,title,lines,cta,helpId){
   return `<div class="guide noprint"><div class="gico">${icon}</div>
     <div style="flex:1"><b>${title}</b>
       <div class="small">${lines}</div>
       ${cta?`<div class="pillrow" style="margin-top:8px">${cta}</div>`:""}
-    </div></div>`;
+    </div>
+    ${helpId?`<a href="#help/${helpId}" class="small" style="white-space:nowrap;align-self:flex-start">ⓘ Help</a>`:""}
+    </div>`;
 }
 function ctaBtn(label,hash){
   return `<span class="nextchip" onclick="location.hash='${hash}'">${esc(label)} →</span>`;
@@ -400,7 +414,7 @@ ROUTES.home=async(app)=>{
     multiplicity ledger — one console.</p></div>
   ${guide("🧭","Right now, the lab wants one thing from you",
     esc((st.pipeline.steps.find(s=>s.id===st.pipeline.current)||{}).detail||""),
-    ctaBtn(na.label,na.hash))}
+    ctaBtn(na.label,na.hash),"overview")}
   <div class="grid g3">
     <div class="card"><div class="kpi">${st.runs.length}</div>
       <div class="small">experiments in the run ledger</div></div>
@@ -468,7 +482,7 @@ ROUTES.experiments=async(app,rest)=>{
   <div class="hero"><h1>Experiments</h1></div>
   ${guide("▤","Why this page exists",
     "Every past execution, newest first — the lab's memory. Tap any row for a plain-language interpretation, its p-values, and PDF export. Start something new with the button below.",
-    ctaBtn("＋ New experiment","new"))}
+    ctaBtn("＋ New experiment","new"),"experiments")}
   <div class="card"><div class="tablewrap"><table>
     <tr><th>run</th><th>date</th><th>tests</th><th>grade</th><th>status</th></tr>
     ${st.runs.map(r=>`<tr class="clickable" onclick="location.hash='experiments/${encodeURIComponent(r.run_id)}'">
@@ -498,7 +512,7 @@ ROUTES.equations=async(app)=>{
   <div class="hero"><h1>Equations</h1></div>
   ${guide("ƒ","Why this page exists",
     "Left: the equation program's real candidates and what survived scrutiny. Right: a safe sandbox — pick a series, type periods, press <b>Fit</b> to see if your hypothesis beats a dumb baseline. Play freely: it charges nothing and can't contaminate the lab.",
-    ctaBtn("Try the moon-distance candidate","equations")+`<span class="small" style="align-self:center">then press <b>Try it</b> on a candidate</span>`)}
+    ctaBtn("Try the moon-distance candidate","equations")+`<span class="small" style="align-self:center">then press <b>Try it</b> on a candidate</span>`,"equations")}
   <div class="grid g2">
     <div class="card"><h2>Candidate equations</h2>${eqRows||
       '<p class="small">No stored candidates.</p>'}
@@ -508,8 +522,8 @@ ROUTES.equations=async(app)=>{
         <button class="ghost noprint" onclick="location.hash='ledger'">Open ledger</button>
       </details></div>
     <div class="card"><h2>Try an equation</h2>
-      <label>Series</label><select id="eq-series">${opts}</select>
-      <label>Periods (days, comma-separated, 1–5)</label>
+      <label>Series ${info("The real dataset your hypothesis is tested against. Physical series (moon, tide, pressure) contain known rhythms; eval units are synthetic mystery series.")}</label><select id="eq-series">${opts}</select>
+      <label>Periods (days, comma-separated, 1–5) ${info("Your hypothesis: which cycles you think the data contains, in days. E.g. 27.555 is the moon's anomalistic month. The fit finds each cycle's best amplitude and phase automatically.")}</label>
       <input id="eq-periods" placeholder="27.555, 13.7" value="27.555">
       <label style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" id="eq-trend" style="width:auto"> include linear trend</label>
@@ -631,11 +645,11 @@ function renderWiz(app){
   let body="";
   if(WIZ.step===0)body=`
     <h2>What are you asking?</h2>
-    <label>Run id (a-z, 0-9, _)</label>
+    <label>Run id (a-z, 0-9, _) ${info("A permanent, unique name for this experiment — it becomes the run-ledger entry and the registration filename. Example: b8_pressure_memory")}</label>
     <input id="w-id" value="${esc(d.run_id)}" placeholder="e.g. b8_pressure_memory"
       autocapitalize="off" autocomplete="off">
     <p class="small">Existing ids: ${o.used_run_ids.slice(-6).join(", ")}…</p>
-    <label>The question under test (plain language, no outcome expectation)</label>
+    <label>The question under test ${info("State what you are asking, not what you hope to find — the lab protocol is expectation-free. This text becomes section 0 of the registration.")}</label>
     <textarea id="w-hyp" rows="3" placeholder="e.g. Do the 6/49 draw sums share distributional structure across quarters?">${esc(d.hypothesis)}</textarea>
     <label>Drafted by</label><input id="w-author" value="${esc(d.author)}">`;
   if(WIZ.step===1)body=`
@@ -662,9 +676,9 @@ function renderWiz(app){
       :'<p class="small" style="margin-top:12px">No claims yet.</p>'}`;
   if(WIZ.step===2)body=`
     <h2>Design</h2>
-    <label>Seed (must be fresh — pre-checked against the run ledger)</label>
+    <label>Seed ${info("The random seed makes the whole experiment reproducible. It must never have been used before, or results could be cherry-picked across seeds. A fresh one is suggested automatically.")}</label>
     <input id="w-seed" value="${d.seed}" inputmode="numeric">
-    <label>Monte-Carlo m per claim (floor rule: m ≥ ${mMin} at α′ = ${a.toFixed(4)})</label>
+    <label>Monte-Carlo m per claim ${info(`How many null simulations each test runs. More m = finer p-values. The floor rule requires m ≥ ${mMin} so the smallest possible p (1/(m+1)) is at most half the corrected threshold.`)}</label>
     ${d.claims.map((c,i)=>`<div class="rowline">
       <span class="small">${esc(c.instrument)} · ${esc(c.dataset)}</span>
       <input style="width:110px" inputmode="numeric" id="w-m-${i}"
@@ -775,7 +789,7 @@ ROUTES.theorems=async(app)=>{
   app.innerHTML=`
   <div class="hero"><h1>Theorem arsenal</h1></div>
   ${guide("∑","Why this page exists",
-    KB.length+" theorem cards — the lab's rulebook: an instrument may only touch data if its card exists here (<i>no card, no test</i>). Use it to answer “which tool sees what?”: search anything (a theorem, a statistic, a blind spot), filter by face, tap a card to read it or export it to PDF.")}
+    KB.length+" theorem cards — the lab's rulebook: an instrument may only touch data if its card exists here (<i>no card, no test</i>). Use it to answer “which tool sees what?”: search anything (a theorem, a statistic, a blind spot), filter by face, tap a card to read it or export it to PDF.",null,"theorems")}
   <div class="searchbar noprint">
     <input id="kb-q" placeholder="Search theorems, statistics, blind spots…" autocomplete="off">
   </div>
@@ -822,7 +836,7 @@ ROUTES.ledger=async(app)=>{
   app.innerHTML=`
   <div class="hero"><h1>Ledger</h1></div>
   ${guide("☰","Why this page exists",
-    "The lab's accounting: every real-data p-value ever produced, what counts toward the global correction, and the honesty meter watching the whole population. Come here to answer “can I trust a result?” — pick a graph below to see the evidence at a glance.")}
+    "The lab's accounting: every real-data p-value ever produced, what counts toward the global correction, and the honesty meter watching the whole population. Come here to answer “can I trust a result?” — pick a graph below to see the evidence at a glance.",null,"ledger")}
   <div class="card noprint"><h2>Explore the p-values</h2>
     <div class="seg" id="lg-seg" style="margin:6px 0 10px">
       <button class="on" data-m="hist">Histogram</button>
@@ -902,11 +916,12 @@ const CAT_META={
 ROUTES.agents=async(app)=>{
   app.innerHTML=`<div class="hero"><h1>Run centre</h1></div>
   ${guide("◎","Why this page exists",
-    "This is the lab's cockpit: launch gates, registered executors, analysis tools and maintenance jobs — then watch their live logs right here. Anything running (including agent sessions started elsewhere) shows under <b>Running now</b>. Refreshes every 5 s.")}
+    "This is the lab's cockpit: launch gates, registered executors, analysis tools and maintenance jobs — then watch their live logs right here. Anything running (including agent sessions started elsewhere) shows under <b>Running now</b>. Refreshes every 5 s.",null,"runcentre")}
   <div id="jobs-box"></div><div id="agents-box"></div>`;
   const render=async()=>{
     if(!(location.hash||"").includes("agents"))return clearInterval(window._agTimer);
-    const [J,a]=await Promise.all([api("/api/jobs"),api("/api/agents")]);
+    const [J,a,TR]=await Promise.all([api("/api/jobs"),api("/api/agents"),
+      api("/api/agent_transcripts")]);
     const jb=$("#jobs-box"),ab=$("#agents-box");if(!jb)return;
     const active=J.jobs.filter(j=>j.status==="running");
     jb.innerHTML=`
@@ -930,18 +945,30 @@ ROUTES.agents=async(app)=>{
               <textarea id="agent-task" rows="2" style="margin-top:8px"
                 placeholder="e.g. Run all three gates, then rebuild the honesty meter and summarize what changed"></textarea>
               <div style="display:flex;gap:8px;margin-top:8px">
-                <select id="agent-provider" style="flex:1">
-                  <option value="anthropic">Anthropic (Claude API)</option>
-                  <option value="openai">OpenAI-compatible</option></select>
+                <select id="agent-role" style="flex:1">
+                  <option value="analyst">🔬 Analyst — design & interpret (deep)</option>
+                  <option value="executor">⚙️ Executor — run to the letter (fast)</option>
+                  <option value="reviewer">🛡 Reviewer — adversarial check (deep)</option></select>
                 <button class="ghost" onclick="runAgentTask()">Launch agent</button>
               </div>
-              <p class="small" style="margin-top:6px">Runs standalone off your
-              Admin-page keys — Claude Desktop/CLI not required.</p></div>`
+              <p class="small" style="margin-top:6px">Each role uses the
+              provider, model and effort you assigned in
+              <a href="#admin">Admin → agent roles</a>. Runs standalone —
+              Claude Desktop/CLI not required.</p></div>`
           :`<div class="rowline">
             <div><b>${esc(d.label)}</b><div class="small">${esc(d.desc)}</div></div>
             <button class="ghost" onclick="runJob('${d.name}',${JSON.stringify(d.needs).replace(/"/g,"&quot;")})">Run</button>
           </div>`).join("")}</div>`;}).join("")}
-    </div>`;
+    </div>
+    ${TR.length?`<div class="card" style="margin-top:16px">
+      <h2>🗣 Audit an agent ${info("Every agent run keeps its full transcript. Pick one and ask it to justify a conclusion, list what it checked, or explain a decision — the exchange is appended to that run's audit trail in results/agent_runs/.")}</h2>
+      <label>Which run?</label>
+      <select id="audit-tr">${TR.map(t=>`<option value="${esc(t.path)}">
+        ${esc(t.ts||"")} · ${esc(t.role||"agent")} · ${esc(t.task)}</option>`).join("")}</select>
+      <label>Your audit question</label>
+      <textarea id="audit-q" rows="2" placeholder="e.g. Justify why you concluded the gates passed — what exact outputs did you rely on?"></textarea>
+      <div class="pillrow"><button class="ghost" onclick="sendAudit()">Ask for audit reply</button></div>
+    </div>`:""}`;
     ab.innerHTML=`
     <div class="card" style="margin-top:16px"><h2>Running now (all processes)</h2>
       ${a.running_processes.length?a.running_processes.map(p=>`
@@ -988,6 +1015,14 @@ window.showLog=async(id,quiet)=>{
     if(!quiet)v.scrollIntoView({behavior:"smooth",block:"nearest"});
   }catch(e){if(!quiet)toast(e.message)}
 };
+window.sendAudit=async()=>{
+  const q=$("#audit-q").value.trim();
+  if(q.length<5)return toast("Write the audit question first");
+  try{const j=await api("/api/jobs",{method:"POST",body:JSON.stringify(
+      {job:"agent_reply",params:{reply:q,transcript:$("#audit-tr").value,
+       role:"reviewer"}})});
+    toast("Audit reply requested — watch the log");window._openLog=j.id;route();
+  }catch(e){toast(e.message)}};
 window.cancelJob=async id=>{
   try{await api("/api/jobs/cancel",{method:"POST",body:JSON.stringify({id})});
     toast("Stopped");route();}catch(e){toast(e.message)}
@@ -998,7 +1033,7 @@ ROUTES.approvals=async(app)=>{
   app.innerHTML=`
   <div class="hero"><h1>Approvals</h1></div>
   ${guide("✓","Why this page exists",
-    "You are the lab's HUMAN-GATE: nothing registered runs without a signature here. Read the draft, tap Approve — the signature lands in an append-only audit log and the registration's approval line is filled. Then execute it from the <a href='#agents'>Run centre</a>.")}
+    "You are the lab's HUMAN-GATE: nothing registered runs without a signature here. Read the draft, tap Approve — the signature lands in an append-only audit log and the registration's approval line is filled. Then execute it from the <a href='#agents'>Run centre</a>.",null,"approvals")}
   <div class="card"><h2>Awaiting your signature</h2>
     ${a.pending.length?a.pending.map(p=>`
       <div class="rowline"><div><b>${esc(p.title)}</b>
@@ -1008,7 +1043,7 @@ ROUTES.approvals=async(app)=>{
           <button class="subtle" onclick="viewDoc('${esc(p.doc)}')">Read</button>
         </div></div>`).join("")
       :'<p class="small">Nothing pending — all registrations are signed.</p>'}
-    <label>Sign as</label><input id="appr-name" placeholder="Cha (lab owner)" value="Cha (lab owner)">
+    <label>Sign as ${info("Recorded verbatim in the append-only audit log next to each approval — the lab's record of who authorized what.")}</label><input id="appr-name" placeholder="Cha (lab owner)" value="Cha (lab owner)">
   </div>
   <div class="card" style="margin-top:16px"><h2>Audit log</h2>
     ${a.recorded.length?a.recorded.map(r=>`<div class="rowline">
@@ -1033,65 +1068,86 @@ window.viewDoc=async name=>{
 };
 
 ROUTES.admin=async(app)=>{
+  window.renderAdmin=()=>route();
   const c=await api("/api/config");
-  const KEYDEFS=[
-    {k:"ANTHROPIC_API_KEY",label:"Anthropic (Claude agents)",
-     get:"https://console.anthropic.com/settings/keys",
-     hint:"powers Claude-based lab agents"},
-    {k:"OPENAI_COMPAT_API_KEY",label:"OpenAI-compatible provider",
-     get:"https://platform.openai.com/api-keys",
-     hint:"any OpenAI-compatible API: OpenAI, OpenRouter (openrouter.ai/keys), "+
-          "Groq (console.groq.com/keys), or a local Ollama server (no key needed)"},
-  ];
-  const keyRow=d=>`<label>${d.label}
-      ${c.api_keys[d.k]?`<span class="badge ok">set · ${esc(c.api_keys[d.k])}</span>`:'<span class="badge dim">not set</span>'}
-      <a href="${d.get}" target="_blank" style="font-weight:500;margin-left:6px">get a key ↗</a></label>
-      <div style="display:flex;gap:8px">
-        <input id="key-${d.k}" type="password" placeholder="${c.api_keys[d.k]?"(unchanged)":"paste key"}" autocomplete="off">
-        ${c.api_keys[d.k]?`<button class="subtle" onclick="delKey('${d.k}')">Remove</button>`:""}
-      </div><p class="small" style="margin-top:4px">${d.hint}</p>`;
+  const P=await api("/api/providers");
+  window._prov=P;
+  const roleRow=(rid,r)=>{
+    const provOpts=P.providers.filter(p=>p.configured)
+      .map(p=>`<option value="${p.id}" ${r.provider===p.id?"selected":""}>${esc(p.label)}</option>`).join("");
+    const models=(P.providers.find(p=>p.id===r.provider)||{}).models||[];
+    return `<div style="border-top:1px solid var(--line);padding:12px 0">
+      <b>${r.icon} ${esc(r.label)}</b>
+      <div class="small">${esc(r.desc)}</div>
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div><label style="margin-top:0">Provider</label>
+          <select id="role-p-${rid}" onchange="renderAdmin()">
+            <option value="">(use active provider)</option>${provOpts}</select></div>
+        <div><label style="margin-top:0">Model</label>
+          <input id="role-m-${rid}" list="role-ml-${rid}" value="${esc(r.model||"")}"
+            placeholder="${models[0]||"model id"}" autocapitalize="off">
+          <datalist id="role-ml-${rid}">${models.map(m=>`<option value="${esc(m)}">`).join("")}</datalist></div>
+      </div>
+      <label>Thinking effort</label>
+      <div class="seg" id="role-e-${rid}">
+        ${["fast","balanced","deep"].map(e=>`<button class="${(r.effort||"balanced")===e?"on":""}"
+          onclick="this.parentElement.querySelector('.on')?.classList.remove('on');this.classList.add('on')">${e}</button>`).join("")}
+      </div>
+      <div class="pillrow"><button class="ghost" onclick="saveRole('${rid}')">Save ${esc(r.label.toLowerCase())}</button></div>
+    </div>`;};
+  const provRow=p=>`
+    <div class="rowline clickable" onclick="toggleProv('${p.id}')">
+      <div><b>${esc(p.label)}</b>
+        ${P.active===p.id?'<span class="badge">active</span>':""}
+        <div class="small">${p.keyless?"local — no key needed":esc(p.base)}</div></div>
+      <span class="badge ${p.configured?"ok":"dim"}">${p.configured?"✓ configured":"· unconfigured"}</span>
+    </div>
+    <div id="prov-${p.id}" style="display:none;padding:4px 0 14px">
+      ${p.keyless?"":`<label>API key ${p.key_masked?`<span class="badge ok">set · ${esc(p.key_masked)}</span>`:""}
+        ${p.get?`<a href="${p.get}" target="_blank" style="font-weight:500;margin-left:6px">get a key ↗</a>`:""}</label>
+      <input id="pk-${p.id}" type="password" placeholder="${p.key_masked?"(unchanged)":"paste key"}" autocomplete="off">`}
+      <label>Default model</label>
+      <input id="pm-${p.id}" list="pml-${p.id}" value="${esc(p.model||"")}"
+        placeholder="${p.models[0]||"model id"}" autocapitalize="off">
+      <datalist id="pml-${p.id}">${p.models.map(m=>`<option value="${esc(m)}">`).join("")}</datalist>
+      ${p.id==="custom"||p.keyless?`<label>Base URL</label>
+        <input id="pb-${p.id}" value="${esc(p.base)}" autocapitalize="off">`:""}
+      <div class="pillrow">
+        <button class="ghost" onclick="saveProv('${p.id}',false)">Save</button>
+        <button onclick="saveProv('${p.id}',true)">Save & make active</button>
+      </div></div>`;
   app.innerHTML=`
   <div class="hero"><h1>Admin</h1></div>
   ${guide("⚙","Why this page exists",
-    "One-time setup lives here: keys for the LLM agents that operate the lab, and lab-wide settings. Everything sensitive stays in <span class='mono'>"+esc(c.config_path)+"</span> — never committed, always served masked.")}
-  <div class="card"><h2>Agent brains (LLM keys)</h2>
-    <p class="small">Only needed when you want LLM agents to run lab sessions.
-    The console itself and every analysis script work fully offline.</p>
-    ${KEYDEFS.map(keyRow).join("")}
-    <label>Anthropic model</label>
-    <input id="set-ant-model" list="ant-models" autocapitalize="off"
-      placeholder="pick or type a model id"
-      value="${esc(c.settings.anthropic_model||"")}">
-    <datalist id="ant-models">
-      <option value="claude-fable-5">most capable</option>
-      <option value="claude-opus-4-8"></option>
-      <option value="claude-sonnet-5">balanced</option>
-      <option value="claude-haiku-4-5-20251001">fast/cheap — good executor</option>
-    </datalist>
-    <label>OpenAI-compatible base URL</label>
-    <input id="set-oai-url" list="oai-urls" placeholder="https://api.openai.com/v1"
-      value="${esc(c.settings.openai_base_url||"")}" autocapitalize="off">
-    <datalist id="oai-urls">
-      <option value="https://api.openai.com/v1">OpenAI</option>
-      <option value="https://openrouter.ai/api/v1">OpenRouter</option>
-      <option value="https://api.groq.com/openai/v1">Groq</option>
-      <option value="http://localhost:11434/v1">Ollama (local, keyless)</option>
-    </datalist>
-    <label>OpenAI-compatible model</label>
-    <input id="set-oai-model" list="oai-models" autocapitalize="off"
-      placeholder="pick or type a model id"
-      value="${esc(c.settings.openai_model||"")}">
-    <datalist id="oai-models">
-      <option value="gpt-4o"></option><option value="gpt-4o-mini"></option>
-      <option value="o3"></option>
-      <option value="llama-3.3-70b-versatile">Groq</option>
-      <option value="deepseek-chat"></option>
-      <option value="qwen2.5:72b">Ollama</option>
-      <option value="mistral-large-latest"></option>
-    </datalist>
-    <p class="small">Suggested split: a capable model as analyst/reviewer, a
-    fast one as execute-only runner (the lab's role-separation pattern).</p>
-    <div class="pillrow"><button onclick="saveKeys(['ANTHROPIC_API_KEY','OPENAI_COMPAT_API_KEY'])">Save keys & models</button></div>
+    "Three decisions live here, top to bottom: <b>1)</b> how agents authenticate (subscription CLI or API key), <b>2)</b> which provider+model each agent role uses and how hard it thinks, <b>3)</b> lab settings. Everything sensitive stays local and obfuscated — never committed, served masked.",null,"admin")}
+  <div class="card"><h2>1 · How should agents authenticate?</h2>
+    <div class="seg" id="auth-seg" style="margin:8px 0">
+      <button onclick="setAuth('api_key')" class="${P.auth_method==="api_key"?"on":""}">Use an API key</button>
+      <button onclick="setAuth('subscription')" class="${P.auth_method==="subscription"?"on":""}">Use a subscription</button>
+    </div>
+    <div id="auth-sub" style="display:${P.auth_method==="subscription"?"block":"none"}">
+      <p class="small">Subscription agents authenticate through their own CLI
+      login — tokens can't be reused by third-party tools, so the lab detects
+      the CLIs and you run them in a terminal at the repo root:</p>
+      ${P.subscriptions.map(sc=>`<div class="rowline">
+        <div><b>${esc(sc.label)}</b>
+          <div class="small"><a href="${sc.get}" target="_blank">set up ↗</a></div></div>
+        <span class="badge ${sc.detected?"ok":"dim"}">${sc.detected?"✓ detected":"not installed"}</span>
+      </div>`).join("")}
+      <p class="small" style="margin-top:8px">For in-console agents (Run
+      centre), use an API key instead.</p>
+    </div>
+    <div id="auth-api" style="display:${P.auth_method==="api_key"?"block":"none"}">
+      <p class="small">Pick a provider, paste its key, choose a model. The
+      <b>active</b> provider is the default; roles below can override it.</p>
+      ${P.providers.map(provRow).join("")}
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px"><h2>2 · Who does what — agent roles</h2>
+    <p class="small">Assign a brain to each role. Rule of thumb: capable +
+    deep for Analyst and Reviewer (ideally different providers), fast +
+    cheap for the Executor — it must follow registrations, not improvise.</p>
+    ${Object.entries(P.roles).map(([rid,r])=>roleRow(rid,r)).join("")}
   </div>
   <div class="card" style="margin-top:16px"><h2>Data sources — no keys needed</h2>
     <p class="small">All datasets are already downloaded into the repo, and
@@ -1121,6 +1177,28 @@ ROUTES.admin=async(app)=>{
 python3 src/verify_relational_docs.py
 python3 src/lint_frozen_imports.py</pre></div>`;
 };
+
+window.setAuth=async a=>{
+  try{await api("/api/providers",{method:"POST",
+    body:JSON.stringify({auth_method:a})});route();}
+  catch(e){toast(e.message)}};
+window.toggleProv=id=>{const el=document.getElementById("prov-"+id);
+  el.style.display=el.style.display==="none"?"block":"none";};
+window.saveProv=async(id,makeActive)=>{
+  const body={id,active:!!makeActive,
+    key:document.getElementById("pk-"+id)?.value.trim()||"",
+    model:document.getElementById("pm-"+id)?.value.trim()||""};
+  const b=document.getElementById("pb-"+id);if(b)body.base=b.value.trim();
+  try{await api("/api/providers",{method:"POST",body:JSON.stringify(body)});
+    toast(makeActive?"Saved & set active":"Saved");route();
+  }catch(e){toast(e.message)}};
+window.saveRole=async rid=>{
+  const cfg={provider:document.getElementById("role-p-"+rid).value,
+    model:document.getElementById("role-m-"+rid).value.trim(),
+    effort:document.querySelector("#role-e-"+rid+" .on")?.textContent||"balanced"};
+  try{await api("/api/providers",{method:"POST",
+      body:JSON.stringify({role:rid,config:cfg})});
+    toast("Role saved");}catch(e){toast(e.message)}};
 window.saveKeys=async keys=>{
   const payload={api_keys:{},settings:{
     anthropic_model:$("#set-ant-model")?.value.trim()||"",

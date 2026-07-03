@@ -28,6 +28,7 @@ import os
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -102,18 +103,38 @@ def do_tool(name, args):
 
 
 # ---------------------------------------------------------------- providers
-def call_anthropic(model, messages):
-    key = get_api_key("ANTHROPIC_API_KEY")
-    if not key:
-        raise SystemExit("No ANTHROPIC_API_KEY configured (Admin page).")
-    body = {"model": model or "claude-haiku-4-5-20251001", "max_tokens": 2000,
-            "system": SYSTEM, "tools": TOOLS, "messages": messages}
-    req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
-        data=json.dumps(body).encode(),
-        headers={"x-api-key": key, "anthropic-version": "2023-06-01",
-                 "content-type": "application/json"})
-    r = json.load(urllib.request.urlopen(req, timeout=120))
+def _post(url, body, headers):
+    req = urllib.request.Request(url, data=json.dumps(body).encode(),
+                                 headers=headers)
+    return json.load(urllib.request.urlopen(req, timeout=180))
+
+
+def call_anthropic(prov, messages):
+    if not prov["key"]:
+        raise SystemExit(f"No API key for provider '{prov['id']}' — set it "
+                         f"on the Admin page.")
+    body = {"model": prov["model"] or "claude-haiku-4-5-20251001",
+            "max_tokens": 4000, "system": SYSTEM, "tools": TOOLS,
+            "messages": messages}
+    # effort mapping (Admin roles): deep/balanced enable extended thinking
+    budget = {"deep": 8000, "balanced": 2048}.get(prov.get("effort"))
+    if budget:
+        body["thinking"] = {"type": "enabled", "budget_tokens": budget}
+        body["max_tokens"] = budget + 4000
+    try:
+        r = _post(prov["base"].rstrip("/") + "/v1/messages", body,
+                  {"x-api-key": prov["key"],
+                   "anthropic-version": "2023-06-01",
+                   "content-type": "application/json"})
+    except urllib.error.HTTPError as e:
+        if budget and e.code == 400:      # model without extended thinking
+            body.pop("thinking"); body["max_tokens"] = 4000
+            r = _post(prov["base"].rstrip("/") + "/v1/messages", body,
+                      {"x-api-key": prov["key"],
+                       "anthropic-version": "2023-06-01",
+                       "content-type": "application/json"})
+        else:
+            raise
     calls = [{"id": c["id"], "name": c["name"], "args": c["input"]}
              for c in r.get("content", []) if c.get("type") == "tool_use"]
     text = "".join(c.get("text", "") for c in r.get("content", [])
@@ -121,24 +142,31 @@ def call_anthropic(model, messages):
     return text, calls, r
 
 
-def call_openai(model, messages):
-    cfg = jd("../webapp/config.local.json", {}) or {}
-    st = (jd(os.path.relpath(os.path.join(HERE, "config.local.json"), ROOT),
-             {}) or {}).get("settings", {})
-    base = st.get("openai_base_url") or "https://api.openai.com/v1"
-    key = get_api_key("OPENAI_COMPAT_API_KEY") or "ollama"
+def call_openai(prov, messages):
+    if not prov["key"]:
+        raise SystemExit(f"No API key for provider '{prov['id']}' — set it "
+                         f"on the Admin page.")
     oa_tools = [{"type": "function", "function": {
         "name": t["name"], "description": t["description"],
         "parameters": t["input_schema"]}} for t in TOOLS]
-    body = {"model": model or st.get("openai_model") or "gpt-4o-mini",
+    body = {"model": prov["model"] or "gpt-4o-mini",
             "messages": [{"role": "system", "content": SYSTEM}] + messages,
             "tools": oa_tools}
-    req = urllib.request.Request(
-        base.rstrip("/") + "/chat/completions",
-        data=json.dumps(body).encode(),
-        headers={"Authorization": f"Bearer {key}",
-                 "content-type": "application/json"})
-    r = json.load(urllib.request.urlopen(req, timeout=120))
+    eff = {"fast": "low", "balanced": "medium", "deep": "high"}.get(
+        prov.get("effort"))
+    if eff:
+        body["reasoning_effort"] = eff
+    hdr = {"Authorization": f"Bearer {prov['key']}",
+           "content-type": "application/json"}
+    url = prov["base"].rstrip("/") + "/chat/completions"
+    try:
+        r = _post(url, body, hdr)
+    except urllib.error.HTTPError as e:
+        if eff and e.code in (400, 422):  # provider without reasoning_effort
+            body.pop("reasoning_effort")
+            r = _post(url, body, hdr)
+        else:
+            raise
     msg = r["choices"][0]["message"]
     calls = [{"id": c["id"], "name": c["function"]["name"],
               "args": json.loads(c["function"]["arguments"] or "{}")}
@@ -149,30 +177,59 @@ def call_openai(model, messages):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", required=True)
-    ap.add_argument("--provider", choices=["anthropic", "openai"],
-                    default="anthropic")
+    ap.add_argument("--provider", default=None,
+                    help="provider id from the Admin registry")
+    ap.add_argument("--role", default=None,
+                    choices=["analyst", "executor", "reviewer"],
+                    help="use this role's provider/model/effort from Admin")
     ap.add_argument("--model", default=None)
+    ap.add_argument("--resume", default=None,
+                    help="path to a previous run's transcript.json")
+    ap.add_argument("--reply", default=None,
+                    help="audit question/instruction appended to the resumed "
+                         "conversation")
     a = ap.parse_args()
-    cfg_settings = (json.load(open(os.path.join(HERE, "config.local.json")))
-                    .get("settings", {})
-                    if os.path.exists(os.path.join(HERE, "config.local.json"))
-                    else {})
-    model = a.model or (cfg_settings.get("anthropic_model")
-                        if a.provider == "anthropic"
-                        else cfg_settings.get("openai_model"))
-    print(f"agent: provider={a.provider} model={model or '(default)'}")
+    from server import resolve_provider
+    prov = resolve_provider(a.provider, role=a.role)
+    if a.model:
+        prov["model"] = a.model
+    print(f"agent: role={a.role or '(none)'} provider={prov['id']} "
+          f"model={prov['model'] or '(default)'} effort={prov.get('effort')}")
     print(f"task: {a.task}\n")
-    messages = [{"role": "user", "content": a.task}]
+    if a.resume:
+        tpath = os.path.join(ROOT, a.resume) if not os.path.isabs(a.resume) \
+            else a.resume
+        prior = json.load(open(tpath))
+        messages = prior["messages"]
+        messages.append({"role": "user", "content":
+                         "AUDIT FOLLOW-UP from the lab owner: " + a.task})
+        print("(resuming transcript for audit — prior turns:",
+              len(messages), ")\n")
+    else:
+        messages = [{"role": "user", "content": a.task}]
     final = None
     for turn in range(MAX_TURNS):
-        text, calls, raw = (call_anthropic if a.provider == "anthropic"
-                            else call_openai)(model, messages)
+        try:
+            text, calls, raw = (call_anthropic
+                                if prov["protocol"] == "anthropic"
+                                else call_openai)(prov, messages)
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode(errors="replace")[:400]
+            raise SystemExit(
+                f"Provider '{prov['id']}' rejected the request "
+                f"(HTTP {e.code}). Check the API key and model on the Admin "
+                f"page.\n{detail}")
+        except urllib.error.URLError as e:
+            raise SystemExit(
+                f"Could not reach provider '{prov['id']}' at {prov['base']} "
+                f"({e.reason}). Check your network, or the base URL on the "
+                f"Admin page.")
         if text.strip():
             print(f"--- agent (turn {turn+1}) ---\n{text}\n", flush=True)
         if not calls:
             final = text
             break
-        if a.provider == "anthropic":
+        if prov["protocol"] == "anthropic":
             messages.append({"role": "assistant", "content": raw["content"]})
             results = []
             for c in calls:
@@ -191,11 +248,30 @@ def main():
                 messages.append({"role": "tool", "tool_call_id": c["id"],
                                  "content": out[:12000]})
     os.makedirs(os.path.join(ROOT, "results", "agent_runs"), exist_ok=True)
-    rp = os.path.join(ROOT, "results", "agent_runs",
-                      f"webapp-agent-{time.strftime('%Y%m%d-%H%M%S')}.md")
-    with open(rp, "w") as f:
+    stamp = time.strftime('%Y%m%d-%H%M%S')
+    if a.resume:
+        tpath2 = tpath                       # append to the same transcript
+        rp = tpath.replace(".transcript.json", ".md")
+    else:
+        base = os.path.join(ROOT, "results", "agent_runs",
+                            f"webapp-agent-{stamp}")
+        tpath2, rp = base + ".transcript.json", base + ".md"
+    try:
+        json.dump({"task": a.task, "role": a.role, "provider": prov["id"],
+                   "messages": messages, "ts": stamp}, open(tpath2, "w"))
+        print(f"transcript: {os.path.relpath(tpath2, ROOT)}")
+    except TypeError:
+        pass                                 # non-serializable provider blobs
+    with open(rp, "a" if a.resume else "w") as f:
+        if a.resume:
+            f.write(f"\n\n---\n## Audit follow-up ({stamp})\n\n"
+                    f"**Owner asked:** {a.task}\n\n**Agent:**\n\n"
+                    f"{final or '(no final reply)'}\n")
+            print(f"report appended: {os.path.relpath(rp, ROOT)}")
+            sys.exit(0 if final else 2)
         f.write(f"# Standalone agent report\n\nTask: {a.task}\n"
-                f"Provider: {a.provider} · model {model}\n\n"
+                f"Role: {a.role} · provider {prov['id']} · model "
+                f"{prov['model']} · effort {prov.get('effort')}\n\n"
                 f"{final or '(hit turn limit without a final report)'}\n")
     json.dump({"agent": "standalone-runner", "stage": "finished",
                "progress": os.path.relpath(rp, ROOT),

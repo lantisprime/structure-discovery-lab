@@ -563,6 +563,11 @@ JOB_DEFS = {
         "argv": [PY, "src/build_multiplicity_ledger.py"], "cat": "maintenance",
         "label": "Rebuild multiplicity ledger",
         "desc": "non-destructive rebuild (aborts rather than lose a row)"},
+    "agent_reply": {
+        "argv": None, "cat": "executors", "label": "Audit reply to an agent",
+        "desc": "resume a finished agent run and ask it to justify or "
+                "explain — the exchange is appended to its audit trail",
+        "needs": ["reply", "transcript"], "hidden": True},
     "agent_task": {
         "argv": None, "cat": "executors", "label": "Standalone agent task",
         "desc": "an LLM agent (your configured keys — no Claude Desktop "
@@ -579,11 +584,29 @@ def job_argv(name, params):
         task = (params.get("task") or "").strip()
         if len(task) < 10:
             raise ValueError("describe the agent task (≥10 characters)")
-        prov = params.get("provider") or "anthropic"
-        if prov not in ("anthropic", "openai"):
-            raise ValueError("provider must be anthropic or openai")
-        return [PY, "-u", "webapp/agent_runner.py", "--provider", prov,
-                "--task", task]
+        argv = [PY, "-u", "webapp/agent_runner.py", "--task", task]
+        role = params.get("role")
+        if role:
+            if role not in AGENT_ROLES:
+                raise ValueError("role must be analyst | executor | reviewer")
+            argv += ["--role", role]
+        if params.get("provider"):
+            if params["provider"] not in PROVIDERS:
+                raise ValueError(f"unknown provider {params['provider']}")
+            argv += ["--provider", params["provider"]]
+        return argv
+    if name == "agent_reply":
+        reply = (params.get("reply") or "").strip()
+        tr = (params.get("transcript") or "").strip()
+        if len(reply) < 5:
+            raise ValueError("write the audit question (≥5 characters)")
+        if not re.fullmatch(r"results/agent_runs/[\w\-.]+\.transcript\.json", tr):
+            raise ValueError("pick a valid transcript")
+        argv = [PY, "-u", "webapp/agent_runner.py", "--resume", tr,
+                "--task", reply]
+        if params.get("role") in AGENT_ROLES:
+            argv += ["--role", params["role"]]
+        return argv
     if name == "git_commit":
         msg = (params.get("message") or "").strip()
         if not (5 <= len(msg) <= 400):
@@ -628,6 +651,8 @@ def jobs_state():
     refresh_jobs()
     cats = {}
     for k, d in JOB_DEFS.items():
+        if d.get("hidden"):
+            continue
         cats.setdefault(d["cat"], []).append(
             {"name": k, "label": d["label"], "desc": d["desc"],
              "needs": d.get("needs", [])})
@@ -773,6 +798,198 @@ def config_set(payload):
     return config_get()
 
 
+# ---------------------------------------------------------------- providers
+# Popular API-key providers (the set most coding agents support). protocol:
+# "anthropic" = native Messages API; "openai" = OpenAI-compatible chat API.
+PROVIDERS = {
+    "anthropic": {"label": "Anthropic", "protocol": "anthropic",
+                  "base": "https://api.anthropic.com",
+                  "get": "https://console.anthropic.com/settings/keys",
+                  "models": ["claude-fable-5", "claude-opus-4-8",
+                             "claude-sonnet-5", "claude-haiku-4-5-20251001"]},
+    "openai": {"label": "OpenAI", "protocol": "openai",
+               "base": "https://api.openai.com/v1",
+               "get": "https://platform.openai.com/api-keys",
+               "models": ["gpt-4o", "gpt-4o-mini", "o3"]},
+    "openrouter": {"label": "OpenRouter", "protocol": "openai",
+                   "base": "https://openrouter.ai/api/v1",
+                   "get": "https://openrouter.ai/keys",
+                   "models": ["anthropic/claude-sonnet-5",
+                              "google/gemini-2.5-pro", "openai/gpt-4o"]},
+    "google": {"label": "Google Gemini", "protocol": "openai",
+               "base": "https://generativelanguage.googleapis.com/v1beta/openai",
+               "get": "https://aistudio.google.com/apikey",
+               "models": ["gemini-2.5-pro", "gemini-2.5-flash"]},
+    "groq": {"label": "Groq", "protocol": "openai",
+             "base": "https://api.groq.com/openai/v1",
+             "get": "https://console.groq.com/keys",
+             "models": ["llama-3.3-70b-versatile", "qwen-2.5-72b"]},
+    "deepseek": {"label": "DeepSeek", "protocol": "openai",
+                 "base": "https://api.deepseek.com/v1",
+                 "get": "https://platform.deepseek.com/api_keys",
+                 "models": ["deepseek-chat", "deepseek-reasoner"]},
+    "mistral": {"label": "Mistral", "protocol": "openai",
+                "base": "https://api.mistral.ai/v1",
+                "get": "https://console.mistral.ai/api-keys",
+                "models": ["mistral-large-latest", "codestral-latest"]},
+    "xai": {"label": "xAI (Grok)", "protocol": "openai",
+            "base": "https://api.x.ai/v1", "get": "https://console.x.ai",
+            "models": ["grok-3", "grok-3-mini"]},
+    "together": {"label": "Together AI", "protocol": "openai",
+                 "base": "https://api.together.xyz/v1",
+                 "get": "https://api.together.ai/settings/api-keys",
+                 "models": ["meta-llama/Llama-3.3-70B-Instruct-Turbo"]},
+    "fireworks": {"label": "Fireworks", "protocol": "openai",
+                  "base": "https://api.fireworks.ai/inference/v1",
+                  "get": "https://fireworks.ai/account/api-keys",
+                  "models": ["accounts/fireworks/models/llama-v3p3-70b-instruct"]},
+    "cerebras": {"label": "Cerebras", "protocol": "openai",
+                 "base": "https://api.cerebras.ai/v1",
+                 "get": "https://cloud.cerebras.ai",
+                 "models": ["llama-3.3-70b"]},
+    "moonshot": {"label": "Moonshot (Kimi)", "protocol": "openai",
+                 "base": "https://api.moonshot.ai/v1",
+                 "get": "https://platform.moonshot.ai/console/api-keys",
+                 "models": ["kimi-k2", "moonshot-v1-128k"]},
+    "ollama": {"label": "Ollama (local, keyless)", "protocol": "openai",
+               "base": "http://localhost:11434/v1",
+               "get": "https://ollama.com/download", "keyless": True,
+               "models": ["qwen2.5:72b", "llama3.3:70b", "deepseek-r1:70b"]},
+    "lmstudio": {"label": "LM Studio (local, keyless)", "protocol": "openai",
+                 "base": "http://localhost:1234/v1",
+                 "get": "https://lmstudio.ai", "keyless": True,
+                 "models": []},
+    "custom": {"label": "Custom OpenAI-compatible", "protocol": "openai",
+               "base": "", "get": "",
+               "models": []},
+}
+SUBSCRIPTION_CLIS = {
+    "claude": {"label": "Anthropic (Claude Pro/Max via Claude Code CLI)",
+               "cmd": "claude", "get": "https://claude.com/claude-code"},
+    "codex": {"label": "ChatGPT Plus/Pro (Codex CLI)",
+              "cmd": "codex", "get": "https://github.com/openai/codex"},
+    "copilot": {"label": "GitHub Copilot CLI", "cmd": "gh",
+                "get": "https://github.com/features/copilot"},
+}
+
+
+AGENT_ROLES = {
+    "analyst": {"label": "Analyst", "icon": "🔬",
+                "desc": "designs registrations, interprets results — give it "
+                        "your most capable model, deep effort"},
+    "executor": {"label": "Executor", "icon": "⚙️",
+                 "desc": "runs approved experiments to the letter — fast, "
+                         "cheap model is ideal (it must not improvise)"},
+    "reviewer": {"label": "Reviewer", "icon": "🛡",
+                 "desc": "adversarially checks work before publication — "
+                         "capable model, deep effort, different provider "
+                         "from the analyst if possible"},
+}
+EFFORTS = ["fast", "balanced", "deep"]
+
+
+def providers_get():
+    cfg = _load_cfg()
+    st = cfg["settings"]
+    import shutil as _sh
+    out = {"providers": [], "active": st.get("active_provider", "anthropic"),
+           "auth_method": st.get("auth_method", "api_key"),
+           "roles": {r: {**AGENT_ROLES[r],
+                         **st.get("agent_roles", {}).get(
+                             r, {"provider": "", "model": "", "effort": "balanced"})}
+                     for r in AGENT_ROLES},
+           "subscriptions": []}
+    for pid, p in PROVIDERS.items():
+        key_set = bool(cfg["api_keys"].get(f"PROVIDER_{pid.upper()}_KEY")) \
+            or bool(p.get("keyless"))
+        pst = st.get("providers", {}).get(pid, {})
+        out["providers"].append({
+            "id": pid, "label": p["label"], "protocol": p["protocol"],
+            "base": pst.get("base") or p["base"], "get": p["get"],
+            "models": p["models"], "keyless": bool(p.get("keyless")),
+            "model": pst.get("model", ""),
+            "configured": key_set if not p.get("keyless") else True,
+            "key_masked": _mask(cfg["api_keys"].get(
+                f"PROVIDER_{pid.upper()}_KEY"))})
+    for sid, s in SUBSCRIPTION_CLIS.items():
+        out["subscriptions"].append({
+            "id": sid, "label": s["label"], "get": s["get"],
+            "detected": bool(_sh.which(s["cmd"]))})
+    return out
+
+
+def _mask(v):
+    if not v:
+        return None
+    plain = _deobf(v)
+    return (plain[:3] + "…" + plain[-2:]) if len(plain) > 8 else "set"
+
+
+def providers_set(payload):
+    cfg = _load_cfg()
+    st = cfg["settings"]
+    pid = payload.get("id")
+    if payload.get("auth_method") in ("api_key", "subscription"):
+        st["auth_method"] = payload["auth_method"]
+    if payload.get("role"):
+        r = payload["role"]
+        if r not in AGENT_ROLES:
+            raise ValueError(f"unknown role {r}")
+        rc = payload.get("config") or {}
+        if rc.get("provider") and rc["provider"] not in PROVIDERS:
+            raise ValueError(f"unknown provider {rc.get('provider')}")
+        if rc.get("effort") and rc["effort"] not in EFFORTS:
+            raise ValueError("effort must be fast | balanced | deep")
+        st.setdefault("agent_roles", {}).setdefault(r, {})
+        for k in ("provider", "model", "effort"):
+            if k in rc:
+                st["agent_roles"][r][k] = rc[k]
+    if pid:
+        if pid not in PROVIDERS:
+            raise ValueError(f"unknown provider {pid}")
+        key = (payload.get("key") or "").strip()
+        if key == "__delete__":
+            cfg["api_keys"].pop(f"PROVIDER_{pid.upper()}_KEY", None)
+        elif key and "…" not in key:
+            cfg["api_keys"][f"PROVIDER_{pid.upper()}_KEY"] = _obf(key)
+        st.setdefault("providers", {}).setdefault(pid, {})
+        if "model" in payload:
+            st["providers"][pid]["model"] = (payload.get("model") or "").strip()
+        if "base" in payload and payload["base"]:
+            st["providers"][pid]["base"] = payload["base"].strip()
+        if payload.get("active"):
+            st["active_provider"] = pid
+    _write_cfg(cfg)
+    return providers_get()
+
+
+def resolve_provider(pid=None, role=None):
+    """Used by the standalone agent runner: full plaintext credentials for a
+    provider — in-process only, never over HTTP. If role is given, that
+    role's assigned provider/model/effort (Admin page) takes precedence."""
+    cfg = _load_cfg()
+    st = cfg["settings"]
+    role_cfg = st.get("agent_roles", {}).get(role or "", {})
+    pid = pid or role_cfg.get("provider") or st.get("active_provider",
+                                                    "anthropic")
+    if pid not in PROVIDERS:
+        raise ValueError(f"unknown provider {pid}")
+    p = PROVIDERS[pid]
+    pst = st.get("providers", {}).get(pid, {})
+    key = cfg["api_keys"].get(f"PROVIDER_{pid.upper()}_KEY")
+    # legacy fallbacks from the original two-key admin page
+    if not key and pid == "anthropic":
+        key = cfg["api_keys"].get("ANTHROPIC_API_KEY")
+    if not key and p["protocol"] == "openai":
+        key = cfg["api_keys"].get("OPENAI_COMPAT_API_KEY")
+    return {"id": pid, "protocol": p["protocol"],
+            "base": pst.get("base") or p["base"],
+            "model": role_cfg.get("model") or pst.get("model")
+            or (p["models"][0] if p["models"] else ""),
+            "effort": role_cfg.get("effort", "balanced"),
+            "key": _deobf(key) if key else ("ollama" if p.get("keyless") else None)}
+
+
 # ---------------------------------------------------------------- http
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -809,6 +1026,21 @@ class H(BaseHTTPRequestHandler):
                 return self.send_json(kb_cards())
             if u.path == "/api/series":
                 return self.send_json(get_series(q["name"]))
+            if u.path == "/api/agent_transcripts":
+                d = os.path.join(ROOT, "results", "agent_runs")
+                out = []
+                if os.path.isdir(d):
+                    for f in sorted(os.listdir(d), reverse=True)[:40]:
+                        if f.endswith(".transcript.json"):
+                            try:
+                                j = json.load(open(os.path.join(d, f)))
+                                out.append({"path": f"results/agent_runs/{f}",
+                                            "task": (j.get("task") or "")[:90],
+                                            "role": j.get("role"),
+                                            "ts": j.get("ts")})
+                            except Exception:
+                                pass
+                return self.send_json(out)
             if u.path == "/api/agents":
                 return self.send_json(agent_status())
             if u.path == "/api/approvals":
@@ -817,6 +1049,8 @@ class H(BaseHTTPRequestHandler):
                 return self.send_json(config_get())
             if u.path == "/api/experiment_options":
                 return self.send_json(experiment_options())
+            if u.path == "/api/providers":
+                return self.send_json(providers_get())
             if u.path == "/api/jobs":
                 return self.send_json(jobs_state())
             if u.path == "/api/joblog":
@@ -839,6 +1073,8 @@ class H(BaseHTTPRequestHandler):
                 return self.send_json(try_equation(payload))
             if self.path == "/api/new_experiment":
                 return self.send_json(create_experiment(payload))
+            if self.path == "/api/providers":
+                return self.send_json(providers_set(payload))
             if self.path == "/api/jobs":
                 return self.send_json(start_job(payload))
             if self.path == "/api/jobs/cancel":
