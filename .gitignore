@@ -2,4 +2,3 @@
 __pycache__/
 .pytest_cache/
 .git_write_test
-webapp/config.local.json
