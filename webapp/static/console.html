@@ -484,6 +484,23 @@ h1.view-h1{font-family:var(--serif);font-weight:500;font-size:32px;
 .adm-set label.mt{margin-top:16px}
 .txt-bad{color:#c1121f}
 @media(max-width:600px){.role-grid{grid-template-columns:1fr}}
+/* ---------------- help ---------------- */
+.help-lead{font-size:13px;color:var(--mut2);line-height:1.5;margin-bottom:12px}
+.help-t{font-weight:600;font-size:15px;margin-bottom:6px}
+.help-b{font-size:13.5px;color:var(--mut);line-height:1.55}
+.help-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.help-stat{background:var(--bg);border:1px solid var(--line2);border-radius:12px;padding:14px}
+.help-stat .n{font-family:var(--mono);font-size:23px;font-weight:500;color:var(--ink);line-height:1.1}
+.help-stat .l{font-size:11.5px;color:var(--mut2);margin-top:4px;line-height:1.3}
+.help-stat .sub{font-size:11px;margin-top:5px;font-weight:500}
+.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.help-doc{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--hair)}
+.help-doc:last-of-type{border-bottom:0}
+.help-doc .dt{font-weight:600;font-size:13.5px}
+.help-doc .dd{font-size:12px;color:var(--mut2);margin-top:2px}
+.help-doc .dp{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
+@media(max-width:720px){.help-grid{grid-template-columns:1fr}}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(8px);
   background:var(--dark);color:var(--on-dark);padding:11px 18px;border-radius:12px;
   font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.22);opacity:0;pointer-events:none;
@@ -576,7 +593,7 @@ const PRIMARY=[["home","Overview"],["results","Experiments"],["equations","Equat
   ["theorems","Theorems"],["ledger","Ledger"]];
 const MORE=[["agents","Agents"],["approvals","Approvals"],["admin","Admin"],["help","Help"]];
 const TITLES=Object.fromEntries([...PRIMARY,...MORE].map(([id,l])=>[id,l]));
-const BUILT=new Set(["home","new","results","equations","theorems","ledger","agents","approvals","admin"]);   // grows as views land in later phases
+const BUILT=new Set(["home","new","results","equations","theorems","ledger","agents","approvals","admin","help"]);   // all nine views + wizard + help now live
 
 /* ---------------- governance / evidence primitives ---------------- */
 // grades are hand-authored, compound, sometimes absent: badge the first Gn
@@ -2197,6 +2214,101 @@ window.admSaveSettings=async()=>{
     body:JSON.stringify({settings:{default_m:+($("#set-m").value)||399,owner:$("#set-owner").value}})});
     toast("Settings saved");
   }catch(e){toast(e.message);}
+};
+
+/* ============================ help ============================ */
+// The console in five minutes — a live front door, not static prose. "Lab at a
+// glance" reads the SAME endpoints the rest of the console does (/api/state +
+// /api/kb) so every figure is real (never the prototype's placeholders — the
+// instrument count and the honesty p come from disk). "The lab's documents"
+// opens the real protocol/rulebook Markdown through /api/doc (whitelisted to
+// docs/ + evals/) in the shared reader modal. Orientation cards ported from the
+// classic Help + the mock's HELP_BLOCKS.
+const HELP_DOCS=[
+  ["docs/RUNBOOK.md","Runbook","The discovery + decision pipeline, end to end"],
+  ["docs/ARCHITECTURE.md","Architecture","How the lab kernel and modules fit together"],
+  ["docs/THEOREM_GOVERNANCE.md","Theorem governance","How instruments are admitted, reconciled, onboarded"],
+  ["docs/THEOREM_SYNTHESIS.md","Theorem synthesis","What the instruments collectively say"],
+  ["docs/AGENT_WORKFLOW.md","Agent workflow","How model-routed agents run the protocol"],
+  ["docs/EVALUATION_PROTOCOL.md","Evaluation protocol","The deterministic, blind-eval spec"],
+  ["docs/EQUATION_DISCOVERY.md","Equation discovery","The equation program — sandbox to null generator"],
+  ["docs/ADVERSARIAL_REVIEW.md","Adversarial review","The red-team relational program"],
+  ["docs/RESEARCH_NOTES.md","Research dossier","The founding case study"],
+  ["docs/kb/INDEX.md","Instrument index","The theorem & methodology card index"],
+];
+VIEWS.help=async(app)=>{
+  let st,kb;
+  try{[st,kb]=await Promise.all([loadState(),api("/api/kb")]);}
+  catch(e){app.innerHTML=`<div class="view"><div class="card"><p class="placeholder">${
+    esc(e.message)}</p></div></div>`;return;}
+  const cards=(kb||[]).length, admitted=(kb||[]).filter(c=>c&&c.admitted).length;
+  const lg=st.ledger||{}, mp=st.meta_panel||{};
+  const runs=(st.runs||[]).length, fams=Object.keys(st.families||{}).length;
+  const hr=honestyRead(mp);          // live honesty p, honest hot/looks-honest note
+  const hc=hr.hot?"var(--amber)":"var(--green)";
+  const stat=(n,l,sub)=>`<div class="help-stat"><div class="n">${n}</div>
+    <div class="l">${l}</div>${sub||""}</div>`;
+  // Orientation cards: static author copy (safe HTML), instrument count wired live.
+  const BLOCKS=[
+    ["The idea in one paragraph",`The lab tests stochastic datasets against a fully `+
+      `specified null using <b>${admitted}</b> admitted theorem-backed instruments. `+
+      `Nothing counts unless it was <b>registered before it ran</b>, every p-value lands `+
+      `in the <b>multiplicity ledger</b>, corrections apply at verdict time, and a `+
+      `<b>meta panel</b> watches the whole p-value population for self-deception.`],
+    ["Your journey",`The loop is always: <b>New experiment</b> (the wizard drafts a `+
+      `registration) → <b>Approvals</b> (you sign) → <b>Run centre</b> (execute, watch `+
+      `live logs) → <b>Experiments</b> (read the interpreted result) → <b>Ledger</b> `+
+      `(see it priced into the global correction). <b>Overview</b> always shows the `+
+      `single next action.`],
+    ["Standalone agents",`From the Run centre you can launch an LLM agent that operates `+
+      `the lab <b>without any CLI</b> — it calls your configured API directly and can `+
+      `only act through the same whitelisted jobs you see there.`],
+    ["Trying an equation, honestly",`The <b>Equations</b> sandbox fits periods to a `+
+      `series and reports hold-out skill vs a climatology baseline. It charges no `+
+      `multiplicity and is never citable — a real claim goes through registration and `+
+      `the null-equation generator.`],
+    ["Golden rules",`No card, no test. No registration, no run. Every p on its lattice, `+
+      `every test in the ledger. k co-firing instruments on the same rows = one anomaly. `+
+      `Failures are published as loudly as successes.`],
+    ["Exporting to PDF",`Every result page prints cleanly (⌘P / Ctrl-P) — the layout `+
+      `strips navigation and keeps the cards intact, so it reads as a report.`],
+  ];
+  app.innerHTML=`<div class="view">
+    ${guide("How to use the lab without fooling yourself — the console in five minutes.",
+      null,"help")}
+    <h1 class="view-h1">Help</h1>
+    <div class="card">
+      <div class="help-t">Lab at a glance</div>
+      <div class="help-lead">Live from this machine — the same figures the rest of the
+        console reads, never a prototype placeholder.</div>
+      <div class="help-stats">
+        ${stat(cards,"theorem-instrument cards",
+          `<div class="sub" style="color:var(--green)">✓ ${admitted} admitted</div>`)}
+        ${stat(runs,"experiments run")}
+        ${stat(lg.live!=null?lg.live:(lg.tests||0),"live tests in the ledger",
+          lg.frac_le_05!=null?`<div class="sub" style="color:var(--mut2)">${
+            (lg.frac_le_05*100).toFixed(0)}% at p ≤ .05</div>`:"")}
+        ${stat(fams,"instrument families")}
+        ${stat(`<span style="color:${hc}">${hr.p}</span>`,"honesty p — population meta-test",
+          `<div class="sub" style="color:${hc}">${hr.hot?"⚠ "+hr.note:"✓ "+hr.note}</div>`)}
+      </div>
+    </div>
+    <div class="help-grid" style="margin-top:14px">
+      ${BLOCKS.map(([t,b])=>`<div class="card"><div class="help-t">${t}</div>
+        <div class="help-b">${b}</div></div>`).join("")}
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="help-t">The lab's documents</div>
+      <div class="help-lead">The full protocol and rulebook, served from this machine —
+        open any one to read it here.</div>
+      ${HELP_DOCS.map(([p,t,d])=>`<div class="help-doc">
+        <div><div class="dt">${esc(t)}</div><div class="dd">${esc(d)}</div>
+          <div class="dp">${esc(p)}</div></div>
+        <button class="btn ghost sm" onclick='openDoc(${JSON.stringify(p)},${
+          JSON.stringify(t)})'>Open</button>
+      </div>`).join("")}
+    </div>
+  </div>`;
 };
 
 /* ---------------- toast + prompt modal (shared) ---------------- */
