@@ -162,7 +162,26 @@ def state():
 
 
 # ---------------------------------------------------------------- kb
-KB_FACE_RE = re.compile(r"\*\*Face\*\*[:\s]*([^\n]*)", re.I)
+# Match either the legacy "**Domain face**:" label (used by every current
+# arsenal card) or the "**Face**:" label kb_add writes for console-proposed
+# cards. Prior versions matched only **Face**, so all 27 existing cards
+# returned an empty face and the whole face filter was silently dead.
+KB_FACE_RE = re.compile(r"\*\*(?:Domain\s+face|Face)\*\*[:\s]*([^\n]*)", re.I)
+# The exact signature kb_add() stamps on a console-proposed card. A card is
+# treated as NOT-ADMITTED only when this appears — established cards carry no
+# Status line, so absence of a status must never imply "not admitted".
+KB_PROPOSED_SIGNATURE = "PROPOSED via web console"
+
+
+def _kb_norm_face(raw):
+    """Normalize a raw domain-face label to a single lowercase token for
+    chips/filtering. Split on '(', '/', or an em-dash only (NEVER '-', which
+    would break 'cross-sectional'); e.g. 'cross-sectional/physical' ->
+    'cross-sectional', 'marginal/geometric — …' -> 'marginal'."""
+    t = raw
+    for sep in ("(", "/", "—"):
+        t = t.split(sep)[0]
+    return t.strip().lower()
 
 
 def kb_cards():
@@ -171,13 +190,18 @@ def kb_cards():
     for f in sorted(os.listdir(kb)):
         if not f.endswith(".md") or f == "INDEX.md":
             continue
-        txt = open(os.path.join(kb, f)).read()
+        with open(os.path.join(kb, f)) as fh:
+            txt = fh.read()
         title = next((l.lstrip("# ").strip() for l in txt.splitlines()
                       if l.startswith("#")), f)
-        face = (KB_FACE_RE.search(txt).group(1).strip()
-                if KB_FACE_RE.search(txt) else "")
+        m = KB_FACE_RE.search(txt)
+        face_raw = m.group(1).strip() if m else ""
+        face = _kb_norm_face(face_raw)
+        admitted = KB_PROPOSED_SIGNATURE not in txt
         out.append({"slug": f[:-3], "file": f"docs/kb/{f}", "title": title,
-                    "face": face,
+                    "face": face, "face_raw": face_raw,
+                    "status": "admitted" if admitted else "proposed",
+                    "admitted": admitted,
                     "preview": " ".join(txt.split())[:400],
                     "body": txt})
     return out
