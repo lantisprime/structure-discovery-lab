@@ -690,9 +690,9 @@ async function route(){
 function notBuilt(app,page){
   app.innerHTML=`<div class="view">
     <h1 class="view-h1">${esc(TITLES[page]||"Overview")}</h1>
-    <div class="card"><p class="placeholder">This view is being rebuilt in the
-      redesign and isn't wired up in this build yet. The current console still
-      has it — open <a href="/">the classic console</a> meanwhile.</p></div></div>`;
+    <div class="card"><p class="placeholder">That page isn't part of the console —
+      check the address, or head back to the <a href="#home">Overview</a>. The
+      original app is still available at <a href="/classic">/classic</a>.</p></div></div>`;
 }
 function renderError(app,e){
   const net=/load failed|failed to fetch|networkerror/i.test(e.message);

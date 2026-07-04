@@ -1697,11 +1697,13 @@ class H(BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path)
         q = dict(urllib.parse.parse_qsl(u.query))
         try:
-            if u.path in ("/", "/index.html"):
-                return self.send_file(os.path.join(STATIC, "index.html"),
-                                      "text/html; charset=utf-8")
-            if u.path in ("/console", "/console.html"):
+            # Cut-over: the redesigned console is the default at / (and /console);
+            # the original app stays reachable at /classic as a fallback.
+            if u.path in ("/", "/index.html", "/console", "/console.html"):
                 return self.send_file(os.path.join(STATIC, "console.html"),
+                                      "text/html; charset=utf-8")
+            if u.path in ("/classic", "/classic.html"):
+                return self.send_file(os.path.join(STATIC, "index.html"),
                                       "text/html; charset=utf-8")
             if u.path == "/api/state":
                 return self.send_json(state())
@@ -1817,6 +1819,7 @@ def main():
     host = "0.0.0.0" if lan else "127.0.0.1"
     srv = ThreadingHTTPServer((host, port), H)
     print(f"Structure Discovery Lab console: http://localhost:{port}")
+    print(f"  (original app still at http://localhost:{port}/classic)")
     if lan:
         import socket
         try:
