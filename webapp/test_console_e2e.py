@@ -88,10 +88,13 @@ def run():
         assert pg.locator(".morebtn").is_visible(), "hamburger shows on phone"
         pg.set_viewport_size({"width": 1280, "height": 900})
 
-        # 10. Unbuilt view degrades honestly (placeholder, no crash).
-        pg.goto(f"{BASE}/console#ledger", wait_until="networkidle")
+        # 10. Unknown view degrades honestly (fallback card, no crash). Every real
+        #     view is built post-cut-over, so hit a bogus hash to reach notBuilt.
+        pg.goto(f"{BASE}/console#nonexistent", wait_until="networkidle")
         pg.wait_for_selector(".view", timeout=3000)
-        assert "being rebuilt" in pg.inner_text("body"), "unbuilt view placeholder"
+        body = pg.inner_text("body")
+        assert "isn't part of the console" in body, "unknown-view fallback text"
+        assert "/classic" in pg.content(), "fallback points to the classic app at /classic"
 
         # 11. Screenshot the Overview for the human review.
         pg.goto(f"{BASE}/console", wait_until="networkidle")

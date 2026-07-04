@@ -941,21 +941,26 @@ script and found byte-level discrepancy; the panel was refreshed to KS p = 0.385
 
 ## Web console (`webapp/`)
 
+![The redesigned lab console — Overview, with the lab's single next action and live honesty meter](docs/images/console-overview.png)
+
 Local, zero-dependency console for the lab (Python stdlib only):
 
 ```
-python3 webapp/server.py          # http://localhost:8787
+python3 webapp/server.py          # http://localhost:8787   (redesigned console)
 python3 webapp/server.py --lan    # + phone access on the same Wi-Fi
 ```
 
 Or just double-click **Start Lab Console.command** (macOS) — it starts the
 server and opens the browser; close the Terminal window to stop.
 
-Apple-style, mobile-friendly SPA: pipeline wizard with the lab's current and
-next step, past experiments with PDF export, candidate equations with a
-try-it sandbox (descriptive fits only — 0 multiplicity, never citable),
-searchable theorem arsenal (docs/kb), multiplicity ledger + honesty meter,
-live agent/script status, HUMAN-GATE approvals (append-only audit log at
-`results/webapp_approvals.jsonl`; fills blank `approved_by_human` lines),
-and an admin page whose API keys live in `webapp/config.local.json`
-(gitignored, masked when served). Binds 127.0.0.1 only. Help page inside.
+The redesigned, Apple-style, mobile-friendly console is served at **`/`**; the
+original console remains available at **`/classic`**. Nine views plus a pipeline
+wizard: **Overview** with the lab's single next step, **Experiments** with PDF
+export, **Equations** with a try-it sandbox (descriptive fits only — 0
+multiplicity, never citable), a searchable **Theorems** arsenal (docs/kb), the
+multiplicity **Ledger** + honesty meter, the **Run centre** for live agent/script
+status, HUMAN-GATE **Approvals** (append-only audit log at
+`results/webapp_approvals.jsonl`; fills blank `approved_by_human` lines), an
+**Admin** page whose API keys live in `webapp/config.local.json` (gitignored,
+masked when served), and a dynamic **Help** page with a live "lab at a glance"
+and the protocol docs. Binds 127.0.0.1 only.
