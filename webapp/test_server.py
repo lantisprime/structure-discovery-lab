@@ -105,5 +105,46 @@ class TestDatasetStats(unittest.TestCase):
         self.assertEqual(set(opts["dataset_stats"]), set(opts["datasets"]))
 
 
+class TestEquationSandbox(unittest.TestCase):
+    def test_series_list_maps_name_to_label(self):
+        sl = server.__dict__.get("SERIES")
+        base = {k: v[2] for k, v in sl.items()}
+        self.assertIn("moon_distance", base)
+        self.assertTrue(all(isinstance(v, str) for v in base.values()))
+
+    def test_get_series_returns_dates_and_values(self):
+        s = server.get_series("moon_distance")
+        self.assertEqual(s["name"], "moon_distance")
+        self.assertTrue(s["label"])
+        self.assertEqual(len(s["dates"]), len(s["values"]))
+        self.assertGreater(len(s["values"]), 100)
+
+    def test_try_equation_happy_path_and_spectrum(self):
+        r = server.try_equation({"series": "moon_distance",
+                                 "periods_d": [27.555], "trend": False})
+        for k in ("rmse_train", "rmse_holdout", "rmse_climatology_holdout",
+                  "beats_climatology", "disclaimer", "residual_spectrum",
+                  "residual_top_period_d", "residual_top_share", "plot"):
+            self.assertIn(k, r)
+        self.assertEqual(set(r["plot"]),
+                         {"dates", "y", "fit", "train_end_index"})
+        self.assertEqual(len(r["plot"]["y"]), len(r["plot"]["fit"]))
+        # residual_spectrum is a sorted-by-period list of {period_d, share}
+        sp = r["residual_spectrum"]
+        self.assertTrue(1 <= len(sp) <= 48)
+        self.assertTrue(all({"period_d", "share"} <= set(d) for d in sp))
+        self.assertEqual([d["period_d"] for d in sp],
+                         sorted(d["period_d"] for d in sp))
+        self.assertTrue(all(0 <= d["share"] <= 1 for d in sp))
+        self.assertIn("never citable", r["disclaimer"])
+
+    def test_try_equation_rejects_bad_period_count(self):
+        with self.assertRaises(ValueError):
+            server.try_equation({"series": "moon_distance", "periods_d": []})
+        with self.assertRaises(ValueError):
+            server.try_equation({"series": "moon_distance",
+                                 "periods_d": [1, 2, 3, 4, 5, 6]})
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

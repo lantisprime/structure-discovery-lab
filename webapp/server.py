@@ -273,6 +273,14 @@ def try_equation(payload):
     f = np.abs(np.fft.rfft(resid - resid.mean())[1:]) ** 2
     out["residual_top_period_d"] = round(float(len(y) / (int(np.argmax(f)) + 1)), 2)
     out["residual_top_share"] = round(float(f.max() / f.sum()), 4)
+    # additive, sandbox-only: strongest residual periodogram peaks for the
+    # "Residual spectrum" segment (share of residual variance per period).
+    fs = f / f.sum()
+    order = list(np.argsort(fs)[::-1][:48])
+    out["residual_spectrum"] = sorted(
+        ({"period_d": round(float(len(y) / (int(j) + 1)), 3),
+          "share": round(float(fs[j]), 5)} for j in order),
+        key=lambda d: d["period_d"])
     step = max(1, len(y) // 400)
     out["plot"] = {"dates": s["dates"][::step], "y": list(map(float, y[::step])),
                    "fit": list(map(float, fit[::step])),
