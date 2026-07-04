@@ -5,3 +5,4 @@ __pycache__/
 webapp/config.local.json
 webapp/joblogs/
 webapp/.keysalt
+.episodic-memory/
