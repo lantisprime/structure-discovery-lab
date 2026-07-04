@@ -5,6 +5,7 @@ math) and dataset_stats (wizard dataset-card previews).
 
 Run:  python3 webapp/test_server.py
 """
+import json
 import math
 import os
 import shutil
@@ -246,6 +247,64 @@ class TestKBAdd(unittest.TestCase):
             server.kb_add(self._valid(title="x"))            # title too short
         with self.assertRaises(ValueError):
             server.kb_add(self._valid(statement="short"))    # < 10 chars
+
+
+class TestApprovalsGate(unittest.TestCase):
+    """The REAL human gate behind the redesigned Approvals view: record_approval()
+    must genuinely append the signature to the append-only log AND fill the
+    registration's approved_by_human line, and approvals_list() must reflect the
+    queue draining. Runs against an isolated temp ROOT so no real (frozen)
+    registration or the real results/ log is ever touched."""
+
+    BLANK = "- approved_by_human: ____________  date: ____________"
+
+    def setUp(self):
+        self._real_root, self._real_appr = server.ROOT, server.APPROVALS
+        self.tmp = tempfile.mkdtemp()
+        os.makedirs(os.path.join(self.tmp, "docs"))
+        os.makedirs(os.path.join(self.tmp, "results"))
+        server.ROOT = self.tmp
+        server.APPROVALS = os.path.join(self.tmp, "results", "webapp_approvals.jsonl")
+        self.doc = "docs/REGISTRATION_GATE_FIXTURE.md"
+        with open(os.path.join(self.tmp, self.doc), "w") as f:
+            f.write("# Gate fixture registration\n\n## Governance\n" + self.BLANK + "\n")
+
+    def tearDown(self):
+        server.ROOT, server.APPROVALS = self._real_root, self._real_appr
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_unsigned_registration_is_pending(self):
+        q = server.approvals_list()
+        self.assertEqual([p["doc"] for p in q["pending"]], [self.doc])
+        self.assertEqual(q["recorded"], [])
+
+    def test_missing_name_raises_the_gate(self):
+        with self.assertRaises(ValueError):
+            server.record_approval({"doc": self.doc, "name": "  "})
+
+    def test_doc_outside_docs_is_rejected(self):
+        with self.assertRaises(ValueError):
+            server.record_approval({"doc": "../secrets.md", "name": "x"})
+
+    def test_signing_patches_doc_appends_log_and_drains_queue(self):
+        entry = server.record_approval(
+            {"doc": self.doc, "name": "Juan dela Cruz (lab owner)", "decision": "approve"})
+        # (a) registration approval line genuinely filled
+        self.assertTrue(entry["doc_patched"])
+        txt = open(os.path.join(self.tmp, self.doc)).read()
+        self.assertIn("approved_by_human: Juan dela Cruz (lab owner) (via webapp)", txt)
+        self.assertNotIn("____________", txt)
+        # (b) append-only log carries the signature + a pre-image hash
+        self.assertTrue(os.path.exists(server.APPROVALS))
+        logged = [json.loads(l) for l in open(server.APPROVALS) if l.strip()]
+        self.assertEqual(len(logged), 1)
+        self.assertEqual(logged[0]["name"], "Juan dela Cruz (lab owner)")
+        self.assertEqual(logged[0]["channel"], "webapp")
+        self.assertTrue(logged[0]["sha_before"])
+        # (c) queue drains; the now-signed doc appears under recorded
+        q = server.approvals_list()
+        self.assertEqual(q["pending"], [])
+        self.assertEqual(q["recorded"][0]["doc"], self.doc)
 
 
 if __name__ == "__main__":
