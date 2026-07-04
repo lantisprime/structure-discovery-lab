@@ -361,6 +361,21 @@ h1.view-h1{font-family:var(--serif);font-weight:500;font-size:32px;
 .seg button{padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:500;
   color:var(--mut2);white-space:nowrap}
 .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+/* ---------------- ledger ---------------- */
+.lg-card-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.lgchart{width:100%;height:150px;display:block}
+.lg-h{font-family:var(--serif);font-weight:600;font-size:16px;margin-bottom:4px}
+.lg-k{color:var(--mut2);font-size:13px}
+.lg-note{color:var(--mut2);font-size:12.5px;margin-top:8px;line-height:1.5}
+.lg-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lg-legend:empty{display:none}
+.lg-chip{font-family:var(--mono);font-size:11px;color:var(--mut);background:var(--hair);
+  border-radius:999px;padding:3px 10px}
+.lg-fam{border-bottom:1px solid var(--hair)}
+.lg-fam summary{cursor:pointer;padding:9px 0;font-weight:600;font-size:13.5px;list-style:none}
+.lg-fam summary::-webkit-details-marker{display:none}
+.lg-fam summary::before{content:"▸";color:var(--faint);font-size:11px;margin-right:8px}
+.lg-fam[open] summary::before{content:"▾"}
 .seg .m{display:none}
 .eqres{margin-top:14px}
 .eqreshead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
@@ -448,7 +463,7 @@ const PRIMARY=[["home","Overview"],["results","Experiments"],["equations","Equat
   ["theorems","Theorems"],["ledger","Ledger"]];
 const MORE=[["agents","Agents"],["approvals","Approvals"],["admin","Admin"],["help","Help"]];
 const TITLES=Object.fromEntries([...PRIMARY,...MORE].map(([id,l])=>[id,l]));
-const BUILT=new Set(["home","new","results","equations","theorems"]);   // grows as views land in later phases
+const BUILT=new Set(["home","new","results","equations","theorems","ledger"]);   // grows as views land in later phases
 
 /* ---------------- governance / evidence primitives ---------------- */
 // grades are hand-authored, compound, sometimes absent: badge the first Gn
@@ -1353,6 +1368,167 @@ window.submitKB=async()=>{
     const v=document.querySelector("#app .view");if(v)v.appendChild(box);
   }catch(e){btn.disabled=false;btn.textContent="Create PROPOSED card";
     err.textContent=e.message;err.style.display="block";}
+};
+
+/* ============================ Ledger ============================ */
+// Look/layout from the mock (design_handoff_structure_lab_console §Ledger +
+// screenshots/06-ledger.png); functionality + copy ported from the classic app
+// (index.html ROUTES.ledger). EVERY number below comes from /api/state — the
+// mock's 173/126/47, hist bars and rows are placeholders and are not rendered.
+function fmtP(p){if(p==null||isNaN(+p))return "—";p=+p;return p<0.001?"<0.001":p.toFixed(3);}
+// p-value charts as inline SVG (same approach as pvBars); accent bars for
+// histogram / by-family, a sparkline for ledger-order sequence.
+function lgBars(values){
+  const W=600,H=150,pl=4,pr=4,pt=12,pb=8,iw=W-pl-pr,ih=H-pt-pb;
+  const n=values.length||1,max=Math.max(1,...values);
+  const step=iw/n,bw=Math.max(2,step*0.62);
+  const bars=values.map((v,i)=>{
+    const h=Math.max(1,(v/max)*ih),x=pl+i*step+(step-bw)/2,y=pt+ih-h;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}"
+      height="${h.toFixed(1)}" rx="2.5" fill="var(--accent)"/>`;}).join("");
+  return `<svg class="lgchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${bars}</svg>`;
+}
+function lgSpark(values){
+  const W=600,H=150,pl=4,pr=4,pt=12,pb=10,iw=W-pl-pr,ih=H-pt-pb;
+  const n=values.length;
+  if(!n)return `<svg class="lgchart" viewBox="0 0 ${W} ${H}"></svg>`;
+  const X=i=>pl+(n===1?iw/2:(i/(n-1))*iw), Y=v=>pt+ih-Math.max(0,Math.min(1,v))*ih;
+  const pts=values.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+  const y05=Y(0.05).toFixed(1);
+  return `<svg class="lgchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <line x1="${pl}" y1="${y05}" x2="${W-pr}" y2="${y05}" stroke="var(--amber)"
+      stroke-width="1" stroke-dasharray="5 4" opacity=".55" vector-effect="non-scaling-stroke"/>
+    <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.6"
+      stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+VIEWS.ledger=async(app)=>{
+  const st=await loadState(true);
+  const L=st.ledger||{}, M=st.meta_panel||{};
+  const steps=(st.pipeline&&st.pipeline.steps)||[];
+  const cur=steps.find(s=>s.id===(st.pipeline&&st.pipeline.current))||{};
+  const nxt=steps[steps.findIndex(s=>s.id===cur.id)+1];
+  const recent=L.recent||[];
+  // Live population that feeds the charts: real p-values, never the exploratory
+  // stratum (parity with classic ROUTES.ledger).
+  const live=recent.filter(t=>t.raw_p!=null&&!t.exploratory);
+  const h=honestyRead(M);
+  const flag=t=>{
+    const b=[];
+    if(t.exploratory)b.push('<span class="badge" style="background:#b0670a1c;color:var(--amber)">exploratory</span>');
+    if(t.at_floor)b.push('<span class="badge" style="background:#b0670a1c;color:var(--amber)">at floor</span>');
+    return b.join(" ")||'<span style="color:var(--faint)">—</span>';};
+  app.innerHTML=`<div class="view">
+    ${guide("The lab's accounting: every real-data p-value ever produced, what counts "+
+      "toward the global correction, and the honesty meter watching the whole population. "+
+      "Come here to answer “can I trust a result?” — pick a graph below to see the evidence "+
+      "at a glance.")}
+    <h1 class="view-h1">Ledger</h1>
+
+    <div class="card">
+      <div class="lg-card-h">
+        <div style="font-weight:600">Explore the p-values</div>
+        <div class="seg" id="lg-seg">
+          <button class="on" data-m="hist">Histogram</button>
+          <button data-m="fam">By family</button>
+          <button data-m="seq">In sequence</button>
+        </div>
+      </div>
+      <div id="lg-chart" style="margin-top:14px"></div>
+      <div class="lg-legend" id="lg-legend"></div>
+      <p class="lg-note" id="lg-cap"></p>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><div class="val">${L.tests??"—"}</div>
+        <div class="lab">test rows</div></div>
+      <div class="tile"><div class="val">${L.live??"—"}</div>
+        <div class="lab">live toward global m = ${L.global_m??"—"}</div></div>
+      <div class="tile"><div class="val">${L.exploratory??"—"}</div>
+        <div class="lab">exploratory (never pooled)</div></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><div class="lg-h">Where the lab is</div>
+        <div class="rowline"><span class="lg-k">current step</span>
+          <b>${esc(cur.title||"—")}</b></div>
+        <div class="rowline"><span class="lg-k">next</span>
+          <span>${esc(nxt?nxt.title:"—")}</span></div>
+        <p class="lg-note">${esc(cur.detail||"")}</p>
+        <button class="btn ghost sm" style="margin-top:12px"
+          onclick="location.hash='home'">Full journey</button></div>
+      <div class="card"><div class="lg-h">Honesty meter${
+        M.panel_version?` · panel v${esc(M.panel_version)}`:""}</div>
+        <div class="rowline"><span class="lg-k">discrete meta p</span>
+          <b class="mono" style="color:${h.hot?'var(--amber)':'var(--green)'}">${fmtP(M.p_meta_discrete)}</b></div>
+        <div class="rowline"><span class="lg-k">share ≤ .05</span>
+          <span class="mono">${M.frac_le_05!=null?(M.frac_le_05*100).toFixed(1)+"%":"—"}${
+            M.sim_frac_le_05_q05_q95?` <span style="color:var(--mut2)">(null band ${
+            M.sim_frac_le_05_q05_q95.map(x=>(x*100).toFixed(1)).join("–")}%)</span>`:""}</span></div>
+        <div class="rowline"><span class="lg-k">panel sha</span>
+          <span class="mono" style="color:var(--mut2)">${esc(M.panel_sha||"—")}</span></div>
+        <p class="lg-note">${h.hot
+          ? "The small-p excess is measured, composition-robust, and concentrates in the "+
+            "traced #45 family — a known, era-bounded anomaly, not a new discovery."
+          : "The live p-value population is consistent with honest null testing."}</p></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="lg-h">Recent test rows</div>
+      <div class="ptablewrap" style="margin-top:10px"><table class="ptable">
+        <thead><tr><th>run</th><th>dataset</th><th>method</th><th>p</th><th>m</th><th>flags</th></tr></thead>
+        <tbody>${recent.length?recent.map(t=>`<tr>
+          <td class="mono">${esc(t.run_id)}</td>
+          <td>${esc(t.dataset)}</td>
+          <td class="mono">${esc(t.method)}</td>
+          <td class="mono">${fmtP(t.raw_p)}</td>
+          <td>${t.m_perm??"gate"}</td>
+          <td>${flag(t)}</td></tr>`).join("")
+          :`<tr><td colspan="6" style="color:var(--mut2);padding:14px 8px">No test rows in the ledger yet.</td></tr>`}
+        </tbody></table></div>
+      <div style="margin-top:14px"><button class="btn ghost sm"
+        onclick="window.print()">Export to PDF</button></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="lg-h">Instrument families</div>
+      <div style="margin-top:8px">${Object.entries(st.families||{}).map(([k,v])=>`
+        <details class="lg-fam"><summary>${esc(k)}
+          <span style="color:var(--mut2);font-weight:400">· ${esc(v.class||"")}</span></summary>
+          <p class="lg-note">members: ${esc((Array.isArray(v.members)?v.members:[]).join(", "))}</p>
+          <p class="lg-note">${esc(v.status||"")}</p></details>`).join("")
+        ||`<p class="lg-note">No families recorded.</p>`}</div>
+    </div>
+  </div>`;
+
+  const capMap={
+    hist:"Recent live p-values in 0.05 bins. Honest nulls look roughly flat; a tall "+
+      "leftmost bar means flags to investigate.",
+    fam:"How the recent testing effort splits across instrument families — the m the "+
+      "correction must pay for.",
+    seq:"p-values in ledger order (recent window). Sustained low stretches = a run that "+
+      "kept flagging; random scatter = business as usual."};
+  const renderLg=m=>{
+    const box=$("#lg-chart"),leg=$("#lg-legend"),cap=$("#lg-cap");if(!box)return;
+    leg.innerHTML="";
+    if(m==="hist"){
+      const bins=Array(20).fill(0);
+      live.forEach(t=>bins[Math.min(19,Math.max(0,Math.floor(t.raw_p*20)))]++);
+      box.innerHTML=lgBars(bins);
+    }else if(m==="fam"){
+      const f={};live.forEach(t=>{const k=t.family_id||"—";f[k]=(f[k]||0)+1;});
+      box.innerHTML=lgBars(Object.values(f));
+      leg.innerHTML=Object.entries(f).map(([k,c])=>
+        `<span class="lg-chip">${esc(k)} · ${c}</span>`).join("");
+    }else{
+      box.innerHTML=lgSpark(live.map(t=>+t.raw_p));
+    }
+    cap.textContent=capMap[m];
+  };
+  $("#lg-seg").addEventListener("click",e=>{
+    const b=e.target.closest("button[data-m]");if(!b)return;
+    $("#lg-seg .on")?.classList.remove("on");b.classList.add("on");
+    renderLg(b.dataset.m);});
+  renderLg("hist");
 };
 
 /* ---------------- markdown + modal (shared) ---------------- */
