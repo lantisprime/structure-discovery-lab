@@ -7,7 +7,9 @@ Run:  python3 webapp/test_server.py
 """
 import math
 import os
+import shutil
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -144,6 +146,106 @@ class TestEquationSandbox(unittest.TestCase):
         with self.assertRaises(ValueError):
             server.try_equation({"series": "moon_distance",
                                  "periods_d": [1, 2, 3, 4, 5, 6]})
+
+
+class TestKBFaces(unittest.TestCase):
+    """kb_cards() face/status enrichment over the real docs/kb corpus."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.cards = server.kb_cards()
+
+    def test_corpus_non_empty(self):
+        self.assertTrue(self.cards)
+
+    def test_every_card_has_a_face(self):
+        # Regression: the old **Face**-only regex left every current card (all
+        # of which use **Domain face**) with an empty face and a dead filter.
+        self.assertTrue(all(c["face"] for c in self.cards),
+                        "every card must resolve a non-empty normalized face")
+
+    def test_face_taxonomy_is_the_known_set(self):
+        faces = {c["face"] for c in self.cards}
+        self.assertLessEqual(faces, {"statistical", "dynamical", "algorithmic",
+                                     "cross-sectional", "relational", "decision",
+                                     "marginal"})
+
+    def test_enriched_keys_present_and_typed(self):
+        for c in self.cards:
+            self.assertTrue({"face", "face_raw", "status", "admitted"} <= set(c))
+            self.assertIsInstance(c["admitted"], bool)
+
+    def test_cross_sectional_not_split_on_hyphen(self):
+        faces = {c["face"] for c in self.cards}
+        self.assertNotIn("cross", faces)          # never split the token on '-'
+        self.assertIn("cross-sectional", faces)
+
+    def test_all_current_cards_are_admitted(self):
+        # HONESTY GUARD: no established arsenal card may be flagged non-admitted
+        # merely for lacking a Status line. Only the exact kb_add signature marks
+        # a card PROPOSED, and none of the shipped cards carry it.
+        not_admitted = [c["slug"] for c in self.cards if not c["admitted"]]
+        self.assertEqual(not_admitted, [])
+
+    def test_face_normalizer_units(self):
+        self.assertEqual(server._kb_norm_face("cross-sectional/physical"),
+                         "cross-sectional")
+        self.assertEqual(
+            server._kb_norm_face("marginal/geometric — and the lab's only *exclusion*"),
+            "marginal")
+        self.assertEqual(server._kb_norm_face("relational (paired rows)"),
+                         "relational")
+
+    def test_both_face_labels_parse(self):
+        self.assertTrue(server.KB_FACE_RE.search("**Domain face**: statistical"))
+        self.assertTrue(server.KB_FACE_RE.search("**Face**: statistical"))
+
+
+class TestKBAdd(unittest.TestCase):
+    """kb_add() writes a PROPOSED card. Runs against an isolated temp ROOT so the
+    real (frozen) docs/kb corpus is never touched."""
+
+    def setUp(self):
+        self._real_root = server.ROOT
+        self.tmp = tempfile.mkdtemp()
+        os.makedirs(os.path.join(self.tmp, "docs", "kb"))
+        server.ROOT = self.tmp
+
+    def tearDown(self):
+        server.ROOT = self._real_root
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _valid(self, **over):
+        p = {"title": "Runs test — Wald-Wolfowitz",
+             "face": "statistical",
+             "statement": "Counts of runs are asymptotically normal under H0.",
+             "h0": "Expected run count for an iid binary sequence.",
+             "detects": "Serial clustering and over-alternation.",
+             "blind": "Higher-order structure beyond one-step runs."}
+        p.update(over)
+        return p
+
+    def test_creates_proposed_card_read_back_as_not_admitted(self):
+        r = server.kb_add(self._valid())
+        self.assertIn("slug", r)
+        made = [c for c in server.kb_cards() if c["slug"] == r["slug"]]
+        self.assertEqual(len(made), 1)
+        c = made[0]
+        self.assertFalse(c["admitted"])           # carries the PROPOSED signature
+        self.assertEqual(c["status"], "proposed")
+        self.assertEqual(c["face"], "statistical")  # **Face** label parses back
+
+    def test_real_docs_kb_untouched(self):
+        r = server.kb_add(self._valid(title="Isolation probe theorem card"))
+        real_made = os.path.join(self._real_root, "docs", "kb", r["slug"] + ".md")
+        self.assertFalse(os.path.exists(real_made),
+                         "kb_add must not write into the real docs/kb")
+
+    def test_validation_rejects_short_fields(self):
+        with self.assertRaises(ValueError):
+            server.kb_add(self._valid(title="x"))            # title too short
+        with self.assertRaises(ValueError):
+            server.kb_add(self._valid(statement="short"))    # < 10 chars
 
 
 if __name__ == "__main__":
