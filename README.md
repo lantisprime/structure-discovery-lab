@@ -6,6 +6,14 @@ mathematical traditions under a single calibration discipline, with formal proto
 onboarding theorems and datasets, harmonizing their conflicts, and confirming findings on
 held-out data.
 
+![The Structure Lab console — the Overview landing page](docs/images/console-overview.png)
+
+*The lab drives from a local web console (`python3 webapp/server.py` → http://localhost:8787).
+The **Overview** landing page always surfaces the single next action, alongside live counts
+from the run ledger, the multiplicity ledger, and the honesty meter. Nine views plus a
+guided wizard cover the whole pipeline — pre-registration, human-gated approvals, execution,
+and results.*
+
 The five faces of structure interrogated are **statistical** (uniform marginals),
 **dynamical** (future ⊥ past), **algorithmic** (incompressible), **cross-sectional /
 physical** (no collective modes), and — added with the relational extension —
@@ -940,8 +948,6 @@ script and found byte-level discrepancy; the panel was refreshed to KS p = 0.385
 *Protocol v2.1 · Jun 11, 2026*
 
 ## Web console (`webapp/`)
-
-![The redesigned lab console — Overview, with the lab's single next action and live honesty meter](docs/images/console-overview.png)
 
 Local, zero-dependency console for the lab (Python stdlib only):
 
