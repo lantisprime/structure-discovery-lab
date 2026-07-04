@@ -330,13 +330,94 @@ def all_datasets():
     return d
 
 
+# -- wizard dataset-card previews (rows / span / sparkline). Read-only and
+#    cached by source-file mtime. This is a PREVIEW, not the E0 row-integrity
+#    audit a registered claim still requires.
+PCSO_DRAWS = "datasets/pcso-lotto/data_draws_1yr.csv"
+LOTTO_GAME = {k: k for k in ("Lotto 6/42", "Mega Lotto 6/45",
+                             "Super Lotto 6/49", "Grand Lotto 6/55",
+                             "Ultra Lotto 6/58")}
+_DS_STATS_CACHE = {}   # name -> (source_mtime, stats)
+
+
+def _sparkline(vals, n=24):
+    if not vals:
+        return []
+    step = max(1, len(vals) // n)
+    return [round(float(v), 4) for v in vals[::step][:n]]
+
+
+def _lotto_series(game):
+    """Draw-sum (N1..N6) per draw for one game, sorted by date. The lottery
+    sets aren't single-column SERIES entries, so this is a small sibling of
+    load_csv_col that filters by Game and derives the sum."""
+    import csv as _csv
+    ds, vals = [], []
+    with open(os.path.join(ROOT, PCSO_DRAWS)) as f:
+        for row in _csv.DictReader(f):
+            if row.get("Game") != game:
+                continue
+            try:
+                s = sum(int(row[f"N{i}"]) for i in range(1, 7))
+            except (ValueError, KeyError):
+                continue
+            ds.append(row.get("Date"))
+            vals.append(s)
+    order = sorted(range(len(ds)), key=lambda i: ds[i] or "")
+    return [ds[i] for i in order], [vals[i] for i in order]
+
+
+def dataset_stats(name):
+    """{rows, first_date, last_date, sparkline, source} for a wizard card, or
+    None if the source is unreadable. Cached by source mtime."""
+    try:
+        if name in LOTTO_GAME:
+            src = PCSO_DRAWS
+            def loader():
+                return _lotto_series(LOTTO_GAME[name])
+        elif name in SERIES:
+            src = SERIES[name][0]
+            def loader():
+                return load_csv_col(src, SERIES[name][1])
+        elif name.startswith("user:"):
+            slug = name[5:]
+            src = f"datasets/user/{slug}/data.csv"
+            meta = user_datasets().get(slug) or {}
+            def loader():
+                return load_csv_col(src, meta.get("value_col"),
+                                    meta.get("date_col", "Date"))
+        else:
+            return None
+        path = os.path.join(ROOT, src)
+        mt = os.path.getmtime(path)
+        cached = _DS_STATS_CACHE.get(name)
+        if cached and cached[0] == mt:
+            return cached[1]
+        ds, vals = loader()
+        vals = [v for v in vals if v is not None]
+        if not vals:
+            return None
+        dates = [d for d in ds if d]
+        stats = {"rows": len(vals),
+                 "first_date": min(dates) if dates else None,
+                 "last_date": max(dates) if dates else None,
+                 "sparkline": _sparkline(vals), "source": src,
+                 "preview": True}
+        _DS_STATS_CACHE[name] = (mt, stats)
+        return stats
+    except (OSError, KeyError, ValueError, TypeError):
+        return None
+
+
 def experiment_options():
     seeds, ids = used_seeds_and_runs()
     sug = int(time.strftime("%Y%m%d")) * 100
     while sug in seeds:
         sug += 1
     fams = jd("results/families.json", {}).get("families", {})
-    return {"datasets": all_datasets(),
+    ds = all_datasets()
+    return {"datasets": ds,
+            "dataset_stats": {name: dataset_stats(name) for name in ds},
             "instruments": {k: {"family": v[0], "claim_type": v[1],
                                 "null": v[2],
                                 "family_status": (fams.get(v[0], {})
@@ -348,6 +429,34 @@ def experiment_options():
 
 def sidak(alpha, m):
     return 1 - (1 - alpha) ** (1.0 / m)
+
+
+def compute_governance(instruments, alpha=0.05):
+    """Single source of truth for the wizard's multiplicity math (pure,
+    read-only). `instruments` is a list of instrument method-ids; returns the
+    families engaged, the Šidák-corrected alpha, and the floor-rule minimum m.
+    Both the live wizard preview (/api/governance_preview) and the enforcing
+    draft writer (create_experiment) call THIS function, so the number the
+    operator sees can never diverge from the number the server enforces."""
+    import math
+    valid = [i for i in instruments if i in INSTRUMENTS]
+    fams = sorted({INSTRUMENTS[i][0] for i in valid})
+    nf = len(fams)
+    a_corr = sidak(alpha, nf) if nf else None
+    m_min = (math.ceil(2 / a_corr) - 1) if a_corr else None
+    return {"instruments": valid, "claims": len(valid),
+            "families_engaged": fams, "n_families": nf,
+            "alpha": alpha,
+            "alpha_corrected": round(a_corr, 6) if a_corr is not None else None,
+            "m_min": m_min}
+
+
+def governance_preview(payload):
+    """Read-only live preview for wizard Step 3. No writes, no side effects."""
+    inst = payload.get("instruments") or []
+    if not isinstance(inst, list) or len(inst) > 40:
+        raise ValueError("send a list of up to 40 instrument ids")
+    return compute_governance([str(i) for i in inst])
 
 
 def create_experiment(p):
@@ -368,13 +477,12 @@ def create_experiment(p):
     claims = p.get("claims") or []
     if not (1 <= len(claims) <= 12):
         raise ValueError("select 1-12 instrument × dataset claims")
-    fams_engaged = sorted({INSTRUMENTS[c["instrument"]][0] for c in claims
-                           if c.get("instrument") in INSTRUMENTS})
+    gov = compute_governance([c.get("instrument") for c in claims])
+    fams_engaged = gov["families_engaged"]
     if not fams_engaged:
         raise ValueError("no valid instruments selected")
-    a_corr = sidak(0.05, len(fams_engaged))
-    import math
-    m_min = math.ceil(2 / a_corr) - 1
+    a_corr = gov["alpha_corrected"]
+    m_min = gov["m_min"]
     rows = []
     for i, c in enumerate(claims, 1):
         inst = c["instrument"]
@@ -1560,6 +1668,9 @@ class H(BaseHTTPRequestHandler):
             if u.path in ("/", "/index.html"):
                 return self.send_file(os.path.join(STATIC, "index.html"),
                                       "text/html; charset=utf-8")
+            if u.path in ("/console", "/console.html"):
+                return self.send_file(os.path.join(STATIC, "console.html"),
+                                      "text/html; charset=utf-8")
             if u.path == "/api/state":
                 return self.send_json(state())
             if u.path == "/api/kb":
@@ -1618,6 +1729,8 @@ class H(BaseHTTPRequestHandler):
                 return self.send_json(try_equation(payload))
             if self.path == "/api/new_experiment":
                 return self.send_json(create_experiment(payload))
+            if self.path == "/api/governance_preview":
+                return self.send_json(governance_preview(payload))
             if self.path == "/api/providers":
                 return self.send_json(providers_set(payload))
             if self.path == "/api/kb":

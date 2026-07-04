@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Structure Lab · Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#0071e3; --accent-soft:#e8f0fd; --accent-dark:#0058b0; --accent-dark2:#3a5a8c;
+  --bg:#f5f5f7; --card:#fff; --line:#e8e8ed; --line2:#e2e2e7; --hair:#f0f0f3;
+  --dark:#1d1d1f; --on-dark:#f5f5f7; --dark-mut:#c9c9ce; --dark-faint:#a1a1a6;
+  --ink:#1d1d1f; --ink2:#424245; --mut:#6e6e73; --mut2:#86868b; --faint:#a1a1a6;
+  --guide:#4a545e; --tip:#5b6674; --green:#248a3d; --amber:#b0670a; --grey:#8e8e93;
+  --serif:"Newsreader",Georgia,serif;
+  --sans:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none}
+.mono{font-family:var(--mono)}
+.serif{font-family:var(--serif)}
+
+/* ---------------- header / nav ---------------- */
+header{position:sticky;top:0;z-index:40;
+  background:rgba(245,245,247,.82);backdrop-filter:saturate(160%) blur(16px);
+  -webkit-backdrop-filter:saturate(160%) blur(16px);border-bottom:1px solid var(--line)}
+.bar{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:20px;
+  padding:13px 24px}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+.logo .sq{width:29px;height:29px;border-radius:8px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.logo .name{font-family:var(--serif);font-weight:600;font-size:18px;
+  letter-spacing:-.01em;white-space:nowrap}
+nav.pills{display:flex;align-items:center;gap:2px}
+nav.pills a,.morebtn{padding:6px 13px;border-radius:999px;color:var(--mut);
+  font-size:13.5px;font-weight:500;white-space:nowrap;background:none}
+nav.pills a.on,.morebtn.on{background:var(--accent-soft);color:var(--accent)}
+.morewrap{position:relative}
+.morebtn{display:inline-flex;align-items:center;gap:3px}
+.penddot{display:inline-flex;align-items:center;justify-content:center;
+  min-width:17px;height:17px;padding:0 5px;border-radius:999px;
+  background:var(--accent);color:#fff;font-size:11px;font-weight:700;
+  font-family:var(--mono);margin-left:2px}
+.moremenu{position:absolute;top:38px;right:0;background:#fff;border:1px solid var(--line);
+  border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.12);min-width:172px;
+  padding:6px;display:none;flex-direction:column;z-index:50}
+.moremenu.open{display:flex}
+.moremenu a{padding:9px 12px;border-radius:8px;color:var(--ink);font-size:14px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px}
+.moremenu a.on{color:var(--accent)}
+.moremenu a:hover{background:var(--hair)}
+.spacer{flex:1}
+.compbtn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;
+  border:1px solid var(--line2);background:#fff;border-radius:999px;
+  font-size:13.5px;font-weight:500;color:var(--ink)}
+.compbtn .star{color:var(--accent)}
+
+main{max-width:1080px;margin:0 auto;padding:34px 24px 90px}
+.view{animation:fadeUp .34s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------------- primitives ---------------- */
+.eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;
+  font-size:12px;color:var(--faint)}
+h1.greet{font-family:var(--serif);font-weight:500;font-size:34px;line-height:1.12;
+  letter-spacing:-.02em;max-width:640px;margin:6px 0 0}
+h1.view-h1{font-family:var(--serif);font-weight:500;font-size:32px;
+  letter-spacing:-.01em;margin:2px 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:11.5px;
+  font-weight:600;white-space:nowrap}
+.grid{display:grid;gap:16px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:1fr 1fr}
+.btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);
+  color:#fff;border-radius:12px;padding:13px 24px;font-size:14.5px;font-weight:600}
+.btn.sm{padding:9px 16px;border-radius:10px;font-size:13.5px}
+.btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--line2)}
+
+/* guide banner (every view except Overview + wizard) */
+.guide{display:flex;gap:12px;background:var(--accent-soft);border-radius:16px;
+  padding:15px 20px;margin-bottom:22px}
+.guide .f{font-family:var(--serif);color:var(--accent);font-size:19px;line-height:1;
+  font-style:italic;flex:0 0 auto}
+.guide b{color:var(--accent);font-size:13.5px}
+.guide p{color:var(--guide);font-size:13px;margin-top:2px}
+.guide .btn{margin-top:11px;padding:8px 15px;border-radius:999px;font-size:13px}
+
+/* Overview */
+.next{background:var(--dark);color:var(--on-dark);border-radius:20px;padding:26px 28px;
+  display:flex;flex-wrap:wrap;gap:20px;align-items:center;
+  box-shadow:0 12px 40px rgba(0,0,0,.12);margin:26px 0 0}
+.next .txt{flex:1 1 260px;min-width:260px}
+.next .eyebrow{color:var(--dark-faint)}
+.next h2{font-family:var(--serif);font-weight:500;font-size:24px;margin:8px 0 6px}
+.next p{color:var(--dark-mut);font-size:14px}
+.next .btn{background:var(--accent)}
+.subcap{text-align:center;color:var(--faint);font-size:12.5px;margin-top:10px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+.tile .val{font-family:var(--mono);font-size:27px;line-height:1.1}
+.tile .val.green{color:var(--green)}
+.tile .lab{color:var(--mut2);font-size:13px;margin-top:6px}
+.two{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-top:22px}
+.rightcol{display:grid;gap:16px}
+.stage{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--hair)}
+.stage:last-child{border-bottom:0}
+.stage .dot{width:22px;height:22px;border-radius:999px;flex:0 0 auto;display:flex;
+  align-items:center;justify-content:center;font-size:12px;font-family:var(--mono);
+  background:var(--hair);color:var(--mut2)}
+.stage .dot.done{background:var(--green);color:#fff}
+.stage .dot.now{background:var(--accent);color:#fff}
+.stage .st-t{font-weight:600;font-size:13.5px;display:flex;gap:8px;align-items:center}
+.stage .st-d{color:var(--mut2);font-size:12.5px}
+.mini-badge{font-size:10.5px;padding:1px 8px}
+.start{background:var(--accent-soft);border:0;border-radius:16px;padding:22px}
+.start h3{color:var(--accent-dark);font-family:var(--serif);font-weight:600;font-size:18px}
+.start p{color:var(--accent-dark2);font-size:13.5px;margin:6px 0 14px}
+.helpcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+.help{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;
+  cursor:pointer;text-align:left}
+.help .ic{font-size:18px}
+.help .t{font-weight:600;font-size:14px;margin:8px 0 4px}
+.help .d{color:var(--mut2);font-size:12.5px}
+.placeholder{color:var(--mut2);font-size:14px;padding:30px 0}
+
+/* ---------------- wizard ---------------- */
+.wiz-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin-bottom:22px}
+.wiz-back{font-family:var(--mono);font-size:12px;color:var(--accent);
+  text-transform:uppercase;letter-spacing:.06em}
+.wiz-head h1{font-family:var(--serif);font-weight:500;font-size:32px;
+  letter-spacing:-.02em;margin-top:4px;width:100%}
+.wiz-head .sub{color:var(--mut);font-size:14px;flex:1;min-width:220px}
+.wiz-head .count{font-family:var(--mono);font-size:13px;color:var(--faint)}
+.wiz-grid{display:grid;grid-template-columns:206px 1fr;gap:26px}
+.stepper{position:sticky;top:86px;align-self:start;display:flex;flex-direction:column;gap:2px}
+.stepper .s{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:11px}
+.stepper .s.on{background:#fff;border:1px solid var(--line)}
+.stepper .s .n{width:24px;height:24px;border-radius:999px;flex:0 0 auto;display:flex;
+  align-items:center;justify-content:center;font-size:12px;font-family:var(--mono);
+  background:var(--hair);color:var(--mut2)}
+.stepper .s.on .n{background:var(--accent);color:#fff}
+.stepper .s.done .n{background:var(--green);color:#fff}
+.stepper .s .l{font-size:13.5px;color:var(--mut);font-weight:500}
+.stepper .s.on .l{color:var(--ink);font-weight:600}
+.wiz-body{min-height:400px}
+.dscards{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:14px}
+.dscard{border:1px solid var(--line);border-radius:16px;padding:16px;cursor:pointer;
+  background:#fff;text-align:left;position:relative;transition:border-color .15s}
+.dscard:hover{border-color:var(--line2)}
+.dscard.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.dscard .kind{font-size:11px}
+.dscard .nm{font-weight:600;font-size:15.5px;margin:9px 0 3px}
+.dscard .hint{color:var(--mut2);font-size:12.5px;min-height:34px}
+.dscard .meta{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:8px}
+.dscard .tick{position:absolute;top:12px;right:12px;color:var(--accent);font-weight:700}
+.spark{display:block;width:100%;height:34px;margin-top:8px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;color:var(--mut);margin-bottom:6px;font-weight:500}
+.field input,.field textarea{width:100%;border:1px solid var(--line2);border-radius:11px;
+  padding:11px 13px;font-family:inherit;font-size:14px;outline:none;background:#fff}
+.field input.mono,.field textarea.mono{font-family:var(--mono)}
+.field textarea{min-height:90px;resize:vertical}
+.tip{display:flex;gap:9px;background:var(--accent-soft);border-radius:11px;
+  padding:12px 14px;color:var(--tip);font-size:13px;margin-top:4px}
+.tip .st{color:var(--accent)}
+.faces{display:grid;gap:14px}
+.face{border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:#fff}
+.face .fn{font-family:var(--serif);font-size:18px;font-weight:500}
+.face .fd{color:var(--faint);font-size:12.5px;margin-bottom:10px}
+.ichips{display:flex;flex-wrap:wrap;gap:8px}
+.ichip{border:1px solid var(--line2);border-radius:11px;padding:7px 11px;cursor:pointer;
+  font-size:12.5px;background:#fff;text-align:left}
+.ichip.on{border-color:var(--accent);background:var(--accent-soft)}
+.ichip .id{font-family:var(--mono);font-size:12px}
+.ichip .ct{color:var(--mut2);opacity:.85;font-size:11px}
+.govbar{position:sticky;bottom:16px;background:var(--dark);color:var(--on-dark);
+  border-radius:14px;padding:14px 20px;box-shadow:0 8px 30px rgba(0,0,0,.16);
+  display:flex;flex-wrap:wrap;gap:22px;align-items:center;margin-top:16px}
+.govbar .g .k{font-family:var(--mono);text-transform:uppercase;font-size:11px;
+  letter-spacing:.05em;color:var(--dark-faint)}
+.govbar .g .v{font-family:var(--mono);font-size:17px}
+.govbar .note{color:var(--dark-mut);font-size:12.5px;flex:1;min-width:200px}
+.rev{border:1px solid var(--line);border-radius:16px;padding:20px;background:#fff}
+.revrow{display:flex;justify-content:space-between;gap:12px;padding:8px 0;
+  border-bottom:1px solid var(--hair);font-size:13.5px}
+.revrow:last-child{border-bottom:0}
+.revrow .k{color:var(--mut2)}
+.revrow .v{font-family:var(--mono);text-align:right}
+.branches{display:grid;gap:8px;margin:14px 0}
+.branch{background:var(--hair);border-radius:11px;padding:11px 13px;font-size:13px}
+.branch b{font-family:var(--mono);font-size:12px}
+.accept{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;margin-top:10px}
+.accept input{width:17px;height:17px;accent-color:var(--accent);margin-top:2px}
+.wiz-nav{display:flex;justify-content:space-between;gap:12px;margin-top:22px}
+.wiz-err{color:var(--amber);font-size:13px;margin-top:10px}
+.agentrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--hair)}
+.agentrow:last-child{border-bottom:0}
+.agentrow .an{font-weight:600;font-size:13.5px}
+.agentrow .ad{color:var(--mut2);font-size:12.5px}
+.agentrow .am{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-left:auto}
+.loop{display:grid;gap:8px;margin:6px 0 14px}
+.loopstep{display:flex;gap:11px;align-items:center;font-size:13.5px}
+.loopstep .ln{width:22px;height:22px;border-radius:999px;background:var(--accent-soft);
+  color:var(--accent);font-family:var(--mono);font-size:12px;display:flex;
+  align-items:center;justify-content:center;flex:0 0 auto}
+.callout{background:var(--accent-soft);border-radius:12px;padding:13px 16px;
+  color:var(--accent-dark2);font-size:13.5px;margin:2px 0 16px}
+@media(max-width:820px){.wiz-grid{grid-template-columns:1fr}
+  .stepper{position:static;flex-direction:row;overflow-x:auto;gap:6px}
+  .stepper .s .l{display:none}.govbar{position:static}}
+
+/* ---------------- experiments ---------------- */
+.exp-list{padding:4px 0}
+.exprow{display:grid;grid-template-columns:1.3fr 1.5fr auto;gap:14px;align-items:center;
+  padding:15px 20px;border-bottom:1px solid var(--hair);cursor:pointer;width:100%;
+  text-align:left;background:none}
+.exprow:last-child{border-bottom:0}
+.exprow:hover{background:#fcfcfd}
+.exprow .rid{font-family:var(--mono);font-size:13px}
+.exprow .rdate{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:2px}
+.exprow .rstatus{color:var(--ink2);font-size:13.5px}
+.exprow .rright{justify-self:end;display:flex;align-items:center;gap:8px}
+.exprow .caretr{color:var(--faint);font-size:12px}
+.expdetail{border-bottom:1px solid var(--hair);padding:4px 20px 20px;
+  animation:fadeUp .25s ease}
+.expdetail .di{font-size:14px;color:var(--ink2);margin:6px 0 14px;line-height:1.5}
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 22px}
+.fact .fk{font-family:var(--mono);text-transform:uppercase;font-size:10.5px;
+  letter-spacing:.05em;color:var(--faint)}
+.fact .fv{font-size:13px;margin-top:2px;word-break:break-word}
+.fact .fv.mono{font-family:var(--mono);font-size:12px}
+@media(max-width:600px){.exprow{grid-template-columns:1fr auto}.exprow .rstatus{display:none}
+  .facts{grid-template-columns:1fr}}
+
+/* ---------------- modal (docs / theorem cards) ---------------- */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.32);z-index:70;display:flex;
+  align-items:flex-start;justify-content:center;padding:60px 20px;overflow-y:auto;
+  animation:fadeUp .2s ease}
+.modal{background:#fff;border-radius:18px;max-width:720px;width:100%;padding:26px 28px;
+  box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.modal .mx{float:right;width:30px;height:30px;border-radius:999px;background:var(--hair);
+  color:var(--mut);font-size:16px}
+.modal h3{font-family:var(--serif);font-weight:600;font-size:22px;margin-bottom:10px}
+.md{font-size:14px;line-height:1.6;color:var(--ink2)}
+.md h1,.md h2,.md h3{font-family:var(--serif);color:var(--ink);margin:14px 0 6px}
+.md h1{font-size:20px}.md h2{font-size:17px}.md h3{font-size:15px}
+.md code{font-family:var(--mono);font-size:12.5px;background:var(--hair);padding:1px 5px;border-radius:5px}
+.md pre{background:var(--hair);padding:12px;border-radius:10px;overflow-x:auto;margin:8px 0}
+.md pre code{background:none;padding:0}
+.md ul{margin:6px 0 6px 20px}.md li{margin:3px 0}
+.md p{margin:8px 0}
+.md table{border-collapse:collapse;width:100%;margin:8px 0;font-size:12.5px;display:block;overflow-x:auto}
+.md th,.md td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+
+/* ---------------- companion drawer ---------------- */
+.comp{position:fixed;right:20px;bottom:20px;width:min(360px,calc(100vw - 40px));
+  max-height:min(560px,78vh);background:#fff;border:1px solid #e2ddd1;
+  border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.18);
+  display:none;flex-direction:column;z-index:60;animation:fadeUp .3s ease}
+.comp.open{display:flex}
+.comp .ch{display:flex;align-items:center;gap:8px;padding:14px 16px;
+  border-bottom:1px solid var(--hair)}
+.comp .ch .star{color:var(--accent)}
+.comp .ch .t{font-weight:600;font-size:14.5px;flex:1}
+.comp .ch .x{width:26px;height:26px;border-radius:999px;background:var(--hair);
+  color:var(--mut);font-size:15px}
+.comp .msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.bub{padding:9px 13px;border-radius:15px;font-size:13.5px;line-height:1.45;max-width:88%;
+  white-space:pre-wrap}
+.bub.u{background:var(--accent);color:#fff;align-self:flex-end;
+  border-bottom-right-radius:4px;max-width:85%}
+.bub.a{background:#f0f0f3;color:#2a2a2c;align-self:flex-start;border-bottom-left-radius:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 10px}
+.chip{background:var(--accent-soft);color:var(--accent);border-radius:999px;
+  padding:6px 11px;font-size:12px;font-weight:500}
+.comp .in{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--hair)}
+.comp .in input{flex:1;border:1px solid var(--line2);border-radius:999px;
+  padding:9px 14px;font-family:inherit;font-size:13.5px;outline:none}
+.comp .in .send{width:34px;height:34px;border-radius:999px;background:var(--accent);
+  color:#fff;font-size:16px;flex:0 0 auto}
+
+/* ---------------- responsive ---------------- */
+@media(max-width:960px){.g3,.helpcards,.tiles{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:820px){.two,.g2{grid-template-columns:1fr}}
+@media(max-width:600px){.g3,.g2,.tiles,.helpcards{grid-template-columns:1fr}
+  h1.greet,h1.view-h1{font-size:25px}}
+.mobnav{display:none}
+@media(max-width:720px){
+  nav.pills{display:none}
+  .compbtn .lbl{display:none}
+  .compbtn{padding:8px;border-radius:999px}
+  .bar{padding:12px 16px;gap:10px}
+  .logo{order:1}.spacer{order:1}.compbtn{order:2}.morewrap{order:3}
+  .morebtn{width:38px;height:38px;padding:0;justify-content:center;font-size:17px;
+    border:1px solid var(--line2)}
+  .morebtn.menuopen{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .moremenu{min-width:188px}
+}
+</style>
+</head>
+<body>
+<header><div class="bar" id="bar"></div></header>
+<main><div id="app"></div></main>
+
+<div class="comp" id="comp">
+  <div class="ch"><span class="star">✦</span><span class="t">Lab companion</span>
+    <button class="x" onclick="Comp.toggle(false)">✕</button></div>
+  <div class="msgs" id="compmsgs"></div>
+  <div class="chips" id="compchips"></div>
+  <div class="in"><input id="compinput" placeholder="Ask about the lab…"
+    onkeydown="if(event.key==='Enter')Comp.send()">
+    <button class="send" onclick="Comp.send()">↑</button></div>
+</div>
+
+<script>
+"use strict";
+/* ============================ helpers ============================ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function api(path,opts){const r=await fetch(path,opts);const j=await r.json();
+  if(j&&j.error)throw new Error(j.error);return j;}
+let STATE=null, OPTS=null;
+async function loadState(force){if(!STATE||force)STATE=await api("/api/state");return STATE;}
+
+const LOGO_SVG='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" '+
+  'stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">'+
+  '<path d="M2 12h3l2.5-7 4 15 3-11 2 5H22"/></svg>';
+
+/* nav model */
+const PRIMARY=[["home","Overview"],["results","Experiments"],["equations","Equations"],
+  ["theorems","Theorems"],["ledger","Ledger"]];
+const MORE=[["agents","Agents"],["approvals","Approvals"],["admin","Admin"],["help","Help"]];
+const TITLES=Object.fromEntries([...PRIMARY,...MORE].map(([id,l])=>[id,l]));
+const BUILT=new Set(["home"]);   // grows as views land in later phases
+
+/* ---------------- governance / evidence primitives ---------------- */
+// grades are hand-authored, compound, sometimes absent: badge the first Gn
+// token, keep the full string in the tooltip, neutral fallback otherwise.
+function gradeToken(g){const m=/\bG([0-6])\b/.exec(g||"");return m?("G"+m[1]):null;}
+function gradeColor(tok){return {G0:"#8e8e93",G1:"#8e5bd0",G2:"#0071e3",G3:"#0071e3",
+  G4:"#0071e3",G5:"#248a3d",G6:"#248a3d"}[tok]||"#8e8e93";}
+const GRADE_TIP={G0:"G0 · exploratory — orientation only, never a claim",
+  G1:"G1 · calibrated instrument — tools verified on synthetic data",
+  G2:"G2 · internal registered result",
+  G3:"G3 · auditable registration (hash-committed)",
+  G4:"G4 · independently reproduced by a different agent identity",
+  G5:"G5 · confirmed on fresh, held-out data",G6:"G6 · decision-grade"};
+function gradeBadge(g){
+  const tok=gradeToken(g);
+  if(!tok)return `<span class="badge" style="background:#8e8e9322;color:#6e6e73"
+    title="${esc(g||"no grade — see status")}">${esc((g||"—").split(" ")[0])||"—"}</span>`;
+  const c=gradeColor(tok);
+  return `<span class="badge" style="background:${c}22;color:${c}"
+    title="${esc(GRADE_TIP[tok]||g)} — full: ${esc(g)}">${tok}</span>`;
+}
+// honesty meter: never label a mildly-hot panel "looks honest". Derive from data.
+function honestyRead(mp){
+  const p=mp&&mp.p_meta_discrete, band=mp&&mp.sim_frac_le_05_q05_q95,
+    f=mp&&mp.frac_le_05;
+  if(p==null)return {p:"—",hot:false,note:"panel not built yet"};
+  const hot=(band&&f!=null&&f>band[1])||p<0.05;
+  return {p:(+p).toFixed(3),hot,
+    note:hot?"mild #45-family excess":"looks honest",
+    long:hot?"Mild left-tail excess, concentrated in the adjudicated #45 shadow "+
+      "family — descriptive, not a new discovery.":
+      "The live p-value population is consistent with honest null testing."};
+}
+function guide(line,ctaLabel,ctaHash){
+  return `<div class="guide"><span class="f">ƒ</span><div>
+    <b>Why this page exists</b><p>${line}</p>
+    ${ctaLabel?`<a class="btn" href="#${ctaHash}">${esc(ctaLabel)}</a>`:""}</div></div>`;
+}
+
+/* ============================ shell / nav ============================ */
+let MENU_OPEN=false;
+function pendingCount(){return (STATE&&STATE.approvals&&STATE.approvals.pending||[]).length;}
+function renderBar(){
+  const cur=(location.hash||"#home").slice(1).split("/")[0];
+  const moreActive=MORE.some(([id])=>id===cur);
+  const pend=pendingCount();
+  const pills=PRIMARY.map(([id,l])=>
+    `<a href="#${id}" class="${id===cur?'on':''}">${l}</a>`).join("");
+  const moreItems=MORE.map(([id,l])=>
+    `<a href="#${id}" class="${id===cur?'on':''}" onclick="Nav.closeMenu()">${l}
+      ${id==='approvals'&&pend?`<span class="penddot">${pend}</span>`:''}</a>`).join("");
+  $("#bar").innerHTML=
+    `<div class="logo" onclick="location.hash='home'">
+       <span class="sq">${LOGO_SVG}</span><span class="name">Structure Lab</span></div>
+     <nav class="pills">${pills}</nav>
+     <div class="spacer"></div>
+     <button class="compbtn" onclick="Comp.toggle()"><span class="star">✦</span>
+       <span class="lbl">Companion</span></button>
+     <div class="morewrap">
+       <button class="morebtn ${moreActive?'on':''} ${MENU_OPEN?'menuopen':''}"
+         onclick="Nav.toggleMenu(event)"><span class="morelbl">More</span>
+         <span class="caret">${MENU_OPEN?'▴':'▾'}</span>
+         ${pend?`<span class="penddot">${pend}</span>`:''}</button>
+       <div class="moremenu ${MENU_OPEN?'open':''}">${moreItems}</div>
+     </div>`;
+}
+const Nav={
+  toggleMenu(e){e&&e.stopPropagation();MENU_OPEN=!MENU_OPEN;renderBar();},
+  closeMenu(){MENU_OPEN=false;renderBar();},
+};
+document.addEventListener("click",e=>{
+  if(MENU_OPEN&&!e.target.closest(".morewrap")){MENU_OPEN=false;renderBar();}});
+
+/* ============================ router ============================ */
+const VIEWS={};
+async function route(){
+  renderBar();
+  const [page,...rest]=(location.hash||"#home").slice(1).split("/");
+  const app=$("#app");
+  if(location.protocol==="file:"){
+    app.innerHTML=`<div class="card"><h2 class="serif">Open me through the server</h2>
+      <p style="margin-top:8px">This console needs its local server for live data.
+      In Terminal from the repo folder run <span class="mono">python3 webapp/server.py</span>
+      then visit <a href="http://localhost:8787/console">localhost:8787/console</a>.</p></div>`;
+    return;
+  }
+  app.innerHTML='<div class="view"><p class="placeholder">Loading…</p></div>';
+  try{
+    if(VIEWS[page])await VIEWS[page](app,rest);
+    else notBuilt(app,page);
+  }catch(e){renderError(app,e);}
+  window.scrollTo(0,0);
+}
+function notBuilt(app,page){
+  app.innerHTML=`<div class="view">
+    <h1 class="view-h1">${esc(TITLES[page]||"Overview")}</h1>
+    <div class="card"><p class="placeholder">This view is being rebuilt in the
+      redesign and isn't wired up in this build yet. The current console still
+      has it — open <a href="/">the classic console</a> meanwhile.</p></div></div>`;
+}
+function renderError(app,e){
+  const net=/load failed|failed to fetch|networkerror/i.test(e.message);
+  app.innerHTML=`<div class="view"><div class="card">
+    <h2 class="serif">Something went wrong</h2>
+    <p class="placeholder">${esc(e.message)}</p>
+    ${net?`<p class="placeholder">Start the server: <span class="mono">python3 webapp/server.py</span></p>`:""}
+    <button class="btn ghost sm" onclick="route()">Retry</button></div></div>`;
+}
+window.addEventListener("hashchange",route);
+
+/* ============================ Overview ============================ */
+function nextAction(st){
+  // Priority (Codex F8): pending approvals > pipeline attention > new experiment.
+  const pend=(st.approvals&&st.approvals.pending)||[];
+  if(pend.length){
+    const p=pend[0];
+    return {eyebrow:"Right now, the lab needs one thing",
+      title:"Approve the "+approvalTitle(p)+" registration",
+      detail:"A registered experiment is drafted and waiting on your signature. "+
+             "Nothing runs until you sign — that's the lab's integrity.",
+      cta:"Review & approve",hash:"approvals"};
+  }
+  const cur=st.pipeline&&st.pipeline.current;
+  const map={
+    rerun:{title:"Approve & run the corrected rerun",cta:"Go to approvals",hash:"approvals"},
+    ratify:{title:"Ratify the pending verdicts",cta:"Go to approvals",hash:"approvals"},
+    eq_eval:{title:"Run the blind eval pack in a fresh agent session",
+      cta:"How to run it",hash:"help"},
+    eq_v4:{title:"Draft the equation-v4 registration",cta:"New experiment",hash:"new"},
+  };
+  const m=map[cur];
+  if(m)return {eyebrow:"Right now, the lab needs one thing",
+    detail:(st.pipeline.steps.find(s=>s.id===cur)||{}).detail||"",...m};
+  return {eyebrow:"Right now, the lab needs one thing",
+    title:"Start a new experiment",
+    detail:"Nothing is blocked. The six-step wizard drafts a registration and "+
+           "does the governance math for you.",cta:"New experiment",hash:"new"};
+}
+function approvalTitle(p){
+  const t=(p.title||"").replace(/^Registration[ —-]*/i,"").trim();
+  if(/corrected/i.test(p.doc||t))return "corrected-instrument rerun";
+  return t?t.slice(0,48):"pending";
+}
+function dateEyebrow(){
+  try{return new Date().toLocaleDateString('en-US',
+    {weekday:'long',month:'long',day:'numeric'});}catch(e){return "Today";}
+}
+const STAGE_LABEL={done:["done","done"],"waiting-human":["now","now"],
+  next:["next","next"],later:["later","later"]};
+function stageBadge(status){
+  const c=status==="done"?"var(--green)":status==="waiting-human"?"var(--accent)":
+    status==="next"?"var(--amber)":"var(--grey)";
+  const t={done:"done","waiting-human":"now",next:"next",later:"later"}[status]||status;
+  return `<span class="badge mini-badge" style="background:${c}22;color:${c}">${t}</span>`;}
+
+VIEWS.home=async(app)=>{
+  const st=await loadState(true);
+  const na=nextAction(st);
+  const greet=pendingCount()
+    ? "One decision is waiting for you. Everything else is calm."
+    : "The lab is quiet — a good moment to start something new.";
+  const h=honestyRead(st.meta_panel);
+  const runs=st.runs||[], latest=runs[0]||{};
+  const priced=(st.ledger&&st.ledger.live)!=null?st.ledger.live:"—";
+  const steps=(st.pipeline&&st.pipeline.steps)||[];
+  const stages=steps.map(s=>{
+    const done=s.status==="done";
+    const now=s.status==="waiting-human"||s.status==="next";
+    const dot=done?'<span class="dot done">✓</span>':
+      `<span class="dot ${s.status==='waiting-human'?'now':''}">${done?'✓':''}
+        ${!done?(steps.indexOf(s)+1):''}</span>`;
+    return `<div class="stage">${dot}<div>
+      <div class="st-t">${esc(stageTitle(s.id))} ${stageBadge(s.status)}</div>
+      <div class="st-d">${esc((s.detail||"").split(" — ")[0].slice(0,80))}</div></div></div>`;
+  }).join("");
+
+  app.innerHTML=`<div class="view">
+    <div class="eyebrow">${esc(dateEyebrow())}</div>
+    <h1 class="greet">${esc(greet)}</h1>
+
+    <div class="next"><div class="txt">
+      <div class="eyebrow">${esc(na.eyebrow)}</div>
+      <h2>${esc(na.title)}</h2><p>${esc(na.detail)}</p></div>
+      <a class="btn" href="#${na.hash}">${esc(na.cta)} →</a></div>
+    <div class="subcap">When you're unsure what to do, come back here — this
+      card always shows the single next step.</div>
+
+    <div class="tiles">
+      <div class="tile"><div class="val">${runs.length}</div>
+        <div class="lab">experiments in the run ledger</div></div>
+      <div class="tile"><div class="val ${h.hot?'':'green'}"
+        title="${esc(h.long)}">${h.p}</div>
+        <div class="lab">honesty-meter p (${esc(h.note)})</div></div>
+      <div class="tile"><div class="val">${priced}</div>
+        <div class="lab">p-values priced into the global correction</div></div>
+    </div>
+
+    <div class="two">
+      <div class="card"><div class="st-t" style="font-size:16px">Where the lab is</div>
+        <div class="st-d" style="margin:2px 0 10px">Five stages of the program —
+          nothing here you must memorise.</div>${stages}</div>
+      <div class="rightcol">
+        <div class="card">
+          <div class="eyebrow" style="text-transform:none;font-size:12px">Latest result</div>
+          <div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px">
+            <span class="mono" style="font-size:13.5px">${esc(latest.run_id||"—")}</span>
+            ${gradeBadge(latest.grade)}</div>
+          <p class="st-d" style="font-size:13px">${esc((latest.status||"—").slice(0,150))}</p>
+          <a class="btn ghost sm" href="#results" style="margin-top:12px">
+            Read the interpreted result →</a></div>
+        <div class="start"><h3>Start something new</h3>
+          <p>A six-step wizard drafts the registration and does the governance
+            math for you.</p><a class="btn sm" href="#new">New experiment</a></div>
+      </div>
+    </div>
+
+    <div class="helpcards">
+      ${helpCard("📖","What a null means","Why “no structure found” is a real, publishable result here.","What does a null mean?")}
+      ${helpCard("🧭","How the lab works","Register → approve → run → interpret → decide. One loop.","What should I do next?")}
+      ${helpCard("⚖️","The honesty meter","How the lab watches its own p-values for self-deception.","Explain the honesty meter")}
+    </div>
+  </div>`;
+};
+function stageTitle(id){return {audit:"Correctness audit",ratify:"Verdicts ratified",
+  rerun:"Corrected rerun",eq_eval:"Blind eval pack",eq_v4:"Equation v4"}[id]||id;}
+function helpCard(ic,t,d,ask){
+  return `<button class="help" onclick="Comp.ask('${esc(ask).replace(/'/g,"\\'")}')">
+    <div class="ic">${ic}</div><div class="t">${esc(t)}</div>
+    <div class="d">${esc(d)}</div></button>`;}
+
+/* ============================ wizard ============================ */
+const STEP_META=[
+  {k:"Choose data",h:"Which stochastic dataset?",next:"Continue",
+   sub:"Pick a series to interrogate for hidden structure — or a physical control with a known rhythm."},
+  {k:"Frame question",h:"What are you asking?",next:"Continue",
+   sub:"Name the experiment and state the question, expectation-free."},
+  {k:"Instruments",h:"Which instruments?",next:"Continue",
+   sub:"Choose theorem-backed instruments across the faces of structure. The governance math updates live."},
+  {k:"Register",h:"Register & approve",next:"Create draft registration",
+   sub:"Commit the design before any data is touched — then hand it to the human gate."},
+  {k:"Draft",h:"Your registration is drafted",next:"See what you'll get",
+   sub:"Nothing has run. A draft can't execute until you sign it in Approvals."},
+  {k:"Next",h:"What happens after you sign",next:"Back to Overview",
+   sub:"The loop from a signed registration to an interpreted result."},
+];
+const FACES=[
+  {name:"Statistical",desc:"uniform marginals",inst:["mmd","half-corr"]},
+  {name:"Dynamical",desc:"future ⊥ past",inst:["delay-embed-H1"]},
+  {name:"Cross-sectional",desc:"no collective modes",inst:["lambda-max","cooc-spectra"]},
+  {name:"Relational",desc:"shared / subset structure",
+   inst:["matrix-completion","knn-recovery","cca-covariates"]},
+];
+const WIZ={step:1,dataset:null,runId:"",hypothesis:"",author:"Cha (lab owner)",
+  inst:{},seed:null,m:399,mTouched:false,accepted:false,signName:"Cha (lab owner)",
+  result:null,gov:null,err:""};
+function wizReset(){Object.assign(WIZ,{step:1,dataset:null,runId:"",hypothesis:"",
+  inst:{},m:399,mTouched:false,accepted:false,result:null,gov:null,err:""});
+  WIZ.seed=OPTS?OPTS.suggested_seed:null;}
+function dsKind(name){
+  if(/^(Lotto|Mega|Super|Grand|Ultra)/.test(name))return "Lottery";
+  if(name==="moon_distance")return "Ephemeris";
+  if(name.startsWith("user:"))return "User data";
+  return "Physical";}
+function dsNice(name){return {moon_distance:"Moon distance",tidal_accel:"Manila tidal accel.",
+  pressure:"Manila MSL pressure",kp_index:"Kp geomagnetic"}[name]||name.replace(/^user:/,"");}
+function sparkSVG(vals){
+  if(!vals||vals.length<2)return "";
+  const w=200,h=34,p=2,mn=Math.min(...vals),mx=Math.max(...vals),r=(mx-mn)||1;
+  const pts=vals.map((v,i)=>(p+i*(w-2*p)/(vals.length-1)).toFixed(1)+","+
+    (h-p-((v-mn)/r)*(h-2*p)).toFixed(1)).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="#c9c9ce" stroke-width="1.4"/></svg>`;}
+
+VIEWS.new=async(app)=>{
+  if(!OPTS){OPTS=await api("/api/experiment_options");
+    if(!WIZ.seed)WIZ.seed=OPTS.suggested_seed;}
+  renderWizard();
+};
+function renderWizard(){
+  const app=$("#app"),m=STEP_META[WIZ.step-1];
+  const stepper=STEP_META.map((s,i)=>{
+    const n=i+1,cls=n===WIZ.step?"on":n<WIZ.step?"done":"";
+    return `<div class="s ${cls}"><span class="n">${n<WIZ.step?"✓":n}</span>
+      <span class="l">${s.k}</span></div>`;}).join("");
+  const backHidden=WIZ.step===1||WIZ.step>=5;
+  app.innerHTML=`<div class="view">
+    <div class="wiz-head">
+      <a class="wiz-back" href="#home">← Overview</a>
+      <span style="flex:1"></span><span class="count">Step ${WIZ.step} / 6</span>
+      <h1>${esc(m.h)}</h1><div class="sub">${esc(m.sub)}</div></div>
+    <div class="wiz-grid">
+      <aside class="stepper">${stepper}</aside>
+      <section class="wiz-body">${wizStep()}</section>
+    </div>
+    ${WIZ.step<6?`<div class="wiz-nav">
+      <button class="btn ghost" ${backHidden?'style="visibility:hidden"':''}
+        onclick="wizGo(-1)">← Back</button>
+      <button class="btn" onclick="wizNext()">${esc(m.next)}</button></div>`:``}
+    ${WIZ.err?`<div class="wiz-err">${esc(WIZ.err)}</div>`:""}</div>`;
+  if(WIZ.step===3)refreshGov();
+  if(WIZ.step===2){const r=document.getElementById("w-runid");if(r)r.focus();}
+}
+function wizStep(){
+  const S=WIZ.step;
+  if(S===1){
+    const ds=OPTS.datasets,st=OPTS.dataset_stats||{};
+    return `<div class="dscards">`+Object.keys(ds).map(name=>{
+      const s=st[name]||{},on=WIZ.dataset===name;
+      const span=s.first_date?`${s.first_date.slice(0,4)}–${s.last_date.slice(0,4)}`:"";
+      const meta=s.rows?`${s.rows.toLocaleString()} rows${span?" · "+span:""}`:"";
+      return `<button class="dscard ${on?'on':''}" onclick="wizPickDs('${esc(name)}')">
+        ${on?'<span class="tick">✓</span>':''}
+        <span class="badge" style="background:var(--hair);color:var(--mut)">${dsKind(name)}</span>
+        <div class="nm">${esc(dsNice(name))}</div>
+        <div class="hint">${esc(ds[name])}</div>
+        ${sparkSVG(s.sparkline)}
+        <div class="meta">${meta||"preview unavailable"}</div></button>`;
+    }).join("")+`</div>`;
+  }
+  if(S===2)return `<div class="rev" style="max-width:620px">
+    <div class="field"><label>Experiment id</label>
+      <input class="mono" id="w-runid" value="${esc(WIZ.runId)}" placeholder="e.g. b8_pressure_memory"
+        oninput="WIZ.runId=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'');this.value=WIZ.runId"></div>
+    <div class="field"><label>The question under test</label>
+      <textarea id="w-hyp" placeholder="Do the 6/49 draw sums share distributional structure across quarters?"
+        oninput="WIZ.hypothesis=this.value">${esc(WIZ.hypothesis)}</textarea></div>
+    <div class="tip"><span class="st">✦</span><div>State what you're <em>asking</em>,
+      not what you hope to find. The lab is expectation-free — you commit to publishing
+      either outcome before any data is touched.</div></div>
+    <div class="field" style="margin-top:16px"><label>Drafted by</label>
+      <input id="w-auth" value="${esc(WIZ.author)}" oninput="WIZ.author=this.value"></div></div>`;
+  if(S===3){
+    const im=OPTS.instruments||{};
+    const faces=FACES.map(f=>`<div class="face"><div class="fn">${f.name}</div>
+      <div class="fd">${f.desc}</div><div class="ichips">`+
+      f.inst.filter(id=>im[id]).map(id=>`<button class="ichip ${WIZ.inst[id]?'on':''}"
+        onclick="wizToggle('${id}')"><div class="id">${id}</div>
+        <div class="ct">${esc(im[id].claim_type)}</div></button>`).join("")+
+      `</div></div>`).join("");
+    return `<div class="faces">${faces}</div>
+      <div class="govbar" id="govbar">${govInner()}</div>`;
+  }
+  if(S===4){
+    const sel=selInst(),g=WIZ.gov||{};
+    return `<div class="rev" style="max-width:640px">
+      <div class="mono" style="color:var(--accent);font-size:12.5px;margin-bottom:12px">
+        docs/REGISTRATION_${esc((WIZ.runId||'untitled').toUpperCase())}.md · DRAFT</div>
+      ${revRow("run id",WIZ.runId||"—")}
+      ${revRow("question",(WIZ.hypothesis||"—").slice(0,70),true)}
+      ${revRow("dataset",WIZ.dataset||"—")}
+      ${revRow("claims / families",`${sel.length} · ${g.n_families??"—"}`)}
+      ${revRow("Šidák α′ / min m",`${g.alpha_corrected!=null?(+g.alpha_corrected).toFixed(4):"—"} / ${g.m_min??"—"}`)}
+      <div class="field" style="margin-top:14px"><label>Fresh seed (auto — verified against the ledger)</label>
+        <input class="mono" value="${esc(WIZ.seed||"")}" oninput="WIZ.seed=this.value.replace(/[^0-9]/g,'');this.value=WIZ.seed"></div>
+      <div class="field"><label>Trials m per claim (≥ min m; 399 is a good default)</label>
+        <input class="mono" value="${WIZ.m}" oninput="WIZ.mTouched=true;WIZ.m=parseInt(this.value||'0',10)||0;this.value=WIZ.m"></div>
+      <div style="font-weight:600;margin:6px 0 4px">Both outcomes, declared up front</div>
+      <div class="branches">
+        <div class="branch"><b>NULL</b> — Published at full volume; coverage matrix updated.</div>
+        <div class="branch"><b>REJECT</b> — Row-traced before any anomaly language; same-family co-fires count once.</div></div>
+      <label class="accept"><input type="checkbox" ${WIZ.accepted?"checked":""}
+        onchange="WIZ.accepted=this.checked">
+        <span>I accept both branches and won't edit this registration after approval.</span></label>
+      </div>`;
+  }
+  if(S===5){
+    const r=WIZ.result||{};
+    return `<div class="callout"><b>Nothing has run yet.</b> The wizard only drafts a
+      registration — the human gate and execution are deliberate, separate steps.</div>
+    <div class="rev" style="max-width:680px">
+      <div class="mono" style="color:var(--accent);font-size:13px;margin-bottom:6px">${esc(r.doc||"")}</div>
+      ${revRow("families engaged",(r.families_engaged||[]).join(", ")||"—")}
+      ${revRow("Šidák α′ (server)",r.alpha_corrected!=null?(+r.alpha_corrected).toFixed(4):"—")}
+      ${revRow("min m (server)",r.m_min??"—")}
+      <div style="font-weight:600;margin:16px 0 6px">After you approve, role-separated agents will:</div>
+      ${AGENTS.map(a=>`<div class="agentrow"><div>
+        <div class="an">${a.n}</div><div class="ad">${a.d}</div></div>
+        <span class="am">${a.m}</span></div>`).join("")}
+      <a class="btn" style="margin-top:16px" href="#approvals">Review &amp; sign in Approvals →</a>
+    </div>`;
+  }
+  // S===6
+  return `<div class="rev" style="max-width:680px">
+    <div class="loop">
+      ${["Register — you just drafted it (nothing ran)",
+         "Approve — sign the human gate in Approvals",
+         "Run — an Executor runs it from the Run centre",
+         "Interpret — the plain-language result appears in Experiments",
+         "Decide — verdicts become decisions only through the decision layer"]
+        .map((t,i)=>`<div class="loopstep"><span class="ln">${i+1}</span>${esc(t)}</div>`).join("")}
+    </div>
+    <div class="callout">A clean null is a successful, publishable result here — reported
+      at full volume with its power. There's no “bad” outcome to fear.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn" href="#approvals">Review &amp; sign in Approvals →</a>
+      <button class="btn ghost" onclick="wizReset();renderWizard()">Draft another</button>
+    </div></div>`;
+}
+const AGENTS=[
+  {n:"research-scout",d:"Sources the null model & prior art",m:"sonnet"},
+  {n:"structure-analyst",d:"Designs the Monte-Carlo nulls, calibrates on H₀",m:"fable · deep"},
+  {n:"structure-analyst",d:"Runs the instruments on real data",m:"haiku · exec"},
+  {n:"independent-verifier",d:"Re-executes under a different identity; checks the floor rule",m:"haiku"},
+  {n:"docs-web-editor",d:"Writes the results doc & ledgers every p-value",m:"sonnet"},
+];
+function revRow(k,v,plain){return `<div class="revrow"><span class="k">${esc(k)}</span>
+  <span class="v" ${plain?'style="font-family:var(--sans);text-align:right"':''}>${esc(v)}</span></div>`;}
+function selInst(){return Object.keys(WIZ.inst).filter(k=>WIZ.inst[k]);}
+function govInner(){
+  const g=WIZ.gov||{claims:0,n_families:0,alpha_corrected:null,m_min:null};
+  const cell=(k,v)=>`<div class="g"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  return cell("Claims",g.claims||0)+cell("Families",g.n_families||0)+
+    cell("Šidák α′",g.alpha_corrected!=null?(+g.alpha_corrected).toFixed(4):"—")+
+    cell("Min m",g.m_min??"—")+
+    `<div class="note">The lab does the multiplicity math (computed on the server).
+      Same-family instruments count once.</div>`;
+}
+let govTimer=null;
+function refreshGov(){
+  clearTimeout(govTimer);
+  govTimer=setTimeout(async()=>{
+    try{WIZ.gov=await api("/api/governance_preview",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({instruments:selInst()})});}catch(e){WIZ.gov=null;}
+    if(WIZ.gov&&WIZ.gov.m_min&&!WIZ.mTouched)WIZ.m=Math.max(399,WIZ.gov.m_min);
+    const el=document.getElementById("govbar");if(el)el.innerHTML=govInner();
+  },160);
+}
+window.wizPickDs=name=>{WIZ.dataset=name;WIZ.err="";renderWizard();};
+window.wizToggle=id=>{WIZ.inst[id]=!WIZ.inst[id];
+  renderWizStep3Chip(id);refreshGov();};
+function renderWizStep3Chip(id){
+  // toggle just the clicked chip's class without a full re-render
+  const btns=[...document.querySelectorAll(".ichip")];
+  const b=btns.find(x=>x.querySelector(".id")&&x.querySelector(".id").textContent===id);
+  if(b)b.classList.toggle("on",!!WIZ.inst[id]);
+}
+window.wizGo=d=>{WIZ.err="";WIZ.step=Math.max(1,Math.min(6,WIZ.step+d));renderWizard();};
+window.wizNext=async()=>{
+  WIZ.err="";
+  if(WIZ.step===1){if(!WIZ.dataset){WIZ.err="Pick a dataset to continue.";return renderWizard();}}
+  if(WIZ.step===2){
+    if(!/^[a-z0-9_]{3,40}$/.test(WIZ.runId)){WIZ.err="Experiment id: 3–40 chars, a–z 0–9 _.";return renderWizard();}
+    if((WIZ.hypothesis||"").trim().length<20){WIZ.err="Describe the question in at least 20 characters.";return renderWizard();}
+  }
+  if(WIZ.step===3){if(!selInst().length){WIZ.err="Select at least one instrument.";return renderWizard();}}
+  if(WIZ.step===4){return wizCreate();}
+  if(WIZ.step===5){WIZ.step=6;return renderWizard();}
+  if(WIZ.step===6){location.hash="home";return;}
+  WIZ.step++;renderWizard();
+};
+async function wizCreate(){
+  if(!WIZ.accepted){WIZ.err="Tick the box accepting both outcome branches first.";return renderWizard();}
+  const claims=selInst().map(i=>({instrument:i,dataset:WIZ.dataset,m:WIZ.m}));
+  try{
+    WIZ.result=await api("/api/new_experiment",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({run_id:WIZ.runId,seed:parseInt(WIZ.seed||"0",10),
+        claims,hypothesis:WIZ.hypothesis,author:WIZ.author})});
+    STATE=null;                       // approvals queue changed — refresh next time
+    WIZ.step=5;renderWizard();
+  }catch(e){WIZ.err=e.message;renderWizard();}
+}
+
+/* ============================ experiments ============================ */
+VIEWS.results=async(app)=>{
+  const st=await loadState();
+  const runs=st.runs||[];
+  app.innerHTML=`<div class="view">
+    ${guide("Every past run, newest first — the lab's memory. Tap a run for its "+
+      "plain-language interpretation and evidence grade.","＋ New experiment","new")}
+    <h1 class="view-h1">Experiments</h1>
+    <div class="card exp-list">${runs.map((r,i)=>expRow(r,i)).join("")||
+      '<p class="placeholder" style="padding:20px">No runs in the ledger yet.</p>'}</div>
+  </div>`;
+};
+function expRow(r,i){
+  return `<button class="exprow" onclick="toggleExp(${i})">
+    <div><div class="rid">${esc(r.run_id)}</div><div class="rdate">${esc(r.date||"")}</div></div>
+    <div class="rstatus">${esc(r.status||"—")}</div>
+    <div class="rright">${gradeBadge(r.grade)}<span class="caretr" id="cr-${i}">▸</span></div>
+    </button><div id="exp-${i}"></div>`;
+}
+window.toggleExp=i=>{
+  const box=document.getElementById("exp-"+i),cr=document.getElementById("cr-"+i);
+  if(box.innerHTML){box.innerHTML="";cr.textContent="▸";return;}
+  document.querySelectorAll("[id^='exp-']").forEach(b=>b.innerHTML="");
+  document.querySelectorAll("[id^='cr-']").forEach(c=>c.textContent="▸");
+  const r=(STATE.runs||[])[i];if(!r)return;
+  cr.textContent="▾";box.innerHTML=expDetail(r);
+};
+function expDetail(r){
+  const reg=(r.registration||"").match(/docs\/[\w./-]+\.md/);
+  const fact=(k,v,mono)=>v?`<div class="fact"><div class="fk">${esc(k)}</div>
+    <div class="fv ${mono?'mono':''}">${esc(v)}</div></div>`:"";
+  const facts=[
+    fact("grade",r.grade,true),
+    fact("real-data tests",r.real_data_tests!=null?String(r.real_data_tests):""),
+    fact("datasets",(r.datasets||[]).join(", ")),
+    fact("stages",r.stages,true),
+    fact("seed scheme",r.seed_scheme,true),
+    fact("verifiers",(r.verifiers||[]).join("; ")),
+    fact("output",r.output,true),
+    fact("script",r.script,true),
+  ].join("");
+  return `<div class="expdetail"><div class="di">${esc(r.status||"")}</div>
+    <div class="facts">${facts}</div>
+    ${reg?`<a class="btn ghost sm" style="margin-top:14px" href="#"
+      onclick="openDoc('${esc(reg[0])}','${esc(r.run_id)} — registration');return false">
+      Read the registration →</a>`:""}</div>`;
+}
+
+/* ---------------- markdown + modal (shared) ---------------- */
+function mdInline(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")
+  .replace(/`([^`]+)`/g,"<code>$1</code>")
+  .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');}
+function mdTable(rows){
+  const cells=r=>r.trim().replace(/^\||\|$/g,"").split("|").map(c=>c.trim());
+  if(rows.length<2)return "<p>"+rows.map(mdInline).join("<br>")+"</p>";
+  const head=cells(rows[0]),body=rows.slice(2);
+  return "<table><thead><tr>"+head.map(h=>"<th>"+mdInline(h)+"</th>").join("")+
+    "</tr></thead><tbody>"+body.map(r=>"<tr>"+cells(r).map(c=>"<td>"+mdInline(c)+
+    "</td>").join("")+"</tr>").join("")+"</tbody></table>";
+}
+function mdlite(src){
+  const L=String(src||"").replace(/\r/g,"").split("\n");let out=[],i=0;
+  while(i<L.length){
+    const l=L[i];
+    if(/^```/.test(l)){let c=[];i++;while(i<L.length&&!/^```/.test(L[i])){c.push(esc(L[i]));i++;}i++;
+      out.push("<pre><code>"+c.join("\n")+"</code></pre>");continue;}
+    const h=/^(#{1,3})\s+(.*)/.exec(l);
+    if(h){out.push(`<h${h[1].length}>${mdInline(h[2])}</h${h[1].length}>`);i++;continue;}
+    if(/^\s*\|.*\|\s*$/.test(l)){let rows=[];
+      while(i<L.length&&/^\s*\|.*\|\s*$/.test(L[i])){rows.push(L[i]);i++;}out.push(mdTable(rows));continue;}
+    if(/^\s*[-*]\s+/.test(l)){let it=[];
+      while(i<L.length&&/^\s*[-*]\s+/.test(L[i])){it.push(mdInline(L[i].replace(/^\s*[-*]\s+/,"")));i++;}
+      out.push("<ul>"+it.map(x=>"<li>"+x+"</li>").join("")+"</ul>");continue;}
+    if(/^\s*$/.test(l)){i++;continue;}
+    let p=[];while(i<L.length&&!/^\s*$/.test(L[i])&&
+      !/^(#{1,3}\s|```|\s*\||\s*[-*]\s)/.test(L[i])){p.push(mdInline(L[i]));i++;}
+    out.push("<p>"+p.join("<br>")+"</p>");
+  }
+  return out.join("\n");
+}
+function openModal(html){closeModal();
+  const o=document.createElement("div");o.className="overlay";o.id="overlay";
+  o.innerHTML=`<div class="modal">${html}</div>`;
+  o.addEventListener("click",e=>{if(e.target===o)closeModal();});
+  document.body.appendChild(o);}
+window.closeModal=()=>{const o=document.getElementById("overlay");if(o)o.remove();};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")window.closeModal();});
+window.openDoc=async(name,title)=>{
+  try{const d=await api("/api/doc?name="+encodeURIComponent(name));
+    openModal(`<button class="mx" onclick="closeModal()">✕</button>
+      <h3>${esc(title||name)}</h3><div class="md">${mdlite(d.body)}</div>`);
+  }catch(e){openModal(`<button class="mx" onclick="closeModal()">✕</button>
+    <p class="placeholder">Couldn't open ${esc(name)} — ${esc(e.message)}</p>`);}
+};
+
+/* ============================ companion ============================ */
+const Comp={
+  msgs:[{role:"assistant",content:"Hi — I'm your lab companion. The Overview "+
+    "always shows the single next step; ask me anytime what something means."}],
+  open:false,busy:false,
+  toggle(v){this.open=v==null?!this.open:v;$("#comp").classList.toggle("open",this.open);
+    if(this.open)this.render();},
+  ask(q){this.toggle(true);$("#compinput").value=q;this.send();},
+  render(){
+    $("#compmsgs").innerHTML=this.msgs.map(m=>
+      `<div class="bub ${m.role==='user'?'u':'a'}">${esc(m.content)}</div>`).join("")+
+      (this.busy?`<div class="bub a">…</div>`:"");
+    $("#compchips").innerHTML=["What should I do next?","What does a null mean?",
+      "Explain the honesty meter"].map(c=>
+      `<button class="chip" onclick="Comp.ask('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
+    const m=$("#compmsgs");m.scrollTop=m.scrollHeight;},
+  async send(){
+    const inp=$("#compinput");const t=(inp.value||"").trim();
+    if(!t||this.busy)return;inp.value="";
+    this.msgs.push({role:"user",content:t});this.busy=true;this.render();
+    try{
+      const page=(location.hash||"#home").slice(1).split("/")[0];
+      const r=await api("/api/companion",{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({messages:this.msgs.slice(-12),page})});
+      this.busy=false;
+      if(r.setup_needed)this.msgs.push({role:"assistant",
+        content:(r.hint||"Set up the Companion role in Admin first.")});
+      else this.msgs.push({role:"assistant",content:r.reply||"(no reply)"});
+    }catch(e){this.busy=false;
+      this.msgs.push({role:"assistant",content:"I couldn't reach my provider — "+
+        "check the Companion role's key in Admin. ("+e.message+")"});}
+    this.render();
+  },
+};
+
+/* ============================ boot ============================ */
+route();
+window.addEventListener("resize",()=>{});
+</script>
+</body>
+</html>
