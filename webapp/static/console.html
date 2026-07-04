@@ -83,6 +83,16 @@ h1.view-h1{font-family:var(--serif);font-weight:500;font-size:32px;
   color:#fff;border-radius:12px;padding:13px 24px;font-size:14.5px;font-weight:600}
 .btn.sm{padding:9px 16px;border-radius:10px;font-size:13.5px}
 .btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--line2)}
+.rowline{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:6px}
+.pvsec{margin-top:16px;border-top:1px solid var(--hair);padding-top:14px}
+.pvh{font-weight:600;font-size:13.5px;margin-bottom:8px}
+.pvbars{width:100%;height:90px;display:block}
+.pvcap{font-size:11.5px;color:var(--mut2);margin:6px 0 10px;line-height:1.45}
+.ptablewrap{overflow-x:auto}
+.ptable{border-collapse:collapse;width:100%;font-size:12px}
+.ptable th{text-align:left;color:var(--mut2);font-weight:600;padding:5px 8px;
+  border-bottom:1px solid var(--line);white-space:nowrap}
+.ptable td{padding:5px 8px;border-bottom:1px solid var(--hair);vertical-align:top}
 
 /* guide banner (every view except Overview + wizard) */
 .guide{display:flex;gap:12px;background:var(--accent-soft);border-radius:16px;
@@ -292,6 +302,75 @@ h1.view-h1{font-family:var(--serif);font-weight:500;font-size:32px;
 @media(max-width:820px){.two,.g2{grid-template-columns:1fr}}
 @media(max-width:600px){.g3,.g2,.tiles,.helpcards{grid-template-columns:1fr}
   h1.greet,h1.view-h1{font-size:25px}}
+/* ---------------- equations ---------------- */
+.eqgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.eqcol .eqh{font-weight:600;font-size:16px;margin-bottom:12px}
+.candrow{padding:13px 0;border-top:1px solid var(--hair)}
+.candrow:first-of-type{border-top:0;padding-top:2px}
+.candhead{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.candhead .cid{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink)}
+.candmeta{color:var(--mut2);font-size:12.5px;margin-top:4px}
+.candbp{color:var(--mut2);font-size:11.5px;margin-top:4px}
+.candbp b{font-family:var(--mono);color:var(--ink2)}
+.readjwrap{border-top:1px solid var(--hair);margin-top:12px;padding-top:12px}
+.readjtog{font-size:12.5px;font-weight:600;color:var(--accent);display:flex;gap:6px;align-items:center}
+.readjbody{display:none;margin-top:10px}
+.readjbody.open{display:block}
+.readjbody p{font-size:12.5px;color:var(--mut);line-height:1.55;margin-bottom:10px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-bottom:6px}
+.field select,.field input[type=text]{width:100%;padding:10px 13px;border:1px solid var(--line2);
+  border-radius:10px;font-family:inherit;font-size:14px;background:#fafafc;color:var(--ink)}
+.field select:focus,.field input:focus{outline:0;border-color:var(--accent);background:#fff}
+.field{margin-bottom:14px}
+.chkline{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink2);margin:2px 0 0}
+.chkline input{width:16px;height:16px;accent-color:var(--accent)}
+.fiterr{color:var(--amber);font-size:12.5px;margin:12px 0 0}
+.eqbtns{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.sbnote{font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.4}
+.seg{display:inline-flex;background:#ededf0;border-radius:999px;padding:3px;gap:2px}
+.seg button{padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:500;
+  color:var(--mut2);white-space:nowrap}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.seg .m{display:none}
+.eqres{margin-top:14px}
+.eqreshead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+  gap:10px;margin-bottom:14px}
+.chartwrap{display:flex;gap:8px}
+.yax{display:flex;flex-direction:column;justify-content:space-between;width:58px;text-align:right;
+  font-family:var(--mono);font-size:11px;color:var(--faint);padding:2px 0}
+.chartmain{flex:1;min-width:0}
+.chart{width:100%;height:190px;display:block}
+.chart .axis{stroke:var(--line2);stroke-width:1}
+.chart .split{stroke:var(--amber);stroke-width:1;stroke-dasharray:3 3}
+.chart .yline{fill:none;stroke:#c9c9ce;stroke-width:1.4}
+.chart .fitline{fill:none;stroke:var(--accent);stroke-width:2}
+.chart .resline{fill:none;stroke:var(--accent-dark2);stroke-width:1.5}
+.chart .stem{stroke:var(--accent);stroke-width:2}
+.chart .peak{stroke:var(--amber);stroke-width:2}
+.xax{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;
+  color:var(--faint);margin-top:4px}
+.chartcap2{font-size:12px;color:var(--mut2);margin-top:8px}
+.bigmetrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.bigm .bmv{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.01em;
+  display:flex;align-items:center;gap:8px;color:var(--ink)}
+.bigm .bmk{font-size:12px;color:var(--mut2);margin-top:2px}
+.skill{font-family:var(--sans);font-size:11.5px;font-weight:600;background:var(--accent-soft);
+  color:var(--accent);padding:2px 9px;border-radius:999px}
+.skill.noskill{background:var(--hair);color:var(--mut2)}
+.interp{display:flex;gap:11px;background:var(--accent-soft);border-radius:12px;
+  padding:15px 17px;margin-top:18px}
+.interp .i{color:var(--accent);font-size:16px;line-height:1;margin-top:1px}
+.interp .ih{font-weight:600;font-size:14px;margin-bottom:5px;color:var(--ink)}
+.interp p{font-size:13.5px;color:var(--guide);line-height:1.55}
+.amps{font-size:12px;color:var(--mut2);margin-top:16px;padding-top:12px;border-top:1px solid var(--hair)}
+.amps .ampv{font-family:var(--mono);color:var(--ink2);margin-left:8px}
+.disc{display:flex;gap:9px;background:#fff7ec;border:1px solid #f0e0c8;border-radius:12px;
+  padding:11px 14px;margin-top:14px}
+.disc .i{color:var(--amber);flex:0 0 auto;font-weight:700}
+.disc p{color:#7a5a1e;font-size:12.5px;line-height:1.45}
+.sandbox-empty{color:var(--mut2);font-size:13px;padding:20px 4px;text-align:center}
+@media(max-width:820px){.eqgrid{grid-template-columns:1fr}.bigmetrics{grid-template-columns:1fr}}
+@media(max-width:600px){.seg .full{display:none}.seg .m{display:inline}}
 .mobnav{display:none}
 @media(max-width:720px){
   nav.pills{display:none}
@@ -339,7 +418,7 @@ const PRIMARY=[["home","Overview"],["results","Experiments"],["equations","Equat
   ["theorems","Theorems"],["ledger","Ledger"]];
 const MORE=[["agents","Agents"],["approvals","Approvals"],["admin","Admin"],["help","Help"]];
 const TITLES=Object.fromEntries([...PRIMARY,...MORE].map(([id,l])=>[id,l]));
-const BUILT=new Set(["home"]);   // grows as views land in later phases
+const BUILT=new Set(["home","new","results","equations"]);   // grows as views land in later phases
 
 /* ---------------- governance / evidence primitives ---------------- */
 // grades are hand-authored, compound, sometimes absent: badge the first Gn
@@ -502,6 +581,7 @@ VIEWS.home=async(app)=>{
     ? "One decision is waiting for you. Everything else is calm."
     : "The lab is quiet — a good moment to start something new.";
   const h=honestyRead(st.meta_panel);
+  const mp=st.meta_panel||{};
   const runs=st.runs||[], latest=runs[0]||{};
   const priced=(st.ledger&&st.ledger.live)!=null?st.ledger.live:"—";
   const steps=(st.pipeline&&st.pipeline.steps)||[];
@@ -530,11 +610,14 @@ VIEWS.home=async(app)=>{
     <div class="tiles">
       <div class="tile"><div class="val">${runs.length}</div>
         <div class="lab">experiments in the run ledger</div></div>
+      <div class="tile"><div class="val">${priced}</div>
+        <div class="lab">live tests toward global m${mp&&mp.frac_le_05!=null?
+          ` (${(mp.frac_le_05*100).toFixed(1)}% ≤ .05)`:""}</div></div>
       <div class="tile"><div class="val ${h.hot?'':'green'}"
         title="${esc(h.long)}">${h.p}</div>
-        <div class="lab">honesty-meter p (${esc(h.note)})</div></div>
-      <div class="tile"><div class="val">${priced}</div>
-        <div class="lab">p-values priced into the global correction</div></div>
+        <div class="lab">honesty-meter p${mp&&mp.panel_version?
+          ` (v${esc(String(mp.panel_version))}, ${esc(String(mp.n_tests))} tests)`:""}
+          · ${esc(h.note)}</div></div>
     </div>
 
     <div class="two">
@@ -548,8 +631,13 @@ VIEWS.home=async(app)=>{
             <span class="mono" style="font-size:13.5px">${esc(latest.run_id||"—")}</span>
             ${gradeBadge(latest.grade)}</div>
           <p class="st-d" style="font-size:13px">${esc((latest.status||"—").slice(0,150))}</p>
-          <a class="btn ghost sm" href="#results" style="margin-top:12px">
-            Read the interpreted result →</a></div>
+          ${latest.script?`<div class="rowline"><span class="st-d">script</span>
+            <span class="mono" style="font-size:12px">${esc(latest.script)}</span></div>`:""}
+          ${latest.registration?`<div class="rowline"><span class="st-d">registration</span>
+            <span class="st-d" style="font-size:12px">${esc((latest.registration||"").slice(0,52))}</span></div>`:""}
+          <div class="pillrow" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+            <a class="btn ghost sm" href="#results">Read the interpreted result →</a>
+            <a class="btn ghost sm" href="#agents">Agent status</a></div></div>
         <div class="start"><h3>Start something new</h3>
           <p>A six-step wizard drafts the registration and does the governance
             math for you.</p><a class="btn sm" href="#new">New experiment</a></div>
@@ -783,6 +871,8 @@ window.wizNext=async()=>{
   if(WIZ.step===1){if(!WIZ.dataset){WIZ.err="Pick a dataset to continue.";return renderWizard();}}
   if(WIZ.step===2){
     if(!/^[a-z0-9_]{3,40}$/.test(WIZ.runId)){WIZ.err="Experiment id: 3–40 chars, a–z 0–9 _.";return renderWizard();}
+    if((OPTS&&OPTS.used_run_ids||[]).includes(WIZ.runId)){
+      WIZ.err="That experiment id already exists — pick another.";return renderWizard();}
     if((WIZ.hypothesis||"").trim().length<20){WIZ.err="Describe the question in at least 20 characters.";return renderWizard();}
   }
   if(WIZ.step===3){if(!selInst().length){WIZ.err="Select at least one instrument.";return renderWizard();}}
@@ -831,8 +921,27 @@ window.toggleExp=i=>{
   const r=(STATE.runs||[])[i];if(!r)return;
   cr.textContent="▾";box.innerHTML=expDetail(r);
 };
+// plain-language interpretation of a run — ported verbatim from the classic app
+// (index.html interpretRun); the guide promises this "plain-language interpretation".
+function interpretRun(r,tests){
+  const s=[],grade=(r.grade||""),st=(r.status||"");
+  if(/G0/.test(grade))s.push("This was an <b>exploratory</b> run: its numbers are for orientation only and can never support a claim.");
+  else if(/G1/.test(grade))s.push("This run validated <b>instruments</b> on synthetic data — it says the tools are calibrated, not anything about the real world.");
+  else if(/G2|registered/i.test(grade))s.push("This was a <b>registered</b> experiment: the design was committed before execution, so its p-values are citable evidence.");
+  const ps=tests.map(t=>t.raw_p).filter(p=>p!=null);
+  if(ps.length){
+    const small=ps.filter(p=>p<=.05).length;
+    s.push(`It contributed <b>${ps.length}</b> p-value${ps.length>1?"s":""} to the ledger; ${small===0?"none":small} fell below raw 0.05${small?" (raw — the corrected threshold is stricter, so check the family correction before reading anything into it)":""}.`);
+  }
+  if(/NULL/i.test(st))s.push("Bottom line: <b>no structure beyond chance</b> was found — in this lab a clean null is a successful, publishable result.");
+  if(/positive control/i.test(st))s.push("A physical positive control detected its known mechanism, which certifies the pipeline had power — the nulls are not for lack of trying.");
+  if(/dissolv/i.test(st))s.push("An earlier flag traced back to already-known rows rather than new structure.");
+  if(/ADMITTED/i.test(st))s.push("Verdict class: instruments re-admitted under tightened calibration gates.");
+  return s.join(" ")||"No interpretation available for this run.";
+}
 function expDetail(r){
   const reg=(r.registration||"").match(/docs\/[\w./-]+\.md/);
+  const tests=((STATE.ledger&&STATE.ledger.recent)||[]).filter(t=>t.run_id===r.run_id);
   const fact=(k,v,mono)=>v?`<div class="fact"><div class="fk">${esc(k)}</div>
     <div class="fv ${mono?'mono':''}">${esc(v)}</div></div>`:"";
   const facts=[
@@ -845,12 +954,258 @@ function expDetail(r){
     fact("output",r.output,true),
     fact("script",r.script,true),
   ].join("");
-  return `<div class="expdetail"><div class="di">${esc(r.status||"")}</div>
+  const pblock=tests.length?`<div class="pvsec">
+    <div class="pvh">Ledgered p-values (recent window)</div>
+    ${pvBars(tests)}
+    <p class="pvcap">Bars = p-values (taller is closer to 1 = more null). Short bars are
+      the interesting ones — but only below the family-corrected threshold, not raw 0.05.</p>
+    <div class="ptablewrap"><table class="ptable">
+      <thead><tr><th>dataset</th><th>method</th><th>p</th><th>m</th><th>family</th></tr></thead>
+      <tbody>${tests.map(t=>`<tr><td>${esc(t.dataset)}</td><td>${esc(t.method)}</td>
+        <td class="mono">${t.raw_p==null?"—":(+t.raw_p).toFixed(3)}</td>
+        <td>${t.m_perm??"gate"}</td><td>${esc(t.family_id||"")}</td></tr>`).join("")}
+      </tbody></table></div></div>`:"";
+  return `<div class="expdetail">
+    <div class="interp" style="margin-bottom:14px"><span class="i">💡</span><div>
+      <div class="ih">What this experiment means</div>
+      <p>${interpretRun(r,tests)}</p></div></div>
+    <div class="di">${esc(r.status||"")}</div>
     <div class="facts">${facts}</div>
-    ${reg?`<a class="btn ghost sm" style="margin-top:14px" href="#"
-      onclick="openDoc('${esc(reg[0])}','${esc(r.run_id)} — registration');return false">
-      Read the registration →</a>`:""}</div>`;
+    ${pblock}
+    <div class="pillrow" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      ${reg?`<a class="btn ghost sm" href="#"
+        onclick="openDoc('${esc(reg[0])}','${esc(r.run_id)} — registration');return false">
+        Read the registration →</a>`:""}
+      <button class="btn ghost sm" onclick="window.print()">Export to PDF</button></div></div>`;
 }
+// per-run ledgered p-values as a small bar chart (ported from classic drawBars):
+// taller bar = p closer to 1 = more null; bars at/under raw 0.05 flagged amber.
+function pvBars(tests){
+  const ps=tests.map(t=>t.raw_p==null?0:+t.raw_p);
+  const W=460,H=90,pl=2,pr=2,pt=4,pb=4,iw=W-pl-pr,ih=H-pt-pb,n=ps.length||1;
+  const bw=Math.max(2,(iw/n)*0.7);
+  const bars=ps.map((p,i)=>{
+    const x=pl+(i+0.5)*(iw/n)-bw/2,h=Math.max(1,p*ih),y=pt+ih-h;
+    const c=p<=0.05?"var(--amber)":"var(--accent)";
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}"
+      height="${h.toFixed(1)}" rx="1.5" fill="${c}"/>`;}).join("");
+  return `<svg class="pvbars" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${bars}</svg>`;
+}
+
+/* ============================ Equations ============================ */
+// Verdicts are real ratified strings (FAILED_EQUATION_SEARCH / FAIL_corrected /
+// AT_FLOOR_RESOLUTION_LIMITED / …). Render them honestly; conservative color map
+// so an unrecognized future status can NEVER accidentally read as "good/green".
+function verdictBadge(frozen,corrected){
+  const label=(corrected||frozen||"—").toString();
+  const U=label.toUpperCase();
+  let col="var(--grey)";
+  if(/FAIL|REJECT|WITHDRAW|RETRACT/.test(U))col="var(--amber)";
+  else if(/AT_FLOOR|LIMIT|INCONCLUS|UNDER/.test(U))col="var(--grey)";
+  else if(/RETAIN|CONFIRM|\bPASS\b|SUPPORT|HOLD/.test(U))col="var(--green)";
+  const full=[frozen,corrected].filter(Boolean).join(" → ")||"no verdict";
+  return `<span class="badge mono" style="background:${col}22;color:${col};font-size:11px"
+    title="${esc(full)}">${esc(label)}</span>`;
+}
+// Every number below comes from /api/try_equation (real experiment output);
+// nothing here is hard-coded. Layout + copy match the target design in
+// design_handoff_structure_lab_console/Structure Lab Console.dc.html (§Equations).
+const EQ={series:null,list:null,periods:"",trend:false,seg:"fit",res:null,busy:false,
+  err:"",readjOpen:false};
+VIEWS.equations=async(app)=>{
+  const st=await loadState();
+  if(!EQ.list)EQ.list=await api("/api/series_list");
+  if(!EQ.series)EQ.series=Object.keys(EQ.list)[0];
+  const cands=st.equations||[];
+  app.innerHTML=`<div class="view">
+    ${guide("Left: the equation program's real candidates and what survived scrutiny — "+
+      "today, honestly, both searches failed. Right: a safe sandbox — pick a series, type "+
+      "periods, press Fit. It charges nothing and can't contaminate the lab.",
+      "Try the moon-distance candidate →","equations")}
+    <h1 class="view-h1">Equations</h1>
+    <div class="eqgrid">
+      <section class="card eqcol">
+        <div class="eqh">Candidate equations</div>
+        ${cands.length?cands.map(candRow).join(""):
+          '<p class="sandbox-empty">No candidate equations registered yet.</p>'}
+        ${readjExpander(st.readjudication||{})}
+      </section>
+      <section class="card eqcol" id="sandbox">${sandboxControls()}</section>
+    </div>
+    <div id="eqresult">${eqResultInner()}</div>
+  </div>`;
+  const gb=app.querySelector(".guide .btn");
+  if(gb)gb.onclick=e=>{e.preventDefault();
+    const mc=cands.find(c=>c.series==="moon_distance");
+    if(mc)eqTry(mc.series,mc.periods_d);else eqTry("moon_distance",[27.555]);};
+};
+function candRow(c){
+  const per=(c.periods_d||[]).join(", ");
+  const per2=JSON.stringify(c.periods_d||[]);
+  return `<div class="candrow">
+    <div class="candhead"><span class="cid">${esc(c.id)}</span>
+      ${verdictBadge(c.frozen_verdict,c.corrected_status)}</div>
+    <div class="candmeta">${esc(c.target||c.series||"—")} · periods ${esc(per||"—")} d</div>
+    ${c.binding_p!=null?`<div class="candbp">binding p (post-multiplicity)
+      <b>${(+c.binding_p).toFixed(3)}</b></div>`:""}
+    <button class="btn ghost sm" style="margin-top:9px"
+      onclick='eqTry(${JSON.stringify(c.series)},${per2})'>Try it →</button></div>`;
+}
+function readjExpander(readj){
+  const rat=readj.ratification||{};
+  const when=rat.date?esc(rat.date)+(rat.by?" by "+esc(rat.by):""):"";
+  return `<div class="readjwrap">
+    <button class="readjtog" onclick="EQ.readjOpen=!EQ.readjOpen;
+      $('#readjbody').classList.toggle('open',EQ.readjOpen);
+      this.querySelector('.cr').textContent=EQ.readjOpen?'▾':'▸';">
+      <span class="cr">▸</span> Why statuses changed (readjudication)</button>
+    <div class="readjbody" id="readjbody">
+      <p>${when?`Ratified ${when}: `:""}verdict-time multiplicity was charged
+      (Šidák, base α 0.05, cumulative family m at verdict time). Both candidates were
+      re-adjudicated to <b>FAIL_corrected</b> once the family correction was applied.</p>
+      <a class="btn ghost sm" href="#" onclick="openDoc('docs/RESULTS_EQ_READJUDICATION.md',
+        'Equation readjudication');return false">Read the readjudication →</a>
+    </div></div>`;
+}
+function sandboxControls(){
+  const opts=Object.entries(EQ.list).map(([k,v])=>
+    `<option value="${esc(k)}" ${k===EQ.series?"selected":""}>${esc(v)}</option>`).join("");
+  return `<div class="eqh">Try a hypothesis</div>
+    <div class="field"><label>Series</label>
+      <select onchange="EQ.series=this.value">${opts}</select></div>
+    <div class="field"><label>Periods (days, comma-separated)</label>
+      <input type="text" value="${esc(EQ.periods)}" placeholder="27.555, 13.66"
+        oninput="EQ.periods=this.value"></div>
+    <label class="chkline"><input type="checkbox" ${EQ.trend?"checked":""}
+      onchange="EQ.trend=this.checked"> include linear trend</label>
+    ${EQ.err?`<div class="fiterr">${esc(EQ.err)}</div>`:""}
+    <div class="eqbtns">
+      <button class="btn" onclick="eqFit()">${EQ.busy?"Fitting…":"Fit hypothesis"}</button>
+      <button class="btn ghost" onclick="window.print()">Export to PDF</button></div>
+    <div class="sbnote">Sandbox only: descriptive fit + 80/20 hold-out. Charges 0 multiplicity
+      and is never citable — a real claim goes through registration and the v4
+      null-equation generator.</div>`;
+}
+// big metric numbers are km/g-scale reals — format for readability, never round away signal.
+function fmtNum(v){if(v==null||isNaN(v))return "—";v=+v;const a=Math.abs(v);
+  if(a>=1e4)return v.toExponential(3);        // 15155.1 -> "1.516e+4"
+  if(a>=100)return String(Math.round(v));      // 4126.9 -> "4127"
+  return String(+v.toPrecision(4));}
+function eqResultInner(){
+  if(EQ.busy)return '<div class="card eqres"><p class="sandbox-empty">Fitting…</p></div>';
+  if(!EQ.res)return "";
+  const r=EQ.res,seg=EQ.seg;
+  const sb=(id,full,m)=>`<button class="${seg===id?'on':''}" onclick="eqSeg('${id}')">
+    <span class="full">${full}</span><span class="m">${m}</span></button>`;
+  // Copy + logic ported verbatim from the classic app (webapp/static/index.html
+  // runEq): the functional original the .dc.html mock was traced from. Numbers
+  // are the live /api/try_equation output; interp holds only a trusted <i> tag.
+  const beat=r.beats_climatology,gain=(1-r.rmse_holdout/r.rmse_climatology_holdout)*100;
+  const interp=beat
+    ? `Your hypothesis explains real variation: on data it never saw, it predicts `+
+      `${gain.toFixed(0)}% better than just guessing the average. The residual's `+
+      `strongest leftover rhythm is ~${r.residual_top_period_d} days`+
+      `${r.residual_top_share>0.1?" and it is prominent — worth trying as an extra period":""}. `+
+      `If this keeps looking good, the honest next step is a registration (New experiment), `+
+      `not a bigger sandbox fit.`
+    : `On held-out data your hypothesis predicts <i>worse</i> than a flat average — with `+
+      `these periods there is no usable signal here. That is a perfectly good finding: `+
+      `the lab publishes nulls at full volume.`;
+  const beatCol=beat?"var(--green)":"var(--amber)";
+  const amps=(r.amplitudes||[]).map(a=>
+    `${esc(a.period_d+"d")}: ${(+a.amp).toPrecision(3)}`).join(" · ");
+  return `<div class="card eqres">
+    <div class="eqreshead">
+      <div class="eqh" style="margin:0">Fit — ${esc(r.label)}</div>
+      <div class="seg">${sb("fit","Data + fit","Fit")}${sb("resid","Residuals","Resid.")}${
+        sb("spec","Residual spectrum","Spectrum")}</div>
+    </div>
+    ${eqChart(r,seg)}
+    <div class="chartcap2">${chartCap(seg)}</div>
+    <div class="bigmetrics">
+      <div class="bigm"><div class="bmv">${(+r.rmse_holdout).toPrecision(4)}</div>
+        <div class="bmk">hold-out RMSE (last 20%)</div></div>
+      <div class="bigm"><div class="bmv">${(+r.rmse_climatology_holdout).toPrecision(4)}</div>
+        <div class="bmk">climatology baseline RMSE</div></div>
+      <div class="bigm"><div class="bmv" style="color:${beatCol}">${beat?"beats":"loses to"}</div>
+        <div class="bmk">baseline ${beat?'<span class="skill">skill</span>':
+          '<span class="skill noskill">no skill</span>'}</div></div>
+    </div>
+    <div class="interp"><span class="i">💡</span><div>
+      <div class="ih">What this means</div><p>${interp}</p></div></div>
+    <div class="amps">recovered amplitudes<span class="ampv">${amps||"—"}</span></div>
+    <div class="disc"><span class="i">⚠</span><p>${esc(r.disclaimer)}</p></div>
+  </div>`;
+}
+function chartCap(seg){
+  if(seg==="resid")return "What your equation leaves unexplained — structure here means "+
+    "something it misses.";
+  if(seg==="spec")return "Residual periodogram — a dominant bar is a leftover rhythm your "+
+    "equation doesn't capture.";
+  return "Grey = observed series · blue = your equation. The last 20% was never used for fitting.";
+}
+// chart with real axis labels (y min/max, x first/last date), like the target twoLine.
+function eqChart(r,seg){
+  const W=460,H=190,pl=2,pr=2,pt=6,pb=6,iw=W-pl-pr,ih=H-pt-pb;
+  const dates=(r.plot||{}).dates||[];
+  const wrap=(body,yTop,yBot,xL,xR)=>`<div class="chartwrap">
+    <div class="yax"><span>${esc(yTop)}</span><span>${esc(yBot)}</span></div>
+    <div class="chartmain">
+      <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${body}</svg>
+      <div class="xax"><span>${esc(xL)}</span><span>${esc(xR)}</span></div>
+    </div></div>`;
+  if(seg==="spec"){
+    const sp=r.residual_spectrum||[];
+    if(!sp.length)return wrap("","","","","");
+    const per=sp.map(d=>d.period_d),sh=sp.map(d=>d.share);
+    const pmn=Math.min(...per),pmx=Math.max(...per),pdr=(pmx-pmn)||1,smx=Math.max(...sh)||1;
+    const topi=sh.indexOf(smx);
+    const stems=sp.map((d,i)=>{
+      const x=pl+((d.period_d-pmn)/pdr)*iw,y2=pt+ih-(d.share/smx)*ih;
+      return `<line class="${i===topi?'peak':'stem'}" x1="${x.toFixed(1)}" y1="${(pt+ih).toFixed(1)}"
+        x2="${x.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;}).join("");
+    const body=`<line class="axis" x1="${pl}" y1="${pt+ih}" x2="${W-pr}" y2="${pt+ih}"/>${stems}`;
+    return wrap(body,(smx*100).toFixed(0)+"%","0",pmn.toFixed(1)+" d",pmx.toFixed(0)+" d");
+  }
+  const p=r.plot||{},ys=p.y||[],fit=p.fit||[];
+  if(!ys.length)return wrap("","","","","");
+  const resid=ys.map((v,i)=>v-(fit[i]||0));
+  const vals=seg==="resid"?resid:ys.concat(fit);
+  const vmn=Math.min(...vals),vmx=Math.max(...vals),vr=(vmx-vmn)||1,n=ys.length;
+  const X=i=>pl+(n<2?0:(i/(n-1))*iw),Y=v=>pt+ih-((v-vmn)/vr)*ih;
+  const path=a=>a.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+  let body;
+  if(seg==="resid"){
+    const zy=Y(0);
+    body=`<line class="axis" x1="${pl}" y1="${zy.toFixed(1)}" x2="${W-pr}" y2="${zy.toFixed(1)}"/>
+      <path class="resline" d="${path(resid)}"/>`;
+  }else{
+    body=`<path class="yline" d="${path(ys)}"/><path class="fitline" d="${path(fit)}"/>`;
+    if(p.train_end_index!=null){const sx=X(p.train_end_index);
+      body+=`<line class="split" x1="${sx.toFixed(1)}" y1="${pt}" x2="${sx.toFixed(1)}"
+        y2="${(pt+ih).toFixed(1)}"/>`;}
+  }
+  return wrap(body,fmtNum(vmx),fmtNum(vmn),dates[0]||"",dates[dates.length-1]||"");
+}
+// re-render the sandbox controls (busy/error) and the full-width result independently.
+function rerenderEq(){const c=$("#sandbox");if(c)c.innerHTML=sandboxControls();
+  const e=$("#eqresult");if(e)e.innerHTML=eqResultInner();
+  if(!c&&!e)VIEWS.equations($("#app"));}
+window.eqTry=(series,periods)=>{EQ.series=series;EQ.periods=(periods||[]).join(", ");
+  EQ.trend=false;eqFit();};
+window.eqSeg=id=>{EQ.seg=id;const e=$("#eqresult");if(e)e.innerHTML=eqResultInner();};
+window.eqFit=async()=>{
+  const periods=EQ.periods.split(/[,\s]+/).map(x=>parseFloat(x)).filter(x=>x>0);
+  if(periods.length<1||periods.length>5){
+    EQ.err="Enter 1–5 positive periods (in days).";return rerenderEq();}
+  EQ.err="";EQ.busy=true;EQ.res=null;rerenderEq();
+  try{EQ.res=await api("/api/try_equation",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({series:EQ.series,periods_d:periods,trend:EQ.trend})});
+    EQ.seg="fit";
+  }catch(e){EQ.err=e.message;}
+  EQ.busy=false;rerenderEq();
+};
 
 /* ---------------- markdown + modal (shared) ---------------- */
 function mdInline(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")

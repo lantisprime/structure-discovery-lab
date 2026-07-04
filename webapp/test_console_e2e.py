@@ -41,10 +41,13 @@ def run():
         assert "looks honest" not in hlab, "must not mislabel a hot panel as honest"
         assert "excess" in hlab, "hot panel should surface the #45 excess caveat"
         assert "0.385" not in body, "prototype placeholder 0.385 must not appear"
+        # panel provenance restored from the classic app (version + n_tests)
+        assert "v2" in hlab and "tests" in hlab, "honesty tile shows panel version + n_tests"
 
-        # 3. Priced-into-correction tile is the live live-test count (195).
-        assert pg.locator(".tile", has_text="priced into the global correction"
-                          ).locator(".val").inner_text().strip() == "195"
+        # 3. Live-tests tile: live count (195) + the frac_le_05 figure (classic parity).
+        ltile = pg.locator(".tile", has_text="live tests toward global m")
+        assert ltile.locator(".val").inner_text().strip() == "195"
+        assert "≤ .05" in ltile.inner_text(), "restore the % ≤ .05 figure from index.html"
 
         # 4. Next-action reflects live pipeline (no pending approval => eval step).
         nexttitle = pg.locator(".next h2").inner_text().lower()
@@ -52,9 +55,14 @@ def run():
         assert pg.locator(".next .eyebrow").inner_text().lower() == \
             "right now, the lab needs one thing"   # CSS uppercases it
 
-        # 5. Latest result shows the real newest run + a parsed grade badge.
-        assert "corrected_rerun_r1" in pg.locator(".rightcol").inner_text()
+        # 5. Latest result shows the real newest run + a parsed grade badge,
+        #    plus the classic provenance (script + registration) and nav to agents.
+        rc = pg.locator(".rightcol").inner_text()
+        assert "corrected_rerun_r1" in rc
         assert pg.locator(".rightcol .badge").first.inner_text().strip() == "G2"
+        assert ".py" in rc, "latest card shows the run's script (classic parity)"
+        assert "REGISTRATION" in rc.upper(), "latest card shows the registration doc"
+        assert pg.locator(".rightcol a", has_text="Agent status").count() == 1
 
         # 6. No pending approvals right now => no pending badge anywhere.
         assert pg.locator(".penddot").count() == 0, "no pending dot when queue empty"

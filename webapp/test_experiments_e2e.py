@@ -18,7 +18,9 @@ SHOT = sys.argv[2] if len(sys.argv) > 2 else "/tmp/console_experiments.png"
 
 
 def run():
-    runs = json.load(urllib.request.urlopen(f"{BASE}/api/state"))["runs"]
+    _state = json.load(urllib.request.urlopen(f"{BASE}/api/state"))
+    runs = _state["runs"]
+    st_ledger_recent = _state.get("ledger", {}).get("recent", [])
     with sync_playwright() as pw:
         b = pw.chromium.launch()
         pg = b.new_page(viewport={"width": 1280, "height": 950})
@@ -55,6 +57,20 @@ def run():
         det = pg.locator(".expdetail").first.inner_text()
         assert "positive control" in det.lower() or runs[0]["status"][:20] in det
         assert "datasets" in det.lower() or "verifiers" in det.lower()
+        # plain-language interpretation the guide promises (ported from classic interpretRun)
+        interp = pg.locator(".expdetail .interp").first.inner_text()
+        assert "What this experiment means" in interp
+        assert len(interp) > 60, "interpretation should be a real narrative, not empty"
+        # per-run ledgered p-values chart + table (restored from classic detail page)
+        detail = pg.locator(".expdetail").first
+        run_tests = [t for t in st_ledger_recent if t.get("run_id") == runs[0]["run_id"]]
+        if run_tests:
+            assert detail.locator(".pvsec svg.pvbars rect").count() == len(run_tests), \
+                "one p-value bar per ledgered test for this run"
+            assert detail.locator(".ptable tbody tr").count() == len(run_tests), \
+                "one table row per ledgered test"
+        # per-run Export to PDF (classic parity)
+        assert detail.get_by_role("button", name="Export to PDF").count() == 1
 
         # registration doc opens in the modal, then closes
         pg.get_by_role("link", name="Read the registration").click()
