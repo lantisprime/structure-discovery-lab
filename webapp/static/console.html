@@ -376,6 +376,41 @@ h1.view-h1{font-family:var(--serif);font-weight:500;font-size:32px;
 .lg-fam summary::-webkit-details-marker{display:none}
 .lg-fam summary::before{content:"▸";color:var(--faint);font-size:11px;margin-right:8px}
 .lg-fam[open] summary::before{content:"▾"}
+/* ---------------- agents / run centre ---------------- */
+.ag-logcard{background:var(--dark);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+.ag-loghead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;
+  color:var(--on-dark);font-weight:600;font-size:14px}
+.ag-logtext{font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--dark-mut);
+  max-height:320px;overflow:auto;margin:0}
+.ag-gh{display:flex;align-items:baseline;gap:8px;font-weight:600;font-size:15px}
+.ag-ico{font-size:16px}
+.ag-desc{color:var(--mut2);font-size:12.5px;line-height:1.5;margin-top:6px}
+.ag-item{display:flex;justify-content:space-between;gap:10px;align-items:center;
+  padding:10px 0;border-top:1px solid var(--hair)}
+.ag-lbl{font-size:13.5px;font-weight:500}
+.ag-sub{color:var(--faint);font-size:12px;line-height:1.4;margin-top:2px}
+.ag-jobrow{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
+  padding:10px 0;border-top:1px solid var(--hair)}
+.ag-jobrow:first-of-type{border-top:0}
+.ag-launch{background:var(--accent-soft);border-radius:16px;padding:20px;margin-top:14px}
+.ag-launch-h{font-weight:600;color:var(--accent-dark);margin-bottom:6px}
+.ag-launch-p{font-size:13px;color:var(--accent-dark2);line-height:1.5;margin-bottom:12px}
+.ag-launch textarea{width:100%;font:inherit;font-size:13.5px;padding:11px 13px;
+  border:1px solid #cfe0ee;border-radius:11px;background:#fff;resize:vertical}
+.ag-launch-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ag-launch-row select{flex:1;min-width:180px;border:1px solid var(--line2);border-radius:10px;
+  padding:9px 12px;font:inherit;font-size:13.5px;background:#fff}
+.ag-procrow{display:flex;justify-content:space-between;gap:12px;align-items:center;
+  padding:8px 0;border-top:1px solid var(--hair)}
+.ag-procrow:first-of-type{border-top:0}
+.ag-cmd{font-size:11.5px;color:var(--mut2);text-align:right;word-break:break-all}
+.ag-pre{background:var(--hair);border-radius:10px;padding:10px 12px;font-size:11.5px;
+  overflow-x:auto;margin-top:6px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(8px);
+  background:var(--dark);color:var(--on-dark);padding:11px 18px;border-radius:12px;
+  font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.22);opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;z-index:90;max-width:80vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .seg .m{display:none}
 .eqres{margin-top:14px}
 .eqreshead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
@@ -463,7 +498,7 @@ const PRIMARY=[["home","Overview"],["results","Experiments"],["equations","Equat
   ["theorems","Theorems"],["ledger","Ledger"]];
 const MORE=[["agents","Agents"],["approvals","Approvals"],["admin","Admin"],["help","Help"]];
 const TITLES=Object.fromEntries([...PRIMARY,...MORE].map(([id,l])=>[id,l]));
-const BUILT=new Set(["home","new","results","equations","theorems","ledger"]);   // grows as views land in later phases
+const BUILT=new Set(["home","new","results","equations","theorems","ledger","agents"]);   // grows as views land in later phases
 
 /* ---------------- governance / evidence primitives ---------------- */
 // grades are hand-authored, compound, sometimes absent: badge the first Gn
@@ -1530,6 +1565,239 @@ VIEWS.ledger=async(app)=>{
     renderLg(b.dataset.m);});
   renderLg("hist");
 };
+
+/* ============================ Agents / Run centre ============================ */
+// Look/layout from the mock (.dc.html §Run centre + screenshots/07-agents.png);
+// functionality + copy ported from the classic app (index.html ROUTES.agents +
+// runJob/runAgentTask/showLog/sendAudit/cancelJob), wired to the real job engine
+// (/api/jobs, /api/agents, /api/agent_transcripts, /api/joblog). Job definitions,
+// live job list, running processes and transcripts all come from the server —
+// nothing here is hard-coded.
+const JOB_CAT={
+  gates:["🛡","Gates & health","Run before publishing anything — all three must PASS."],
+  executors:["▶","Registered executors","Real experiments. Each is self-gated: it "+
+    "refuses to run without an approved registration."],
+  analysis:["📊","Analysis tools","Rebuild the lab's registries and monitors."],
+  maintenance:["🧹","Maintenance","Git hygiene and ledger upkeep."]};
+const AG_ROLES=[["analyst","🔬 Analyst — design & interpret (deep)"],
+  ["executor","⚙️ Executor — run to the letter (fast)"],
+  ["reviewer","🛡 Reviewer — adversarial check (deep)"]];
+let _agTimer=null, _openLog=null;
+
+// Job status → colour. Distinct from verdictBadge: a job is running/done/failed/
+// cancelled, and "done" must read green (verdictBadge would grey it).
+function agStatusBadge(s){
+  const u=String(s||"").toLowerCase();
+  let c="#8e8e93";
+  if(u.includes("run"))c="#0071e3"; else if(u.includes("done"))c="#248a3d";
+  else if(u.includes("fail")||u.includes("cancel"))c="#b0670a";
+  return `<span class="badge" style="background:${c}1c;color:${c}">${esc(s||"—")}</span>`;
+}
+
+VIEWS.agents=async(app)=>{
+  clearInterval(_agTimer);
+  app.innerHTML=`<div class="view">
+    ${guide("The cockpit — launch gates, registered executors, analysis jobs and "+
+      "maintenance, then watch their live logs right here. Anything running (including "+
+      "agent sessions started elsewhere) shows under “Running now”. Refreshes every 5 s.",
+      "Run the three gates","agents")}
+    <h1 class="view-h1">Run centre</h1>
+    <div id="ag-log"></div>
+    <div id="ag-jobs"></div>
+    <div id="ag-groups"></div>
+    <div id="ag-launch"></div>
+    <div id="ag-audit"></div>
+    <div id="ag-running"></div>
+  </div>`;
+  // Guide CTA: run every gate the server declares (honest to "the three gates").
+  const gb=app.querySelector(".guide .btn");
+  if(gb)gb.onclick=e=>{e.preventDefault();runGates();};
+  let J,a,TR;
+  try{[J,a,TR]=await Promise.all([api("/api/jobs"),api("/api/agents"),
+    api("/api/agent_transcripts")]);}
+  catch(e){$("#ag-groups").innerHTML=`<div class="card"><p class="placeholder">${
+    esc(e.message)}</p></div>`;return;}
+  // Static panels rendered ONCE (re-rendering on the 5s poll would wipe the
+  // task textarea / audit inputs mid-type — a bug in the classic app).
+  agRenderGroups(J);
+  agRenderLaunch(J);
+  agRenderAudit(TR);
+  // Dynamic panels refreshed on the poll.
+  agRenderJobs(J);
+  agRenderRunning(a);
+  _agTimer=setInterval(agPoll,5000);
+};
+async function agPoll(){
+  if(!(location.hash||"").includes("agents")){clearInterval(_agTimer);return;}
+  let J,a;
+  try{[J,a]=await Promise.all([api("/api/jobs"),api("/api/agents")]);}catch(e){return;}
+  if(!$("#ag-jobs"))return;
+  agRenderJobs(J); agRenderRunning(a);
+  if(_openLog)showLog(_openLog,true);
+}
+function agRenderGroups(J){
+  const el=$("#ag-groups");if(!el)return;
+  el.innerHTML=`<div class="grid g2">${Object.entries(J.defs).map(([cat,defs])=>{
+    const [ico,title,desc]=JOB_CAT[cat]||["·",cat,""];
+    // Task-need defs (the standalone agent) get the dedicated launcher card below.
+    const runnable=defs.filter(d=>!(d.needs||[]).includes("task"));
+    if(!runnable.length)return "";
+    return `<div class="card"><div class="ag-gh"><span class="ag-ico">${ico}</span>
+      <span>${esc(title)}</span></div><p class="ag-desc">${esc(desc)}</p>
+      ${runnable.map(d=>`<div class="ag-item">
+        <div><div class="ag-lbl">${esc(d.label)}</div><div class="ag-sub">${esc(d.desc)}</div></div>
+        <button class="btn ghost sm" onclick='runJob(${JSON.stringify(d.name)},${
+          JSON.stringify(d.needs||[])})'>Run</button></div>`).join("")}</div>`;
+  }).join("")}</div>`;
+}
+function agRenderLaunch(J){
+  const el=$("#ag-launch");if(!el)return;
+  const taskDef=Object.values(J.defs).flat().find(d=>(d.needs||[]).includes("task"));
+  el.innerHTML=taskDef?`<div class="ag-launch">
+    <div class="ag-launch-h">Launch a standalone agent</div>
+    <p class="ag-launch-p">An LLM agent operates the lab through the whitelisted jobs
+      above using the provider, model and effort you assign each role in
+      <a href="#admin">Admin → agent roles</a> — no Claude Desktop needed. It can only
+      act through the same jobs you see here.</p>
+    <textarea id="ag-task" rows="2" placeholder="e.g. Run all three gates, then rebuild the honesty meter and summarize what changed"></textarea>
+    <div class="ag-launch-row">
+      <select id="ag-role">${AG_ROLES.map(([v,l])=>
+        `<option value="${esc(v)}">${esc(l)}</option>`).join("")}</select>
+      <button class="btn sm" onclick="runAgentTask()">Launch agent</button>
+    </div></div>`:"";
+}
+function agRenderAudit(TR){
+  const el=$("#ag-audit");if(!el)return;
+  el.innerHTML=(TR&&TR.length)?`<div class="card" style="margin-top:14px">
+    <div class="ag-gh"><span class="ag-ico">🗣</span><span>Audit an agent</span></div>
+    <p class="ag-desc">Every agent run keeps its full transcript. Pick one and ask it to
+      justify a conclusion or explain a decision — the exchange is appended to that run's
+      audit trail in results/agent_runs/.</p>
+    <div class="field" style="margin-top:12px"><label>Which run?</label>
+      <select id="ag-tr">${TR.map(t=>`<option value="${esc(t.path)}">${esc(t.ts||"")} ·
+        ${esc(t.role||"agent")} · ${esc(t.task)}</option>`).join("")}</select></div>
+    <div class="field"><label>Your audit question</label>
+      <textarea id="ag-q" rows="2" placeholder="e.g. Justify why you concluded the gates passed — what exact outputs did you rely on?"></textarea></div>
+    <button class="btn ghost sm" onclick="sendAudit()">Ask for audit reply</button></div>`:"";
+}
+function agRenderJobs(J){
+  const el=$("#ag-jobs");if(!el)return;
+  el.innerHTML=(J.jobs&&J.jobs.length)?`<div class="card" style="margin-bottom:14px">
+    <div class="ag-gh"><span>Jobs</span></div>
+    ${J.jobs.slice(0,8).map(j=>`<div class="ag-jobrow">
+      <div><b>${esc(j.label)}</b><div class="ag-sub">${esc(j.id)} · started ${esc(j.started)}</div></div>
+      <div style="text-align:right">${agStatusBadge(j.status)}
+        <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn ghost sm" onclick="showLog('${esc(j.id)}')">Log</button>
+          ${String(j.status).includes("run")?
+            `<button class="btn ghost sm" onclick="cancelJob('${esc(j.id)}')">Stop</button>`:""}
+        </div></div></div>`).join("")}</div>`:"";
+}
+function agRenderRunning(a){
+  const el=$("#ag-running");if(!el)return;
+  const procs=(a&&a.running_processes)||[];
+  el.innerHTML=`<div class="card" style="margin-top:14px">
+    <div class="ag-gh"><span>Running now (all processes)</span></div>
+    ${procs.length?procs.map(p=>`<div class="ag-procrow">
+      <span class="badge" style="background:#248a3d1c;color:var(--green)">running · ${esc(p.elapsed)}</span>
+      <span class="mono ag-cmd">${esc(p.cmd)}</span></div>`).join("")
+      :`<p class="ag-desc">Nothing executing outside the jobs above.</p>`}
+    ${a&&Object.keys(a.declared_status||{}).length?
+      `<div class="ag-gh" style="margin-top:14px;font-size:13.5px"><span>Declared agent status</span></div>
+       <pre class="ag-pre mono">${esc(JSON.stringify(a.declared_status,null,1))}</pre>`:""}
+    <p class="ag-desc" style="margin-top:8px">${esc((a&&a.note)||"")}</p></div>`;
+}
+window.runJob=async(name,needs)=>{
+  needs=needs||[];
+  const params={};
+  if(needs.includes("message")){
+    const m=await promptModal("Commit message","add + commit docs/results/src/… — 5–400 chars");
+    if(m==null)return; params.message=m;
+  }
+  try{const j=await api("/api/jobs",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({job:name,params})});
+    _openLog=j.id;toast(`Started: ${j.label||name}`);await agPoll();showLog(j.id,true);
+  }catch(e){toast(e.message);}
+};
+window.runGates=async()=>{
+  try{const J=await api("/api/jobs");
+    const gates=(J.defs.gates||[]).map(d=>d.name);
+    if(!gates.length)return toast("No gate jobs registered");
+    let last=null;
+    for(const n of gates){
+      try{const j=await api("/api/jobs",{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({job:n,params:{}})});last=j.id;}catch(e){/* already running */}
+    }
+    if(last)_openLog=last;
+    toast("Gates launched — watch the logs");await agPoll();if(last)showLog(last,true);
+  }catch(e){toast(e.message);}
+};
+window.runAgentTask=async()=>{
+  const t=($("#ag-task").value||"").trim();
+  if(t.length<10)return toast("Describe the task (≥10 characters)");
+  // Send task + role; the role's provider/model/effort come from Admin config
+  // (fixes the classic app, which read a non-existent #agent-provider).
+  const role=($("#ag-role")||{}).value||"analyst";
+  try{const j=await api("/api/jobs",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({job:"agent_task",params:{task:t,role}})});
+    _openLog=j.id;toast("Agent launched — watch its log");await agPoll();showLog(j.id,true);
+  }catch(e){toast(e.message);}
+};
+window.sendAudit=async()=>{
+  const q=($("#ag-q").value||"").trim();
+  if(q.length<5)return toast("Write the audit question first");
+  try{const j=await api("/api/jobs",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({job:"agent_reply",
+        params:{reply:q,transcript:($("#ag-tr")||{}).value,role:"reviewer"}})});
+    _openLog=j.id;toast("Audit reply requested — watch the log");await agPoll();showLog(j.id,true);
+  }catch(e){toast(e.message);}
+};
+window.showLog=async(id,quiet)=>{
+  _openLog=id;
+  try{const l=await api("/api/joblog?id="+encodeURIComponent(id));
+    const v=$("#ag-log");if(!v)return;
+    v.innerHTML=`<div class="ag-logcard">
+      <div class="ag-loghead"><span>Log — ${esc(id)}</span>${agStatusBadge(l.status)}</div>
+      <pre class="ag-logtext mono">${esc(l.log||"(no output yet)")}</pre></div>`;
+    if(!quiet)v.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }catch(e){if(!quiet)toast(e.message);}
+};
+window.cancelJob=async id=>{
+  try{await api("/api/jobs/cancel",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({id})});
+    toast("Stopped");await agPoll();
+  }catch(e){toast(e.message);}
+};
+
+/* ---------------- toast + prompt modal (shared) ---------------- */
+let _toastT=null;
+function toast(msg){
+  let t=$("#toast");
+  if(!t){t=document.createElement("div");t.id="toast";t.className="toast";
+    document.body.appendChild(t);}
+  t.textContent=String(msg);t.classList.add("on");
+  clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove("on"),3200);
+}
+window.toast=toast;
+// Modal-based prompt (native prompt() blocks and can't be driven in tests).
+function promptModal(title,placeholder){
+  return new Promise(res=>{
+    let settled=false; const done=v=>{if(settled)return;settled=true;closeModal();res(v);};
+    openModal(`<button class="mx" onclick="closeModal()">✕</button>
+      <h3>${esc(title)}</h3>
+      <div class="field" style="margin-top:12px"><input id="pm-input"
+        placeholder="${esc(placeholder||"")}" autocomplete="off"></div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn sm" id="pm-ok">OK</button>
+        <button class="btn ghost sm" id="pm-cancel">Cancel</button></div>`);
+    $("#pm-ok").onclick=()=>done(($("#pm-input").value||"").trim());
+    $("#pm-cancel").onclick=()=>done(null);
+    $("#pm-input").addEventListener("keydown",e=>{
+      if(e.key==="Enter")done(($("#pm-input").value||"").trim());});
+    $("#pm-input").focus();
+  });
+}
 
 /* ---------------- markdown + modal (shared) ---------------- */
 // Only allow safe link schemes (http/https/mailto), fragments, and relative

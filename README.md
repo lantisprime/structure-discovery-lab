@@ -840,7 +840,14 @@ run-ledger row. Start at `riemann-zero-lab/README.md`.
 ### Instrument scripts (domain-specific; frozen historical records; run from project root)
 
 ```bash
-pip install -r requirements.txt
+# Declared core deps, plus the instrument-script deps requirements.txt does not
+# yet pin. The Run centre jobs (meta_panel/families/R5/TDA) import these, so a
+# fresh setup needs them too. On an externally-managed interpreter (e.g. Homebrew
+# Python — PEP 668) either work inside a venv, or append --break-system-packages.
+pip install -r requirements.txt                # ephem, numpy, openpyxl
+pip install scipy matplotlib pandas ripser     # scipy: R5/families · matplotlib: honesty-meter figure · pandas · ripser: persistent-homology (TDA)
+# Verify the runtime deps are all importable before running jobs:
+python3 webapp/test_lab_deps.py
 python3 src/montecarlo_certification.py   # marginal uniformity + ensemble certification
 python3 src/markov_analysis.py            # dynamical face: order-0 vs order-1
 python3 src/structure_discovery.py        # algorithmic + cross-sectional: compression/RMT/spectra
