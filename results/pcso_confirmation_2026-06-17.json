@@ -1,0 +1,55 @@
+{
+  "confirmation_cutoff": "2026-06-10",
+  "family_m": 9,
+  "bonferroni_thresh": 0.005555555555555556,
+  "tests": {
+    "chisq_Lotto 6/42": {
+      "n_draws": 3,
+      "chi_obs": 33.333,
+      "p": 0.6234
+    },
+    "chisq_Mega Lotto 6/45": {
+      "n_draws": 2,
+      "chi_obs": 48.0,
+      "p": 0.1684
+    },
+    "chisq_Super Lotto 6/49": {
+      "n_draws": 3,
+      "chi_obs": 36.444,
+      "p": 0.7035
+    },
+    "chisq_Grand Lotto 6/55": {
+      "n_draws": 2,
+      "chi_obs": 52.167,
+      "p": 0.4877
+    },
+    "chisq_Ultra Lotto 6/58": {
+      "n_draws": 3,
+      "chi_obs": 40.0,
+      "p": 1.0
+    },
+    "pearson_moon_altitude": {
+      "r": 0.63,
+      "p": 0.0252,
+      "n": 13
+    },
+    "pearson_moon_illumination": {
+      "r": -0.26,
+      "p": 0.3848,
+      "n": 13
+    },
+    "pearson_kp": {
+      "r": null,
+      "p": null,
+      "n": 0,
+      "note": "Kp unavailable for confirmation draws (GFZ endpoint unreachable; left blank per task) -> NOT COMPUTABLE"
+    },
+    "binom_655_n45": {
+      "n_655": 2,
+      "k_with_45": 0,
+      "expected": 0.218,
+      "p": 1.0
+    }
+  },
+  "flagged": []
+}
