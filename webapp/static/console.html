@@ -426,6 +426,64 @@ h1.view-h1{font-family:var(--serif);font-weight:500;font-size:32px;
 .appr-log .m{color:var(--faint);text-align:right}
 @media(max-width:600px){.appr-row{flex-direction:column;align-items:stretch}
   .appr-acts{justify-content:flex-end}}
+/* ---------------- admin ---------------- */
+.adm-h{font-weight:600;font-size:16px;margin-bottom:4px}
+.adm-sub{font-size:13px;color:var(--mut2);line-height:1.45;margin-bottom:14px}
+.adm-note{font-size:12px;color:var(--faint);margin-top:12px;line-height:1.4}
+.adm-pre{background:var(--hair);border-radius:9px;padding:9px 12px;font-size:12px;
+  overflow-x:auto;margin:5px 0}
+.badge.ok{background:#248a3d1c;color:var(--green)}
+.badge.dim{background:#8e8e9322;color:var(--mut2)}
+.badge.warn{background:#b0670a1c;color:var(--amber)}
+.badge.act{background:var(--accent-soft);color:var(--accent)}
+.prov-search{width:100%;font:inherit;font-size:13.5px;padding:10px 13px;border:1px solid var(--line2);
+  border-radius:10px;background:#fafafc;margin-bottom:4px}
+.prov-list{max-height:320px;overflow-y:auto;margin:0 -4px;padding:0 4px}
+.prov-item{border-bottom:1px solid var(--hair)}
+.prov-row{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:12px 4px;cursor:pointer}
+.prov-name{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.prov-base{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:2px}
+.prov-panel{padding:4px 4px 16px}
+.prov-panel label,.role-card label{display:block;font-size:12px;font-weight:600;
+  color:var(--mut2);margin:12px 0 6px}
+.prov-panel label:first-child{margin-top:2px}
+.prov-panel input{width:100%;font:inherit;font-size:13.5px;padding:9px 12px;border:1px solid var(--line2);
+  border-radius:9px;background:#fafafc}
+.prov-panel input.mono{font-family:var(--mono);font-size:13px}
+.prov-panel select{width:100%;font:inherit;font-family:var(--mono);font-size:13px;
+  background:#fafafc;border:1px solid var(--line2);border-radius:9px;padding:9px 12px;
+  color:var(--ink2);cursor:pointer}
+.prov-acts{display:flex;gap:10px;margin-top:14px}
+.adm-keyless{font-size:12.5px;color:var(--mut2);padding:4px 0}
+.role-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.role-name{font-weight:600;font-size:16px}
+.role-desc{font-size:13px;color:var(--mut2);line-height:1.45;margin:3px 0 14px}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pillrow{display:flex;flex-wrap:wrap;gap:6px}
+.pill{border:1px solid var(--line2);background:#fafafc;color:var(--ink2);font-size:12.5px;
+  font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer}
+.pill.on{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.role-card select{width:100%;font:inherit;font-family:var(--mono);font-size:13px;background:#fafafc;
+  border:1px solid var(--line2);border-radius:9px;padding:9px 12px;color:var(--ink2);cursor:pointer}
+.role-card input.mono{width:100%;font:inherit;font-family:var(--mono);font-size:13px;padding:9px 12px;
+  border:1px solid var(--line2);border-radius:9px;background:#fafafc;margin-top:6px}
+.role-test{display:flex;align-items:center;gap:10px;margin-top:14px}
+.role-tmsg{font-size:12.5px}
+.adm-src{display:flex;justify-content:space-between;gap:12px;padding:10px 0;
+  border-bottom:1px solid var(--hair);font-size:13.5px}
+.adm-src:last-of-type{border-bottom:0}
+.adm-src .s{font-family:var(--mono);font-size:11.5px;color:var(--faint);text-align:right}
+.adm-adds{border-top:1px solid var(--hair);margin-top:12px;padding-top:12px}
+.adm-adds-t{font-weight:600;font-size:13.5px;color:var(--accent);cursor:pointer}
+.adm-set input{font:inherit;padding:9px 12px;border:1px solid var(--line2);border-radius:9px;
+  background:#fafafc;font-size:14px}
+.adm-set input.m{width:120px;font-family:var(--mono)}
+.adm-set input.owner{width:100%;max-width:320px}
+.adm-set label{display:block;font-size:12px;font-weight:600;color:var(--mut2);margin:0 0 6px}
+.adm-set label.mt{margin-top:16px}
+.txt-bad{color:#c1121f}
+@media(max-width:600px){.role-grid{grid-template-columns:1fr}}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(8px);
   background:var(--dark);color:var(--on-dark);padding:11px 18px;border-radius:12px;
   font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.22);opacity:0;pointer-events:none;
@@ -518,7 +576,7 @@ const PRIMARY=[["home","Overview"],["results","Experiments"],["equations","Equat
   ["theorems","Theorems"],["ledger","Ledger"]];
 const MORE=[["agents","Agents"],["approvals","Approvals"],["admin","Admin"],["help","Help"]];
 const TITLES=Object.fromEntries([...PRIMARY,...MORE].map(([id,l])=>[id,l]));
-const BUILT=new Set(["home","new","results","equations","theorems","ledger","agents","approvals"]);   // grows as views land in later phases
+const BUILT=new Set(["home","new","results","equations","theorems","ledger","agents","approvals","admin"]);   // grows as views land in later phases
 
 /* ---------------- governance / evidence primitives ---------------- */
 // grades are hand-authored, compound, sometimes absent: badge the first Gn
@@ -1854,6 +1912,290 @@ window.doApprove=async doc=>{
     await loadState(true);            // refresh pending count for the nav dot
     await VIEWS.approvals($("#app")); // re-render with the fresh queue + log
     renderBar();
+  }catch(e){toast(e.message);}
+};
+
+/* ============================ admin ============================ */
+// Layout/look from the mock (dc.html isAdmin + screenshots/08-admin); FULL
+// functionality ported from the classic app (index.html ROUTES.admin +
+// setAuth/saveProv/saveRole/testRole/addDataset/saveSettings), wired to the real
+// endpoints: GET/POST /api/providers (auth method, provider keys, role brains),
+// GET/POST /api/config (lab settings), POST /api/datasets (validated onboarding),
+// POST /api/test_role (one live call proving a role's key+model work). Keys stay
+// in webapp/config.local.json (gitignored, obfuscated at rest, served masked) —
+// this view never renders a raw key.
+const ADM_DATA_SOURCES=[
+  ["PCSO lotto draws","local · datasets/pcso-lotto/"],
+  ["JPL Horizons sun/moon ephemerides","local · public API, keyless"],
+  ["Open-Meteo Manila pressure","local · free tier, keyless"],
+  ["GFZ Kp geomagnetic index","local · public, keyless"]];
+let _admAddDs=false;
+VIEWS.admin=async(app)=>{
+  let P,c;
+  try{[P,c]=await Promise.all([api("/api/providers"),api("/api/config")]);}
+  catch(e){app.innerHTML=`<div class="view"><div class="card"><p class="placeholder">${
+    esc(e.message)}</p></div></div>`;return;}
+  window._admP=P;
+  const set=c.settings||{};
+  const provRow=p=>{
+    const pModels=p.models||[];
+    const pKnown=!p.model||pModels.includes(p.model);   // typed-custom id if false
+    return `<div class="prov-item" data-q="${esc((p.id+" "+p.label).toLowerCase())}">
+    <div class="prov-row" onclick="admToggleProv('${esc(p.id)}')">
+      <div><div class="prov-name">${esc(p.label)}
+        ${P.active===p.id?'<span class="badge act">active</span>':""}</div>
+        <div class="prov-base">${p.keyless?"local — no key needed":esc(p.base)}</div></div>
+      <span class="badge ${p.configured?"ok":"dim"}">${p.configured?"✓ configured":"· unconfigured"}</span>
+    </div>
+    <div class="prov-panel" id="prov-${esc(p.id)}" style="display:none">
+      ${p.keyless?'<div class="adm-keyless">Local server — no API key needed.</div>':
+        `<label>API key ${p.key_masked?`<span class="badge ok">set · ${esc(p.key_masked)}</span>`:""}
+          ${p.get?`<a href="${esc(p.get)}" target="_blank" rel="noopener" style="font-weight:500;margin-left:6px">get a key ↗</a>`:""}</label>
+        <input id="pk-${esc(p.id)}" type="password" autocomplete="off"
+          placeholder="${p.key_masked?"(unchanged)":"paste key"}">`}
+      <label>Default model</label>
+      <select id="pm-${esc(p.id)}" onchange="admProvModelChange('${esc(p.id)}')">
+        <option value="">${pModels.length?`Provider default (${esc(pModels[0])})`:"Provider default"}</option>
+        ${pModels.map(m=>`<option value="${esc(m)}" ${p.model===m?"selected":""}>${esc(m)}</option>`).join("")}
+        <option value="__custom__" ${!pKnown?"selected":""}>Custom model id…</option>
+      </select>
+      <input id="pmc-${esc(p.id)}" class="mono" value="${esc(!pKnown?p.model:"")}"
+        placeholder="type any model id" autocapitalize="off"
+        style="margin-top:6px;display:${!pKnown?"block":"none"}">
+      <label>Base URL</label>
+      <input id="pb-${esc(p.id)}" class="mono" value="${esc(p.base||"")}" autocapitalize="off">
+      <div class="prov-acts">
+        <button class="btn ghost sm" onclick="admSaveProv('${esc(p.id)}',false)">Save</button>
+        <button class="btn sm" onclick="admSaveProv('${esc(p.id)}',true)">Save &amp; make active</button>
+      </div>
+    </div></div>`;};
+  const usable=P.providers.filter(p=>p.configured);
+  const roleCard=(rid,r)=>{
+    const effId=r.provider||(usable[0]||{}).id||"";
+    const eff=P.providers.find(p=>p.id===effId)||{};
+    const models=eff.models||[];
+    const knownModel=!r.model||models.includes(r.model);
+    if(!usable.length)return `<div class="role-card">
+      <div class="role-name">${esc(r.icon||"")} ${esc(r.label)}</div>
+      <div class="role-desc">${esc(r.desc)}</div>
+      <p class="role-tmsg txt-bad">⚠ No usable provider yet — save an API key in
+        section 1 above (or start a local server like Ollama) and this role
+        becomes configurable.</p></div>`;
+    return `<div class="role-card" data-rid="${esc(rid)}" data-prov="${esc(effId)}">
+      <div class="role-name">${esc(r.icon||"")} ${esc(r.label)}</div>
+      <div class="role-desc">${esc(r.desc)}</div>
+      <div class="role-grid">
+        <div><label>Provider</label>
+          <div class="pillrow">${usable.map(p=>
+            `<div class="pill ${effId===p.id?"on":""}" onclick="admSetRoleProv('${esc(rid)}','${esc(p.id)}')">${esc(p.label)}</div>`).join("")}</div></div>
+        <div><label>Model</label>
+          <select id="role-ms-${esc(rid)}" onchange="admModelChange('${esc(rid)}')">
+            <option value="">${models.length?`Provider default (${esc(models[0])})`:"Provider default"}</option>
+            ${models.map(m=>`<option value="${esc(m)}" ${r.model===m?"selected":""}>${esc(m)}</option>`).join("")}
+            <option value="__custom__" ${!knownModel?"selected":""}>Custom model id…</option>
+          </select>
+          <input id="role-mc-${esc(rid)}" class="mono" value="${esc(!knownModel?r.model:"")}"
+            placeholder="type any model id" autocapitalize="off"
+            onchange="admSaveRole('${esc(rid)}')"
+            style="display:${!knownModel?"block":"none"}"></div>
+      </div>
+      <div style="margin-top:14px"><label>Thinking effort</label>
+        <div class="seg" id="role-e-${esc(rid)}">${["fast","balanced","deep"].map(e=>
+          `<button class="${(r.effort||"balanced")===e?"on":""}" onclick="admEffort('${esc(rid)}','${e}')">${e}</button>`).join("")}</div></div>
+      <div class="role-test">
+        <button class="btn ghost sm" onclick="admTestRole('${esc(rid)}')">Test</button>
+        <span class="role-tmsg" id="role-t-${esc(rid)}"></span></div>
+    </div>`;};
+  const subRow=sc=>`<div style="padding:11px 0;border-bottom:1px solid var(--hair)">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+      <b style="font-size:14px">${esc(sc.label)}</b>
+      <span><span class="badge ${sc.installed?"ok":"dim"}">${sc.installed?"✓ installed":"not installed"}</span>
+        <span class="badge ${sc.signed_in?"ok":"warn"}">${sc.signed_in?"✓ signed in":"not signed in"}</span></span></div>
+    ${sc.installed?(sc.signed_in
+      ?`<details style="margin-top:6px"><summary class="adm-note" style="cursor:pointer">Re-authenticate or switch account?</summary>
+         <pre class="mono adm-pre">${esc(sc.relogin)}</pre><div class="adm-note">${esc(sc.flow)}</div></details>`
+      :`<div class="adm-note">To sign in, run in Terminal:</div><pre class="mono adm-pre">${esc(sc.cmd)}</pre><div class="adm-note">${esc(sc.flow)}</div>`)
+      :`<div class="adm-note">Not installed — <a href="${esc(sc.get)}" target="_blank" rel="noopener">installation guide ↗</a></div>`}
+  </div>`;
+  const provList=P.providers.filter(p=>!p.role_only)
+    .sort((a,b)=>(b.configured-a.configured)||a.label.localeCompare(b.label));
+  app.innerHTML=`<div class="view" style="max-width:760px">
+    ${guide("Set up how agents authenticate and which model each role uses. "+
+      "Everything sensitive stays on this machine and is served masked.",null,"admin")}
+    <h1 class="view-h1">Admin</h1>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="adm-h">1 · How should agents authenticate?</div>
+      <div class="adm-sub">API keys power in-console agents and the companion.
+        Subscription CLIs run agents you start yourself in Terminal.</div>
+      <div class="seg" style="margin-bottom:16px">
+        <button class="${P.auth_method==="api_key"?"on":""}" onclick="admAuth('api_key')">Use an API key</button>
+        <button class="${P.auth_method==="subscription"?"on":""}" onclick="admAuth('subscription')">Use a subscription</button>
+      </div>
+      <div id="adm-auth-api" style="display:${P.auth_method==="subscription"?"none":"block"}">
+        <input class="prov-search" placeholder="Search providers (e.g. deepseek, groq, mini)…"
+          oninput="admFilterProv(this.value)" autocomplete="off">
+        <div class="prov-list">${provList.map(provRow).join("")}</div>
+        <p class="adm-note" id="adm-prov-noresult" style="display:none">No provider
+          matches — pick <b>Custom OpenAI-compatible</b> and set its base URL.</p>
+      </div>
+      <div id="adm-auth-sub" style="display:${P.auth_method==="subscription"?"block":"none"}">
+        <p class="adm-note" style="margin-bottom:4px">Sign-ins happen only in
+          <b>Terminal</b> — no website can do it for you. Each CLI's true state and
+          the exact command are shown below.</p>
+        ${(P.subscriptions||[]).map(subRow).join("")||'<p class="adm-note">No subscription CLIs detected.</p>'}
+      </div>
+    </div>
+
+    <div class="adm-h" style="margin:6px 0 12px">2 · Who does what — agent roles</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      ${Object.entries(P.roles).map(([rid,r])=>roleCard(rid,r)).join("")}
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="adm-h">Data sources</div>
+      <div class="adm-sub">All datasets are downloaded locally from free, keyless
+        public services — nothing to configure.</div>
+      ${ADM_DATA_SOURCES.map(([n,s])=>`<div class="adm-src"><span>${esc(n)}</span><span class="s">${esc(s)}</span></div>`).join("")}
+      <div class="adm-note">To refresh a dataset, run its fetcher in
+        <span class="mono">datasets/&lt;name&gt;/</span> — still no key required.</div>
+      <div class="adm-adds">
+        <div class="adm-adds-t" onclick="admToggleAddDs()"><span id="adm-ds-caret">${_admAddDs?"▾":"▸"}</span> Add a dataset (validated)</div>
+        <div id="adm-ds-body" style="display:${_admAddDs?"block":"none"}">
+          <label class="prov-lbl" style="display:block;font-size:12px;font-weight:600;color:var(--mut2);margin:14px 0 6px">Name</label>
+          <input id="ds-name" class="prov-search" style="margin:0" placeholder="e.g. Manila rainfall daily">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--mut2);margin:14px 0 6px">Source / provenance</label>
+          <input id="ds-src" class="prov-search" style="margin:0" placeholder="URL or description">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--mut2);margin:14px 0 6px">Description (optional)</label>
+          <input id="ds-desc" class="prov-search" style="margin:0">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--mut2);margin:14px 0 6px">CSV</label>
+          <textarea id="ds-csv" rows="4" class="mono" placeholder="date,value&#10;2025-01-01,12.3&#10;…"
+            style="width:100%;font:inherit;font-family:var(--mono);font-size:12.5px;padding:10px 12px;border:1px solid var(--line2);border-radius:9px;background:#fafafc;resize:vertical"></textarea>
+          <input type="file" id="ds-file" accept=".csv" style="border:0;padding:6px 0;font-size:12.5px"
+            onchange="this.files[0]&&this.files[0].text().then(t=>{document.getElementById('ds-csv').value=t;toast('CSV loaded — press Validate & add')})">
+          <div class="adm-note" style="margin-top:0">Requirements: a “date” column
+            (YYYY-MM-DD, ascending) + ≥1 numeric column, ≥50 rows, ≤5% missing.
+            Validation runs before anything is saved.</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+            <button class="btn sm" onclick="admAddDataset()">Validate &amp; add</button></div>
+          <div id="ds-report"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card adm-set" style="margin-top:14px">
+      <div class="adm-h" style="margin-bottom:14px">Lab settings</div>
+      <label>Default Monte-Carlo m for exploratory fits</label>
+      <input id="set-m" class="m" value="${esc(String(set.default_m||399))}">
+      <label class="mt">Owner name for approvals</label>
+      <input id="set-owner" class="owner" value="${esc(set.owner||"Cha (lab owner)")}">
+      <div style="margin-top:16px"><button class="btn ghost sm" onclick="admSaveSettings()">Save settings</button></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;background:var(--bg)">
+      <div class="adm-h" style="font-size:15px;margin-bottom:8px">Health gates</div>
+      <div style="font-size:13px;color:var(--mut);line-height:1.5">Run all three from the
+        <a href="#agents">Run centre</a> before publishing — design verifier, numeric
+        verifier, frozen-import lint.</div>
+    </div>
+  </div>`;
+};
+window.admAuth=async a=>{
+  try{await api("/api/providers",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({auth_method:a})});await VIEWS.admin($("#app"));}
+  catch(e){toast(e.message);}
+};
+window.admFilterProv=q=>{
+  q=(q||"").trim().toLowerCase();let hits=0;
+  document.querySelectorAll(".prov-item").forEach(el=>{
+    const show=!q||(el.dataset.q||"").includes(q);
+    el.style.display=show?"":"none";if(show)hits++;});
+  const nr=$("#adm-prov-noresult");if(nr)nr.style.display=hits?"none":"block";
+};
+window.admToggleProv=id=>{const el=$("#prov-"+id);
+  if(el)el.style.display=el.style.display==="none"?"block":"none";};
+function admProvModel(id){
+  const sel=$("#pm-"+id),c=$("#pmc-"+id);
+  return sel&&sel.value==="__custom__"?(c?c.value.trim():""):(sel?sel.value.trim():"");
+}
+window.admProvModelChange=id=>{const sel=$("#pm-"+id),c=$("#pmc-"+id);
+  if(c)c.style.display=sel&&sel.value==="__custom__"?"block":"none";};
+window.admSaveProv=async(id,makeActive)=>{
+  const g=x=>{const el=$("#"+x+"-"+id);return el?el.value.trim():"";};
+  const body={id,active:!!makeActive,key:g("pk"),model:admProvModel(id),base:g("pb")};
+  try{await api("/api/providers",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body)});
+    toast(makeActive?"Saved & set active":"Saved");await VIEWS.admin($("#app"));
+  }catch(e){toast(e.message);}
+};
+window.admSetRoleProv=async(rid,pid)=>{
+  // switching provider resets the model to the new provider's default (the server
+  // drops a stale model when provider changes and no model is supplied)
+  try{await api("/api/providers",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({role:rid,config:{provider:pid}})});
+    await VIEWS.admin($("#app"));
+  }catch(e){toast(e.message);}
+};
+function admRoleModel(rid){
+  const sel=$("#role-ms-"+rid),custom=$("#role-mc-"+rid);
+  return sel&&sel.value==="__custom__"?(custom?custom.value.trim():""):(sel?sel.value:"");
+}
+window.admModelChange=rid=>{
+  const sel=$("#role-ms-"+rid),custom=$("#role-mc-"+rid);
+  if(custom)custom.style.display=sel&&sel.value==="__custom__"?"block":"none";
+  if(sel&&sel.value!=="__custom__")admSaveRole(rid);
+};
+window.admEffort=(rid,e)=>{
+  const seg=$("#role-e-"+rid);if(!seg)return;
+  const on=seg.querySelector(".on");if(on)on.classList.remove("on");
+  const btns=[...seg.querySelectorAll("button")].find(b=>b.textContent===e);
+  if(btns)btns.classList.add("on");
+  admSaveRole(rid);
+};
+window.admSaveRole=async(rid,quiet)=>{
+  const card=document.querySelector(`.role-card[data-rid="${rid}"]`);
+  const provider=card?card.dataset.prov:"";
+  const effort=($("#role-e-"+rid)||{}).querySelector?
+    (($("#role-e-"+rid).querySelector(".on")||{}).textContent||"balanced"):"balanced";
+  const cfg={provider,model:admRoleModel(rid),effort};
+  try{await api("/api/providers",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({role:rid,config:cfg})});
+    if(!quiet)toast("Role saved");
+  }catch(e){toast(e.message);}
+};
+window.admTestRole=async rid=>{
+  const out=$("#role-t-"+rid);if(out){out.className="role-tmsg";out.textContent="testing…";}
+  await admSaveRole(rid,true);            // test what's on screen, not stale config
+  try{const r=await api("/api/test_role",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({role:rid})});
+    if(!out)return;
+    if(r.ok){out.className="role-tmsg";out.style.color="var(--green)";
+      out.textContent=`✓ works — ${r.model} answered in ${r.latency_ms} ms`;}
+    else{out.className="role-tmsg txt-bad";out.textContent="✕ "+(r.error||"failed");}
+  }catch(e){if(out){out.className="role-tmsg txt-bad";out.textContent="✕ "+e.message;}}
+};
+window.admToggleAddDs=()=>{_admAddDs=!_admAddDs;
+  const b=$("#adm-ds-body"),c=$("#adm-ds-caret");
+  if(b)b.style.display=_admAddDs?"block":"none";if(c)c.textContent=_admAddDs?"▾":"▸";};
+window.admAddDataset=async()=>{
+  const rep=$("#ds-report");
+  try{const r=await api("/api/datasets",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name:($("#ds-name")||{}).value,source:($("#ds-src")||{}).value,
+        description:($("#ds-desc")||{}).value,csv_text:($("#ds-csv")||{}).value})});
+    STATE=null;                            // dataset list changed — refresh next time
+    const v=r.validation;
+    if(rep)rep.innerHTML=`<div class="guide" style="margin-top:12px"><span class="f">✓</span><div>
+      <b>Validated &amp; added</b><p>${v.rows} rows · ${esc((v.date_range||[]).join(" → "))} ·
+      column “${esc(v.value_column)}” · ${(v.missing_frac*100).toFixed(1)}% missing ·
+      ${v.duplicate_dates} duplicate dates.<br>${esc(r.next)}</p>
+      <a class="btn" href="#equations">Try it in the sandbox →</a></div></div>`;
+    toast("Dataset added");
+  }catch(e){if(rep)rep.innerHTML=`<p class="role-tmsg txt-bad" style="margin-top:8px">✕ ${esc(e.message)}</p>`;}
+};
+window.admSaveSettings=async()=>{
+  try{await api("/api/config",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({settings:{default_m:+($("#set-m").value)||399,owner:$("#set-owner").value}})});
+    toast("Settings saved");
   }catch(e){toast(e.message);}
 };
 

@@ -307,5 +307,71 @@ class TestApprovalsGate(unittest.TestCase):
         self.assertEqual(q["recorded"][0]["doc"], self.doc)
 
 
+class TestDatasetAdd(unittest.TestCase):
+    """The validated dataset-onboarding gate behind Admin's 'Add a dataset'.
+    dataset_add() must accept a well-formed CSV and reject malformed ones with a
+    plain-language error. Runs against an isolated temp USER_DATA_DIR so nothing
+    is written into the real datasets/user/ tree."""
+
+    def setUp(self):
+        self._real = server.USER_DATA_DIR
+        self.tmp = tempfile.mkdtemp()
+        server.USER_DATA_DIR = os.path.join(self.tmp, "user")
+
+    def tearDown(self):
+        server.USER_DATA_DIR = self._real
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _csv(self, n=60, start_day=1, missing=0, ascending=True, iso=True):
+        rows = ["date,value"]
+        for i in range(n):
+            day = start_day + (i if ascending else n - i)
+            d = f"2025-01-{day:02d}" if iso else f"01/{day:02d}/2025"
+            v = "" if i < missing else f"{10 + i * 0.5}"
+            rows.append(f"{d},{v}")
+        return "\n".join(rows) + "\n"
+
+    def test_valid_csv_is_accepted_and_written(self):
+        r = server.dataset_add({"name": "Manila rainfall daily", "source": "PAGASA",
+                                "csv_text": self._csv(60)})
+        self.assertEqual(r["slug"], "manila_rainfall_daily")
+        self.assertEqual(r["validation"]["rows"], 60)
+        self.assertEqual(r["validation"]["value_column"], "value")
+        made = os.path.join(server.USER_DATA_DIR, "manila_rainfall_daily")
+        self.assertTrue(os.path.exists(os.path.join(made, "data.csv")))
+        self.assertTrue(os.path.exists(os.path.join(made, "meta.json")))
+
+    def test_real_datasets_user_untouched(self):
+        server.dataset_add({"name": "isolation probe ds", "csv_text": self._csv(60)})
+        self.assertFalse(os.path.exists(
+            os.path.join(self._real, "isolation_probe_ds")))
+
+    def test_rejects_short_name(self):
+        with self.assertRaises(ValueError):
+            server.dataset_add({"name": "x", "csv_text": self._csv(60)})
+
+    def test_rejects_too_few_rows(self):
+        with self.assertRaises(ValueError):
+            server.dataset_add({"name": "tiny set", "csv_text": self._csv(20)})
+
+    def test_rejects_missing_date_column(self):
+        csv = "label,value\n" + "\n".join(f"a,{i}" for i in range(60))
+        with self.assertRaises(ValueError):
+            server.dataset_add({"name": "no date col", "csv_text": csv})
+
+    def test_rejects_no_numeric_column(self):
+        rows = ["date,note"] + [f"2025-01-{(i % 28) + 1:02d},hello" for i in range(60)]
+        with self.assertRaises(ValueError):
+            server.dataset_add({"name": "no numeric", "csv_text": "\n".join(rows)})
+
+    def test_rejects_unsorted_dates(self):
+        with self.assertRaises(ValueError):
+            server.dataset_add({"name": "unsorted set", "csv_text": self._csv(60, ascending=False)})
+
+    def test_rejects_excess_missing(self):
+        with self.assertRaises(ValueError):
+            server.dataset_add({"name": "gappy set", "csv_text": self._csv(60, missing=10)})
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
