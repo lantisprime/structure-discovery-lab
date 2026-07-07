@@ -79,9 +79,14 @@ def run():
         rc = pg.locator(".rightcol").inner_text()
         assert newest_run in rc, \
             f"latest card should show the ledger's newest run ({newest_run})"
+        # the badge must reflect the run's LEDGERED grade — the ledger's
+        # grade vocabulary is open ("G2 …", "calibration gate …", …), so
+        # assert consistency with the API rather than a G\d shape
         badge = pg.locator(".rightcol .badge").first.inner_text().strip()
-        assert re.fullmatch(r"G\d\S*", badge), \
-            f"latest card shows a parsed grade badge, got {badge!r}"
+        newest_grade = state["runs"][0].get("grade") or ""
+        assert badge and badge.split()[0] in newest_grade, \
+            f"badge {badge!r} should come from the ledgered grade " \
+            f"{newest_grade!r}"
         assert ".py" in rc, "latest card shows the run's script (classic parity)"
         assert "REGISTRATION" in rc.upper(), "latest card shows the registration doc"
         assert pg.locator(".rightcol a", has_text="Agent status").count() == 1
