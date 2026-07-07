@@ -5,6 +5,7 @@ __pycache__/
 webapp/config.local.json
 webapp/joblogs/
 webapp/.keysalt
+webapp/.lantoken
 .episodic-memory/
 .venv/
 archive/

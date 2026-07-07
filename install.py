@@ -61,6 +61,15 @@ AGENT_ROLES = ("analyst", "executor", "reviewer", "companion")
 
 
 # --------------------------------------------------------------------- ui
+# Windows consoles often default to cp1252, which cannot encode the
+# box-drawing/check characters below — degrade to '?' instead of crashing.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
+
 def hr():
     print("─" * 62)
 
@@ -315,9 +324,17 @@ def run_wizard(args, state, interactive):
 
 # ----------------------------------------------------------------- actions
 def archive_dir():
+    """A guaranteed-fresh archive dir. Timestamps are second-granular, so two
+    operations in the same second (clean install then --restore on a fast
+    machine) MUST NOT share a dir — --restore would otherwise displace state
+    into the very archive it is restoring from."""
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
-    d = os.path.join(ROOT, "archive", f"preinstall-{stamp}")
-    os.makedirs(d, exist_ok=True)
+    base = os.path.join(ROOT, "archive", f"preinstall-{stamp}")
+    d, n = base, 1
+    while os.path.exists(d):
+        n += 1
+        d = f"{base}-{n}"
+    os.makedirs(d)
     return d
 
 
@@ -335,7 +352,7 @@ def snapshot_hashes(out):
             if f in skip_files:
                 continue
             p = os.path.join(base, f)
-            rel = "./" + os.path.relpath(p, ROOT)
+            rel = "./" + os.path.relpath(p, ROOT).replace(os.sep, "/")
             h = hashlib.sha256(open(p, "rb").read()).hexdigest()[:16]
             rows.append(f"{h}  {rel}")
     out.write("\n".join(rows) + "\n")
@@ -352,7 +369,8 @@ def do_clean_ledger(arch):
     for sub in ("figures", "agent_runs", "blind"):
         os.makedirs(os.path.join(RESULTS, sub), exist_ok=True)
     now = datetime.now(timezone.utc).isoformat()
-    with open(os.path.join(RESULTS, "commitment_ledger.txt"), "w") as f:
+    with open(os.path.join(RESULTS, "commitment_ledger.txt"), "w",
+              encoding="utf-8", newline="\n") as f:
         f.write(
             "# Commitment ledger — append-only. SHA-256 of every doc/script/result.\n"
             f"# Fresh ledger initialized by install.py at {now}.\n"
@@ -400,12 +418,13 @@ def target_python(env_mode):
     return py
 
 
-def pip_install(py, pkgs):
+def pip_install(py, pkgs, extra_flags=()):
     """Install pkgs; on bulk failure retry one-by-one so the report names
     exactly what is missing. Returns the list of packages that failed."""
     if not pkgs:
         return []
-    base = [py, "-m", "pip", "install", "--disable-pip-version-check"]
+    base = [py, "-m", "pip", "install", "--disable-pip-version-check",
+            *extra_flags]
     r = subprocess.run(base + pkgs)
     if r.returncode == 0:
         return []
@@ -417,7 +436,7 @@ def pip_install(py, pkgs):
     return failed
 
 
-def do_deps(env_mode, with_riemann):
+def do_deps(env_mode, with_riemann, locked=False):
     py = target_python(env_mode)
     subprocess.run([py, "-m", "pip", "install", "--quiet", "--upgrade",
                     "pip"], stdout=subprocess.DEVNULL,
@@ -426,9 +445,15 @@ def do_deps(env_mode, with_riemann):
     if with_riemann:
         pkgs += [p for p in read_requirements(
             os.path.join(RIEMANN, "requirements.txt")) if p not in pkgs]
+    constraints = os.path.join(ROOT, "constraints-recorded.txt")
+    flags = ()
+    if locked and os.path.exists(constraints):
+        flags = ("-c", constraints)
+        say("  --locked: pinning to the recorded environment "
+            "(constraints-recorded.txt)")
     say(f"  installing {len(pkgs)} packages into "
         f"{'.venv/' if env_mode == 'venv' else py} …")
-    failed = pip_install(py, pkgs)
+    failed = pip_install(py, pkgs, flags)
     if failed:
         say("", "  ⚠ these packages did not install:")
         for p in failed:
@@ -515,6 +540,43 @@ def verify(py, with_riemann):
     return ok
 
 
+def do_restore(archive_rel):
+    """Mechanically undo a clean start: swap the named archive back in.
+    The CURRENT state is archived first — restore never deletes either."""
+    arch = archive_rel if os.path.isabs(archive_rel) \
+        else os.path.join(ROOT, archive_rel)
+    if not os.path.isdir(arch):
+        sys.exit(f"archive not found: {archive_rel}")
+    has = {n: os.path.isdir(os.path.join(arch, n))
+           for n in ("results", "riemann-results", "datasets")}
+    if not any(has.values()):
+        sys.exit(f"{archive_rel} contains no results/, riemann-results/ or "
+                 "datasets/ to restore")
+    displaced = archive_dir()
+    if has["results"]:
+        if os.path.isdir(RESULTS):
+            shutil.move(RESULTS, os.path.join(displaced, "results"))
+        shutil.move(os.path.join(arch, "results"), RESULTS)
+        say("  ✓ results/ restored from the archive")
+    if has["riemann-results"]:
+        r_res = os.path.join(RIEMANN, "results")
+        if os.path.isdir(r_res):
+            shutil.move(r_res, os.path.join(displaced, "riemann-results"))
+        shutil.move(os.path.join(arch, "riemann-results"), r_res)
+        say("  ✓ riemann-zero-lab/results/ restored")
+    if has["datasets"]:
+        dst = os.path.join(displaced, "datasets")
+        os.makedirs(dst, exist_ok=True)
+        for d in sorted(os.listdir(os.path.join(arch, "datasets"))):
+            cur = os.path.join(ROOT, "datasets", d)
+            if os.path.isdir(cur):
+                shutil.move(cur, os.path.join(dst, d))
+            shutil.move(os.path.join(arch, "datasets", d), cur)
+        say("  ✓ datasets restored")
+    say(f"  the state that was in place is preserved at "
+        f"{os.path.relpath(displaced, ROOT)}/ (nothing deleted)")
+
+
 def ensure_gitignore():
     gi = os.path.join(ROOT, ".gitignore")
     text = open(gi).read() if os.path.exists(gi) else ""
@@ -545,9 +607,20 @@ def main():
     ap.add_argument("--provider", choices=list(WIZARD_PROVIDERS),
                     help="agent LLM provider; key read from env "
                          "LAB_LLM_API_KEY")
+    ap.add_argument("--locked", action="store_true",
+                    help="pin installs to the recorded environment "
+                         "(constraints-recorded.txt) for closest "
+                         "reproduction of ledgered results")
+    ap.add_argument("--restore", metavar="ARCHIVE_DIR",
+                    help="undo a clean start: swap the named archive/"
+                         "preinstall-* folder back in (current state is "
+                         "archived first, nothing deleted) and exit")
     args = ap.parse_args()
 
     state = preflight()
+    if args.restore:
+        do_restore(args.restore)
+        return
     if args.verify_only:
         vdir = os.path.join(ROOT, ".venv", "Scripts" if os.name == "nt"
                             else "bin")
@@ -598,7 +671,8 @@ def main():
         do_clean_datasets(arch)
     if choices["ledger"] == "clean":
         do_clean_ledger(arch)
-    py, failed = do_deps(choices["env"], choices["riemann"] == "yes")
+    py, failed = do_deps(choices["env"], choices["riemann"] == "yes",
+                         locked=args.locked)
     if choices.get("provider"):
         do_agent_config(choices["provider"], choices.get("key", ""))
     ok = verify(py, choices["riemann"] == "yes")
