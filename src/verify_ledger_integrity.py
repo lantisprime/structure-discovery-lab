@@ -228,8 +228,8 @@ def check_commitment():
     # every later snapshot's chain
     raw = open(path, "rb").read()
     chained = broken = 0
-    for m in re.finditer(rb"(?m)^# Snapshot [^\n]*\n# chain-prev: "
-                         rb"([0-9a-f]{64})$", raw):
+    for m in re.finditer(rb"(?m)^# Snapshot [^\r\n]*\r?\n# chain-prev: "
+                         rb"([0-9a-f]{64})\r?$", raw):
         chained += 1
         expected = hashlib.sha256(raw[:m.start()]).hexdigest()
         if m.group(1).decode() != expected:

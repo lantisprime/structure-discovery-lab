@@ -370,7 +370,7 @@ def do_clean_ledger(arch):
         os.makedirs(os.path.join(RESULTS, sub), exist_ok=True)
     now = datetime.now(timezone.utc).isoformat()
     with open(os.path.join(RESULTS, "commitment_ledger.txt"), "w",
-              encoding="utf-8") as f:
+              encoding="utf-8", newline="\n") as f:
         f.write(
             "# Commitment ledger — append-only. SHA-256 of every doc/script/result.\n"
             f"# Fresh ledger initialized by install.py at {now}.\n"
