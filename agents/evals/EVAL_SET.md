@@ -184,3 +184,20 @@ Z-V2 reproduces the live E2 defect the Batch-1 verifier caught, confirming the
 verification discipline transfers to the deterministic-math module. No agent *definition*
 files changed, so the V/D/A/O/R/E/Q/X suite was not re-triggered (no-change, no re-eval).
 
+
+## Mechanical regrade (2026-07-07)
+
+`src/grade_agent_eval.py` now implements graders for every machine-graded
+eval (previously only V-1) plus text checks for the behavioral ones, with
+three-valued outcomes: PASS / FAIL / **INCOMPLETE_RECORD** (the record lacks
+the evidence to re-verify a MUST — not a failure, an audit gap). Regrading is
+read-only: historical `grade.json` / `grades.json` files are never modified.
+`python3 src/grade_agent_eval.py --all` regrades every record; CI runs it on
+every push (`tests/test_graders.py`).
+
+Regrade of the 2026-06 records: **9 PASS, 5 INCOMPLETE_RECORD, 0 FAIL.**
+The five INCOMPLETE_RECORD entries (V-2, V-3, D-1+D-2, A-2, X-2) saved only
+the identity stamp, not `report.md` — their PASS stands on the recorded
+grade but cannot be independently re-verified today. **Going forward every
+dispatch must save `report.md` verbatim** (the Replay & audit rule already
+requires it; the grader now makes omissions visible).
