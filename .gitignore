@@ -9,3 +9,4 @@ webapp/.lantoken
 .episodic-memory/
 .venv/
 archive/
+results/agent_status.json

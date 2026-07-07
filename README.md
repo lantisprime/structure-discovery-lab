@@ -1017,9 +1017,11 @@ python3 -m pytest tests/ -q               # installer / ledger-tool / webapp-smo
   architecture (domain-neutral `src/core/`) but not yet empirically demonstrated.
 - **G5 empty:** the confirmation family (m = 9, α' = 0.0056) has not been touched;
   no result currently holds G5 grade. This is by design, not an omission.
-- **GW miscalibration:** GW (R2) is demoted to G0. Any analysis relying on GW alone
-  is unpublishable until null redesign is complete. A redesign + readmission path is
-  proposed (pending approval) in `docs/PROPOSAL_GW_NULL_REDESIGN.md`.
+- **GW retired:** GW (R2) is retired to the conflict registry (C12). The registered
+  readmission run (`docs/RESULTS_GW_READMISSION_V1.md`) showed the redesigned
+  permutation null is calibrated but powerless — no achievable null family both
+  calibrates and powers exact GW. GW-alone results remain unpublishable; a future
+  GW-family instrument would be a new onboarding.
 - **Resolution bounds:** all "no structure found" verdicts are bounded by ε at tested n.
   ε ≈ 0.15–0.20 is vacuous as an EV constraint at feasible ticket counts. "At the tested
   resolution" qualifies every null result.
