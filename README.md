@@ -87,7 +87,10 @@ Non-interactive use (CI, scripted setups): `python3 install.py --yes` accepts ev
 default; `--env venv|system`, `--ledger keep|clean`, `--datasets keep|clean`,
 `--riemann yes|no`, `--provider <id>` (key read from the `LAB_LLM_API_KEY` environment
 variable, never from argv) override individual answers; `--dry-run` prints the plan and
-changes nothing; `--verify-only` re-runs the post-install health checks and exits.
+changes nothing; `--verify-only` re-runs the post-install health checks and exits;
+`--locked` pins installs to the recorded environment (`constraints-recorded.txt`) for
+closest reproduction of ledgered results; `--restore archive/preinstall-…` mechanically
+undoes a clean start (the displaced state is archived first — nothing is ever deleted).
 
 After installing: activate the venv if you created one (`source .venv/bin/activate`),
 then start the console — `python3 webapp/server.py 8787` (or double-click
@@ -111,9 +114,11 @@ tested platforms; the web console itself is stdlib-only). To migrate:
    --verify-only` to confirm all gates pass.
 
 On a shared/headless server, keep the console bound to localhost (the default) and
-reach it over an SSH tunnel (`ssh -L 8787:localhost:8787 you@server`); `--lan` exposes
-it to the local network only — the console has no authentication layer, so do not
-expose the port to the public internet.
+reach it over an SSH tunnel (`ssh -L 8787:localhost:8787 you@server`). `--lan` exposes
+it to the local network behind a **token gate**: non-localhost devices must open the
+one-time `?token=…` URL printed at startup (token stored git-ignored in
+`webapp/.lantoken`; localhost is always exempt so scripts and the launcher keep
+working). Still do not expose the port to the public internet.
 
 ---
 
@@ -676,9 +681,11 @@ delta-only commitment snapshot in one command (append-only; secrets excluded).
 Every push and pull request runs the full stack on **Ubuntu and macOS**: the guided
 installer itself (`python3 install.py --yes` — CI fails if a fresh install's gates
 fail), all five verifiers above, the repo test suite (`tests/` — installer behavior,
-ledger tooling, webapp smoke), the webapp unit tests, the riemann regression tests,
-and the 10-view browser e2e suite. Locally, `./tools/check.sh [--e2e]` runs the same
-battery in one command.
+ledger tooling, agent-eval regrades, webapp smoke), the webapp unit tests, the riemann
+regression tests, and the 10-view browser e2e suite. A **weekly scheduled run**
+(Mondays 06:00 UTC) catches bit-rot between pushes, and an informational Windows job
+(`continue-on-error`) reports cross-platform drift without blocking. Locally,
+`./tools/check.sh [--e2e]` runs the same battery in one command.
 
 ### n=200 calibration gates
 
@@ -1011,7 +1018,8 @@ python3 -m pytest tests/ -q               # installer / ledger-tool / webapp-smo
 - **G5 empty:** the confirmation family (m = 9, α' = 0.0056) has not been touched;
   no result currently holds G5 grade. This is by design, not an omission.
 - **GW miscalibration:** GW (R2) is demoted to G0. Any analysis relying on GW alone
-  is unpublishable until null redesign is complete.
+  is unpublishable until null redesign is complete. A redesign + readmission path is
+  proposed (pending approval) in `docs/PROPOSAL_GW_NULL_REDESIGN.md`.
 - **Resolution bounds:** all "no structure found" verdicts are bounded by ε at tested n.
   ε ≈ 0.15–0.20 is vacuous as an EV constraint at feasible ticket counts. "At the tested
   resolution" qualifies every null result.
@@ -1056,7 +1064,8 @@ Local, zero-dependency console for the lab (Python stdlib only, fonts vendored i
 
 ```
 python3 webapp/server.py          # http://localhost:8787   (redesigned console)
-python3 webapp/server.py --lan    # + phone access on the same Wi-Fi
+python3 webapp/server.py --lan    # + phone access on the same Wi-Fi (token-gated;
+                                  #   open the ?token=… URL printed at startup)
 ```
 
 Or just double-click **Start Lab Console.command** (macOS) — it starts the

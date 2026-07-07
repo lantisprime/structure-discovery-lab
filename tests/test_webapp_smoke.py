@@ -93,5 +93,37 @@ def test_config_keys_always_masked(server):
         assert v == "set" or "…" in v, "keys must never be served in plaintext"
 
 
+def test_lan_gate_logic():
+    """Unit test the --lan token gate: loopback exempt, valid token grants a
+    cookie session, bad/absent token denied, non-LAN mode wide open."""
+    sys.path.insert(0, os.path.join(REPO, "webapp"))
+    try:
+        import server
+    finally:
+        sys.path.pop(0)
+    g = server.lan_gate
+    tok = "sekret123"
+    # not in LAN mode: everything allowed
+    assert g("192.168.1.50", {}, "", None) == "allow"
+    # LAN mode: loopback always exempt (scripts + launcher keep working)
+    assert g("127.0.0.1", {}, "", tok) == "allow"
+    assert g("::1", {}, "", tok) == "allow"
+    # LAN peer without credentials: denied
+    assert g("192.168.1.50", {}, "", tok) == "deny"
+    # LAN peer with wrong token: denied
+    assert g("192.168.1.50", {"token": "wrong"}, "", tok) == "deny"
+    assert g("192.168.1.50", {}, "labtoken=wrong", tok) == "deny"
+    # valid ?token= -> one-time cookie grant; valid cookie -> allowed
+    assert g("192.168.1.50", {"token": tok}, "", tok) == "set-cookie"
+    assert g("192.168.1.50", {}, f"labtoken={tok}", tok) == "allow"
+    assert g("192.168.1.50", {}, f"other=x; labtoken={tok}", tok) == "allow"
+
+
+def test_localhost_unaffected_by_lan_gate(server):
+    """The running (non---lan) server must not demand any token."""
+    code, _ = get(server, "/api/state")
+    assert code == 200
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

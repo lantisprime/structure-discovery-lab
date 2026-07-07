@@ -224,3 +224,32 @@ def test_real_repo_dry_run():
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def test_restore_swaps_archive_back(tmp_path):
+    """--restore must undo a clean start: archived history returns, the
+    displaced fresh state is itself archived (nothing deleted)."""
+    root = str(tmp_path / "lab")
+    make_mini_lab(root)
+    r = run_installer(root, "--ledger", "clean", "--datasets", "clean")
+    assert r.returncode == 0
+    first_arch = os.path.join("archive", os.listdir(
+        os.path.join(root, "archive"))[0])
+    r = subprocess.run([sys.executable, "install.py", "--restore",
+                        first_arch], cwd=root, capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    led = open(os.path.join(root, "results", "run_ledger.jsonl")).read()
+    assert '"run_id": "r1"' in led, "history must be back after restore"
+    assert os.path.isdir(os.path.join(root, "datasets", "toy-data"))
+    archives = sorted(os.listdir(os.path.join(root, "archive")))
+    assert len(archives) == 2, "displaced fresh state must be archived too"
+
+
+def test_restore_rejects_bogus_archive(tmp_path):
+    root = str(tmp_path / "lab")
+    make_mini_lab(root)
+    r = subprocess.run([sys.executable, "install.py", "--restore",
+                        "archive/nope"], cwd=root,
+                       capture_output=True, text=True)
+    assert r.returncode != 0
+    assert "not found" in r.stderr + r.stdout

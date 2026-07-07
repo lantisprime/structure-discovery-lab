@@ -4,6 +4,8 @@ on:
   push:
     branches: [master]
   pull_request:
+  schedule:
+    - cron: "0 6 * * 1"   # weekly bit-rot check (Mondays 06:00 UTC)
 
 jobs:
   verify:
@@ -59,6 +61,28 @@ jobs:
 
       - name: Installer verify-only gate
         run: python3 install.py --verify-only
+
+  verify-windows:
+    # Informational only (continue-on-error): Windows is not a supported lab
+    # platform, but the installer handles its paths — this job reports drift.
+    name: install + verify (windows, informational)
+    runs-on: windows-latest
+    continue-on-error: true
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the installer (accept defaults)
+        run: python install.py --yes
+      - name: Install dev extras
+        run: .venv\Scripts\python -m pip install -r requirements-dev.txt
+      - name: Verifiers + tests
+        run: |
+          .venv\Scripts\python src\verify_ledger_integrity.py
+          .venv\Scripts\python src\lint_frozen_imports.py
+          .venv\Scripts\python -m pytest tests/ -q
 
   e2e:
     name: browser e2e (ubuntu)
