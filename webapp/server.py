@@ -1705,6 +1705,18 @@ class H(BaseHTTPRequestHandler):
             if u.path in ("/classic", "/classic.html"):
                 return self.send_file(os.path.join(STATIC, "index.html"),
                                       "text/html; charset=utf-8")
+            if u.path.startswith("/fonts/"):
+                # vendored fonts: basename only — no traversal
+                name = os.path.basename(u.path)
+                p = os.path.join(STATIC, "fonts", name)
+                if os.path.isfile(p) and (name.endswith(".woff2")
+                                          or name == "fonts.css"):
+                    return self.send_file(
+                        p, "font/woff2" if name.endswith(".woff2")
+                        else "text/css; charset=utf-8")
+                self.send_response(404)
+                self.end_headers()
+                return None
             if u.path == "/api/state":
                 return self.send_json(state())
             if u.path == "/api/kb":

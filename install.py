@@ -500,6 +500,14 @@ def verify(py, with_riemann):
     ledgers_ok = all(os.path.exists(os.path.join(RESULTS, f))
                      for f in LEDGER_FILES)
     checks.append(("ledger files present (append-only)", ledgers_ok))
+    integ = os.path.join(ROOT, "src", "verify_ledger_integrity.py")
+    if ledgers_ok and os.path.exists(integ):
+        r = subprocess.run([py, integ, "--quiet"],
+                           capture_output=True, text=True)
+        checks.append(("ledger integrity "
+                       "(src/verify_ledger_integrity.py)", r.returncode == 0))
+        if r.returncode != 0:
+            print((r.stdout or r.stderr).strip()[-800:])
     ok = True
     for label, passed in checks:
         say(f"   {'✓ PASS' if passed else '✗ FAIL'}  {label}")

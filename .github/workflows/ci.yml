@@ -1,0 +1,96 @@
+name: lab-ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  verify:
+    name: install + verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            riemann-zero-lab/requirements.txt
+
+      # CI dogfoods the wizard: a non-interactive run must produce a lab
+      # whose own verification gates all pass (installer exits 1 otherwise).
+      - name: Run the installer (accept defaults)
+        run: python3 install.py --yes
+
+      - name: Install dev extras
+        run: .venv/bin/python -m pip install -r requirements-dev.txt
+
+      - name: Ledger integrity
+        run: .venv/bin/python src/verify_ledger_integrity.py
+
+      - name: Frozen-artifact convention
+        run: .venv/bin/python src/lint_frozen_imports.py
+
+      - name: Domain neutrality
+        run: .venv/bin/python src/lint_domain_neutrality.py
+
+      - name: Design verifier
+        run: .venv/bin/python src/design_verifier.py
+
+      - name: Relational docs verifier
+        run: .venv/bin/python src/verify_relational_docs.py
+
+      - name: Repo tests (installer, ledger tools, webapp smoke)
+        run: .venv/bin/python -m pytest tests/ -q
+
+      - name: Webapp unit tests
+        run: .venv/bin/python -m pytest webapp/test_server.py webapp/test_routing.py -q
+
+      - name: Riemann regression tests
+        run: .venv/bin/python -m pytest riemann-zero-lab/tests -q
+
+      - name: Installer verify-only gate
+        run: python3 install.py --verify-only
+
+  e2e:
+    name: browser e2e (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      # e2e needs the console's real data plumbing but no science deps
+      - name: Install playwright (+ numpy for the sandbox-fit endpoint)
+        run: |
+          python3 -m pip install -r requirements-dev.txt numpy
+          python3 -m playwright install --with-deps chromium
+
+      - name: Start console
+        run: |
+          python3 webapp/server.py 8799 &
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:8799/api/state >/dev/null && break
+            sleep 0.5
+          done
+
+      - name: Run browser suites
+        run: |
+          set -e
+          for t in console ledger admin agents approvals equations \
+                   experiments help theorems wizard; do
+            echo "── e2e: $t"
+            python3 webapp/test_${t}_e2e.py http://localhost:8799
+          done

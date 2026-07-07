@@ -660,6 +660,26 @@ Ensures domain vocabulary is confined to `src/domains/<domain>.py`, frozen histo
 records, domain datasets/results, and domain deliverables. Current verdict: **PASS,
 16 files clean** (source: `docs/SANITIZATION.md`).
 
+### Ledger integrity verifier: `src/verify_ledger_integrity.py`
+
+Mechanically checks the four-level ledger system itself: run-ledger rows parse with
+unique `run_id`s and every recorded `output_sha256` still matches the file on disk;
+multiplicity-ledger rows carry valid schema-v2 fields (`raw_p` ∈ [0,1], `p_floor`
+consistent with `m_perm`, run_ids cross-referenced to the run ledger); the commitment
+ledger's append-only text format is intact; the riemann sub-ledger parses. Runs in CI
+on every push and as the installer's final gate. Current verdict: **PASS — 10 checks,
+0 warnings**. Companion tool `tools/snapshot_commitment.py` appends a labeled,
+delta-only commitment snapshot in one command (append-only; secrets excluded).
+
+### Continuous integration: `.github/workflows/ci.yml`
+
+Every push and pull request runs the full stack on **Ubuntu and macOS**: the guided
+installer itself (`python3 install.py --yes` — CI fails if a fresh install's gates
+fail), all five verifiers above, the repo test suite (`tests/` — installer behavior,
+ledger tooling, webapp smoke), the webapp unit tests, the riemann regression tests,
+and the 10-view browser e2e suite. Locally, `./tools/check.sh [--e2e]` runs the same
+battery in one command.
+
 ### n=200 calibration gates
 
 All instrument families are re-gated at n=200 before any real-data run that will
@@ -969,7 +989,12 @@ directly.
 python3 src/verify_relational_docs.py     # PASS — all 6 sections green
 python3 src/design_verifier.py            # PASS — 0 violations
 python3 src/lint_domain_neutrality.py     # PASS — 16 files clean
+python3 src/verify_ledger_integrity.py    # PASS — 10 checks, ledgers ↔ disk consistent
 python3 src/grade_agent_eval.py           # grades agent dispatch records
+python3 tools/snapshot_commitment.py "label"   # append a commitment snapshot (append-only)
+./tools/check.sh                          # everything above + all test suites, one command
+./tools/check.sh --e2e                    # … plus the 10-view browser e2e suite
+python3 -m pytest tests/ -q               # installer / ledger-tool / webapp-smoke tests
 ```
 
 ---
@@ -1025,7 +1050,8 @@ script and found byte-level discrepancy; the panel was refreshed to KS p = 0.385
 
 ## Web console (`webapp/`)
 
-Local, zero-dependency console for the lab (Python stdlib only):
+Local, zero-dependency console for the lab (Python stdlib only, fonts vendored in
+`webapp/static/fonts/` — no CDN, works fully offline/air-gapped):
 
 ```
 python3 webapp/server.py          # http://localhost:8787   (redesigned console)
