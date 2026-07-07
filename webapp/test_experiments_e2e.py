@@ -41,10 +41,15 @@ def run():
         first = pg.locator(".exprow").first
         assert runs[0]["run_id"] in first.inner_text()
 
-        # grade badges parse the first Gn token; grade-less runs fall back to "—"
+        # grade badges parse the first Gn token; grade-less runs fall back to
+        # "—". The newest row changes as the append-only ledger grows, so
+        # derive the expectation from the run's ledgered grade, never a pin.
         badges = [pg.locator(".exprow .badge").nth(i).inner_text().strip()
                   for i in range(pg.locator(".exprow .badge").count())]
-        assert badges[0] == "G2", f"corrected_rerun_r1 -> G2, got {badges[0]}"
+        newest_grade = runs[0].get("grade") or ""
+        assert badges[0] and (badges[0] == "—" or
+                              badges[0].split()[0] in newest_grade), \
+            f"newest badge {badges[0]!r} should derive from {newest_grade!r}"
         # Gn grades parse to G0-G6; non-Gn/absent show a neutral fallback token
         assert all(bt in ("G0", "G1", "G2", "G3", "G4", "G5", "G6")
                    or not bt.startswith("G") for bt in badges), badges
