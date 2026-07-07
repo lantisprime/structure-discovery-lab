@@ -6,3 +6,5 @@ webapp/config.local.json
 webapp/joblogs/
 webapp/.keysalt
 .episodic-memory/
+.venv/
+archive/

@@ -1,0 +1,4 @@
+# riemann-zero-lab module (deterministic mathematics — Riemann zeta zeros).
+# The top-level installer (python3 install.py) offers these as a wizard step.
+mpmath>=1.3       # zeta/theta evaluation, zetazero cross-check (no RNG)
+numpy>=1.24       # spacing analysis

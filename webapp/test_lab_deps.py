@@ -2,8 +2,9 @@
 """Environment guard for the Run centre.
 
 The lab's job scripts (launched from /console#agents) import third-party packages
-that requirements.txt under-declares (it lists only ephem/numpy/openpyxl, but the
-scripts also need scipy/matplotlib/pandas/ripser). The console job e2e mocks the
+beyond the original core three (requirements.txt used to list only
+ephem/numpy/openpyxl; it now declares the full set, and `python3 install.py`
+installs and then runs this guard). The console job e2e mocks the
 /api/jobs POSTs, so a missing runtime dependency surfaces only when a job actually
 runs a subprocess — which is how meta_panel (matplotlib) and r5_coupling (scipy)
 failed in the browser after passing every mocked test.
