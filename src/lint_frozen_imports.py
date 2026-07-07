@@ -22,7 +22,8 @@ FREEZE_MARK = "FROZEN HISTORICAL RECORD"
 FROZEN = set()
 for f in os.listdir(HERE):
     if f.endswith(".py"):
-        head = open(os.path.join(HERE, f)).read(400)
+        head = open(os.path.join(HERE, f), encoding="utf-8",
+                    errors="replace").read(400)
         # marker must be a header comment, not a docstring mention
         if any(l.strip().startswith("#") and FREEZE_MARK in l
                for l in head.splitlines()[:4]):
@@ -54,7 +55,7 @@ IMPORT_RE = re.compile(r"^\s*(?:from|import)\s+([A-Za-z_][A-Za-z0-9_]*)",
 def module_level_imports(path):
     """Names imported at column-0 indentation (module level)."""
     out = []
-    for line in open(path):
+    for line in open(path, encoding="utf-8", errors="replace"):
         m = re.match(r"^(?:from|import)\s+([A-Za-z_][A-Za-z0-9_]*)", line)
         if m:
             out.append(m.group(1))
@@ -75,7 +76,7 @@ def main():
                 continue
             frozen_hits = [i for i in module_level_imports(path)
                            if i in FROZEN]
-            lazy_hits = [i for i in set(IMPORT_RE.findall(open(path).read()))
+            lazy_hits = [i for i in set(IMPORT_RE.findall(open(path, encoding="utf-8", errors="replace").read()))
                          if i in FROZEN and i not in frozen_hits]
             if is_core and frozen_hits:
                 msg = (f"core module {rel} imports frozen {frozen_hits} "

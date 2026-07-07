@@ -36,7 +36,7 @@ FLOAT = re.compile(r"\d+\.\d+")
 
 def read(run_dir, name):
     p = os.path.join(run_dir, name)
-    return open(p).read() if os.path.exists(p) else None
+    return open(p, encoding="utf-8").read() if os.path.exists(p) else None
 
 
 def sha256_file(path):
@@ -59,7 +59,7 @@ def finish(eval_id, checks, notes=None):
 # ---------------------------------------------------------------- V slice
 def grade_v1(run_dir):
     rep_path = os.path.join(run_dir, "report.md")
-    rep = open(rep_path).read()
+    rep = open(rep_path, encoding="utf-8").read()
     checks = {}
     for line in ["FIRST-RUN + ADMISSION VERIFIED", "BATCH5 + ALLGAMES VERIFIED",
                  "BATCH6 VERIFIED", "PRESSURE + BATCH7 VERIFIED",

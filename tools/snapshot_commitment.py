@@ -52,7 +52,7 @@ def previous_hashes():
     prev = {}
     if not os.path.exists(LEDGER):
         return prev
-    for line in open(LEDGER):
+    for line in open(LEDGER, encoding="utf-8"):
         line = line.strip()
         if not line or line.startswith("#") or "[SEALED]" in line:
             continue

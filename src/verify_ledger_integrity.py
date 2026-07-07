@@ -57,7 +57,7 @@ def sha16(path):
 
 def load_jsonl(path):
     rows, bad = [], 0
-    for i, line in enumerate(open(path), 1):
+    for i, line in enumerate(open(path, encoding="utf-8"), 1):
         line = line.strip()
         if not line:
             continue
@@ -205,7 +205,7 @@ def check_commitment():
     # rows are '<sha16>  ./path'; the blind-eval commitment chain also uses
     # bare paths and '[SEALED] path' rows — all are legitimate
     row_re = re.compile(r"^[0-9a-f]{16}\s+(\[SEALED\]\s+)?\.?/?\S")
-    for i, line in enumerate(open(path), 1):
+    for i, line in enumerate(open(path, encoding="utf-8"), 1):
         line = line.rstrip("\n")
         if not line.strip():
             continue
@@ -248,7 +248,7 @@ def check_admission():
     if not os.path.exists(path):
         fail("results/admission_log.txt missing")
         return
-    lines = [l.strip() for l in open(path) if l.strip()]
+    lines = [l.strip() for l in open(path, encoding="utf-8") if l.strip()]
     if not lines:
         ok("admission log: present, empty (fresh install)")
         return

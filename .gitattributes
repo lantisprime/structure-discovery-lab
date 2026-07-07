@@ -1,0 +1,5 @@
+# Hash-ledgered repository: file BYTES are the commitment device
+# (results/commitment_ledger.txt, run-ledger output_sha256). Git must never
+# rewrite line endings on checkout — CRLF conversion on Windows changes every
+# sha256 and reads as ledger corruption (caught by the Windows CI job).
+* -text
