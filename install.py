@@ -352,7 +352,7 @@ def snapshot_hashes(out):
             if f in skip_files:
                 continue
             p = os.path.join(base, f)
-            rel = "./" + os.path.relpath(p, ROOT)
+            rel = "./" + os.path.relpath(p, ROOT).replace(os.sep, "/")
             h = hashlib.sha256(open(p, "rb").read()).hexdigest()[:16]
             rows.append(f"{h}  {rel}")
     out.write("\n".join(rows) + "\n")
@@ -369,7 +369,8 @@ def do_clean_ledger(arch):
     for sub in ("figures", "agent_runs", "blind"):
         os.makedirs(os.path.join(RESULTS, sub), exist_ok=True)
     now = datetime.now(timezone.utc).isoformat()
-    with open(os.path.join(RESULTS, "commitment_ledger.txt"), "w") as f:
+    with open(os.path.join(RESULTS, "commitment_ledger.txt"), "w",
+              encoding="utf-8") as f:
         f.write(
             "# Commitment ledger — append-only. SHA-256 of every doc/script/result.\n"
             f"# Fresh ledger initialized by install.py at {now}.\n"

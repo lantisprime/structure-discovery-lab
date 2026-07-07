@@ -40,7 +40,7 @@ def tree_hashes():
             if f in SKIP_FILES:
                 continue
             p = os.path.join(base, f)
-            rel = "./" + os.path.relpath(p, ROOT)
+            rel = "./" + os.path.relpath(p, ROOT).replace(os.sep, "/")
             h = hashlib.sha256(open(p, "rb").read()).hexdigest()[:16]
             rows[rel] = h
     return rows
@@ -107,7 +107,7 @@ def main():
         sys.stdout.write(header + body)
         print(f"# --dry-run: nothing appended ({len(changed)} rows)")
         return
-    with open(LEDGER, "a") as f:
+    with open(LEDGER, "a", encoding="utf-8") as f:
         f.write(header + body)
     anchor = hashlib.sha256(open(LEDGER, "rb").read()).hexdigest()
     print(f"appended snapshot '{args.label}': {len(changed)} rows "

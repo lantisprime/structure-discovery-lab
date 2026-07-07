@@ -63,8 +63,9 @@ def test_obfuscated_key_round_trips_through_server(tmp_path, monkeypatch):
         assert server._deobf(token) == "sk-test-roundtrip-123"
     finally:
         sys.path.pop(0)
-    salt = os.path.join(str(tmp_path), ".keysalt")
-    assert oct(os.stat(salt).st_mode & 0o777) == "0o600"
+    if os.name != "nt":   # POSIX modes don't exist on Windows
+        salt = os.path.join(str(tmp_path), ".keysalt")
+        assert oct(os.stat(salt).st_mode & 0o777) == "0o600"
 
 
 def test_snapshot_hash_format(tmp_path, monkeypatch):
@@ -171,9 +172,10 @@ def test_keyless_provider_configures_roles(tmp_path):
     assert {r_ for r_ in roles} == {"analyst", "executor", "reviewer",
                                     "companion"}
     assert all(roles[x]["provider"] == "ollama" for x in roles)
-    mode = os.stat(os.path.join(root, "webapp",
-                                "config.local.json")).st_mode & 0o777
-    assert oct(mode) == "0o600"
+    if os.name != "nt":   # POSIX modes don't exist on Windows
+        mode = os.stat(os.path.join(root, "webapp",
+                                    "config.local.json")).st_mode & 0o777
+        assert oct(mode) == "0o600"
 
 
 def test_provider_key_from_env_is_obfuscated(tmp_path):
