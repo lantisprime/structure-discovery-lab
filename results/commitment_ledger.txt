@@ -748,3 +748,13 @@ d90b2674a1dd6f25  ./webapp/test_render.js
 53a60273d4784dff  ./webapp/test_server.py
 7d73751a6c22b819  ./webapp/test_theorems_e2e.py
 2afb9e803e11fcc3  ./webapp/test_wizard_e2e.py
+# Snapshot 2026-07-07T10:47:04+00:00 — R2 retirement ratified (C12) — governance edits
+# chain-prev: 10f557f81667ee94548c8348fc9f7218551ce981aaffb760a1a5448d59747359
+# (7 changed of 319 tracked files; hashed BEFORE any run script executes)
+c3043798522ed01a  ./README.md
+49cc499a0fa4c1ac  ./docs/RESULTS_GW_READMISSION_V1.md
+d89f940e26ec5a4f  ./docs/THEOREM_GOVERNANCE.md
+91785c9ef533838d  ./src/gw_readmission_v1.py
+ed2617fa0d17fc21  ./src/verify_relational_docs.py
+773804b6f267ed0f  ./webapp/test_console_e2e.py
+3fb7de821061de64  ./webapp/test_experiments_e2e.py

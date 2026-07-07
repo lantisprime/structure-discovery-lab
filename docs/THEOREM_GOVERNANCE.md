@@ -107,6 +107,24 @@ layers apart.
 
 ---
 
+### C12. GW alignment vs achievable null calibration  *(added 2026-07-07; ratified by the lab owner — R2 RETIRED)*
+The Gromov–Wasserstein instrument (R2) needs a null for "these two metric-measure spaces
+share more structure than independent generation predicts". Every achievable null family
+failed one horn of the calibration dilemma: **moment-matched regeneration** nulls have power
+but are miscalibrated in distribution (REMEDIATION_LOG M2: lattice χ² p=0.002 at n=200);
+**coupling-label permutation** nulls are exactly calibrated (registered readmission run
+`gw_readmission_v1`: FPR 0.040, KS p=0.076, lattice χ² p=0.238) but powerless against the
+registered shared-geometry effect (0.62 @ noise 0.1 vs frozen reference 0.95; flat curve),
+because permuted pooled labels inherit the shared geometry the instrument is meant to
+detect; row permutation is degenerate (GW is order-invariant). **The conflict is between the
+instrument's alignment invariance and the exchangeability structure any honest permutation
+null must condition on.** Resolution: **R2 is RETIRED** (docs/RESULTS_GW_READMISSION_V1.md;
+proposal + registration + two byte-identical runs on the commitment ledger). GW-alone
+results remain unpublishable; the M3 pair numbers stay exploratory. Any future GW-family
+instrument (e.g. entropic GW) is a NEW instrument requiring fresh onboarding under Part 3.
+
+---
+
 ## Part 2 — Harmonization constitution (seven articles, plus a deterministic-math extension A8)
 
 **A1. One generative null, many lenses.** Every instrument's null distribution is
