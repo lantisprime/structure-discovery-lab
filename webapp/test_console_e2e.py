@@ -8,6 +8,7 @@ unbuilt views degrade honestly.
 Run:  python3 webapp/server.py 8799 &   then
       <venv>/bin/python webapp/test_console_e2e.py http://localhost:8799
 """
+import re
 import sys
 from playwright.sync_api import sync_playwright, expect
 
@@ -23,30 +24,47 @@ def run():
         pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
         pg.on("pageerror", lambda e: errs.append(str(e)))
 
+        # Source of truth: the page must mirror the SAME live state the API
+        # serves — never pinned snapshots, which rot on the next legitimate
+        # ledger append, and never the prototype's placeholders.
+        state = pg.request.get(f"{BASE}/api/state").json()
+        n_runs = len(state["runs"])
+        live_m = state["ledger"]["live"]
+        panel = state["meta_panel"]
+        p_live = panel["p_meta_discrete"]
+        band_hi = panel["sim_frac_le_05_q05_q95"][1]
+        panel_hot = panel["frac_le_05"] > band_hi
+
         pg.goto(f"{BASE}/console", wait_until="networkidle")
         pg.wait_for_selector(".greet", timeout=5000)
 
         body = pg.inner_text("body")
 
-        # 1. Real ledger count (22 runs), not the prototype's "10".
-        assert pg.locator(".tile", has_text="experiments in the run ledger").locator(
-            ".val").inner_text().strip() == "22", "run count should be live (22)"
+        # 1. Run-ledger tile mirrors the live ledger, not the prototype's "10".
+        rtile_val = pg.locator(".tile", has_text="experiments in the run ledger"
+                               ).locator(".val").inner_text().strip()
+        assert rtile_val == str(n_runs), \
+            f"run count should be live ({n_runs}), got {rtile_val}"
 
-        # 2. Honesty meter: live 0.032 AND honest label — NEVER "looks honest"
-        #    while the panel is mildly hot (frac_le_05 above the sim band).
+        # 2. Honesty meter: live p AND an honest label — NEVER "looks honest"
+        #    while the panel is actually hot (frac_le_05 above the sim band).
         htile = pg.locator(".tile", has_text="honesty-meter p")
         hval = htile.locator(".val").inner_text().strip()
-        assert hval.startswith("0.032"), f"honesty p should be live ~0.032, got {hval}"
+        assert hval.startswith(f"{p_live:.3f}"[:5]), \
+            f"honesty p should be live ~{p_live:.3f}, got {hval}"
         hlab = htile.inner_text()
-        assert "looks honest" not in hlab, "must not mislabel a hot panel as honest"
-        assert "excess" in hlab, "hot panel should surface the #45 excess caveat"
+        if panel_hot:
+            assert "looks honest" not in hlab, \
+                "must not mislabel a hot panel as honest"
+            assert "excess" in hlab, "hot panel should surface the excess caveat"
         assert "0.385" not in body, "prototype placeholder 0.385 must not appear"
         # panel provenance restored from the classic app (version + n_tests)
-        assert "v2" in hlab and "tests" in hlab, "honesty tile shows panel version + n_tests"
+        assert f"v{panel['panel_version']}" in hlab and "tests" in hlab, \
+            "honesty tile shows panel version + n_tests"
 
-        # 3. Live-tests tile: live count (195) + the frac_le_05 figure (classic parity).
+        # 3. Live-tests tile mirrors the ledger + the frac_le_05 figure.
         ltile = pg.locator(".tile", has_text="live tests toward global m")
-        assert ltile.locator(".val").inner_text().strip() == "195"
+        assert ltile.locator(".val").inner_text().strip() == str(live_m)
         assert "≤ .05" in ltile.inner_text(), "restore the % ≤ .05 figure from index.html"
 
         # 4. Next-action reflects live pipeline (no pending approval => eval step).
@@ -57,9 +75,13 @@ def run():
 
         # 5. Latest result shows the real newest run + a parsed grade badge,
         #    plus the classic provenance (script + registration) and nav to agents.
+        newest_run = state["runs"][0]["run_id"]
         rc = pg.locator(".rightcol").inner_text()
-        assert "corrected_rerun_r1" in rc
-        assert pg.locator(".rightcol .badge").first.inner_text().strip() == "G2"
+        assert newest_run in rc, \
+            f"latest card should show the ledger's newest run ({newest_run})"
+        badge = pg.locator(".rightcol .badge").first.inner_text().strip()
+        assert re.fullmatch(r"G\d\S*", badge), \
+            f"latest card shows a parsed grade badge, got {badge!r}"
         assert ".py" in rc, "latest card shows the run's script (classic parity)"
         assert "REGISTRATION" in rc.upper(), "latest card shows the registration doc"
         assert pg.locator(".rightcol a", has_text="Agent status").count() == 1

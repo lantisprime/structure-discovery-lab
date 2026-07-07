@@ -174,5 +174,28 @@ def test_snapshot_dry_run_appends_nothing(tmp_path):
                              "commitment_ledger.txt")).read() == before
 
 
+def test_snapshot_hash_chain_verifies_and_breaks(tmp_path):
+    """Each snapshot commits to all prior ledger bytes; verifier must accept
+    an intact chain and FAIL when earlier bytes are retroactively edited."""
+    root = str(tmp_path)
+    make_lab(root, [GOOD_RUN], [GOOD_TEST])
+    os.makedirs(os.path.join(root, "docs"))
+    doc = os.path.join(root, "docs", "a.md")
+    open(doc, "w").write("v1")
+    assert snap(root, "one").returncode == 0
+    open(doc, "w").write("v2")
+    r2 = snap(root, "two")
+    assert r2.returncode == 0
+    assert "anchor" in r2.stdout, "post-append digest must be printed"
+    ok = verify(root)
+    assert ok.returncode == 0 and "hash chain intact across 2" in ok.stdout
+
+    ledger = os.path.join(root, "results", "commitment_ledger.txt")
+    text = open(ledger).read()
+    open(ledger, "w").write(text.replace("one", "0ne", 1))  # retro-edit
+    broken = verify(root)
+    assert broken.returncode == 1
+    assert "hash chain BROKEN" in broken.stdout
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

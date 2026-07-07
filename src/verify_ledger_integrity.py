@@ -223,6 +223,24 @@ def check_commitment():
         ok(f"commitment ledger: {n_rows} hash rows, {n_headers} header/"
            "annotation lines, format intact")
 
+    # hash chain: every '# chain-prev' snapshot commits to the exact ledger
+    # bytes that preceded it — a retroactive edit anywhere earlier breaks
+    # every later snapshot's chain
+    raw = open(path, "rb").read()
+    chained = broken = 0
+    for m in re.finditer(rb"(?m)^# Snapshot [^\n]*\n# chain-prev: "
+                         rb"([0-9a-f]{64})$", raw):
+        chained += 1
+        expected = hashlib.sha256(raw[:m.start()]).hexdigest()
+        if m.group(1).decode() != expected:
+            broken += 1
+            fail("commitment ledger: hash chain BROKEN at byte "
+                 f"{m.start()} — bytes above this snapshot were altered "
+                 "after it was committed")
+    if chained and not broken:
+        ok(f"commitment ledger: hash chain intact across {chained} "
+           "chained snapshot(s)")
+
 
 # ----------------------------------------------------------- admission log
 def check_admission():

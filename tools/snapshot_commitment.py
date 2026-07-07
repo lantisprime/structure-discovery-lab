@@ -86,7 +86,19 @@ def main():
     changed = (current if args.full else
                {p: h for p, h in current.items() if prev.get(p) != h})
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    header = (f"\n# Snapshot {now} — {args.label}\n"
+
+    # Hash-chain: each snapshot commits to the ENTIRE ledger state that
+    # preceded it, so any retroactive edit to earlier lines breaks every
+    # later snapshot's chain (verified by src/verify_ledger_integrity.py).
+    if not args.dry_run:
+        with open(LEDGER, "rb+") as f:
+            raw = f.read()
+            if raw and not raw.endswith(b"\n"):
+                f.write(b"\n")
+    chain_prev = hashlib.sha256(open(LEDGER, "rb").read()).hexdigest()
+
+    header = (f"# Snapshot {now} — {args.label}\n"
+              f"# chain-prev: {chain_prev}\n"
               f"# ({len(changed)} changed of {len(current)} tracked files; "
               "hashed BEFORE any run script executes)\n")
     body = "".join(f"{h}  {p}\n" for p, h in sorted(changed.items()))
@@ -97,8 +109,11 @@ def main():
         return
     with open(LEDGER, "a") as f:
         f.write(header + body)
+    anchor = hashlib.sha256(open(LEDGER, "rb").read()).hexdigest()
     print(f"appended snapshot '{args.label}': {len(changed)} rows "
           f"({len(current)} files tracked) -> results/commitment_ledger.txt")
+    print(f"ledger digest after append (anchor this in your git commit "
+          f"message/tag):\n  {anchor}")
 
 
 if __name__ == "__main__":

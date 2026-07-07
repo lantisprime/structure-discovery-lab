@@ -990,7 +990,8 @@ python3 src/verify_relational_docs.py     # PASS — all 6 sections green
 python3 src/design_verifier.py            # PASS — 0 violations
 python3 src/lint_domain_neutrality.py     # PASS — 16 files clean
 python3 src/verify_ledger_integrity.py    # PASS — 10 checks, ledgers ↔ disk consistent
-python3 src/grade_agent_eval.py           # grades agent dispatch records
+python3 src/grade_agent_eval.py --all     # regrades every agent-eval dispatch record
+                                          # (PASS / FAIL / INCOMPLETE_RECORD; read-only)
 python3 tools/snapshot_commitment.py "label"   # append a commitment snapshot (append-only)
 ./tools/check.sh                          # everything above + all test suites, one command
 ./tools/check.sh --e2e                    # … plus the 10-view browser e2e suite
