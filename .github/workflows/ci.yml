@@ -69,6 +69,8 @@ jobs:
     runs-on: windows-latest
     continue-on-error: true
     timeout-minutes: 40
+    env:
+      PYTHONIOENCODING: utf-8   # Windows console defaults to cp1252
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

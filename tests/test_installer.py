@@ -253,3 +253,13 @@ def test_restore_rejects_bogus_archive(tmp_path):
                        capture_output=True, text=True)
     assert r.returncode != 0
     assert "not found" in r.stderr + r.stdout
+
+
+def test_archive_dir_never_collides(tmp_path, monkeypatch):
+    """Two archive dirs created within the same second must be distinct —
+    otherwise --restore can displace state into the archive it is restoring
+    from (caught by CI on a fast runner)."""
+    monkeypatch.setattr(install, "ROOT", str(tmp_path))
+    a = install.archive_dir()
+    b = install.archive_dir()
+    assert a != b and os.path.isdir(a) and os.path.isdir(b)

@@ -61,6 +61,15 @@ AGENT_ROLES = ("analyst", "executor", "reviewer", "companion")
 
 
 # --------------------------------------------------------------------- ui
+# Windows consoles often default to cp1252, which cannot encode the
+# box-drawing/check characters below — degrade to '?' instead of crashing.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
+
 def hr():
     print("─" * 62)
 
@@ -315,9 +324,17 @@ def run_wizard(args, state, interactive):
 
 # ----------------------------------------------------------------- actions
 def archive_dir():
+    """A guaranteed-fresh archive dir. Timestamps are second-granular, so two
+    operations in the same second (clean install then --restore on a fast
+    machine) MUST NOT share a dir — --restore would otherwise displace state
+    into the very archive it is restoring from."""
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
-    d = os.path.join(ROOT, "archive", f"preinstall-{stamp}")
-    os.makedirs(d, exist_ok=True)
+    base = os.path.join(ROOT, "archive", f"preinstall-{stamp}")
+    d, n = base, 1
+    while os.path.exists(d):
+        n += 1
+        d = f"{base}-{n}"
+    os.makedirs(d)
     return d
 
 
