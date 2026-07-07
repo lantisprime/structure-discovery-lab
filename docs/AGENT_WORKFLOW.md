@@ -183,3 +183,23 @@ From Claude Code / Cowork with the agent files installed:
 
 Each agent's definition file pins its model; the orchestrating session enforces the
 handoff contract and runs the cross-model verification step.
+
+## Mechanical gates available to every agent (added 2026-07-07)
+
+Tooling any agent may (and should) invoke before publishing or handing off —
+all stdlib, all read-only except where noted:
+
+- `python3 src/verify_ledger_integrity.py` — the four-level ledger system is
+  internally consistent and recorded output hashes still match disk. Run it
+  after any step that appends to a ledger.
+- `python3 tools/snapshot_commitment.py "<label>"` — appends a delta-only
+  commitment snapshot (writes, append-only) so registrations are hashed BEFORE
+  their run scripts execute. Replaces the hand-assembled snapshot procedure.
+- `./tools/check.sh [--e2e]` — the full verification battery (five verifiers +
+  all test suites) in one command; CI runs the same battery on every push
+  (`.github/workflows/ci.yml`, Ubuntu + macOS).
+- `python3 install.py --verify-only` — environment health (deps, frozen
+  convention, ledger presence + integrity) without changing anything.
+
+These gates are additive to, not a substitute for, the handoff contract and
+cross-executor verification above.
