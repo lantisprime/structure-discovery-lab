@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "approval": "docs/PROPOSAL_GW_NULL_REDESIGN.md (lab owner, 2026-07-07)",
+    "deterministic": true,
+    "multiplicity_charge": 0,
+    "null_under_test": "coupling-label permutation (pooled 2n rows, permuted, split n/n; 2-D cloud zero-padded \u2014 isometric)",
+    "params": {
+      "d": 3,
+      "h0_trials": 300,
+      "m_perm": 99,
+      "n": 200,
+      "noise_grid": [
+        0.1,
+        0.2,
+        0.3,
+        0.5
+      ],
+      "power_trials": 50,
+      "seed_scheme": "20260707+0 (H0), 20260707+1000+i (power grid)"
+    },
+    "registration": "docs/REGISTRATION_GW_READMISSION_V1.md",
+    "run_id": "gw_readmission_v1",
+    "statistic": "verbatim replica of frozen relational_admission R2 gw_distortion; p_perm (+1)-corrected"
+  },
+  "gate1_2_fpr_uniformity": {
+    "fpr_at_alpha": 0.04,
+    "fpr_ok": true,
+    "ks_p": 0.07547207607428685,
+    "ks_stat": 0.07333333333333336,
+    "lattice_chi2_p": 0.23797213895081865,
+    "n_trials": 300,
+    "p_uniformity_ok": true
+  },
+  "gate3_power": {
+    "curve_power_at_alpha": {
+      "0.1": 0.62,
+      "0.2": 0.62,
+      "0.3": 0.5,
+      "0.5": 0.64
+    },
+    "frozen_m1_reference": {
+      "0.1": 0.95,
+      "0.5": 0.15
+    },
+    "n_trials_per_point": 50,
+    "power_ok": false
+  },
+  "verdict": "CALIBRATED_BUT_POWERLESS"
+}
