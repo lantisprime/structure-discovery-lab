@@ -15,6 +15,8 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 import pcso_weekly_update as pcso  # noqa: E402
+sys.path.insert(0, str(ROOT / "webapp"))
+import server  # noqa: E402
 
 CANONICAL_RESULT_SHA256 = (
     "11c8af729f0353a83f130253100dadb5f"
@@ -23,7 +25,12 @@ CANONICAL_RESULT_SHA256 = (
 
 BREAK_BYTE = "--break-byte-compare" in sys.argv
 BREAK_ATOMIC = "--break-atomic-write" in sys.argv
-for flag in ("--break-byte-compare", "--break-atomic-write"):
+BREAK_JOB = "--break-job-definition" in sys.argv
+for flag in (
+    "--break-byte-compare",
+    "--break-atomic-write",
+    "--break-job-definition",
+):
     if flag in sys.argv:
         sys.argv.remove(flag)
 
@@ -33,6 +40,8 @@ if BREAK_BYTE:
     )
 if BREAK_ATOMIC:
     pcso.atomic_write = lambda output, payload: output.write_bytes(payload[:-1])
+if BREAK_JOB:
+    server.JOB_DEFS.pop("pcso_weekly_verify", None)
 
 
 class TestPCSOCloseout(unittest.TestCase):
@@ -107,6 +116,20 @@ class TestPCSOCloseout(unittest.TestCase):
         self.assertEqual(
             hashlib.sha256(result.read_bytes()).hexdigest(),
             CANONICAL_RESULT_SHA256,
+        )
+
+
+class TestPCSOJob(unittest.TestCase):
+    def test_pcso_job_registered(self):
+        definition = server.JOB_DEFS["pcso_weekly_verify"]
+        self.assertEqual(definition["cat"], "gates")
+        self.assertEqual(definition["label"], "Verify PCSO weekly batch")
+
+    def test_pcso_job_argv_exact(self):
+        observed = server.job_argv("pcso_weekly_verify", {})
+        self.assertEqual(
+            observed,
+            [server.PY, "src/pcso_weekly_update.py", "--verify"],
         )
 
 

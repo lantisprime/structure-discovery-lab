@@ -658,6 +658,10 @@ JOBLOGS = os.path.join(HERE, "joblogs")
 PY = sys.executable or "python3"
 JOB_DEFS = {
     # gates & health -------------------------------------------------------
+    "pcso_weekly_verify": {
+        "argv": [PY, "src/pcso_weekly_update.py", "--verify"], "cat": "gates",
+        "label": "Verify PCSO weekly batch",
+        "desc": "recompute and byte-compare the canonical July closeout without writing"},
     "design_verifier": {
         "argv": [PY, "src/design_verifier.py"], "cat": "gates",
         "label": "Design verifier",

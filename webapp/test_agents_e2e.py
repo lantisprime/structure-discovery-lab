@@ -23,8 +23,10 @@ import sys
 import urllib.request
 from playwright.sync_api import sync_playwright
 
-BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8799"
-SHOT = sys.argv[2] if len(sys.argv) > 2 else "/tmp/console_agents.png"
+BREAK_PCSO_UI = "--break-pcso-ui" in sys.argv
+ARGS = [arg for arg in sys.argv[1:] if arg != "--break-pcso-ui"]
+BASE = ARGS[0] if ARGS else "http://localhost:8799"
+SHOT = ARGS[1] if len(ARGS) > 1 else "/tmp/console_agents.png"
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JOBLOGS = os.path.join(REPO, "webapp", "joblogs")
@@ -41,6 +43,11 @@ def _joblogs():
 def run():
     jobs = _api("/api/jobs")
     defs = jobs["defs"]
+    if BREAK_PCSO_UI:
+        defs["gates"] = [
+            item for item in defs.get("gates", [])
+            if item.get("name") != "pcso_weekly_verify"
+        ]
     # runnable (Run-button) defs per category = everything except the task-need
     # standalone-agent def, which the mock routes to its own launcher card.
     runnable = {cat: [d for d in ds if "task" not in (d.get("needs") or [])]
@@ -71,7 +78,16 @@ def run():
                                                "label": "E2E mock job", "status": "running",
                                                "started": "00:00:00"}))
             else:
-                route.continue_()
+                if BREAK_PCSO_UI:
+                    response = route.fetch()
+                    value = response.json()
+                    value["defs"]["gates"] = [
+                        item for item in value["defs"].get("gates", [])
+                        if item.get("name") != "pcso_weekly_verify"
+                    ]
+                    route.fulfill(response=response, body=json.dumps(value))
+                else:
+                    route.continue_()
 
         def handle_cancel(route, request):
             route.fulfill(status=200, content_type="application/json",
@@ -94,6 +110,8 @@ def run():
                     f"missing group card: {title}"
         assert pg.locator("#ag-groups .ag-item button", has_text="Run").count() == total_run, \
             f"one Run button per runnable job ({total_run})"
+        pcso_row = pg.locator(".ag-item", has_text="Verify PCSO weekly batch")
+        assert pcso_row.count() == 1, "PCSO byte verifier must be visible"
 
         # --- standalone launcher: textarea + role select (3 roles) + Launch ---
         assert pg.locator("#ag-task").count() == 1
@@ -107,6 +125,13 @@ def run():
         pg.wait_for_selector("#ag-log .ag-logcard")
         assert posted and posted[-1]["job"] == "design_verifier", \
             "Run posts the whitelisted job name"
+        pcso_row.get_by_role("button", name="Run").click()
+        for _ in range(40):
+            if posted and posted[-1].get("job") == "pcso_weekly_verify":
+                break
+            pg.wait_for_timeout(50)
+        assert posted[-1]["job"] == "pcso_weekly_verify", \
+            "PCSO Run posts the non-mutating verifier job"
 
         # --- launch validation: <10 chars rejected, no POST ---
         n_before = len(posted)
