@@ -16,6 +16,8 @@ import json
 import math
 import os
 import random
+import subprocess
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -556,8 +558,24 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def git_status_bytes() -> bytes:
+    run = subprocess.run(
+        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+        cwd=ROOT,
+        capture_output=True,
+        check=False,
+    )
+    if run.returncode != 0:
+        raise RuntimeError(
+            run.stderr.decode("utf-8", "replace").strip()
+            or "unable to capture repository status"
+        )
+    return run.stdout
+
+
 def main() -> None:
     args = parse_args()
+    status_before = git_status_bytes() if args.verify else None
     manifest_path = args.manifest.resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     records = validate_manifest(manifest)
@@ -567,6 +585,20 @@ def main() -> None:
     payload = result_bytes(result)
     if args.verify:
         digest = verify_existing_result(output, payload)
+        status_after = git_status_bytes()
+        evidence = {
+            "command_argv": [sys.executable, *sys.argv],
+            "input_sha256": result["_meta"]["input_sha256"],
+            "output_sha256": digest,
+            "exit_status": 0,
+            "git_status_before_sha256": hashlib.sha256(status_before).hexdigest(),
+            "git_status_after_sha256": hashlib.sha256(status_after).hexdigest(),
+            "git_status_unchanged": status_before == status_after,
+            "wrote": "none",
+        }
+        print("VERIFY_EVIDENCE " + json.dumps(evidence, sort_keys=True))
+        if status_before != status_after:
+            raise RuntimeError("repository status changed during verification")
         print(
             f"PASS sha256={digest}; validated={len(records)}; "
             f"confirmation_n={len(confirmation)}; flags={len(result['flags'])}; "

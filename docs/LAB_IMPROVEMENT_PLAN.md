@@ -3,7 +3,7 @@
 **Plan ID:** `LAB-RELIABILITY-2026Q3`
 **Version:** 1.0
 **Created:** 2026-07-10
-**Status:** PROPOSED -- execution not started
+**Status:** IN PROGRESS -- Milestone 0 complete; Milestones 1-6 planned
 **Scope:** prospective lab infrastructure, statistical controls, provenance, and
 verification
 **Implementation plan:** `docs/plans/LAB_RELIABILITY_M0_IMPLEMENTATION_PLAN.md`
@@ -73,18 +73,18 @@ All prospective registered runs must eventually satisfy these controls:
 ### Milestone 0 -- Close operational holes
 
 **Priority:** P0
-**Status:** PLANNED
+**Status:** COMPLETE (2026-07-10)
 **Depends on:** none
 
-- [ ] Add a `pcso_weekly_verify` webapp job that invokes the canonical runner in
+- [x] Add a `pcso_weekly_verify` webapp job that invokes the canonical runner in
   verification mode.
-- [ ] Replace the hard-coded webapp commit path list with an explicit closeout
+- [x] Replace the hard-coded webapp commit path list with an explicit closeout
   manifest or repository-wide staged-path preview requiring human confirmation.
-- [ ] Include `datasets/`, the PCSO workbook, `.gitattributes`, and provenance
+- [x] Include `datasets/`, the PCSO workbook, `.gitattributes`, and provenance
   artifacts when they belong to the approved closeout.
-- [ ] Show the exact command, input hashes, output hash, exit status, and dirty-tree
+- [x] Show the exact command, input hashes, output hash, exit status, and dirty-tree
   comparison in the webapp verification result.
-- [ ] Add routing and job-definition tests for the new workflow.
+- [x] Add routing and job-definition tests for the new workflow.
 
 **Acceptance gate M0**
 

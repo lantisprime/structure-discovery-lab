@@ -123,6 +123,20 @@ class TestPCSOCloseout(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
         self.assertIn(f"PASS sha256={CANONICAL_RESULT_SHA256}", run.stdout)
         self.assertIn("wrote=none", run.stdout)
+        evidence_line = next(
+            line for line in run.stdout.splitlines()
+            if line.startswith("VERIFY_EVIDENCE ")
+        )
+        evidence = json.loads(evidence_line.removeprefix("VERIFY_EVIDENCE "))
+        self.assertEqual(evidence["command_argv"][-1], "--verify")
+        self.assertEqual(evidence["output_sha256"], CANONICAL_RESULT_SHA256)
+        self.assertTrue(evidence["input_sha256"])
+        self.assertEqual(evidence["exit_status"], 0)
+        self.assertTrue(evidence["git_status_unchanged"])
+        self.assertEqual(
+            evidence["git_status_before_sha256"],
+            evidence["git_status_after_sha256"],
+        )
         self.assertEqual(before, after)
         result = ROOT / "results" / "pcso_confirmation_2026-07-08.json"
         self.assertEqual(

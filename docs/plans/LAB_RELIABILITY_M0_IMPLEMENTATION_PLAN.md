@@ -2,9 +2,9 @@
 
 ## §1 Status
 
-**Approved for implementation by direct owner instruction on 2026-07-10.**
-Current stage: **implementation authorized with review exception recorded in
-§19**.
+**Implemented and verified on 2026-07-10 after direct owner approval.**
+Current stage: **COMPLETE on `feature/lab-reliability-m0`; independent-review
+exception recorded in §19**.
 
 | Field | Value |
 |---|---|
@@ -14,10 +14,10 @@ Current stage: **implementation authorized with review exception recorded in
 | Target branch | `feature/lab-reliability-m0` |
 | Executor altitude (§0.1) | `low` |
 
-The current `master` worktree contains the uncommitted 2026-07-08 PCSO
-closeout. That work must be committed or otherwise brought to a clean state by
-the owner before the target branch is created. This plan never folds those
-existing changes into an implementation commit.
+The 2026-07-08 PCSO closeout was committed on `master` as `4d96820` before the
+target branch was created. The implementation commits therefore contain no
+pre-existing closeout changes. Slices S1-S3 landed locally as `369dd76`,
+`4be1e53`, and `21410e6`; no push or PR was performed.
 
 ## §2 Episode Search Summary
 
@@ -419,7 +419,7 @@ Group 2: Webapp job contracts (6 tests)
   test_closeout_snapshot_shape
   agents E2E: pcso verify POST + selected commit POST + unchanged joblogs
 
-Group 3: Isolated Git closeout behavior (11 tests)
+Group 3: Isolated Git closeout behavior (12 tests)
   test_preview_lists_states_and_token
   test_commit_only_selected_paths
   test_deletion_is_committed_when_selected
@@ -431,6 +431,7 @@ Group 3: Isolated Git closeout behavior (11 tests)
   test_rejects_pre_staged_unapproved
   test_detects_change_between_preview_and_stage
   test_commit_message_is_literal_argument
+  test_symlink_hashes_link_text_not_external_target
 ```
 
 Fast test runner:
@@ -449,29 +450,37 @@ terminal:
 python3 webapp/test_agents_e2e.py http://localhost:8799
 ```
 
-Total: 24 named automated checks plus the existing regression suites. Test
+Total: 25 named automated checks plus the existing regression suites. Test
 assertions inspect returned hashes, bytes, captured subprocess argv/output, Git
 trees/status, API payloads, DOM state, intercepted POST bodies, and joblog directory
 contents. No assertion treats a printed description as proof.
 
 ## §15 Verification Ledger (verify by artifact)
 
-The observed column remains `PENDING IMPLEMENTATION`; this draft makes no
-completion claim.
+Observed artifacts below were collected on 2026-07-10 from
+`feature/lab-reliability-m0`. Negative controls were followed by their green
+counterparts; the live verifier job used the real server and wrote no result.
 
 | Claim | Command (strong layer) | Observed artifact |
 |---|---|---|
-| Runner tests pass | `python3 webapp/test_pcso_closeout.py` | `PENDING IMPLEMENTATION` |
-| Byte guard goes red | `python3 webapp/test_pcso_closeout.py --break-byte-compare` | expected non-zero; `PENDING IMPLEMENTATION` |
-| Atomic guard goes red | `python3 webapp/test_pcso_closeout.py --break-atomic-write` | expected non-zero; `PENDING IMPLEMENTATION` |
-| Git closeout tests pass | `python3 tools/test_git_stage_commit.py` | `PENDING IMPLEMENTATION` |
-| Stale guard goes red | `python3 tools/test_git_stage_commit.py --break-stale-guard` | expected non-zero; `PENDING IMPLEMENTATION` |
-| Webapp unit suite passes | `python3 webapp/test_server.py` | `PENDING IMPLEMENTATION` |
-| Live Run-centre E2E passes | `python3 webapp/test_agents_e2e.py http://localhost:8799` | `PENDING IMPLEMENTATION` |
-| UI job assertion goes red | `python3 webapp/test_agents_e2e.py http://localhost:8799 --break-pcso-ui` | expected non-zero; `PENDING IMPLEMENTATION` |
-| Numeric docs remain valid | `python3 src/verify_relational_docs.py` | `PENDING IMPLEMENTATION` |
-| Canonical result unchanged | `shasum -a 256 results/pcso_confirmation_2026-07-08.json` | expected `11c8af...054a4`; `PENDING IMPLEMENTATION` |
-| Whole diff is scoped | `git diff --check` | `PENDING IMPLEMENTATION` |
+| Runner tests pass | `python3 webapp/test_pcso_closeout.py` | `Ran 12 tests`; `OK`. |
+| Byte guard goes red | `python3 webapp/test_pcso_closeout.py --break-byte-compare` | Non-zero; exact-byte mismatch test failed as intended. |
+| Atomic guard goes red | `python3 webapp/test_pcso_closeout.py --break-atomic-write` | Non-zero; atomic replacement test failed as intended. |
+| Git closeout tests pass | `python3 tools/test_git_stage_commit.py` | `Ran 12 tests`; `OK`, including link-object hashing without target reads. |
+| Stale guard goes red | `python3 tools/test_git_stage_commit.py --break-stale-guard` | Non-zero; stale-preview test failed as intended. |
+| Shell-free guard goes red | `python3 webapp/test_pcso_closeout.py --break-shell-free` | Non-zero; injected `sh -c` failed the argv assertion as intended. |
+| Webapp unit suite passes | `python3 webapp/test_server.py` | `Ran 40 tests`; `OK`. |
+| Live Run-centre E2E passes | `python3 webapp/test_agents_e2e.py http://localhost:8799` | `AGENTS E2E OK`; 4 groups, 14 runnable jobs, 3 roles; default/classic selected-path payloads exact; joblogs unchanged (20). |
+| UI job assertion goes red | `python3 webapp/test_agents_e2e.py http://localhost:8799 --break-pcso-ui` | Non-zero because the PCSO job row was absent. |
+| UI closeout assertion goes red | `python3 webapp/test_agents_e2e.py http://localhost:8799 --break-closeout-ui --skip-classic-closeout` | Non-zero because no selectable closeout fixture was present. |
+| Real webapp verifier passes | POST `/api/jobs` with `pcso_weekly_verify` | Job `20260710-175950-pcso_weekly_verify` exited 0; structured evidence includes exact argv, all six input hashes, canonical output SHA-256, equal before/after Git-status hashes, `exit_status=0`, and `wrote=none`. |
+| Live selected-path commit is exact | `python3 tools/git_stage_commit.py ... --preview-token dff9c7...` | Created `21410e6`; response listed exactly the seven approved S3 paths while leaving verifier and plan changes uncommitted. |
+| Numeric docs remain valid | `python3 src/verify_relational_docs.py` | Eight verifier banners passed. |
+| Scientific design remains valid | `python3 src/design_verifier.py` | `PASS`; 0 violations, 111 historical warnings. |
+| Frozen imports remain valid | `python3 src/lint_frozen_imports.py` | `PASS`; 0 violations. |
+| Classic route rendering passes | `node webapp/test_render.js 8799` | 11 routes and `try_equation` passed; `ALL ROUTES RENDER`. |
+| Canonical result unchanged | `shasum -a 256 results/pcso_confirmation_2026-07-08.json` | `11c8af729f0353a83f130253100dadb5fb3413d49cceec11fa031d64daf054a4`. |
+| Whole diff is scoped | `git diff --check` | No output. |
 
 ## §16 Risk Analysis
 
@@ -495,19 +504,20 @@ design choice during execution.
 
 ## §18 Done Criteria
 
-- [ ] Every MUST requirement in §4 has its mapped automated test passing.
-- [ ] Each negative control exits non-zero for the intended missing guard and the
+- [x] Every MUST requirement in §4 has its mapped automated test passing.
+- [x] Each negative control exits non-zero for the intended missing guard and the
   corresponding green command passes immediately afterward.
-- [ ] The canonical result hash is exactly
+- [x] The canonical result hash is exactly
   `11c8af729f0353a83f130253100dadb5fb3413d49cceec11fa031d64daf054a4`.
-- [ ] `--verify` leaves byte-for-byte Git status unchanged.
-- [ ] Repository-isolated Git tests prove the commit contains only selected paths.
-- [ ] Default and classic Run-centre workflows submit `paths` and `preview_token`.
-- [ ] Existing webapp and numeric verifier suites pass.
-- [ ] Each slice receives per-artifact and cross-file review before commit.
-- [ ] The whole three-slice diff receives PR-level review.
-- [ ] Every review finding is recorded and dispositioned in §19.
-- [ ] The owner approves before any commit, push, or PR action.
+- [x] `--verify` leaves byte-for-byte Git status unchanged.
+- [x] Repository-isolated Git tests prove the commit contains only selected paths.
+- [x] Default and classic Run-centre workflows submit `paths` and `preview_token`.
+- [x] Existing webapp and numeric verifier suites pass.
+- [x] Each slice receives per-artifact and cross-file primary-agent review before commit.
+- [x] The whole three-slice diff receives same-session PR-level review under the
+  recorded independent-review exception.
+- [x] Every review finding is recorded and dispositioned in §19.
+- [x] The owner approved implementation and its local commits; no push or PR was performed.
 
 ## §19 Review Consensus (Rule 18)
 
@@ -529,6 +539,8 @@ independent-review claim.
 | 1 | UI checks were initially ordered after the implementation they needed to discriminate. | ACCEPT | Reordered S2/S3 into explicit red-first rows followed immediately by green implementation rows; A.2 records the controlled exception. |
 | 2 | Classic fallback had only a static source assertion for selected-path submission. | ACCEPT | Added a real `/classic#agents` Playwright flow with native-dialog responses and intercepted payload assertions. |
 | 3 | Several A.7 rows combined multiple verification commands. | ACCEPT | Split every regression/hash/diff command into its own numbered row. |
+| 4 | Preview hashing initially followed symlinks and could read content outside the repository. | ACCEPT | `_worktree_oid()` now hashes `os.readlink()` bytes through `git hash-object --stdin`; an isolated adversarial test proves external target changes do not affect the preview token. |
+| 5 | The implementation plan's requirements omitted the parent plan's explicit verifier-evidence fields. | ACCEPT | Completion patch adds a structured `VERIFY_EVIDENCE` line with argv, six input hashes, output hash, exit status, and before/after Git-status hashes; the CLI and real webapp job both prove it. |
 
 Review scope must include:
 
@@ -1084,7 +1096,7 @@ UIs.
 |---|---|---|---|---|
 | 3.0 | - | - | Run every A.4 row. | Branch/tree/runtime banners and all landed tests equal A.4. |
 | 3.1 | `tools/git_stage_commit.py` | **CREATE** | Write Listing S3-Tool verbatim. | `python3 tools/git_stage_commit.py --list-json` observes live Git state -> JSON object with 64-hex `token` and `changes` list. |
-| 3.2 | `tools/test_git_stage_commit.py` | **CREATE** | Write Listing S3-Tool-Test verbatim. | `python3 tools/test_git_stage_commit.py` observes isolated Git commits/indexes/status -> `Ran 11 tests`, `OK`. |
+| 3.2 | `tools/test_git_stage_commit.py` | **CREATE** | Write Listing S3-Tool-Test, plus resolved blocker 4's symlink boundary test. | `python3 tools/test_git_stage_commit.py` observes isolated Git commits/indexes/status -> `Ran 12 tests`, `OK`. |
 | 3.2b | - | - | Negative stale-guard control. | `python3 tools/test_git_stage_commit.py --break-stale-guard` -> non-zero because stale content commits and the stale test fails. |
 | 3.3 | `webapp/test_pcso_closeout.py` | **EDIT** | **Red-first.** Apply Listing S3-Web-Test at the exact anchors, excluding Listing S3-Web-Static. | `python3 webapp/test_pcso_closeout.py` -> non-zero because the old `git_commit` argv has no paths/token gate. |
 | 3.4 | `webapp/server.py` | **EDIT** | Apply Listing S3-Server at the exact anchors. Delete the old `sh -c` commit argv completely. | `python3 webapp/test_pcso_closeout.py` -> `Ran 11 tests`, `OK`; captured commit argv has no shell token and carries exact paths/token. |
@@ -1098,7 +1110,7 @@ UIs.
 | 3.10 | - | - | Run live browser green check. | `python3 webapp/test_agents_e2e.py http://localhost:8799` -> default and classic selected commit POSTs exact; PCSO job POST present; joblogs unchanged. |
 | 3.11 | - | - | Stop the dedicated server with Ctrl-C. | `python3 -c 'import socket; s=socket.socket(); s.settimeout(.2); rc=s.connect_ex(("127.0.0.1",8799)); print(rc); raise SystemExit(rc == 0)'` observes a non-zero connection result and exits 0. |
 | 3.12 | - | - | Run the complete closeout test file. | `python3 webapp/test_pcso_closeout.py` -> `Ran 12 tests`, `OK`. |
-| 3.13 | - | - | Run the isolated Git suite. | `python3 tools/test_git_stage_commit.py` -> `Ran 11 tests`, `OK`. |
+| 3.13 | - | - | Run the isolated Git suite. | `python3 tools/test_git_stage_commit.py` -> `Ran 12 tests`, `OK`. |
 | 3.14 | - | - | Run webapp unit regression. | `python3 webapp/test_server.py` -> `OK`. |
 | 3.15 | - | - | Run numeric regression. | `python3 src/verify_relational_docs.py` -> eight verifier banners. |
 | 3.16 | - | - | Run diff hygiene. | `git diff --check` -> no output. |
@@ -1853,7 +1865,7 @@ shasum -a 256 results/pcso_confirmation_2026-07-08.json
 git diff --check
 ```
 
-Expected: 12 closeout tests, 11 isolated Git tests, existing webapp `OK`, eight
+Expected: 12 closeout tests, 12 isolated Git tests, existing webapp `OK`, eight
 numeric-verifier banners, `AGENTS E2E OK` with exact sentinel paths and unchanged
 joblogs, canonical SHA-256 from A.5, and no diff-check output.
 
