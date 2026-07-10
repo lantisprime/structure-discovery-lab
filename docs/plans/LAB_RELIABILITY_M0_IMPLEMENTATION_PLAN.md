@@ -2,22 +2,25 @@
 
 ## §1 Status
 
-**Implemented and verified on 2026-07-10 after direct owner approval.**
-Current stage: **COMPLETE on `feature/lab-reliability-m0`; independent-review
-exception recorded in §19**.
+**Implemented, verified, and merged on 2026-07-10 after direct owner approval.**
+Current stage: **COMPLETE AND MERGED via PR #17; independent-review exception
+recorded in §19**.
 
 | Field | Value |
 |---|---|
 | RFC | `n/a` |
 | Parent requirements | `LAB-RELIABILITY-2026Q3` controls `C2`, `C6`, `C10`; Milestone 0 |
-| Workplan episode | `n/a`; requirements source is `docs/LAB_IMPROVEMENT_PLAN.md` v1.0 |
+| Workplan episode | `n/a`; requirements source is `docs/LAB_IMPROVEMENT_PLAN.md` v1.1 |
 | Target branch | `feature/lab-reliability-m0` |
+| Pull request | `#17` -- merged into `master` on 2026-07-10 |
+| Merge commit | `0265ed33b74ac5bc9d692c82d464c3c877e1d170` |
 | Executor altitude (§0.1) | `low` |
 
-The 2026-07-08 PCSO closeout was committed on `master` as `4d96820` before the
-target branch was created. The implementation commits therefore contain no
-pre-existing closeout changes. Slices S1-S3 landed locally as `369dd76`,
-`4be1e53`, and `21410e6`; no push or PR was performed.
+The 2026-07-08 PCSO closeout was committed locally as `4d96820` before the
+target branch was created. Slices S1-S3 landed as `369dd76`, `4be1e53`, and
+`21410e6`, followed by completion record `400726d`. The latest `origin/master`
+was merged at `1c4ef49`; additive conflicts were resolved without dropping the
+GW or PCSO ledger rows. GitHub merged PR #17 as `0265ed3` after `lab-ci` passed.
 
 ## §2 Episode Search Summary
 
@@ -458,8 +461,9 @@ contents. No assertion treats a printed description as proof.
 ## §15 Verification Ledger (verify by artifact)
 
 Observed artifacts below were collected on 2026-07-10 from
-`feature/lab-reliability-m0`. Negative controls were followed by their green
-counterparts; the live verifier job used the real server and wrote no result.
+`feature/lab-reliability-m0` and the post-merge `master`. Negative controls were
+followed by their green counterparts; the live verifier job used the real server
+and wrote no result.
 
 | Claim | Command (strong layer) | Observed artifact |
 |---|---|---|
@@ -481,6 +485,9 @@ counterparts; the live verifier job used the real server and wrote no result.
 | Classic route rendering passes | `node webapp/test_render.js 8799` | 11 routes and `try_equation` passed; `ALL ROUTES RENDER`. |
 | Canonical result unchanged | `shasum -a 256 results/pcso_confirmation_2026-07-08.json` | `11c8af729f0353a83f130253100dadb5fb3413d49cceec11fa031d64daf054a4`. |
 | Whole diff is scoped | `git diff --check` | No output. |
+| Upstream reconciliation passes | merge `origin/master` at `1c4ef49` | Four additive conflicts resolved; 24 unique run rows, ledger integrity `11 pass`, all ten upstream browser views, Run Centre E2E, routing, and classic rendering passed. |
+| Pull-request CI passes | GitHub Actions `lab-ci` run 20 | Completed with conclusion `success` on head `1c4ef49`. |
+| Delivery completes | PR #17 | Merged into `master` as `0265ed33b74ac5bc9d692c82d464c3c877e1d170` at 2026-07-10T11:48:16Z. |
 
 ## §16 Risk Analysis
 
@@ -517,7 +524,8 @@ design choice during execution.
 - [x] The whole three-slice diff receives same-session PR-level review under the
   recorded independent-review exception.
 - [x] Every review finding is recorded and dispositioned in §19.
-- [x] The owner approved implementation and its local commits; no push or PR was performed.
+- [x] The owner approved implementation, publication, conflict reconciliation,
+  and merge through PR #17.
 
 ## §19 Review Consensus (Rule 18)
 
