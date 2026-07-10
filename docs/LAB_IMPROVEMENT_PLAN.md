@@ -1,9 +1,10 @@
 # Lab Reliability and Accuracy Improvement Plan
 
 **Plan ID:** `LAB-RELIABILITY-2026Q3`
-**Version:** 1.0
+**Version:** 1.1
 **Created:** 2026-07-10
-**Status:** IN PROGRESS -- Milestone 0 complete; Milestones 1-6 planned
+**Updated:** 2026-07-10 after PR #17 merge
+**Status:** IN PROGRESS -- Milestone 0 merged; Milestone 1 active
 **Scope:** prospective lab infrastructure, statistical controls, provenance, and
 verification
 **Implementation plan:** `docs/plans/LAB_RELIABILITY_M0_IMPLEMENTATION_PLAN.md`
@@ -53,6 +54,17 @@ Baseline evidence is visible in `docs/AGENT_WORKFLOW.md`, `requirements.txt`,
 `webapp/server.py`, `src/verify_relational_docs.py`, and
 `src/pcso_weekly_update.py`.
 
+### 3.1 Progress since baseline
+
+| Finding | Current disposition | Evidence |
+|---|---|---|
+| B2 | PARTIALLY RESOLVED | The guided installer, complete runtime `requirements.txt`, recorded constraints, runtime dependency guard, and cross-platform CI are merged. A `pyproject.toml`, hash-pinned lock, manifest-aware import check, and clean-install equivalence proof remain M1 work. |
+| B7 | RESOLVED | PR #17 added the canonical PCSO webapp verifier and token-bound reviewed-path closeout workflow. |
+| B8 | PARTIALLY RESOLVED | Run-ledger verification is append-safe and checks required IDs plus uniqueness. Broader schema/invariant migration remains in M2 and M5. |
+
+The remaining baseline findings are open unless a later milestone explicitly
+closes them.
+
 ## 4. Target controls
 
 All prospective registered runs must eventually satisfy these controls:
@@ -73,8 +85,12 @@ All prospective registered runs must eventually satisfy these controls:
 ### Milestone 0 -- Close operational holes
 
 **Priority:** P0
-**Status:** COMPLETE (2026-07-10)
+**Status:** COMPLETE AND MERGED (2026-07-10)
 **Depends on:** none
+
+Delivered by PR #17, merge commit `0265ed33b74ac5bc9d692c82d464c3c877e1d170`.
+The merged `lab-ci` run passed, and conflict reconciliation preserved both
+append-only ledger rows and all upstream integrity controls.
 
 - [x] Add a `pcso_weekly_verify` webapp job that invokes the canonical runner in
   verification mode.
@@ -96,18 +112,31 @@ All prospective registered runs must eventually satisfy these controls:
 ### Milestone 1 -- Reproducible environment and continuous integration
 
 **Priority:** P0
-**Status:** PLANNED
+**Status:** IN PROGRESS (2026-07-10)
 **Depends on:** M0 only for preferred execution order
 
 - [ ] Declare the supported Python version and complete direct dependencies in
   `pyproject.toml`.
 - [ ] Produce a fully pinned, hashable lockfile. Separate core, webapp, PCSO, and
   Riemann extras where their dependency sets differ.
-- [ ] Add a clean-environment CI workflow for schema checks, unit tests, verifiers,
-  and deterministic artifact replay.
+- [ ] Complete the clean-environment CI workflow with schema checks, unit tests,
+  verifiers, and deterministic artifact replay. The merged workflow covers clean
+  installation, tests, and verifiers; scientific artifact regeneration remains.
 - [ ] Record Python, OS, architecture, dependency-lock hash, and relevant numerical
   library versions in every new run bundle.
-- [ ] Add a dependency-import test so an undeclared scientific dependency fails CI.
+- [ ] Add a dependency-manifest test so an undeclared scientific dependency fails
+  CI. The merged runtime guard checks a manually maintained import list but does
+  not discover new undeclared imports automatically.
+
+Merged foundation from PRs #11-#16: guided clean installation, complete runtime
+dependency declarations, recorded constraints, a runtime import guard, and
+Ubuntu/macOS CI. M1 remains open because `pyproject.toml`, a hash-pinned lock,
+CI artifact replay, per-run environment binding, manifest-aware import drift
+detection, and two-install deterministic equivalence are not yet complete.
+
+**Next action:** create the template-grade M1 implementation plan for the
+remaining gaps. Do not start M2 schema migration until the M1 acceptance gate is
+fully satisfied.
 
 **Acceptance gate M1**
 
