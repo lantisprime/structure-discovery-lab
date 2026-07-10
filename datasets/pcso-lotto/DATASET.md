@@ -1,6 +1,7 @@
 # DATASET CARD — pcso-lotto
 
-Onboarded: Jun 10–11, 2026 · Status: **ACTIVE** (weekly automated updates) · Owner: Cha
+Onboarded: Jun 10–11, 2026 · Updated: Jul 10, 2026 · Status: **ACTIVE**
+(weekly automated updates) · Owner: Cha
 
 ## 1. Identity & generative null (H₀)
 
@@ -14,10 +15,10 @@ per game, at observed sequence lengths.
 
 | File | Rows | Role |
 |---|---|---|
-| `data_draws_1yr.csv` | 776 | **Canonical dataset** — Jun 11 2025 – Jun 10 2026, all games |
-| `data_draws_1yr_audited.csv` | 776 | Same rows + Source1/Source2/Status audit columns |
-| `data_draws.csv` | 194 | **FROZEN exploration set** (Mar 10 – Jun 10 2026) — see §6 |
-| `data_astro_geomagnetic.csv` | 194+ | Per-draw Moon/Sun ephemeris + Kp index + correlations (exploration set only) |
+| `data_draws_1yr.csv` | 834 | **Canonical append-only dataset** — Jun 11 2025 – Jul 7 2026, all games |
+| `data_draws_1yr_audited.csv` | 834 | Same rows + Source1/Source2/Status audit columns |
+| `data_draws.csv` | 252 | Short-window append-only dataset; its 194-row exploration prefix is frozen — see §6 |
+| `data_astro_geomagnetic.csv` | 252+ | Per-draw Moon/Sun ephemeris + legacy Kp columns + summary block; confirmation Kp is blank |
 | `data_astro_geomagnetic_1yr.csv` | 776 | **Full-year covariate file** — all 776 draws, 13 columns incl. solar tidal — see §10 |
 | `data_future_schedule.csv` | 64 | Draw schedule + picks (historic snapshot, Jun–Jul 2026) |
 | `_655_2025_verification.csv` | 88 | Row-by-row 6/55 2025 verification vs pcsodraw.com |
@@ -53,11 +54,18 @@ Suspicious rows (archive conflicts, not resolved): 6/55 2025-08-13 and 2025-09-0
 
 ## 6. Frozen/holdout structure (BINDING)
 
-- **Exploration set**: all rows ≤ 2026-06-10 (the entire current contents). Findings
-  here can motivate registration, never confirm.
+- **Exploration set**: all rows ≤ 2026-06-10. These are immutable prefixes: 194
+  rows in `data_draws.csv` / `data_astro_geomagnetic.csv`, and 776 rows in each
+  one-year draw file. The CSVs now also contain later append-only monitoring rows;
+  "frozen" applies to the dated prefix, not to the whole physical file. Findings
+  from the frozen prefix can motivate registration, never confirm.
 - **Confirmation set**: rows > 2026-06-10, appended ONLY by the weekly pipeline with
   two-source validation. Registered family m=9, threshold p<0.0056, incl. the 6/55
   #45 binomial test (registered 2026-06-11 after the 2025 transient).
+- **Repeated-look scope**: m=9 corrects the nine tests within one weekly look. No
+  sequential alpha-spending rule is registered across cumulative weekly looks, so
+  weekly outputs are **G0 exploratory forward monitoring**. A flag requires a
+  separately registered fresh replication and cannot itself upgrade a claim.
 
 ## 7. Known anomalies & dispositions
 
@@ -72,6 +80,14 @@ pair affinity, gap law, rolling windows, backtests) — count it once (Governanc
 
 - Scheduled task `pcso-weekly-update` (Wednesdays 10:00 local) appends validated rows
   here and to the workbook, recomputes ephemeris, runs the registered family only.
+- Deterministic closeout runner: `../../src/pcso_weekly_update.py`. It validates
+  the dated provenance manifest, draw-file agreement, frozen-prefix hashes, CRLF
+  format, covariate joins, and workbook invariants before regenerating the result
+  JSON. The 2026-07-08 manifest is
+  `provenance/pcso_weekly_2026-07-08.json`.
+- The legacy astro file has blank Kp fields after 2026-06-10, so the registered Kp
+  permutation test is currently non-computable. A definitive GFZ backfill remains
+  open; it must not be silently replaced with preliminary values.
 - All instrument scripts live in src/ and read
   `datasets/pcso-lotto/data_draws_1yr.csv` (path migrated 2026-06-11).
 - Results ledger: ../../docs/THEOREM_SYNTHESIS.md (25 instrument families, all null except

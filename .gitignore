@@ -6,3 +6,16 @@ webapp/config.local.json
 webapp/joblogs/
 webapp/.keysalt
 .episodic-memory/
+
+# BP-1 per-run HMAC key (RFC-004)
+**/.episodic-memory/runs/*/run.key
+
+# Episodic memory install-version manifest
+.episodic-memory-install.json
+
+# Local agent runtime and approval checkpoints
+.claude/
+.checkpoints/
+
+# Office application lock files
+.~lock.*#

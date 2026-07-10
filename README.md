@@ -814,8 +814,11 @@ run-ledger row. Start at `riemann-zero-lab/README.md`.
     separation, replay mechanics, eval gate
 11. **docs/EQUATION_DISCOVERY.md** — Phase 5 specification: STRUCTURED-only gate,
     equation families, registration contract, null-equation generator, verdict ladder
-12. **docs/kb/** — 26 theorem/methodology cards + INDEX
-13. **admin_onboarding.html** — gate-checked wizard for new theorems and datasets
+12. **docs/LAB_IMPROVEMENT_PLAN.md** — prospective reliability and accuracy program:
+    executable registrations, calibrated nulls, sequential error control, provenance,
+    independent verification, and measurable delivery gates
+13. **docs/kb/** — 26 theorem/methodology cards + INDEX
+14. **admin_onboarding.html** — gate-checked wizard for new theorems and datasets
 
 ### Case study
 

@@ -1,0 +1,2 @@
+# These source files intentionally retain their historical CRLF records.
+datasets/pcso-lotto/*.csv whitespace=cr-at-eol

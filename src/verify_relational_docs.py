@@ -271,7 +271,18 @@ chk('design verifier reconciliation', D['reconciliation']['run_ledger_declared']
 import os
 chk('environment captured', os.path.exists('results/environment.json'), True)
 RL = [json.loads(l) for l in open('results/run_ledger.jsonl')]
-chk('run ledger size', len(RL), 22)
+required_run_ids = {
+    'admission', 'firstrun', 'batch5', 'allgames', 'batch6', 'pressure',
+    'remediation', 'blind_verification', 'cross_executor_verification_1',
+    'blind_methodology_eval_v1', 'batch67_r2', 'r8_admission_attempt',
+    'eq_tidal_v1', 'eq_tidal_v2', 'eq_tidal_v3',
+    'eq_moondist_confirm1', 'synthetic_batch1_expA',
+    'synthetic_batch1_expCD', 'audit_shadow_2026-07-02', 'readmission_v2',
+    'blind_eval_r2', 'corrected_rerun_r1', 'pcso_weekly_2026_07_08',
+}
+run_ids = [r['run_id'] for r in RL]
+chk('run ledger ids unique', len(run_ids), len(set(run_ids)))
+chk('run ledger required ids', required_run_ids - set(run_ids), set())
 chk('run/test ledger reconcile', sum(r['real_data_tests'] for r in RL), len(T))
 import json as _j
 BS=open('results/blind_eval_score.md').read()

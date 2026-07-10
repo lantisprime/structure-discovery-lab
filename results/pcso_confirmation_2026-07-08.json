@@ -1,0 +1,131 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/pcso_weekly_update.py",
+    "registration": "datasets/pcso-lotto/DATASET.md section 6",
+    "run_date": "2026-07-08",
+    "pipeline": "pcso-weekly-update",
+    "grade": "G0 exploratory forward monitoring",
+    "confirmation_cutoff": "2026-06-10",
+    "seed_scheme": "single random.Random(20260708) stream in published test order",
+    "null_simulator": "random.sample(range(1, P+1), 6) independently per draw",
+    "add_one_correction": true,
+    "test_order": [
+      "chi_square:Lotto 6/42",
+      "chi_square:Mega Lotto 6/45",
+      "chi_square:Super Lotto 6/49",
+      "chi_square:Grand Lotto 6/55",
+      "chi_square:Ultra Lotto 6/58",
+      "pearson:mean_drawn_vs_moon_altitude",
+      "pearson:mean_drawn_vs_moon_illumination",
+      "pearson:mean_drawn_vs_kp",
+      "binomial:Grand Lotto 6/55:number45"
+    ],
+    "input_sha256": {
+      "datasets/pcso-lotto/data_draws.csv": "480a3cfdb1202b1f4eec8b9ac387a5a4e05f6556d147bad6cc730f377caeebdd",
+      "datasets/pcso-lotto/data_draws_1yr.csv": "24ab01a335665237995cf8d2384bdccc377565427a95eb7a9a115cfdf770d421",
+      "datasets/pcso-lotto/data_draws_1yr_audited.csv": "23135049edc798856b472d413860f498009c2d7e0212f529c4d82997509c2aa2",
+      "datasets/pcso-lotto/data_astro_geomagnetic.csv": "4ff566d6ddd2b60d59ba788cfb4bccc239f6c1cfb618614aea874be459758ac1",
+      "PCSO_Lotto_Analysis_Mar-Jun_2026.xlsx": "5400f8a227f2f23a2a3770019082bf6d5a6cc6566a72d315fd413f628b524fe1",
+      "datasets/pcso-lotto/provenance/pcso_weekly_2026-07-08.json": "8d690ab48c19169654a417b7ddaef95e780c499adfc784950fdbef5529479976"
+    },
+    "exploration_prefix_sha256": {
+      "data_draws.csv": "8f38c1d2fc1f3778552f015b4dc690c603be4a0d8c3659d692691d2ceb5f5087",
+      "data_draws_1yr.csv": "0a9d06d08557bc6010d2a04415a3fb94ec696780f8214538afd4cd3c815c36b0",
+      "data_draws_1yr_audited.csv": "ddcaf22dc665d5837afe840bdb1816f11fdda4908ef0ff270ec091a477ce7693",
+      "data_astro_geomagnetic.csv": "ee511ace0a90f39afa105f40ab2e8f6e16bb6bfd3ccb626a9782fdde65ab9427"
+    },
+    "workbook": {
+      "sha256": "5400f8a227f2f23a2a3770019082bf6d5a6cc6566a72d315fd413f628b524fe1",
+      "sheets": 8,
+      "formulas": 786,
+      "cached_value_errors": 0,
+      "draw_rows": 252
+    },
+    "audit_correction": {
+      "supersedes_unreproducible_artifact_sha256": "a9e1424b3f2f8d752867f760b38b69f5b9ad39de2f787b6741beb26f6dcc7d50",
+      "reason": "the original untracked JSON had no generating script; this rerun applies the dataset card's declared null and publishes the RNG stream contract",
+      "verdict_changed": false
+    }
+  },
+  "confirmation_sizes": {
+    "Lotto 6/42": 12,
+    "Mega Lotto 6/45": 11,
+    "Super Lotto 6/49": 12,
+    "Grand Lotto 6/55": 11,
+    "Ultra Lotto 6/58": 12,
+    "total": 58
+  },
+  "registered_family_m": 9,
+  "computable_tests": 8,
+  "bonferroni_threshold": 0.005556,
+  "seed": 20260708,
+  "tests": {
+    "chi_square_mc_10000": {
+      "Lotto 6/42": {
+        "n": 12,
+        "chi2": 54.0,
+        "p_mc": 0.020098,
+        "mc_exceedances": 200,
+        "flag": false
+      },
+      "Mega Lotto 6/45": {
+        "n": 11,
+        "chi2": 39.0,
+        "p_mc": 0.50435,
+        "mc_exceedances": 5043,
+        "flag": false
+      },
+      "Super Lotto 6/49": {
+        "n": 12,
+        "chi2": 31.444444,
+        "p_mc": 0.941506,
+        "mc_exceedances": 9415,
+        "flag": false
+      },
+      "Grand Lotto 6/55": {
+        "n": 11,
+        "chi2": 37.333333,
+        "p_mc": 0.935006,
+        "mc_exceedances": 9350,
+        "flag": false
+      },
+      "Ultra Lotto 6/58": {
+        "n": 12,
+        "chi2": 52.055556,
+        "p_mc": 0.505149,
+        "mc_exceedances": 5051,
+        "flag": false
+      }
+    },
+    "pearson_permutation_20000": {
+      "mean_drawn_vs_moon_altitude": {
+        "r": 0.207639,
+        "p": 0.116194,
+        "permutation_exceedances": 2323,
+        "n": 58,
+        "flag": false
+      },
+      "mean_drawn_vs_moon_illumination": {
+        "r": 0.058347,
+        "p": 0.666217,
+        "permutation_exceedances": 13324,
+        "n": 58,
+        "flag": false
+      },
+      "mean_drawn_vs_kp": {
+        "status": "not_computable",
+        "reason": "Kp blank for confirmation draws"
+      }
+    },
+    "binomial_655_number45": {
+      "n_655": 11,
+      "k": 1,
+      "expected": 1.2,
+      "p_two_sided": 1.0,
+      "flag": false
+    }
+  },
+  "flags": [],
+  "note": "The m=9 threshold is within-look only. Weekly cumulative looks are exploratory monitoring without a registered sequential alpha-spending rule; any flag requires a separately registered fresh replication. Kp remains non-computable pending GFZ backfill."
+}
