@@ -26,10 +26,12 @@ CANONICAL_RESULT_SHA256 = (
 BREAK_BYTE = "--break-byte-compare" in sys.argv
 BREAK_ATOMIC = "--break-atomic-write" in sys.argv
 BREAK_JOB = "--break-job-definition" in sys.argv
+BREAK_SHELL = "--break-shell-free" in sys.argv
 for flag in (
     "--break-byte-compare",
     "--break-atomic-write",
     "--break-job-definition",
+    "--break-shell-free",
 ):
     if flag in sys.argv:
         sys.argv.remove(flag)
@@ -42,6 +44,16 @@ if BREAK_ATOMIC:
     pcso.atomic_write = lambda output, payload: output.write_bytes(payload[:-1])
 if BREAK_JOB:
     server.JOB_DEFS.pop("pcso_weekly_verify", None)
+if BREAK_SHELL:
+    _real_job_argv = server.job_argv
+
+    def _broken_job_argv(name, params):
+        result = _real_job_argv(name, params)
+        if name == "git_commit":
+            return ["sh", "-c", "git add -A && git commit"]
+        return result
+
+    server.job_argv = _broken_job_argv
 
 
 class TestPCSOCloseout(unittest.TestCase):
@@ -131,6 +143,64 @@ class TestPCSOJob(unittest.TestCase):
             observed,
             [server.PY, "src/pcso_weekly_update.py", "--verify"],
         )
+
+
+class TestCloseoutJob(unittest.TestCase):
+    def valid(self):
+        return {
+            "message": "commit selected sentinel",
+            "paths": ["docs/SENTINEL A.md", "datasets/SENTINEL-B.csv"],
+            "preview_token": "a" * 64,
+        }
+
+    def test_git_commit_requires_message_paths_token(self):
+        for params in (
+            {},
+            {"message": "valid message", "paths": []},
+            {
+                "message": "valid message",
+                "paths": ["docs/x"],
+                "preview_token": "bad",
+            },
+        ):
+            with self.subTest(params=params):
+                with self.assertRaises(ValueError):
+                    server.job_argv("git_commit", params)
+
+    def test_git_commit_argv_is_shell_free(self):
+        observed = server.job_argv("git_commit", self.valid())
+        self.assertEqual(observed[0], server.PY)
+        self.assertEqual(observed[1], "tools/git_stage_commit.py")
+        self.assertNotIn("sh", observed)
+        self.assertNotIn("-c", observed)
+        self.assertEqual(
+            json.loads(observed[observed.index("--paths-json") + 1]),
+            self.valid()["paths"],
+        )
+        self.assertEqual(
+            observed[observed.index("--preview-token") + 1],
+            "a" * 64,
+        )
+
+
+class TestCloseoutSnapshot(unittest.TestCase):
+    def test_closeout_snapshot_shape(self):
+        observed = server.closeout_snapshot()
+        self.assertIsInstance(observed["changes"], list)
+        self.assertRegex(observed["token"], r"^[0-9a-f]{64}$")
+        console = (ROOT / "webapp" / "static" / "console.html").read_text()
+        classic = (ROOT / "webapp" / "static" / "index.html").read_text()
+        for body in (console, classic):
+            self.assertIn("preview_token", body)
+            self.assertIn("params.paths", body)
+        for stdout in ("not-json", "[]", '{"changes":[],"token":null}'):
+            with self.subTest(stdout=stdout):
+                run = mock.Mock(returncode=0, stdout=stdout, stderr="")
+                with mock.patch.object(server.subprocess, "run", return_value=run):
+                    failed = server.closeout_snapshot()
+                self.assertEqual(failed["changes"], [])
+                self.assertIsNone(failed["token"])
+                self.assertIn("invalid shape", failed["error"])
 
 
 if __name__ == "__main__":

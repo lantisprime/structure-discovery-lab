@@ -717,8 +717,8 @@ JOB_DEFS = {
         "desc": "working-tree state via the self-cleaning wrapper"},
     "git_commit": {
         "argv": None, "cat": "maintenance", "label": "Commit lab changes",
-        "desc": "add + commit docs/ results/ src/ evals/ tools/ webapp/ "
-                "(needs a message)", "needs": ["message"]},
+        "desc": "review changed paths, stage exactly the checked selection, and commit",
+        "needs": ["message", "paths"]},
     "ledger_rebuild": {
         "argv": [PY, "src/build_multiplicity_ledger.py"], "cat": "maintenance",
         "label": "Rebuild multiplicity ledger",
@@ -771,10 +771,24 @@ def job_argv(name, params):
         msg = (params.get("message") or "").strip()
         if not (5 <= len(msg) <= 400):
             raise ValueError("commit message: 5-400 characters")
-        return ["sh", "-c",
-                'sh tools/git-sandbox.sh add docs results src evals tools '
-                'webapp README.md .gitignore && '
-                'sh tools/git-sandbox.sh commit -m "$1"', "gitc", msg]
+        paths = params.get("paths")
+        if not isinstance(paths, list) or not paths or not all(
+            isinstance(path, str) for path in paths
+        ):
+            raise ValueError("select at least one changed path")
+        token = params.get("preview_token")
+        if not isinstance(token, str) or not re.fullmatch(r"[0-9a-f]{64}", token):
+            raise ValueError("closeout preview token is missing or malformed")
+        return [
+            PY,
+            "tools/git_stage_commit.py",
+            "--message",
+            msg,
+            "--paths-json",
+            json.dumps(paths, separators=(",", ":")),
+            "--preview-token",
+            token,
+        ]
     return list(d["argv"])
 
 
@@ -807,6 +821,37 @@ def refresh_jobs():
             JOBS[jid]["rc"] = rc
 
 
+def closeout_snapshot():
+    run = subprocess.run(
+        [PY, "tools/git_stage_commit.py", "--list-json"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if run.returncode != 0:
+        return {
+            "changes": [],
+            "token": None,
+            "error": (run.stderr or run.stdout).strip(),
+        }
+    try:
+        value = json.loads(run.stdout)
+    except json.JSONDecodeError:
+        value = None
+    if not isinstance(value, dict) or not isinstance(
+        value.get("changes"), list
+    ) or not isinstance(value.get("token"), str) or not re.fullmatch(
+        r"[0-9a-f]{64}", value["token"]
+    ):
+        return {
+            "changes": [],
+            "token": None,
+            "error": "closeout snapshot returned an invalid shape",
+        }
+    return value
+
+
 def jobs_state():
     refresh_jobs()
     cats = {}
@@ -818,7 +863,8 @@ def jobs_state():
              "needs": d.get("needs", [])})
     return {"defs": cats,
             "jobs": sorted(JOBS.values(), key=lambda j: j["id"],
-                           reverse=True)[:20]}
+                           reverse=True)[:20],
+            "closeout": closeout_snapshot()}
 
 
 def job_log(jid, tail=120):

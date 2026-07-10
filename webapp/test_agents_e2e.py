@@ -24,7 +24,14 @@ import urllib.request
 from playwright.sync_api import sync_playwright
 
 BREAK_PCSO_UI = "--break-pcso-ui" in sys.argv
-ARGS = [arg for arg in sys.argv[1:] if arg != "--break-pcso-ui"]
+BREAK_CLOSEOUT_UI = "--break-closeout-ui" in sys.argv
+SKIP_CLASSIC_CLOSEOUT = "--skip-classic-closeout" in sys.argv
+TEST_FLAGS = {
+    "--break-pcso-ui",
+    "--break-closeout-ui",
+    "--skip-classic-closeout",
+}
+ARGS = [arg for arg in sys.argv[1:] if arg not in TEST_FLAGS]
 BASE = ARGS[0] if ARGS else "http://localhost:8799"
 SHOT = ARGS[1] if len(ARGS) > 1 else "/tmp/console_agents.png"
 
@@ -78,16 +85,44 @@ def run():
                                                "label": "E2E mock job", "status": "running",
                                                "started": "00:00:00"}))
             else:
+                response = route.fetch()
+                value = response.json()
                 if BREAK_PCSO_UI:
-                    response = route.fetch()
-                    value = response.json()
                     value["defs"]["gates"] = [
                         item for item in value["defs"].get("gates", [])
                         if item.get("name") != "pcso_weekly_verify"
                     ]
-                    route.fulfill(response=response, body=json.dumps(value))
+                if not BREAK_CLOSEOUT_UI:
+                    value["closeout"] = {
+                        "root": "/E2E",
+                        "head": "e2e-head",
+                        "token": "b" * 64,
+                        "changes": [
+                            {
+                                "path": "docs/E2E_SELECTED.md",
+                                "allowed": True,
+                                "unstaged": True,
+                                "staged": False,
+                                "untracked": False,
+                                "worktree_oid": "oid-a",
+                                "index_oid": "oid-old",
+                                "rejection": None,
+                            },
+                            {
+                                "path": "datasets/E2E_UNCHECKED.csv",
+                                "allowed": True,
+                                "unstaged": False,
+                                "staged": False,
+                                "untracked": True,
+                                "worktree_oid": "oid-b",
+                                "index_oid": None,
+                                "rejection": None,
+                            },
+                        ],
+                    }
                 else:
-                    route.continue_()
+                    value["closeout"] = {"changes": [], "token": "b" * 64}
+                route.fulfill(response=response, body=json.dumps(value))
 
         def handle_cancel(route, request):
             route.fulfill(status=200, content_type="application/json",
@@ -133,6 +168,70 @@ def run():
         assert posted[-1]["job"] == "pcso_weekly_verify", \
             "PCSO Run posts the non-mutating verifier job"
 
+        commit_row = pg.locator(".ag-item", has_text="Commit lab changes")
+        commit_row.get_by_role("button", name="Run").click()
+        pg.fill("#pm-input", "E2E selected-path commit")
+        pg.click("#pm-ok")
+        pg.wait_for_selector(
+            ".co-path", timeout=1500 if BREAK_CLOSEOUT_UI else 30000
+        )
+        assert pg.locator(".co-path").count() == 2
+        pg.locator(".co-path").nth(1).uncheck()
+        shot_root, shot_ext = os.path.splitext(SHOT)
+        pg.screenshot(path=shot_root + "_closeout_desktop" + shot_ext, full_page=True)
+        desktop_box = pg.locator("#overlay .modal").bounding_box()
+        assert desktop_box and desktop_box["x"] >= 0
+        assert desktop_box["x"] + desktop_box["width"] <= 1280
+        pg.set_viewport_size({"width": 390, "height": 844})
+        mobile_box = pg.locator("#overlay .modal").bounding_box()
+        assert mobile_box and mobile_box["x"] >= 0
+        assert mobile_box["x"] + mobile_box["width"] <= 390
+        pg.screenshot(path=shot_root + "_closeout_mobile" + shot_ext, full_page=True)
+        pg.set_viewport_size({"width": 1280, "height": 1500})
+        pg.click("#co-ok")
+        for _ in range(40):
+            if posted and posted[-1].get("job") == "git_commit":
+                break
+            pg.wait_for_timeout(50)
+        closeout = posted[-1]
+        assert closeout["job"] == "git_commit"
+        assert closeout["params"]["paths"] == ["docs/E2E_SELECTED.md"]
+        assert closeout["params"]["preview_token"] == "b" * 64
+
+        if not SKIP_CLASSIC_CLOSEOUT:
+            classic = b.new_page(viewport={"width": 1280, "height": 1000})
+            classic.route("**/api/jobs", handle_jobs)
+            classic.route("**/api/jobs/cancel", handle_cancel)
+
+            def answer_classic_prompt(dialog):
+                if "Commit message" in dialog.message:
+                    dialog.accept("E2E classic selected-path commit")
+                elif "Paths to commit" in dialog.message:
+                    dialog.accept("docs/E2E_SELECTED.md")
+                else:
+                    dialog.dismiss()
+
+            classic.on("dialog", answer_classic_prompt)
+            classic.goto(f"{BASE}/classic#agents", wait_until="networkidle")
+            classic.wait_for_selector("#jobs-box .rowline")
+            classic_before = len(posted)
+            classic_row = classic.locator(
+                ".rowline", has_text="Commit lab changes"
+            )
+            classic_row.get_by_role("button", name="Run").click()
+            for _ in range(40):
+                if len(posted) > classic_before:
+                    break
+                classic.wait_for_timeout(50)
+            classic_closeout = posted[-1]
+            assert classic_closeout["job"] == "git_commit"
+            assert classic_closeout["params"]["paths"] == [
+                "docs/E2E_SELECTED.md"
+            ]
+            assert classic_closeout["params"]["preview_token"] == "b" * 64
+            classic.unroute_all(behavior="ignoreErrors")
+            classic.close()
+
         # --- launch validation: <10 chars rejected, no POST ---
         n_before = len(posted)
         pg.fill("#ag-task", "too short")
@@ -159,6 +258,7 @@ def run():
 
         pg.screenshot(path=SHOT, full_page=True)
         assert not errs, f"console/page errors: {errs}"
+        pg.unroute_all(behavior="ignoreErrors")
         b.close()
 
     after = _joblogs()

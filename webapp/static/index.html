@@ -1002,6 +1002,7 @@ ROUTES.agents=async(app)=>{
     if(!(location.hash||"").includes("agents"))return clearInterval(window._agTimer);
     const [J,a,TR]=await Promise.all([api("/api/jobs"),api("/api/agents"),
       api("/api/agent_transcripts")]);
+    window._closeout=J.closeout||{changes:[],token:null};
     const jb=$("#jobs-box"),ab=$("#agents-box");if(!jb)return;
     const active=J.jobs.filter(j=>j.status==="running");
     jb.innerHTML=`
@@ -1070,6 +1071,16 @@ window.runJob=async(name,needs)=>{
   if((needs||[]).includes("message")){
     const m=prompt("Commit message:");
     if(!m)return; params.message=m;
+  }
+  if((needs||[]).includes("paths")){
+    const snapshot=window._closeout||{changes:[],token:null};
+    const eligible=(snapshot.changes||[]).filter(item=>item.allowed).map(item=>item.path);
+    if(!eligible.length)return toast("No changed lab paths are eligible");
+    const raw=prompt("Paths to commit (one per line):",eligible.join("\n"));
+    if(raw==null)return;
+    params.paths=raw.split("\n").map(value=>value.trim()).filter(Boolean);
+    if(!params.paths.length)return toast("Select at least one changed path");
+    params.preview_token=snapshot.token;
   }
   try{const j=await api("/api/jobs",{method:"POST",
       body:JSON.stringify({job:name,params})});
