@@ -41,7 +41,17 @@ CONFIG = os.path.join(HERE, "config.local.json")
 APPROVALS = os.path.join(ROOT, "results", "webapp_approvals.jsonl")
 AGENT_STATUS = os.path.join(ROOT, "results", "agent_status.json")
 
-DOC_WHITELIST_DIRS = ("docs", "evals")
+DOC_WHITELIST_DIRS = ("docs/", "evals/", "datasets/")
+
+
+def doc_path_allowed(name):
+    return (
+        isinstance(name, str)
+        and name.endswith(".md")
+        and ".." not in name
+        and "\\" not in name
+        and name.startswith(DOC_WHITELIST_DIRS)
+    )
 
 
 def rd(path):
@@ -951,6 +961,39 @@ def _deobf(s):
     return bytes(b ^ salt[i % len(salt)] for i, b in enumerate(raw)).decode()
 
 
+# ------------------------------------------------------------ LAN token
+# --lan exposes the console (approvals, admin, job launch) to the local
+# network with no auth. The LAN gate closes that: non-loopback clients must
+# present a machine-local token once (?token=… -> cookie). Localhost use is
+# unchanged, so scripts and the launcher keep working.
+LAN_TOKEN_FILE = os.path.join(HERE, ".lantoken")
+LAN_TOKEN = None            # set by main() only when --lan
+
+
+def _lan_token():
+    if not os.path.exists(LAN_TOKEN_FILE):
+        with open(LAN_TOKEN_FILE, "w") as f:
+            f.write(base64.urlsafe_b64encode(os.urandom(18)).decode())
+        os.chmod(LAN_TOKEN_FILE, 0o600)
+    return open(LAN_TOKEN_FILE).read().strip()
+
+
+def lan_gate(client_ip, query, cookie_header, token):
+    """'allow' | 'set-cookie' (valid ?token= — grant a session cookie) |
+    'deny'. Loopback is always allowed; token=None means not in LAN mode."""
+    if token is None:
+        return "allow"
+    if client_ip in ("127.0.0.1", "::1", "::ffff:127.0.0.1"):
+        return "allow"
+    cookies = dict(p.strip().split("=", 1)
+                   for p in (cookie_header or "").split(";") if "=" in p)
+    if cookies.get("labtoken") == token:
+        return "allow"
+    if query.get("token") == token:
+        return "set-cookie"
+    return "deny"
+
+
 def get_api_key(name):
     """Plaintext for in-process use by executors/agents only — never returned
     over HTTP."""
@@ -1743,9 +1786,29 @@ class H(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _lan_check(self, query):
+        verdict = lan_gate(self.client_address[0], query,
+                           self.headers.get("Cookie"), LAN_TOKEN)
+        if verdict == "set-cookie":
+            u = urllib.parse.urlparse(self.path)
+            self.send_response(302)
+            self.send_header("Set-Cookie",
+                             f"labtoken={LAN_TOKEN}; HttpOnly; SameSite=Lax")
+            self.send_header("Location", u.path or "/")
+            self.end_headers()
+            return False
+        if verdict == "deny":
+            self.send_json({"error": "LAN access requires the token printed "
+                                     "at server startup: open "
+                                     "http://<host>:<port>/?token=…"}, 401)
+            return False
+        return True
+
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         q = dict(urllib.parse.parse_qsl(u.query))
+        if not self._lan_check(q):
+            return None
         try:
             # Cut-over: the redesigned console is the default at / (and /console);
             # the original app stays reachable at /classic as a fallback.
@@ -1755,6 +1818,18 @@ class H(BaseHTTPRequestHandler):
             if u.path in ("/classic", "/classic.html"):
                 return self.send_file(os.path.join(STATIC, "index.html"),
                                       "text/html; charset=utf-8")
+            if u.path.startswith("/fonts/"):
+                # vendored fonts: basename only — no traversal
+                name = os.path.basename(u.path)
+                p = os.path.join(STATIC, "fonts", name)
+                if os.path.isfile(p) and (name.endswith(".woff2")
+                                          or name == "fonts.css"):
+                    return self.send_file(
+                        p, "font/woff2" if name.endswith(".woff2")
+                        else "text/css; charset=utf-8")
+                self.send_response(404)
+                self.end_headers()
+                return None
             if u.path == "/api/state":
                 return self.send_json(state())
             if u.path == "/api/kb":
@@ -1798,7 +1873,7 @@ class H(BaseHTTPRequestHandler):
                                               int(q.get("tail", 120))))
             if u.path == "/api/doc":
                 name = q.get("name", "")
-                if ".." in name or not name.startswith(DOC_WHITELIST_DIRS):
+                if not doc_path_allowed(name):
                     return self.send_json({"error": "not whitelisted"}, 403)
                 return self.send_json({"name": name, "body": rd(name)})
             return self.send_json({"error": "not found"}, 404)
@@ -1806,6 +1881,8 @@ class H(BaseHTTPRequestHandler):
             return self.send_json({"error": str(e)}, 500)
 
     def do_POST(self):
+        if not self._lan_check({}):
+            return None
         n = int(self.headers.get("Content-Length") or 0)
         payload = json.loads(self.rfile.read(n) or b"{}")
         try:
@@ -1871,17 +1948,21 @@ def main():
     print(f"Structure Discovery Lab console: http://localhost:{port}")
     print(f"  (original app still at http://localhost:{port}/classic)")
     if lan:
+        global LAN_TOKEN
+        LAN_TOKEN = _lan_token()
         import socket
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.connect(("8.8.8.8", 80))
             ip = s.getsockname()[0]
             s.close()
-            print(f"LAN mode: on your phone open http://{ip}:{port} "
-                  f"(same Wi-Fi). Approvals/admin are exposed to your "
-                  f"network — use only on networks you trust.")
+            print(f"LAN mode: on your phone open "
+                  f"http://{ip}:{port}/?token={LAN_TOKEN} (same Wi-Fi). "
+                  f"Other devices need that one-time token; localhost "
+                  f"never does.")
         except OSError:
-            print("LAN mode: bound to 0.0.0.0 (could not detect LAN IP)")
+            print(f"LAN mode: bound to 0.0.0.0; other devices open "
+                  f"http://<this-machine>:{port}/?token={LAN_TOKEN}")
     srv.serve_forever()
 
 

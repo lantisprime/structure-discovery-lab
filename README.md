@@ -24,6 +24,7 @@ or a subset determines the whole). Source: `docs/CROSS_DATASET_FRAMEWORK.md §0`
 
 ## Table of contents
 
+- [Installation](#installation)
 - [Why this lab exists](#why-this-lab-exists)
 - [Research questions the framework answers](#research-questions-the-framework-answers)
 - [The constitution: articles A1–A8 and conflict registry C1–C11](#the-constitution-articles-a1a8-and-conflict-registry-c1c11)
@@ -40,6 +41,84 @@ or a subset determines the whole). Source: `docs/CROSS_DATASET_FRAMEWORK.md §0`
 - [Repository guide](#repository-guide)
 - [Limitations](#limitations)
 - [Reviews and audits trail](#reviews-and-audits-trail)
+
+---
+
+## Installation
+
+One command, five questions, safe defaults — pressing ENTER on every question gives a
+good install (macOS and Linux; Python 3.10+):
+
+```bash
+python3 install.py
+```
+
+The wizard checks and installs every runtime dependency (the full set in
+`requirements.txt` — numpy, scipy, matplotlib, pandas, ripser, ephem, openpyxl — plus
+mpmath for the riemann module), then verifies the install by running
+`webapp/test_lab_deps.py` and `src/lint_frozen_imports.py`. Its five decisions:
+
+| Step | Question | Default (ENTER) | Alternative |
+|---|---|---|---|
+| 1 | Python environment | private `.venv/` (avoids the PEP-668 "externally managed" error) | current interpreter |
+| 2 | Lab history | **keep** the repo's ledgers and registered results | **clean ledger** — moves `results/` (and `riemann-zero-lab/results/`) to `archive/`, creates fresh empty ledgers with a new commitment snapshot |
+| 3 | Datasets | **keep** the five onboarded datasets | **clean datasets** — moves them to `archive/`, keeps `datasets/_TEMPLATE` for onboarding your own |
+| 4 | riemann-zero-lab | install its `mpmath` dependency | skip |
+| 5 | Agent LLM provider | skip (configure later on the console Admin page) | store an API key now (Anthropic / OpenAI / OpenRouter / Gemini / local Ollama) |
+
+Guarantees the installer honors (they mirror the lab's constitution):
+
+- **Nothing is ever deleted.** Clean-start options *move* files into a timestamped
+  `archive/` folder (git-ignored). Restoring = moving them back.
+- **Ledgers are append-only.** The four ledgers are never truncated or edited; a clean
+  ledger is a *new* ledger, and the old one survives in `archive/`. Note for clean
+  installs: `src/build_run_ledger.py` / `src/build_multiplicity_ledger.py` *backfill the
+  repo's historical runs* — on a fresh ledger, append new runs via the console/agents
+  instead of running the builders.
+- **`FROZEN HISTORICAL RECORD` scripts are never touched.**
+- **Agent keys never enter the repo.** Keys go to `webapp/config.local.json`
+  (git-ignored, `chmod 600`), obfuscated at rest with the machine-local
+  `webapp/.keysalt` — the exact scheme the web console uses, so the Admin page reads,
+  masks, and manages them natively. All four agent roles (analyst / executor /
+  reviewer / companion) default to the provider you pick; per-role models and effort
+  are tuned on the Admin page.
+
+Non-interactive use (CI, scripted setups): `python3 install.py --yes` accepts every
+default; `--env venv|system`, `--ledger keep|clean`, `--datasets keep|clean`,
+`--riemann yes|no`, `--provider <id>` (key read from the `LAB_LLM_API_KEY` environment
+variable, never from argv) override individual answers; `--dry-run` prints the plan and
+changes nothing; `--verify-only` re-runs the post-install health checks and exits;
+`--locked` pins installs to the recorded environment (`constraints-recorded.txt`) for
+closest reproduction of ledgered results; `--restore archive/preinstall-…` mechanically
+undoes a clean start (the displaced state is archived first — nothing is ever deleted).
+
+After installing: activate the venv if you created one (`source .venv/bin/activate`),
+then start the console — `python3 webapp/server.py 8787` (or double-click
+`Start Lab Console.command` on macOS) and open http://localhost:8787. The Overview page
+always shows the single next action.
+
+### Moving the lab to another machine or server
+
+The lab is self-contained and runs anywhere with Python 3.10+ (macOS and Linux are the
+tested platforms; the web console itself is stdlib-only). To migrate:
+
+1. **Code, docs, ledgers, datasets** — push/pull through git as usual (ledgers and
+   registered results are tracked files). Copy `archive/` manually if you want archived
+   history along (it is git-ignored by design).
+2. **Agent credentials** — `webapp/config.local.json` is obfuscated against the
+   machine-local salt `webapp/.keysalt`, so the two files only work **as a pair**: copy
+   both (they are `chmod 600` and git-ignored), or simply re-enter keys on the new
+   machine via `python3 install.py` step 5 or the console's Admin page.
+3. **Environment** — never copy `.venv/` (it hard-codes absolute paths); run
+   `python3 install.py --yes` on the new machine, then `python3 install.py
+   --verify-only` to confirm all gates pass.
+
+On a shared/headless server, keep the console bound to localhost (the default) and
+reach it over an SSH tunnel (`ssh -L 8787:localhost:8787 you@server`). `--lan` exposes
+it to the local network behind a **token gate**: non-localhost devices must open the
+one-time `?token=…` URL printed at startup (token stored git-ignored in
+`webapp/.lantoken`; localhost is always exempt so scripts and the launcher keep
+working). Still do not expose the port to the public internet.
 
 ---
 
@@ -586,6 +665,28 @@ Ensures domain vocabulary is confined to `src/domains/<domain>.py`, frozen histo
 records, domain datasets/results, and domain deliverables. Current verdict: **PASS,
 16 files clean** (source: `docs/SANITIZATION.md`).
 
+### Ledger integrity verifier: `src/verify_ledger_integrity.py`
+
+Mechanically checks the four-level ledger system itself: run-ledger rows parse with
+unique `run_id`s and every recorded `output_sha256` still matches the file on disk;
+multiplicity-ledger rows carry valid schema-v2 fields (`raw_p` ∈ [0,1], `p_floor`
+consistent with `m_perm`, run_ids cross-referenced to the run ledger); the commitment
+ledger's append-only text format is intact; the riemann sub-ledger parses. Runs in CI
+on every push and as the installer's final gate. Current verdict: **PASS — 10 checks,
+0 warnings**. Companion tool `tools/snapshot_commitment.py` appends a labeled,
+delta-only commitment snapshot in one command (append-only; secrets excluded).
+
+### Continuous integration: `.github/workflows/ci.yml`
+
+Every push and pull request runs the full stack on **Ubuntu and macOS**: the guided
+installer itself (`python3 install.py --yes` — CI fails if a fresh install's gates
+fail), all five verifiers above, the repo test suite (`tests/` — installer behavior,
+ledger tooling, agent-eval regrades, webapp smoke), the webapp unit tests, the riemann
+regression tests, and the 10-view browser e2e suite. A **weekly scheduled run**
+(Mondays 06:00 UTC) catches bit-rot between pushes, and an informational Windows job
+(`continue-on-error`) reports cross-platform drift without blocking. Locally,
+`./tools/check.sh [--e2e]` runs the same battery in one command.
+
 ### n=200 calibration gates
 
 All instrument families are re-gated at n=200 before any real-data run that will
@@ -851,12 +952,14 @@ run-ledger row. Start at `riemann-zero-lab/README.md`.
 ### Instrument scripts (domain-specific; frozen historical records; run from project root)
 
 ```bash
-# Declared core deps, plus the instrument-script deps requirements.txt does not
-# yet pin. The Run centre jobs (meta_panel/families/R5/TDA) import these, so a
-# fresh setup needs them too. On an externally-managed interpreter (e.g. Homebrew
-# Python — PEP 668) either work inside a venv, or append --break-system-packages.
-pip install -r requirements.txt                # ephem, numpy, openpyxl
-pip install scipy matplotlib pandas ripser     # scipy: R5/families · matplotlib: honesty-meter figure · pandas · ripser: persistent-homology (TDA)
+# Recommended: the guided installer handles all of this (venv, full dep set,
+# post-install verification) — see the Installation section at the top.
+python3 install.py
+# Manual alternative: requirements.txt now declares the full runtime set
+# (ephem, numpy, openpyxl, scipy, matplotlib, pandas, ripser). On an
+# externally-managed interpreter (e.g. Homebrew Python — PEP 668) work inside
+# a venv, or append --break-system-packages.
+pip install -r requirements.txt
 # Verify the runtime deps are all importable before running jobs:
 python3 webapp/test_lab_deps.py
 python3 src/montecarlo_certification.py   # marginal uniformity + ensemble certification
@@ -896,7 +999,13 @@ directly.
 python3 src/verify_relational_docs.py     # PASS — all 6 sections green
 python3 src/design_verifier.py            # PASS — 0 violations
 python3 src/lint_domain_neutrality.py     # PASS — 16 files clean
-python3 src/grade_agent_eval.py           # grades agent dispatch records
+python3 src/verify_ledger_integrity.py    # PASS — 10 checks, ledgers ↔ disk consistent
+python3 src/grade_agent_eval.py --all     # regrades every agent-eval dispatch record
+                                          # (PASS / FAIL / INCOMPLETE_RECORD; read-only)
+python3 tools/snapshot_commitment.py "label"   # append a commitment snapshot (append-only)
+./tools/check.sh                          # everything above + all test suites, one command
+./tools/check.sh --e2e                    # … plus the 10-view browser e2e suite
+python3 -m pytest tests/ -q               # installer / ledger-tool / webapp-smoke tests
 ```
 
 ---
@@ -911,8 +1020,11 @@ python3 src/grade_agent_eval.py           # grades agent dispatch records
   architecture (domain-neutral `src/core/`) but not yet empirically demonstrated.
 - **G5 empty:** the confirmation family (m = 9, α' = 0.0056) has not been touched;
   no result currently holds G5 grade. This is by design, not an omission.
-- **GW miscalibration:** GW (R2) is demoted to G0. Any analysis relying on GW alone
-  is unpublishable until null redesign is complete.
+- **GW retired:** GW (R2) is retired to the conflict registry (C12). The registered
+  readmission run (`docs/RESULTS_GW_READMISSION_V1.md`) showed the redesigned
+  permutation null is calibrated but powerless — no achievable null family both
+  calibrates and powers exact GW. GW-alone results remain unpublishable; a future
+  GW-family instrument would be a new onboarding.
 - **Resolution bounds:** all "no structure found" verdicts are bounded by ε at tested n.
   ε ≈ 0.15–0.20 is vacuous as an EV constraint at feasible ticket counts. "At the tested
   resolution" qualifies every null result.
@@ -952,11 +1064,13 @@ script and found byte-level discrepancy; the panel was refreshed to KS p = 0.385
 
 ## Web console (`webapp/`)
 
-Local, zero-dependency console for the lab (Python stdlib only):
+Local, zero-dependency console for the lab (Python stdlib only, fonts vendored in
+`webapp/static/fonts/` — no CDN, works fully offline/air-gapped):
 
 ```
 python3 webapp/server.py          # http://localhost:8787   (redesigned console)
-python3 webapp/server.py --lan    # + phone access on the same Wi-Fi
+python3 webapp/server.py --lan    # + phone access on the same Wi-Fi (token-gated;
+                                  #   open the ?token=… URL printed at startup)
 ```
 
 Or just double-click **Start Lab Console.command** (macOS) — it starts the

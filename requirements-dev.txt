@@ -1,0 +1,4 @@
+# Development / CI extras — NOT needed to run the lab.
+# Install:  pip install -r requirements-dev.txt
+pytest>=8.0        # tests/ + webapp/ + riemann-zero-lab/tests suites
+playwright>=1.49   # browser e2e suite (then: python -m playwright install chromium)

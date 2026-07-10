@@ -5,6 +5,7 @@ __pycache__/
 webapp/config.local.json
 webapp/joblogs/
 webapp/.keysalt
+webapp/.lantoken
 .episodic-memory/
 
 # BP-1 per-run HMAC key (RFC-004)
@@ -19,3 +20,7 @@ webapp/.keysalt
 
 # Office application lock files
 .~lock.*#
+
+.venv/
+archive/
+results/agent_status.json

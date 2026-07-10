@@ -4,3 +4,4 @@ R3_cca_family: {'fpr_ok': True, 'p_uniformity_ok': True, 'power_ok': True, 'ADMI
 R4_tda_persistence: {'fpr_ok': True, 'p_uniformity_ok': True, 'power_ok': True, 'ADMITTED': True} (11.8s)
 R5_graph_matching_spectra: {'fpr_ok': True, 'p_uniformity_ok': True, 'power_ok': False, 'ADMITTED': False} (7.1s)
 R6_coresets_landmarks_nystrom: {'fpr_ok': True, 'p_uniformity_ok': True, 'power_ok': True, 'ADMITTED': True} (4.1s)
+R2_gw_labelperm_readmission_v1: {'fpr_ok': True, 'p_uniformity_ok': True, 'power_ok': False, 'ADMITTED': False} (1744s)

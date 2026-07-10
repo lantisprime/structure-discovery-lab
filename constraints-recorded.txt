@@ -1,0 +1,14 @@
+# Exact versions from the lab's recorded execution environment
+# (results/environment.json, captured 2026-06 on Python 3.10) — for
+# reproducing ledgered results as closely as possible. NOT applied by
+# default: `python3 install.py --locked` (or
+# `pip install -r requirements.txt -c constraints-recorded.txt`).
+numpy==2.2.6
+scipy==1.15.3
+pandas==2.3.3
+ripser==0.6.15
+matplotlib==3.10.9
+networkx==3.4.2
+persim==0.3.8
+scikit-learn==1.7.2
+POT==0.9.6.post1

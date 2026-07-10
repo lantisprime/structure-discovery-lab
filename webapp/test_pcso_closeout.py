@@ -202,6 +202,17 @@ class TestCloseoutSnapshot(unittest.TestCase):
         observed = server.closeout_snapshot()
         self.assertIsInstance(observed["changes"], list)
         self.assertRegex(observed["token"], r"^[0-9a-f]{64}$")
+        self.assertTrue(
+            server.doc_path_allowed("datasets/pcso-lotto/DATASET.md")
+        )
+        for path in (
+            "datasets/pcso-lotto/data_draws.csv",
+            "datasets/../README.md",
+            "datasets\\pcso-lotto\\DATASET.md",
+            "datasetsevil/DATASET.md",
+        ):
+            with self.subTest(path=path):
+                self.assertFalse(server.doc_path_allowed(path))
         console = (ROOT / "webapp" / "static" / "console.html").read_text()
         classic = (ROOT / "webapp" / "static" / "index.html").read_text()
         for body in (console, classic):
