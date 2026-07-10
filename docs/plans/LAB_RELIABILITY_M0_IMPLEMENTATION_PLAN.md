@@ -10,7 +10,8 @@ recorded in §19**.
 |---|---|
 | RFC | `n/a` |
 | Parent requirements | `LAB-RELIABILITY-2026Q3` controls `C2`, `C6`, `C10`; Milestone 0 |
-| Workplan episode | `n/a`; requirements source is `docs/LAB_IMPROVEMENT_PLAN.md` v1.1 |
+| Workplan episode | `n/a`; requirements source is `docs/LAB_IMPROVEMENT_PLAN.md` v1.2 |
+| Workplan checkpoint | PR #18, merged as `a0d334b5f8e3c1cd6fabf3ea771c59f9ab2d28d6` |
 | Target branch | `feature/lab-reliability-m0` |
 | Pull request | `#17` -- merged into `master` on 2026-07-10 |
 | Merge commit | `0265ed33b74ac5bc9d692c82d464c3c877e1d170` |

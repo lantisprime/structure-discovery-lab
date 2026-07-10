@@ -1,14 +1,16 @@
 # Lab Reliability and Accuracy Improvement Plan
 
 **Plan ID:** `LAB-RELIABILITY-2026Q3`
-**Version:** 1.1
+**Version:** 1.2
 **Created:** 2026-07-10
-**Updated:** 2026-07-10 after PR #17 merge
+**Updated:** 2026-07-10 after PR #18 planning checkpoint
 **Status:** IN PROGRESS -- Milestone 0 merged; Milestone 1 active
 **Scope:** prospective lab infrastructure, statistical controls, provenance, and
 verification
 **Implementation plan:** `docs/plans/LAB_RELIABILITY_M0_IMPLEMENTATION_PLAN.md`
 (Milestone 0)
+**Planning checkpoint:** PR #18, merge commit
+`a0d334b5f8e3c1cd6fabf3ea771c59f9ab2d28d6`
 
 ## 1. Objective
 
@@ -266,15 +268,15 @@ fully satisfied.
 
 Use small, reviewable changes in this order:
 
-| Change set | Contents | Required gate |
-|---|---|---|
-| 1 | Webapp verifier job and safe closeout staging | M0 |
-| 2 | Complete dependency declaration, lockfile, clean CI | M1 |
-| 3 | Schemas, registration source of truth, atomic artifact writes | M2 |
-| 4 | Null contracts, RNG streams, MC uncertainty, calibration suite | M3 |
-| 5 | Sequential multiplicity controller and prospective PCSO registration | M3 |
-| 6 | Raw-source adapters, run bundles, holdout seal, role enforcement | M4 |
-| 7 | Independent recomputation, generated workbook, semantic verifiers | M5 |
+| Change set | Contents | Required gate | Delivery status |
+|---|---|---|---|
+| 1 | Webapp verifier job and safe closeout staging | M0 | COMPLETE -- PR #17 |
+| 2 | Complete dependency declaration, lockfile, clean CI | M1 | ACTIVE -- implementation plan next |
+| 3 | Schemas, registration source of truth, atomic artifact writes | M2 | PLANNED -- blocked by M1 |
+| 4 | Null contracts, RNG streams, MC uncertainty, calibration suite | M3 | PLANNED -- blocked by M2 |
+| 5 | Sequential multiplicity controller and prospective PCSO registration | M3 | PLANNED -- blocked by M2 |
+| 6 | Raw-source adapters, run bundles, holdout seal, role enforcement | M4 | PLANNED -- blocked by M1-M3 |
+| 7 | Independent recomputation, generated workbook, semantic verifiers | M5 | PLANNED -- blocked by M1-M4 |
 
 Do not combine a statistical-method change with a historical artifact migration in
 the same change set. Reviewers must be able to distinguish evidence changes from
@@ -323,7 +325,15 @@ clean checkout using one documented workflow that:
 7. passes role-separated replay and independent recomputation; and
 8. emits a release manifest that verifies the complete evidence chain.
 
-## 10. Method references
+## 10. Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0 | 2026-07-10 | Established the seven-milestone reliability and accuracy program. |
+| 1.1 | 2026-07-10 | Recorded M0 delivery through PR #17 and activated M1 without overstating partial CI/dependency controls. |
+| 1.2 | 2026-07-10 | Recorded the merged PR #18 planning checkpoint and added explicit delivery status to every change set. |
+
+## 11. Method references
 
 - Johari, Pekelis, and Walsh, *Always Valid Inference: Bringing Sequential
   Analysis to A/B Testing*, https://arxiv.org/abs/1512.04922
