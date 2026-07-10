@@ -272,10 +272,9 @@ import os
 chk('environment captured', os.path.exists('results/environment.json'), True)
 RL = [json.loads(l) for l in open('results/run_ledger.jsonl')]
 # the run ledger is append-only BY DESIGN (new runs append via append_run);
-# the docs' claim is that the 22 documented runs are present — not that the
+# the docs' claim is that the documented runs are present — not that the
 # lab stopped running. An exact-size check made every legitimate new run
 # read as doc corruption (caught by CI when gw_readmission_v1 appended).
-chk('run ledger holds the 22 documented runs', len(RL) >= 22, True)
 DOCUMENTED = {"admission", "firstrun", "batch5", "allgames", "batch6",
               "pressure", "remediation", "blind_verification",
               "cross_executor_verification_1", "blind_methodology_eval_v1",
@@ -283,9 +282,12 @@ DOCUMENTED = {"admission", "firstrun", "batch5", "allgames", "batch6",
               "eq_tidal_v2", "eq_tidal_v3", "eq_moondist_confirm1",
               "synthetic_batch1_expA", "synthetic_batch1_expCD",
               "audit_shadow_2026-07-02", "readmission_v2", "blind_eval_r2",
-              "corrected_rerun_r1"}
+              "corrected_rerun_r1", "pcso_weekly_2026_07_08"}
+run_ids = [r['run_id'] for r in RL]
+chk('run ledger ids unique', len(run_ids), len(set(run_ids)))
+chk('run ledger holds documented runs', len(RL) >= len(DOCUMENTED), True)
 chk('documented run_ids intact',
-    DOCUMENTED.issubset({r['run_id'] for r in RL}), True)
+    DOCUMENTED.issubset(set(run_ids)), True)
 chk('run/test ledger reconcile', sum(r['real_data_tests'] for r in RL), len(T))
 import json as _j
 BS=open('results/blind_eval_score.md').read()

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "run_date": "2026-07-08",
+  "confirmation_cutoff": "2026-06-10",
+  "previous_latest_draw_date": "2026-06-24",
+  "latest_draw_date": "2026-07-07",
+  "registered_family_m": 9,
+  "seed": 20260708,
+  "mc_trials": 10000,
+  "permutation_trials": 20000,
+  "expected_row_counts": {
+    "data_draws.csv": 252,
+    "data_draws_1yr.csv": 834,
+    "data_draws_1yr_audited.csv": 834,
+    "data_astro_geomagnetic.csv": 252
+  },
+  "provenance_status": "retrospective_manifest_from_contemporaneous_batch_artifacts",
+  "raw_source_capture": {
+    "available": false,
+    "note": "Raw HTML and exact per-date URLs were not retained by the July 8 run. The two-source claim is preserved from the contemporaneous audited CSV, temporary append script, and weekly report; it was not independently re-fetched during closeout."
+  },
+  "sources": [
+    {
+      "id": "lottopcso.com",
+      "base_url": "https://lottopcso.com/",
+      "role": "primary per-date history"
+    },
+    {
+      "id": "pcsodraw.com",
+      "base_url": "https://pcsodraw.com/",
+      "role": "independent per-game history and draw-number continuity"
+    }
+  ],
+  "continuity_boundaries": {
+    "Lotto 6/42": "1795->1801",
+    "Mega Lotto 6/45": "2961->2966",
+    "Super Lotto 6/49": "1834->1840",
+    "Grand Lotto 6/55": "2452->2457",
+    "Ultra Lotto 6/58": "1589->1595"
+  },
+  "draws": [
+    {"date":"2026-06-25","game":"Lotto 6/42","draw_number":1796,"numbers":[26,35,12,8,25,23],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-25","game":"Super Lotto 6/49","draw_number":1835,"numbers":[49,19,15,46,25,36],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-26","game":"Mega Lotto 6/45","draw_number":2962,"numbers":[9,41,22,45,5,10],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-26","game":"Ultra Lotto 6/58","draw_number":1590,"numbers":[53,54,44,57,51,7],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-27","game":"Lotto 6/42","draw_number":1797,"numbers":[24,31,3,36,35,23],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-27","game":"Grand Lotto 6/55","draw_number":2453,"numbers":[38,27,33,32,49,31],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-28","game":"Super Lotto 6/49","draw_number":1836,"numbers":[32,1,35,23,14,29],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-28","game":"Ultra Lotto 6/58","draw_number":1591,"numbers":[46,56,8,1,3,5],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-29","game":"Mega Lotto 6/45","draw_number":2963,"numbers":[33,13,6,21,18,44],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-29","game":"Grand Lotto 6/55","draw_number":2454,"numbers":[1,17,50,25,26,12],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-30","game":"Lotto 6/42","draw_number":1798,"numbers":[1,10,24,27,8,26],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-30","game":"Super Lotto 6/49","draw_number":1837,"numbers":[26,47,5,44,10,22],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-06-30","game":"Ultra Lotto 6/58","draw_number":1592,"numbers":[14,43,54,52,11,58],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-01","game":"Mega Lotto 6/45","draw_number":2964,"numbers":[4,2,36,19,24,17],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-01","game":"Grand Lotto 6/55","draw_number":2455,"numbers":[26,42,6,46,44,32],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-02","game":"Lotto 6/42","draw_number":1799,"numbers":[29,9,31,33,19,24],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-02","game":"Super Lotto 6/49","draw_number":1838,"numbers":[23,22,38,5,48,44],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-03","game":"Mega Lotto 6/45","draw_number":2965,"numbers":[43,2,13,5,36,1],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-03","game":"Ultra Lotto 6/58","draw_number":1593,"numbers":[15,25,54,27,8,56],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-04","game":"Lotto 6/42","draw_number":1800,"numbers":[6,5,25,12,23,8],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-04","game":"Grand Lotto 6/55","draw_number":2456,"numbers":[14,15,23,13,45,9],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-05","game":"Super Lotto 6/49","draw_number":1839,"numbers":[14,15,33,40,2,34],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-05","game":"Ultra Lotto 6/58","draw_number":1594,"numbers":[16,38,47,49,33,46],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-06","game":"Mega Lotto 6/45","draw_number":2966,"numbers":[3,36,6,32,16,45],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-06","game":"Grand Lotto 6/55","draw_number":2457,"numbers":[49,4,25,55,18,42],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-07","game":"Lotto 6/42","draw_number":1801,"numbers":[20,16,12,35,5,6],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-07","game":"Super Lotto 6/49","draw_number":1840,"numbers":[26,18,42,19,11,3],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"},
+    {"date":"2026-07-07","game":"Ultra Lotto 6/58","draw_number":1595,"numbers":[50,22,58,57,43,29],"source_ids":["lottopcso.com","pcsodraw.com"],"status":"two_source_verified"}
+  ]
+}

@@ -3,3 +3,6 @@
 # rewrite line endings on checkout — CRLF conversion on Windows changes every
 # sha256 and reads as ledger corruption (caught by the Windows CI job).
 * -text
+
+# These source files intentionally retain their historical CRLF records.
+datasets/pcso-lotto/*.csv whitespace=cr-at-eol

@@ -1115,7 +1115,7 @@ function interpretRun(r,tests){
   return s.join(" ")||"No interpretation available for this run.";
 }
 function expDetail(r){
-  const reg=(r.registration||"").match(/docs\/[\w./-]+\.md/);
+  const reg=(r.registration||"").match(/(?:docs|datasets)\/[\w./-]+\.md/);
   const tests=((STATE.ledger&&STATE.ledger.recent)||[]).filter(t=>t.run_id===r.run_id);
   const fact=(k,v,mono)=>v?`<div class="fact"><div class="fk">${esc(k)}</div>
     <div class="fv ${mono?'mono':''}">${esc(v)}</div></div>`:"";
@@ -1149,7 +1149,7 @@ function expDetail(r){
     ${pblock}
     <div class="pillrow" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
       ${reg?`<a class="btn ghost sm" href="#"
-        onclick="openDoc('${esc(reg[0])}','${esc(r.run_id)} — registration');return false">
+        onclick="openDoc('${esc(reg[0])}','${esc(r.run_id)} — Registration');return false">
         Read the registration →</a>`:""}
       <button class="btn ghost sm" onclick="window.print()">Export to PDF</button></div></div>`;
 }
@@ -1677,7 +1677,7 @@ const JOB_CAT={
 const AG_ROLES=[["analyst","🔬 Analyst — design & interpret (deep)"],
   ["executor","⚙️ Executor — run to the letter (fast)"],
   ["reviewer","🛡 Reviewer — adversarial check (deep)"]];
-let _agTimer=null, _openLog=null;
+let _agTimer=null, _openLog=null, _closeout={changes:[],token:null};
 
 // Job status → colour. Distinct from verdictBadge: a job is running/done/failed/
 // cancelled, and "done" must read green (verdictBadge would grey it).
@@ -1714,6 +1714,7 @@ VIEWS.agents=async(app)=>{
     esc(e.message)}</p></div>`;return;}
   // Static panels rendered ONCE (re-rendering on the 5s poll would wipe the
   // task textarea / audit inputs mid-type — a bug in the classic app).
+  _closeout=J.closeout||{changes:[],token:null};
   agRenderGroups(J);
   agRenderLaunch(J);
   agRenderAudit(TR);
@@ -1727,6 +1728,7 @@ async function agPoll(){
   let J,a;
   try{[J,a]=await Promise.all([api("/api/jobs"),api("/api/agents")]);}catch(e){return;}
   if(!$("#ag-jobs"))return;
+  _closeout=J.closeout||{changes:[],token:null};
   agRenderJobs(J); agRenderRunning(a);
   if(_openLog)showLog(_openLog,true);
 }
@@ -1802,12 +1804,48 @@ function agRenderRunning(a){
        <pre class="ag-pre mono">${esc(JSON.stringify(a.declared_status,null,1))}</pre>`:""}
     <p class="ag-desc" style="margin-top:8px">${esc((a&&a.note)||"")}</p></div>`;
 }
+function closeoutPathsModal(snapshot){
+  return new Promise(res=>{
+    let settled=false;
+    const done=value=>{if(settled)return;settled=true;closeModal();res(value);};
+    const changes=(snapshot&&snapshot.changes)||[];
+    const rows=changes.map((item,index)=>`<label class="chkline" style="align-items:flex-start">
+      <input type="checkbox" class="co-path" data-i="${index}"
+        ${item.allowed?"checked":"disabled"}>
+      <span><span class="mono">${esc(item.path)}</span><br>
+        <span class="ag-sub">${item.untracked?"untracked":item.staged?"staged":"modified"}${
+          item.rejection?" · "+esc(item.rejection):""}</span></span></label>`).join("");
+    openModal(`<button class="mx" id="co-cancel-x">✕</button>
+      <h3>Review paths to commit</h3>
+      <p class="ag-desc">Only checked paths will be staged. Refresh after any file changes.</p>
+      <div style="max-height:360px;overflow:auto">${rows||
+        '<p class="ag-desc">No changed lab paths are eligible.</p>'}</div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn sm" id="co-ok" ${changes.some(x=>x.allowed)?"":"disabled"}>Commit checked</button>
+        <button class="btn ghost sm" id="co-cancel">Cancel</button></div>`);
+    $("#co-ok").onclick=()=>{
+      const paths=[...document.querySelectorAll(".co-path:checked")]
+        .map(box=>changes[+box.dataset.i].path);
+      if(!paths.length){toast("Select at least one changed path");return;}
+      done({paths,preview_token:snapshot.token});
+    };
+    $("#co-cancel").onclick=()=>done(null);
+    $("#co-cancel-x").onclick=()=>done(null);
+  });
+}
+
 window.runJob=async(name,needs)=>{
   needs=needs||[];
   const params={};
   if(needs.includes("message")){
     const m=await promptModal("Commit message","add + commit docs/results/src/… — 5–400 chars");
     if(m==null)return; params.message=m;
+  }
+  if(needs.includes("paths")){
+    const picked=await closeoutPathsModal(_closeout);
+    if(picked==null)return;
+    params.paths=picked.paths;
+    params.preview_token=picked.preview_token;
   }
   try{const j=await api("/api/jobs",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({job:name,params})});
