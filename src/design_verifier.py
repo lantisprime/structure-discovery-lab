@@ -41,6 +41,11 @@ VALID = {
     # audit C-1: equation claims were previously outside the design gate
     "equation_discovery": {"null-equation-generator",
                            "frozen-equation-confirmation"},
+    # 2026-09-06 (kb card 28 + RESULTS_PCSO_REFRESH): decision-layer claims
+    # about PLAYERS (jackpot sharing) and about selection STRATEGIES; neither
+    # is evidence about the draw process
+    "payout-sharing": {"csi-winners-meandiff", "csi-winners-rankcorr"},
+    "strategy-edge": {"paired-draw-signflip"},
 }
 # hit-count families require data-regime sensitivity rows (audit G-2: was an
 # exact-match set that never fired against hit-count-temporal/-cooc)

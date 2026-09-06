@@ -3,25 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PCSO 2-Ticket Protocol Picker</title>
+<title>PCSO 2-Ticket Protocol Picker v2</title>
 <style>
   :root { --bg:#0f1623; --card:#1a2332; --ink:#e8edf5; --mut:#8fa1bb; --acc:#4da3ff; --gold:#f5c542; --red:#ff6b6b; --grn:#51cf8a; }
   * { box-sizing:border-box; margin:0; }
-  body { font-family:-apple-system, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--ink); padding:24px; max-width:880px; margin:0 auto; }
+  body { font-family:-apple-system, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--ink); padding:24px; max-width:920px; margin:0 auto; }
   h1 { font-size:1.5rem; margin-bottom:4px; }
   .sub { color:var(--mut); font-size:.9rem; margin-bottom:16px; }
-  .banner { background:#2b2030; border:1px solid #6b4f2a; border-radius:10px; padding:10px 14px; font-size:.85rem; color:#e8c98a; margin-bottom:20px; }
+  .banner { background:#2b2030; border:1px solid #6b4f2a; border-radius:10px; padding:10px 14px; font-size:.85rem; color:#e8c98a; margin-bottom:14px; }
+  .fact { background:#16281f; border:1px solid #2f5a3f; border-radius:10px; padding:10px 14px; font-size:.85rem; color:#bfe8cc; margin-bottom:20px; }
   .controls { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:end; }
   label { display:block; font-size:.75rem; color:var(--mut); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
   input, select { background:var(--card); color:var(--ink); border:1px solid #2e3d55; border-radius:8px; padding:9px 12px; font-size:1rem; }
   .card { background:var(--card); border:1px solid #2e3d55; border-radius:14px; padding:18px 20px; margin-bottom:14px; }
   .gname { font-weight:700; font-size:1.1rem; }
-  .meta { color:var(--mut); font-size:.82rem; margin:2px 0 12px; }
+  .meta { color:var(--mut); font-size:.82rem; margin:2px 0 10px; line-height:1.45; }
+  .mono { font-family:ui-monospace,Menlo,monospace; }
   .tk { display:flex; align-items:center; gap:8px; margin:8px 0; flex-wrap:wrap; }
   .tk b { width:64px; color:var(--mut); font-size:.8rem; }
+  .tk small { color:var(--mut); font-size:.75rem; margin-left:6px; }
   .ball { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;
           background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), var(--acc); color:#06121f; font-size:.95rem; }
   .b2 .ball { background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), var(--gold); }
+  .last .ball { width:30px; height:30px; font-size:.8rem; background:#3a4a63; color:var(--ink); }
   .evrow { display:flex; gap:10px; align-items:end; margin-top:12px; flex-wrap:wrap; }
   .ev { font-size:.85rem; padding:6px 10px; border-radius:8px; }
   .neg { background:#3a1f24; color:var(--red); } .pos { background:#15331f; color:var(--grn); }
@@ -29,167 +33,158 @@
   button:hover { filter:brightness(1.1); }
   .nodraw { color:var(--mut); font-style:italic; padding:20px; }
   .foot { color:var(--mut); font-size:.75rem; margin-top:18px; line-height:1.5; }
+  table { border-collapse:collapse; font-size:.78rem; margin:8px 0; }
+  td, th { padding:3px 8px; border-bottom:1px solid #2e3d55; text-align:left; }
+  #parity { font-size:.72rem; color:var(--mut); }
 </style>
 </head>
 <body>
-<h1>PCSO 2-Ticket Protocol Picker</h1>
-<div class="sub">Pick a date &rarr; see which games draw that night (9 PM PHT) and two protocol-compliant combinations per game.</div>
-<div class="banner" style="font-family:ui-monospace,Menlo,monospace">
-P(any 6-set next draw | full history) = 1/C(n,6)&ensp;[i.i.d. uniform: conditional = marginal]<br>
-P(jackpot, 2 disjoint tickets) = 2/C(n,6)&ensp;[mutually exclusive events]<br>
-E[payout] = &Sigma;<sub>k=3..6</sub> P(match k)&middot;prize<sub>k</sub>, &ensp;P(match k) = C(6,k)C(n&minus;6,6&minus;k)/C(n,6)&ensp;[hypergeometric]<br>
-Kelly stake f* &le; 1/C(n,6) &rArr; &#8369;25 stake requires bankroll &ge; 25&middot;C(n,6)<br>
-P(remainder | any subset of history) = marginal&ensp;[relational face, batches 5&ndash;6: recovery curves flat at null for k=1&ndash;40%, all 5 games]</div>
+<h1>PCSO 2-Ticket Protocol Picker <span style="color:var(--mut);font-weight:400">v2 · 2026-09-06</span></h1>
+<div class="sub">Pick a date &rarr; see which games draw that night (9 PM PHT), the last <b>official</b> result, and two protocol-compliant tickets per game.</div>
+<div class="banner mono">
+P(jackpot | any ticket, any method) = 1/C(n,6)&ensp;[i.i.d. uniform; 25+ instrument families null; monitoring below]<br>
+Payout &ne; P(win): E[jackpot share] = J&middot;(1&minus;e<sup>&minus;&lambda;</sup>)/&lambda;, &lambda; = N&middot;q(c)&ensp;[Stern&ndash;Cover 1989; q(c) = share of bets on your combination]<br>
+Category II/III (5- and 4-match) are POOLS shared per winning bet since 2026-02-01&ensp;[official PCSO game pages]; Category IV fixed<br>
+Kelly f* &le; 1/C(n,6) &rArr; a &#8369;25 stake needs bankroll &ge; 25&middot;C(n,6)&ensp;[Doob: no system makes a fair game favourable]
+</div>
+<div class="fact"><b>What this page changes:</b> only how much you would <i>keep</i> if you won (two disjoint tickets; low-popularity combinations). <b>What it cannot change:</b> the chance of winning. On 984 official draws (Jun 2025&ndash;Sep 2026), draws whose winning combination scored in the top third of the popularity index were shared 2.8&times; as often as the bottom third (kb card 28, G0 exploratory); no selection rule &mdash; hot, cold, overdue, repeat, Markov, or these filters &mdash; changed the match rate against the actual draws (draw-paired backtest, 1.67M tickets).</div>
 
 <div class="controls">
-  <div><label>Draw date</label><input type="date" id="d" min="2026-06-11"></div>
+  <div><label>Draw date</label><input type="date" id="d" min="2026-09-06"></div>
   <div><label>Game</label><select id="g"><option value="all">All games that night</option></select></div>
+  <div><label>Tickets sold per draw (assumption)</label><input type="number" id="n" value="500000" step="50000" style="width:150px" onchange="render(false)"></div>
   <div><button onclick="render(true)">New picks &#x21bb;</button></div>
 </div>
 <div id="out"></div>
+<div id="parity"></div>
+
 <div class="foot">
-<b>Summary (external-review wording, 2026-06-11):</b> this lab found no reproducible evidence of exploitable structure in the PCSO lottery data <i>at the tested resolution</i>. One historical 6/55 #45 anomaly remains era-bounded and (for hit-count statistics) data-quality-sensitive. The relational instruments are calibrated on synthetic controls and detect large planted/mechanism-scale effects, but subtle effects are below the demonstrated power of the current dataset. This is &laquo;no detectable structure at the tested resolution&raquo;, never &laquo;no structure exists&raquo;. Independently verified: a blinded second system reproduced all 9 series-level verdicts (9/9) with its own methods. Floor-compliant rerun under the remediated methodology (batch67_r2, registration hash 2709deedb274f0f6, docs/RESULTS_BATCH6_7_RERUN.md) left every verdict unchanged.<br><br>
-Empirical basis (as of 2026-06-11, incl. relational batches 5&ndash;7 + remediation): n=776 validated draws; 55+ within-dataset tests plus a 248-row relational test ledger (results/multiplicity_ledger.jsonl; 7.3% raw p&le;0.05 incl. superseded originals) whose current-best panel of 136 tests is consistent with uniform p-values (8.8% &le;0.05, meta-uniformity KS p=0.111), min familywise-corrected p=0.148 (scan statistic) among new discoveries &mdash; the sole relational corrected rejection is the known 6/55 co-occurrence shadow (&lambda;<sub>max</sub> p=0.0010 at m=999);
-Markov order-0 confirmed (|&lambda;&#8322;|&le;0.12, relaxation &le;1.14 draws); compression &ge; entropy bound in all games; MLE sequence-learnability &beta;=+0.015, CI [&minus;0.04,+0.08] &ni; 0;
-SOC scan (Per Bak): spectral slope &alpha;=0.03&ndash;0.16 (white noise; 1/f would be &alpha;&asymp;1), avalanche sizes geometric (no heavy tail), Hurst H&#770; indistinguishable from calibrated null (p&ge;0.09) &mdash; no self-organized criticality reaches the outputs.
-Power-law test (Clauset&ndash;Shalizi&ndash;Newman MLE, Vuong LR vs geometric): recurrence gaps n=4407, z=&minus;35.3; avalanches n=206, z=&minus;3.2 &mdash; exponential tails, characteristic scale, off-critical; scaling range 0.9 decades &lt; 2 needed for any exponent (universality-class ID not attemptable).
-Universality observed on the mathematics side instead: &lambda;<sub>max</sub> null skewness +0.316 vs Tracy&ndash;Widom GOE universal +0.293; CLT (Gaussian class) under every z-score; Gumbel class in the scan-statistic null.
-Full universality machinery (data collapse / RG flow / Binder): five games' rescaled avalanche CCDFs collapse onto ONE scaling function = the geometric 2<sup>&minus;(2x&minus;1)</sup> of the trivial fixed point (max spread 0.21);
-block-mean excess kurtosis &asymp;0 at all scales k=1&ndash;16 (data sits AT the Gaussian/CLT fixed point); Binder cumulant U(W=32)=0.32 vs i.i.d.-null 0.36, CI [&minus;0.05,+0.60] &mdash; the apparent critical plateau is the n&asymp;4-window estimator bias.
-Scaling-law sweep (8 relations, family m=18, threshold p&lt;0.003): Zipf slope s=0.21&ndash;0.28 vs i.i.d. null 0.20&ndash;0.23 (not Zipf's s&asymp;1; min p=0.017 n.s.);
-Taylor exponent b=0.3&ndash;1.3 vs binomial ~0.9 (no clustering, b&#8780;2); first digits reject Benford (&chi;&sup2;=1312, df=8) and fit the exact uniform-derived law (&chi;&sup2;=9.3);
-L&eacute;vy step-tails exponential (Vuong z=&minus;9.4); coupon-collector coverage inside MC 95% CI in all games (e.g. 6/58: 66 vs [27,70]).
-Fixed point identified: trivial / infinite-temperature. Same verdict from every instrument family &mdash; 8 scaling relations, all i.i.d.-form.
-Batch 4 (harmonization instruments, registered docs/REGISTRATION_BATCH4.md, results docs/RESULTS_BATCH4.md): concentration exclusion &mdash; per-ball bias bound &epsilon;=0.16&ndash;0.20 per game, honest verdict: vacuous at lottery data rates (~130&ndash;330 yrs of draws for a 10% bound, so uniformity rests on direct tests, not the bound);
-graphon cut-norm proxy (Lov&aacute;sz&ndash;Szegedy) &mdash; measured OUT of the RMT equivalence class (null-&rho;=+0.11), all games null except 6/55 (p=0.0005), attributed by driving rows to the already-adjudicated 2025 #45 excess (8th/9th correlated flags, one anomaly, era-bounded, dead since Feb 2026, zero forward value &mdash; picks remain uniform);
-Szemer&eacute;di AP counts &mdash; all games at the theorem-forced rate (p&ge;0.011, n.s. at m=20 threshold 0.0025). The &laquo;Ramsey trap&raquo;: density alone forces 3.2&ndash;4.4 three-term APs into any hot-10 set (Szemer&eacute;di 1975), so &laquo;the hot numbers form a progression&raquo; is a theorem, not a signal.
-Relational face (batches 5&ndash;6, registered docs/REGISTRATION_BATCH5.md &amp; _BATCH6.md, results docs/RESULTS_RELATIONAL_FIRSTRUN.md, _BATCH5.md, _BATCH6.md, figures results/figures/fig1&ndash;7):
-7 instrument families (MMD, Gromov&ndash;Wasserstein, CCA, persistence diagrams, graph spectra, Nystr&ouml;m, matrix completion) admitted only after calibration on independence (FPR&asymp;&alpha;) and power 1.00 on planted structure;
-subset-to-whole recovery curves FLAT at the null line for every game at every subset fraction k=1&ndash;40% (|z|&le;1.1 vs tidal/lunar controls reaching z=+19.7 on the same pipeline);
-cross-game co-occurrence: all 10 pairs null (min p=0.05 vs &Scaron;id&aacute;k 0.0051); sub-dataset partitions (quarters &amp; halves): 65 tests, all joint-null;
-draws vs tidal/geomagnetic/sun&ndash;moon covariates: held-out CCA &rho;&#8321;=&minus;0.01&ndash;0.11, p=0.19&ndash;0.56 (the same test detects the known tidal&harr;ephemerides mechanism at &rho;&#8321;=0.9977, p=0.005 &mdash; the pipeline sees real relations, and sees none here);
-draws vs atmospheric pressure at the draw site (ERA5 Mandaluyong, batch 7): per-game CCA joint null (min p=0.03 &gt; &Scaron;id&aacute;k 0.0102) while pressure itself is richly structured (recovery z=+10.5, all 6 season pairs reject at p=0.0025 at m=399 (rerun_batch67.py, batch67_r2), sun/moon coupling robust across 3 splits (median p=0.005 from b7_cca, &rho;&#8321;=0.567) &mdash; weather is predictable, draws are not);
-delay-embedding topology: no H&#8321; loop in any game (p&ge;0.13; tidal loop detected at p=0.01 floor and recoverable from 20% landmarks).
-The 2025 6/55 #45 excess now traces identically through FOUR instruments (chi-square family, graphon row 27, cross-game &lambda;<sub>max</sub> eigenvector loading 0.439, half-vs-half hot-corr contributors #45/#42) &mdash; one era-bounded anomaly, dead since Feb 2026, zero forward value; picks remain uniform.
-Tickets: uniform random, disjoint, filtered (reject all&le;31, runs&ge;4, 6-term AP, single last-digit) &mdash; filters affect split-risk only, never P(win). The AP filter is itself Ramsey-aware: progressions are popular picks (split risk), not lucky ones.
-EV model: 20% tax &gt;&#8369;10k; co-winner split E[J/(1+K)], K~Poisson(tickets/C(n,6)); pari-mutuel tiers estimated (yellow cells in workbook).
-Jackpot defaults = last verified draws (Jun 9&ndash;10, 2026); edit per draw night. Schedule: 6/42 Tu/Th/Sa &middot; 6/45 Mo/We/Fr &middot; 6/49 Tu/Th/Su &middot; 6/55 Mo/We/Sa &middot; 6/58 Tu/Fr/Su.
-EV model: 20% tax over &#8369;10k, Poisson co-winner split (Stern&ndash;Cover), pari-mutuel lower tiers estimated.
-Rejection rules: all numbers &le;31 (birthday-heavy), 4+ consecutive, single arithmetic progression, all same last digit.
-Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun.
-Full methodology: RESEARCH_NOTES.md in this folder. Please play responsibly &mdash; expected cost is ~&#8369;17&ndash;20 per &#8369;25 ticket.
+<b>Data (all official, pcso.gov.ph SearchLottoResult, fetched 2026-09-06):</b> 984 draws Jun 1 2025 &ndash; Sep 5 2026 with jackpot and winning-bet counts; the lab's 962-row canonical file (Jun 11 2025 &ndash; Sep 5 2026) matches the official page on every row (834/834 prior rows re-verified exactly, 128 new rows <span class="mono">official_verified</span>, cross-checked on two independent archives with draw-number continuity). Provenance: <span class="mono">datasets/pcso-lotto/provenance/pcso_refresh_2026-09-06.json</span> + raw HTML.<br><br>
+<b>Monitoring (registered m=9 family, confirmation set n=186 draws after the 2026-06-10 freeze, <span class="mono">results/pcso_confirmation_2026-09-06.json</span>):</b> per-game exact-MC chi-square p = 0.066 / 0.498 / 0.046 / 0.376 / 0.107 (6/42 &hellip; 6/58); mean-drawn vs moon altitude r=&minus;0.015 (p=0.83), vs illumination r=+0.005 (p=0.95); 6/55 ball #45: 2 hits in 37 draws vs 4.0 expected (p=0.43 &mdash; the 2025 anomaly stays dead). <b>0 flags at &alpha;=0.0056.</b> Kp test non-computable (backfill pending). Weekly cumulative looks are exploratory monitoring without a sequential alpha-spending rule.<br><br>
+<b>Algorithm v2 (replaces the four pattern filters):</b> tickets are drawn uniformly with the browser's cryptographic RNG as one disjoint 12-number sample; each ticket's <i>conscious-selection index</i> (CSI: excess share of numbers &le;31, &le;12 and lucky digits {1,3,5,7,9,11,12,13}; flags for arithmetic progressions, runs of consecutive numbers, common divisors, single last digit, single parity &mdash; weights declared from Cook&ndash;Clotfelter, Stern&ndash;Cover, Simon, Farrell et al., Baker&ndash;McHale, Roger&ndash;Broihanne, Polin et al.) must fall in the bottom 40% of the uniform CSI distribution for that pool (q40: 6/42 0.0243 &middot; 6/45 0.0091 &middot; 6/49 0.0282 &middot; 6/55 0.0172 &middot; 6/58 0.0033). The old rules (all &le;31, 4+ consecutive, full arithmetic progression, one last digit) are a strict subset. Identical function to <span class="mono">src/csi_popularity.py</span> (parity self-test below). Validation on PCSO data: within-game standardized CSI of winner draws is +0.74 sd above winner-less draws (stratified permutation p = 5e-05, floor), rank correlation +0.16 (p = 1e-04); Poisson GLM with game effects: winning bets &prop; exp(0.52&middot;z<sub>CSI</sub>). Grade G0 exploratory: weights fixed before the run, one year of data, winners are winning <i>bets</i> (one bettor can hold several), only the jackpot tier is observable. Nothing here is a prediction of the next numbers.<br><br>
+<b>Backtest (<span class="mono">results/pcso_strategy_backtest_2026-09-06.json</span>, 834 draws &times; 2 tickets, replicates paired by draw, sign-flip null, &Scaron;id&aacute;k &alpha;=0.0073 for 7 rules):</b> mean matches per ticket vs uniform on the same draws &mdash; v1 filters +0.0040 (p=0.0061), v2 CSI +0.0081 (p=0.014), hot +0.012 (p=0.46), cold &minus;0.041 (p=0.010), overdue &minus;0.001 (p=0.95), repeat-last &minus;0.004 (p=0.77), Markov +0.007 (p=0.67). The single flag (v1) traces to this year's excess of drawn numbers above 31 (1,912 vs 1,844 expected, z=+2.12, itself not significant) &mdash; the marginal-frequency fluctuation seen through a filter that leans on it, charged once with the null chi-square class, replication required. Best of 1.67M tickets: one 5-match; never a jackpot. Literature (sourced brief 2026-09-06): no peer-reviewed method beats chance on a physical ball draw; PRNG-recovery results (Mersenne Twister, 2024&ndash;25 transformer work) apply only to software RNGs.<br><br>
+<b>EV model:</b> hypergeometric tiers; official Feb-2026 matrix (ticket &#8369;25; Category II/III pools shared per winning bet, Category IV fixed); 20% tax above &#8369;10k; co-winner split E[1/(1+K)], K~Poisson(N&middot;p<sub>tier</sub>), with the exploratory sharing multiplier exp(0.52&middot;z<sub>CSI</sub>) applied to the jackpot tier of your ticket. Ticket sales N are <i>not</i> published &mdash; edit the assumption above (jackpot growth per rollover draw, official: 6/42 &asymp;&#8369;2.9M, 6/45 &#8369;3.1M, 6/55 &#8369;4.9M, 6/58 &#8369;6.7M; 6/49 sits at its guaranteed floor). Jackpot defaults = last official draw (Sep 3&ndash;5, 2026); edit per draw night.<br><br>
+Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun. Full methodology: docs/RESULTS_PCSO_REFRESH_2026-09-06.md, docs/RESEARCH_NOTES.md &sect;10, docs/kb/conscious-selection-popularity.md. Please play responsibly &mdash; expected cost is ~&#8369;17&ndash;21 per &#8369;25 ticket at current jackpots.
 </div>
 
 <script>
+// ---- official facts (pcso.gov.ph, 2026-09-06). last = most recent official draw; win = winning bets on it.
 const GAMES = {
-  "Lotto 6/42":      {pool:42, days:[2,4,6], minJack:20676273, tickets:400000, p5:24000,  p4:800,  p3:20,  eps:0.16234, apBase:4.39, relZ:0.54, ccaP:0.295, halfCorr:0.060, halfP:0.360},
-  "Mega Lotto 6/45": {pool:45, days:[1,3,5], minJack:52078363, tickets:500000, p5:32000,  p4:1000, p3:30,  eps:0.17564, apBase:4.04, relZ:1.09, ccaP:0.490, halfCorr:0.147, halfP:0.155},
-  "Super Lotto 6/49":{pool:49, days:[0,2,4], minJack:25000000, tickets:500000, p5:56000,  p4:1200, p3:50,  eps:0.16155, apBase:3.79, relZ:0.61, ccaP:0.375, halfCorr:0.004, halfP:0.495},
-  "Grand Lotto 6/55":{pool:55, days:[1,3,6], minJack:45000000, tickets:600000, p5:200000, p4:3000, p3:60,  eps:0.19848, apBase:3.32, relZ:1.03, ccaP:0.190, halfCorr:0.251, halfP:0.050, halfNote:" (#45/#42 era shadow, C9)"},
-  "Ultra Lotto 6/58":{pool:58, days:[0,2,5], minJack:75000000, tickets:700000, p5:280000, p4:4000, p3:100, eps:0.16085, apBase:3.19, relZ:0.71, ccaP:0.560, halfCorr:0.060, halfP:0.280}
-  // eps: batch-4 (Jun 2026) 95% simultaneous exclusion bound on |p_i - 6/P| (concentration_exclusion.py);
-  // apBase: theorem-forced E[3-term APs] in a random 10-subset (Ramsey-trap baseline, szemeredi_ap.py);
-  // relZ: batches 5-6 (Jun 2026) max |null-adjusted z| across subset-to-whole recovery curves, k=1-40%
-  //       (relational_allgames.py; null band is +/-2 -- all games flat);
-  // ccaP: held-out CCA p vs tidal/geomagnetic/sun-moon covariates, shuffled-pairing null (all null);
-  // halfCorr/halfP: half-vs-half hot-number consistency vs constrained-uniform null (rerun_batch67.py,
-  //       batch67_r2, m=199; supersedes relational_subsets.py; joint null at Sidak m=5;
-  //       the 6/55 raw flag traces to the expired #45/#42 era rows per C9)
+  "Lotto 6/42":      {pool:42, days:[2,4,6], minJack:10000000, cat2:1100000, cat3:1000000, cat4:20,  q40:0.0243,
+                      last:{date:"2026-09-05", nums:[29,35,37,24,3,36], jack:28197852.66, win:0}, growth:2883029, chiP:0.066, n:38},
+  "Mega Lotto 6/45": {pool:45, days:[1,3,5], minJack:15000000, cat2:1200000, cat3:1100000, cat4:30,  q40:0.0091,
+                      last:{date:"2026-09-04", nums:[26,38,17,35,11,16], jack:41598513.75, win:0}, growth:3098930, chiP:0.498, n:37},
+  "Super Lotto 6/49":{pool:49, days:[0,2,4], minJack:25000000, cat2:1300000, cat3:1200000, cat4:50,  q40:0.0282,
+                      last:{date:"2026-09-03", nums:[15,45,13,18,8,2], jack:25239749.17, win:0}, growth:61838, chiP:0.046, n:37},
+  "Grand Lotto 6/55":{pool:55, days:[1,3,6], minJack:45000000, cat2:1400000, cat3:1300000, cat4:60,  q40:0.0172,
+                      last:{date:"2026-09-05", nums:[22,44,4,54,47,1], jack:177438115.66, win:0}, growth:4928699, chiP:0.376, n:37, note:" (#45: 2/37 hits, p=0.43)"},
+  "Ultra Lotto 6/58":{pool:58, days:[0,2,5], minJack:75000000, cat2:1500000, cat3:1400000, cat4:100, q40:0.0033,
+                      last:{date:"2026-09-04", nums:[53,34,12,9,5,47], jack:265466683.02, win:0}, growth:6667770, chiP:0.107, n:37}
 };
-// days: JS getDay() with 0=Sun … 6=Sat. 6/42 Tue(2)/Thu(4)/Sat(6); 6/45 Mon(1)/Wed(3)/Fri(5); 6/49 Tue/Thu/Sun(0)... fixed below
-GAMES["Lotto 6/42"].days=[2,4,6]; GAMES["Mega Lotto 6/45"].days=[1,3,5];
-GAMES["Super Lotto 6/49"].days=[0,2,4]; GAMES["Grand Lotto 6/55"].days=[1,3,6]; GAMES["Ultra Lotto 6/58"].days=[0,2,5];
+// Official jackpot hits since 2026-07-01 (game, date, combination as drawn, jackpot, winning bets)
+const HITS = [["6/49","2026-08-23",[47,20,36,43,7,6],25413563.73,1],["6/42","2026-08-13",[20,21,14,41,6,12],31911511.47,1],
+  ["6/49","2026-08-04",[11,20,12,36,44,26],25187181.56,1],["6/45","2026-08-03",[27,29,34,8,32,36],15000000,1],
+  ["6/49","2026-07-26",[4,10,19,14,13,5],91161911.76,1],["6/45","2026-07-24",[14,20,19,31,2,11],20899725.81,1],
+  ["6/42","2026-07-18",[27,32,39,26,12,7],20167956.53,1],["6/45","2026-07-08",[13,5,30,25,22,11],15000000,1],
+  ["6/45","2026-07-03",[43,2,13,5,36,1],97966977.93,1],["6/42","2026-07-02",[29,9,31,33,19,24],57645619.6,1]];
+const BETA_CSI = 0.5185;   // exploratory Poisson slope on within-game standardized CSI (results/csi_popularity_2026-09-06.json)
 
+// ---- conscious-selection index: MUST equal src/csi_popularity.py::csi (parity vectors below)
+const LUCKY = new Set([1,3,5,7,9,11,12,13]);
+const W = {birthday:0.30, calendar:0.10, lucky:0.10, ap6:0.50, ap5:0.20, run4:0.30, run3:0.10, gcd:0.35, lastdigit:0.30, parity:0.05};
+function gcd(a,b){while(b){[a,b]=[b,a%b];}return a;}
+function csi(t,P){
+  const s=[...t].sort((a,b)=>a-b); let sc=0;
+  const b=s.filter(v=>v<=31).length/6, eb=Math.min(31,P)/P; sc+=W.birthday*Math.max(0,(b-eb)/(1-eb));
+  const c=s.filter(v=>v<=12).length/6, ec=12/P; sc+=W.calendar*Math.max(0,(c-ec)/(1-ec));
+  const l=s.filter(v=>LUCKY.has(v)).length/6, el=LUCKY.size/P; sc+=W.lucky*Math.max(0,(l-el)/(1-el));
+  const d=[]; for(let i=0;i<5;i++) d.push(s[i+1]-s[i]);
+  if(new Set(d).size===1) sc+=W.ap6;
+  else if((d[0]===d[1]&&d[1]===d[2]&&d[2]===d[3])||(d[1]===d[2]&&d[2]===d[3]&&d[3]===d[4])) sc+=W.ap5;
+  let run=1,mx=1; for(const x of d){run=(x===1)?run+1:1; mx=Math.max(mx,run);}
+  if(mx>=4) sc+=W.run4; else if(mx===3) sc+=W.run3;
+  let g=0; for(const v of s) g=gcd(g,v); if(g>=2) sc+=W.gcd;
+  if(new Set(s.map(v=>v%10)).size===1) sc+=W.lastdigit;
+  if(s.every(v=>v%2===0)||s.every(v=>v%2===1)) sc+=W.parity;
+  return Math.min(1,sc);
+}
+const PARITY=[[[9,18,27,36,45,54],55,0.852482],[[1,2,3,4,5,6],42,1.0],[[3,7,11,13,21,27],45,0.441278],[[32,38,39,40,41,43],49,0.3],
+  [[2,12,22,32,42,52],58,1.0],[[5,14,23,33,44,57],58,0.003333],[[1,16,25,26,43,58],58,0.088519],[[10,20,30,40,50,55],55,0.55]];
+const parityOK = PARITY.every(([t,P,v])=>Math.abs(csi(t,P)-v)<1e-5);
+
+// ---- CSI distribution under uniform per pool (runtime MC; q40 thresholds are the committed constants)
+const REF={};
+for(const g of Object.keys(GAMES)){const P=GAMES[g].pool; const v=[]; for(let i=0;i<20000;i++) v.push(csi(sampleUnif(P,6),P));
+  const m=v.reduce((a,b)=>a+b,0)/v.length, sd=Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/(v.length-1)); REF[P]={mean:m,sd:sd};}
+
+function sampleUnif(P,k){ // uniform k-subset via CSPRNG Fisher–Yates
+  const arr=Array.from({length:P},(_,i)=>i+1); const buf=new Uint32Array(1);
+  for(let i=arr.length-1;i>0;i--){crypto.getRandomValues(buf); const j=buf[0]%(i+1); [arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr.slice(0,k);
+}
 function comb(n,k){let r=1;for(let i=0;i<k;i++)r=r*(n-i)/(i+1);return Math.round(r);}
-
-function badTicket(t){
-  const s=[...t].sort((a,b)=>a-b);
-  if(s[5]<=31) return true;                                   // birthday-heavy
-  let run=1,maxRun=1;
-  for(let i=1;i<6;i++){run=(s[i]===s[i-1]+1)?run+1:1;maxRun=Math.max(maxRun,run);}
-  if(maxRun>=4) return true;                                  // long consecutive run
-  const d=s[1]-s[0];
-  if(d>0 && s.every((v,i)=>v===s[0]+i*d)) return true;        // arithmetic progression
-  if(new Set(s.map(v=>v%10)).size===1) return true;           // same last digit
-  return false;
-}
-function picks(dateStr, game, salt){
-  const rng=Math.random; // pure random: the date does NOT influence picks (no signal exists — see RESEARCH_NOTES.md)
-  const pool=GAMES[game].pool;
-  for(let tries=0;tries<200;tries++){
-    const arr=Array.from({length:pool},(_,i)=>i+1);
-    for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
-    const A=arr.slice(0,6).sort((a,b)=>a-b), B=arr.slice(6,12).sort((a,b)=>a-b);
-    if(!badTicket(A)&&!badTicket(B)) return [A,B];
-  }
-  return null;
-}
-function ev(game, jack){
-  const g=GAMES[game], C=comb(g.pool,6), p=1/C;
-  const lam=g.tickets*p, share=jack*(1-Math.exp(-lam))/lam;
-  const low=6*(g.pool-6)/C*g.p5*0.8 + 15*comb(g.pool-6,2)/C*g.p4*(g.p4>10000?0.8:1) + 20*comb(g.pool-6,3)/C*g.p3;
-  return {total:p*share*0.8+low, odds:C, low:low};
-}
 function pmatch(P,k){return comb(6,k)*comb(P-6,6-k)/comb(P,6);}
-function derived(game){
-  const g=GAMES[game], P=g.pool, C=comb(P,6);
-  const pAny=pmatch(P,3)+pmatch(P,4)+pmatch(P,5)+pmatch(P,6);
-  const eMatch=36/P, H=Math.log2(C);
-  const e=ev(game,g.minJack);
-  const brk=(25-e.low)/(0.8/C);
-  const relEps=(g.eps/(6/P)*100).toFixed(0);
-  return `P(match&ge;3)=1/${Math.round(1/pAny).toLocaleString()} &middot; E[matches]=${eMatch.toFixed(3)} &middot; `+
-         `H=log&#8322;C(${P},6)=${H.toFixed(1)} bits (irreducible) &middot; `+
-         `break-even J&asymp;${fmt(brk)} (pre-split) &middot; Kelly bankroll for &#8369;25 &asymp; ${fmt(25*C)}<br>`+
-         `Batch-4 bias bound: |p<sub>i</sub>&minus;6/${P}| &le; ${g.eps.toFixed(3)} (95% simult.) &mdash; `+
-         `vacuous at n&asymp;155 (${relEps}% of 6/P): uniformity rests on the 20 direct tests, all null &middot; `+
-         `Ramsey baseline: ${g.apBase.toFixed(1)} 3-term APs forced in any hot-10 set<br>`+
-         `Relational (batches 5&ndash;6): subset&rarr;whole recovery flat, max |z|=${g.relZ.toFixed(2)} (null band &plusmn;2) &middot; `+
-         `physics coupling null (CCA p=${g.ccaP.toFixed(2)}) &middot; `+
-         `half-vs-half hot-number corr ${g.halfCorr>=0?"+":""}${g.halfCorr.toFixed(3)}, p=${g.halfP.toFixed(3)}${g.halfNote||""} &mdash; `+
-         `no part of the history predicts the rest`;
+function share(lam){return lam<1e-9?1:(1-Math.exp(-lam))/lam;}
+function zcsi(t,P){return (csi(t,P)-REF[P].mean)/REF[P].sd;}
+
+function picks(game){
+  const P=GAMES[game].pool, thr=GAMES[game].q40; let best=null;
+  for(let tries=0;tries<400;tries++){
+    const a=sampleUnif(P,12); const A=a.slice(0,6).sort((x,y)=>x-y), B=a.slice(6,12).sort((x,y)=>x-y);
+    const m=Math.max(csi(A,P),csi(B,P)); if(!best||m<best.m) best={A,B,m};
+    if(m<=thr) return [A,B];
+  }
+  return [best.A,best.B];   // never triggers at q40 in practice (P(both accepted) = 0.16 per try)
+}
+function ev(game,J,N,tickets){
+  const g=GAMES[game], P=g.pool, C=comb(P,6), p6=1/C, p5=pmatch(P,5), p4=pmatch(P,4), p3=pmatch(P,3);
+  const mult = tickets ? Math.exp(BETA_CSI*(tickets.map(t=>zcsi(t,P)).reduce((a,b)=>a+b,0)/tickets.length)) : 1;
+  const jack = 0.8*J*p6*share(N*p6*mult);
+  const c2 = 0.8*g.cat2*p5*share(N*p5), c3 = 0.8*g.cat3*p4*share(N*p4), c4 = g.cat4*p3;
+  return {total:jack+c2+c3+c4, jack, low:c2+c3+c4, odds:C, mult, p6, p5, p4, p3};
 }
 function fmt(n){return "₱"+Math.round(n).toLocaleString();}
+function balls(nums,cls){return nums.map(n=>`<span class="ball">${String(n).padStart(2,"0")}</span>`).join("");}
 
-let salts={};
-function render(newSalt){
-  const dateStr=document.getElementById("d").value;
-  const sel=document.getElementById("g").value;
+function render(newPicks){
+  const dateStr=document.getElementById("d").value, sel=document.getElementById("g").value;
+  const N=Number(document.getElementById("n").value)||500000;
   const out=document.getElementById("out"); out.innerHTML="";
   if(!dateStr){out.innerHTML='<div class="nodraw">Choose a date.</div>';return;}
-  const [y,m,dd]=dateStr.split("-").map(Number);
-  const wd=new Date(y,m-1,dd).getDay();
+  const [y,m,dd]=dateStr.split("-").map(Number); const wd=new Date(y,m-1,dd).getDay();
   const tonight=Object.keys(GAMES).filter(g=>GAMES[g].days.includes(wd));
   const show=sel==="all"?tonight:(tonight.includes(sel)?[sel]:[]);
-  if(sel!=="all"&&!tonight.includes(sel)){
-    out.innerHTML=`<div class="nodraw">${sel} does not draw on that date. Games that night: ${tonight.join(", ")||"none"}.</div>`;return;
-  }
+  if(sel!=="all"&&!tonight.includes(sel)){out.innerHTML=`<div class="nodraw">${sel} does not draw on that date. Games that night: ${tonight.join(", ")||"none"}.</div>`;return;}
   if(!show.length){out.innerHTML='<div class="nodraw">No 6-number draws that date.</div>';return;}
   for(const g of show){
-    if(newSalt===true) salts[g]=(salts[g]||0)+1;
-    const pr=picks(dateStr,g,salts[g]||0);
-    const e=ev(g,GAMES[g].minJack);
-    const id="j_"+g.replace(/\W/g,"");
+    const G=GAMES[g], P=G.pool;
+    if(newPicks===true||!G.cur) G.cur=picks(g);
+    const [A,B]=G.cur, id="j_"+g.replace(/\W/g,"");
+    const def=G.last.win>0?G.minJack:G.last.jack;
     const card=document.createElement("div"); card.className="card";
     card.innerHTML=`<div class="gname">${g}</div>
-      <div class="meta">Draw ${dateStr}, 9:00 PM PHT &middot; P(jackpot)=1/${e.odds.toLocaleString()} per ticket; 2/${e.odds.toLocaleString()} for the disjoint pair</div>
-      <div class="meta" style="font-family:ui-monospace,Menlo,monospace">${derived(g)}</div>
-      <div class="tk"><b>Ticket A</b>${pr[0].map(n=>`<span class="ball">${String(n).padStart(2,"0")}</span>`).join("")}</div>
-      <div class="tk b2"><b>Ticket B</b>${pr[1].map(n=>`<span class="ball">${String(n).padStart(2,"0")}</span>`).join("")}</div>
+      <div class="meta">Draw ${dateStr}, 9:00 PM PHT &middot; P(jackpot)=1/${comb(P,6).toLocaleString()} per ticket, 2/${comb(P,6).toLocaleString()} for the disjoint pair &mdash; identical for every ticket on Earth</div>
+      <div class="tk last"><b>Last official</b>${balls(G.last.nums)}<small>${G.last.date} &middot; jackpot ${fmt(G.last.jack)} &middot; ${G.last.win} winning bet${G.last.win===1?"":"s"} &middot; CSI ${csi(G.last.nums,P).toFixed(3)}</small></div>
+      <div class="tk"><b>Ticket A</b>${balls(A)}<small>CSI ${csi(A,P).toFixed(3)} (z ${zcsi(A,P).toFixed(2)})</small></div>
+      <div class="tk b2"><b>Ticket B</b>${balls(B)}<small>CSI ${csi(B,P).toFixed(3)} (z ${zcsi(B,P).toFixed(2)})</small></div>
+      <div class="meta mono">Monitoring (confirmation set, n=${G.n}): exact-MC &chi;&sup2; p=${G.chiP.toFixed(3)}${G.note||""} &middot; E[matches]=${(36/P).toFixed(3)} &middot; H=log&#8322;C(${P},6)=${Math.log2(comb(P,6)).toFixed(1)} bits (irreducible) &middot; Kelly bankroll for &#8369;25 &asymp; ${fmt(25*comb(P,6))} &middot; official jackpot growth per rollover draw &asymp; ${fmt(G.growth)}</div>
       <div class="evrow">
-        <div><label>Current jackpot (edit)</label><input type="number" id="${id}" value="${GAMES[g].minJack}" step="1000000" style="width:180px"
-          onchange="evUpdate('${g}','${id}')"></div>
+        <div><label>Jackpot for this draw (edit; default = last official)</label><input type="number" id="${id}" value="${def}" step="1000000" style="width:190px" onchange="evUpdate('${g}','${id}')"></div>
         <div class="ev neg" id="${id}_ev"></div>
       </div>`;
-    out.appendChild(card);
-    evUpdate(g,id);
+    out.appendChild(card); evUpdate(g,id);
   }
+  const hits=document.createElement("div"); hits.className="card";
+  hits.innerHTML=`<div class="gname" style="font-size:.95rem">Official jackpot hits since 2026-07-01</div><table><tr><th>Date</th><th>Game</th><th>Combination (as drawn)</th><th>Jackpot</th><th>Bets</th><th>CSI</th></tr>`+
+    HITS.map(([gm,dt,nm,J,w])=>`<tr><td>${dt}</td><td>${gm}</td><td class="mono">${nm.map(v=>String(v).padStart(2,"0")).join("-")}</td><td>${fmt(J)}</td><td>${w}</td><td>${csi(nm,Number(gm.slice(2))).toFixed(3)}</td></tr>`).join("")+`</table>
+    <div class="meta">Every winner since July was a single bet. Across the full year: 77 winner draws, 94 winning bets; top-CSI-tertile draws shared 13.5% of the time vs 5.0% for the bottom tertile.</div>`;
+  out.appendChild(hits);
+  document.getElementById("parity").textContent = parityOK ? "CSI parity self-test vs src/csi_popularity.py: 8/8 vectors OK" : "CSI PARITY FAILED — do not trust the CSI values on this page";
 }
 function evUpdate(g,id){
-  const j=Number(document.getElementById(id).value)||GAMES[g].minJack;
-  const e=ev(g,j), el=document.getElementById(id+"_ev");
-  const net=e.total-25;
-  el.textContent=`EV: ${fmt(e.total)} per ₱25 ticket (net ${net>=0?"+":""}${fmt(net)}) — ${net>0?"+EV: rare!":"-EV: entertainment only"}`;
+  const G=GAMES[g], J=Number(document.getElementById(id).value)||G.minJack, N=Number(document.getElementById("n").value)||500000;
+  const e=ev(g,J,N,G.cur), el=document.getElementById(id+"_ev"), net=e.total-25;
+  el.innerHTML=`EV ${fmt(e.total)} per ₱25 ticket (net ${net>=0?"+":""}${fmt(net)}) — jackpot tier ${fmt(e.jack)}, lower tiers ${fmt(e.low)} at N=${N.toLocaleString()} &middot; sharing multiplier for these tickets ${e.mult.toFixed(2)}&times; (G0) — ${net>0?"+EV: rare, re-check sales":"−EV: entertainment only"}`;
   el.className="ev "+(net>0?"pos":"neg");
 }
 (function(){
@@ -197,8 +192,7 @@ function evUpdate(g,id){
   for(const g of Object.keys(GAMES)){const o=document.createElement("option");o.value=g;o.textContent=g;gSel.appendChild(o);}
   const t=new Date(); t.setDate(t.getDate()+1);
   document.getElementById("d").value=t.toISOString().slice(0,10);
-  document.getElementById("d").onchange=()=>render(false);
-  gSel.onchange=()=>render(false);
+  document.getElementById("d").onchange=()=>render(false); gSel.onchange=()=>render(false);
   render(false);
 })();
 </script>

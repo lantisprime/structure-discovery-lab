@@ -1,7 +1,7 @@
 # DATASET CARD — pcso-lotto
 
-Onboarded: Jun 10–11, 2026 · Updated: Jul 10, 2026 · Status: **ACTIVE**
-(weekly automated updates) · Owner: Cha
+Onboarded: Jun 10–11, 2026 · Updated: Sep 6, 2026 · Status: **ACTIVE**
+(manual refresh runs from the official source — see §8; no scheduled task exists in this repo) · Owner: Cha
 
 ## 1. Identity & generative null (H₀)
 
@@ -15,10 +15,12 @@ per game, at observed sequence lengths.
 
 | File | Rows | Role |
 |---|---|---|
-| `data_draws_1yr.csv` | 834 | **Canonical append-only dataset** — Jun 11 2025 – Jul 7 2026, all games |
-| `data_draws_1yr_audited.csv` | 834 | Same rows + Source1/Source2/Status audit columns |
-| `data_draws.csv` | 252 | Short-window append-only dataset; its 194-row exploration prefix is frozen — see §6 |
-| `data_astro_geomagnetic.csv` | 252+ | Per-draw Moon/Sun ephemeris + legacy Kp columns + summary block; confirmation Kp is blank |
+| `data_draws_1yr.csv` | 962 | **Canonical append-only dataset** — Jun 11 2025 – Sep 5 2026, all games |
+| `data_draws_1yr_audited.csv` | 962 | Same rows + Source1/Source2/Status audit columns |
+| `data_draws.csv` | 380 | Short-window append-only dataset; its 194-row exploration prefix is frozen — see §6 |
+| `data_astro_geomagnetic.csv` | 380+ | Per-draw Moon/Sun ephemeris + legacy Kp columns + summary block; confirmation Kp is blank |
+| `data_official_draws_jackpots.csv` | 984 | **Official per-draw record** (pcso.gov.ph SearchLottoResult, Jun 1 2025 – Sep 5 2026): combination, jackpot (PHP), winning bets — the payout-layer input (kb card 28) |
+| `provenance/pcso_refresh_2026-09-06.json` + `provenance/raw_2026-09-06/` | 128 draws · 22 captures | Sep-2026 refresh manifest with per-draw sources, draw-number continuity, and gzipped raw HTML of every page parsed |
 | `data_astro_geomagnetic_1yr.csv` | 776 | **Full-year covariate file** — all 776 draws, 13 columns incl. solar tidal — see §10 |
 | `data_future_schedule.csv` | 64 | Draw schedule + picks (historic snapshot, Jun–Jul 2026) |
 | `_655_2025_verification.csv` | 88 | Row-by-row 6/55 2025 verification vs pcsodraw.com |
@@ -36,9 +38,22 @@ two_source_verified(spot), single_source_only, suspicious_or_needs_review}.
 
 ## 4. Provenance & audit status
 
-Primary: lottopcso.com history pages. Verification: pcso.gov.ph official table (9 rows),
-pcsodraw.com per-date pages & latest-20 tables (102 bulk + 88 6/55-2025 + 8 spot).
-**Census: 197 multi-source/official (25%), 576 single-source, 3 suspicious.**
+Primary (rows ≤ 2026-07-07): lottopcso.com history pages. Verification: pcso.gov.ph official
+table (9 rows), pcsodraw.com per-date pages & latest-20 tables (102 bulk + 88 6/55-2025 + 8 spot).
+**Census at Jul 10: 197 multi-source/official (25%), 576 single-source, 3 suspicious.**
+
+**Sep 6, 2026 official re-verification (`provenance/pcso_refresh_2026-09-06.json`
+`official_full_year_check`):** every one of the 834 rows then on file was re-fetched from the
+official pcso.gov.ph date-range search (per game, 2025-06-01..2026-09-06, raw HTML retained) —
+**834/834 exact matches including exit order, 0 mismatches, 0 rows absent from the official page.**
+The Status column of those rows is left as recorded (append-only file); the official agreement
+is documented here and in the manifest rather than by rewriting history. The three
+`suspicious_or_needs_review` rows (§7, M4) also match the official page exactly, which
+resolves the archive-side conflicts in favour of the values on file.
+Rows > 2026-07-07 (128 draws): **primary = pcso.gov.ph** (official), cross-checked against
+lottopcso.com (128/128) and pcsodraw.com (100/100 within its 20-draw window), Status
+`official_verified`; pcsodraw draw-number continuity confirms no draw is missing in the
+28-draw gap the second archive does not cover (manifest `continuity`).
 Suspicious rows (archive conflicts, not resolved): 6/55 2025-08-13 and 2025-09-03
 (pcsodraw-side duplication errors — our values presumed correct), 6/55 2025-10-29
 (unresolved, NEEDS THIRD SOURCE — open item).
@@ -48,7 +63,7 @@ Suspicious rows (archive conflicts, not resolved): 6/55 2025-08-13 and 2025-09-0
 | Boundary | Event | Analytic consequence |
 |---|---|---|
 | 2025 Holy Week (Apr 17–19) | draw suspensions | gaps, outside current window |
-| **2026-02-01** | PCSO minimum-jackpot/prize restructure | the 6/55 #45 transient died at this boundary; pooled full-year tests conflate eras (Governance C5) |
+| **2026-02-01** | PCSO restructure (official game pages, fetched 2026-09-06): ticket ₱20→₱25; minimum jackpots 6/42 ₱10M · 6/45 ₱15M · 6/49 ₱25M · 6/55 ₱45M · 6/58 ₱75M; Category II (5/6) and III (4/6) become fixed **prize pools shared per winning bet** (₱1.1M/1.0M · 1.2M/1.1M · 1.3M/1.2M · 1.4M/1.3M · 1.5M/1.4M); Category IV (3/6) fixed ₱20/30/50/60/100 | the 6/55 #45 transient died at this boundary; pooled full-year tests conflate eras (Governance C5); payout-layer (kb 16, 28) parameters change here, sales likely too |
 | 2026 Holy Week (Apr 1–5) | draw suspensions | known schedule gaps, verified |
 | Ball sets | 3 per game, rotated by card draw EACH DRAW DAY; balls weighed nightly | persistent single-ball bias mechanically implausible; era effects ≤ set lifetime |
 
@@ -78,13 +93,22 @@ pair affinity, gap law, rolling windows, backtests) — count it once (Governanc
 
 ## 8. Update pipeline & instruments
 
-- Scheduled task `pcso-weekly-update` (Wednesdays 10:00 local) appends validated rows
-  here and to the workbook, recomputes ephemeris, runs the registered family only.
-- Deterministic closeout runner: `../../src/pcso_weekly_update.py`. It validates
-  the dated provenance manifest, draw-file agreement, frozen-prefix hashes, CRLF
-  format, covariate joins, and workbook invariants before regenerating the result
-  JSON. The 2026-07-08 manifest is
-  `provenance/pcso_weekly_2026-07-08.json`.
+- **No scheduled task exists in this repo** (roadmap item 6 honesty fix, 2026-09-06). Refreshes
+  are manual runs: fetch the official date-range search per game (`SearchLottoResult.aspx`
+  POST form; the site returns HTTP 403 to non-browser clients, so use curl with browser
+  headers), cross-check archives, append rows (date, then pool order; CRLF), extend
+  `data_astro_geomagnetic.csv` with `make_astro_geomagnetic_1yr.compute_ephemeris` (PyEphem
+  4.2.1; parity on the Jun–Jul 2026 rows: 54/58 byte-identical, 4 differ by 0.001 in Moon
+  Illum — the §10 V2 rounding artifact), write a dated manifest with raw captures, then run
+  the monitoring family.
+- Deterministic runners: `../../src/pcso_weekly_update.py` (July 2026 closeout, kept as the
+  historical record; hard-coded to its 28-draw manifest) and `../../src/pcso_monitoring_run.py`
+  (generalized: same validators and m=9 family imported from the July module; manifest declares
+  `expected_new_draws`; `official_verified` accepted). Manifests:
+  `provenance/pcso_weekly_2026-07-08.json`, `provenance/pcso_refresh_2026-09-06.json`.
+- The workbook (`PCSO_Lotto_Analysis_Mar-Jun_2026.xlsx`) was NOT extended in the Sep-2026
+  refresh; its 252-row Draws sheet is verified unchanged by the runner's invariants and it
+  no longer mirrors the canonical CSVs.
 - The legacy astro file has blank Kp fields after 2026-06-10, so the registered Kp
   permutation test is currently non-computable. A definitive GFZ backfill remains
   open; it must not be silently replaced with preliminary values.

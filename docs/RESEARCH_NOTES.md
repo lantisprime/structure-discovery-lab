@@ -220,3 +220,23 @@ B1 measured *out* of the MP equivalence class (null-rho=+0.11 vs predicted >=0.9
 exclusion bounds shown vacuous at feasible n (~130-330 yrs for a 10% bound — logged
 as a capability boundary); Ramsey-trap baselines (3.2-4.4 forced APs per hot set)
 added to the failure-mode gallery. Confirmation arbiter: held-out draws >= 2026-06-12.
+
+## 10. Official-source refresh, conscious-selection instrument, strategy backtest (Sep 6, 2026)
+
+Full results: docs/RESULTS_PCSO_REFRESH_2026-09-06.md. Data: 128 draws (Jul 8 – Sep 5, 2026)
+appended from the official pcso.gov.ph date-range search with raw HTML retained; every one of the
+834 rows previously on file re-verified against the same official page (834/834 exact, including
+the three M4 "suspicious" rows); new official per-draw jackpot + winning-bet file (984 draws).
+Monitoring (m=9 family, n=186 confirmation draws): 0 flags, min p=0.046; #45 stays dead (2/37).
+New theorem card 28 (conscious selection, Stern–Cover/Cook–Clotfelter, decision layer) onboarded
+per Part 3: null trial caught a pool-size confound (pooled T1 null mean +0.004, 7 SE from 0) →
+statistics re-specified within game before any real-data claim; first run: winner draws sit +0.74
+sd higher on the popularity proxy (perm. p=5e-05, floor), rank corr +0.16 (p=1e-04), top-tertile
+draws share jackpots 2.8× as often — a statement about players, not the machine; G0 exploratory.
+Draw-paired backtest of eight selection rules (834 draws, sign-flip null, m=7): no rule changes
+P(match); one flag (the old four-filter picker, p=0.0061) traced to this year's above-31 marginal
+excess (z=+2.12, n.s.) and charged once with the chi-square class. Literature scan (sourced brief,
+2026-09-06): no peer-reviewed method beats chance on a physical draw; PRNG-recovery results
+(Mersenne Twister, 2024–25 transformer work) apply only to software RNGs. Web picker rebuilt on
+these outputs: CSPRNG uniform + CSI-filtered disjoint pair, official Feb-2026 prize matrix, Poisson
+co-winner split with the exploratory sharing multiplier; P(win) unchanged and stated as such.

@@ -1,0 +1,256 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/pcso_strategy_backtest.py",
+    "run_date": "2026-09-06",
+    "seed": 20260906,
+    "seed_scheme": "single random.Random(seed) stream in strategy order; CSI thresholds from random.Random(seed+P)",
+    "registration": "docs/RESULTS_PCSO_REFRESH_2026-09-06.md \u00a73 (G0 exploratory backtest; not in the confirmation family)",
+    "input_sha256": {
+      "datasets/pcso-lotto/data_official_draws_jackpots.csv": "54fb48368758df5c6f1cba3a330da8cd2c7eda64d91b13a137f6fdf9c5a694c8"
+    },
+    "warmup_draws": 30,
+    "csi_acceptance_threshold_q40": {
+      "42": 0.0243,
+      "45": 0.0091,
+      "49": 0.0282,
+      "55": 0.0172,
+      "58": 0.0033
+    },
+    "null": "i.i.d. uniform draws => every fixed ticket has E[matches]=36/P; paired sign-flip null on per-draw differences"
+  },
+  "draws_used": 834,
+  "strategies": {
+    "uniform_disjoint": {
+      "replicates_per_draw": 300,
+      "tickets": 500400,
+      "draws": 834,
+      "mean_matches": 0.73199,
+      "expected_mean_h0": 0.73327,
+      "matches_hist": {
+        "0": 219849,
+        "1": 204884,
+        "2": 66152,
+        "3": 8966,
+        "4": 542,
+        "5": 7,
+        "6": 0
+      },
+      "p3plus_obs": 0.019015,
+      "p3plus_exp_h0": 0.019245,
+      "fixed_3match_return_per_ticket": 0.7847,
+      "max_matches_seen": 5
+    },
+    "picker_v1_filters": {
+      "replicates_per_draw": 300,
+      "tickets": 500400,
+      "draws": 834,
+      "mean_matches": 0.736,
+      "expected_mean_h0": 0.73327,
+      "matches_hist": {
+        "0": 218785,
+        "1": 205156,
+        "2": 66808,
+        "3": 9099,
+        "4": 535,
+        "5": 17,
+        "6": 0
+      },
+      "p3plus_obs": 0.019287,
+      "p3plus_exp_h0": 0.019245,
+      "fixed_3match_return_per_ticket": 0.7882,
+      "max_matches_seen": 5,
+      "paired_vs_uniform": {
+        "mean_diff_matches_per_ticket": 0.004007,
+        "z": 2.71,
+        "signflip_perm_p_two_sided": 0.0061,
+        "m_perm": 9999,
+        "p_floor": 0.0001
+      }
+    },
+    "picker_v2_csi": {
+      "replicates_per_draw": 300,
+      "tickets": 500400,
+      "draws": 834,
+      "mean_matches": 0.74008,
+      "expected_mean_h0": 0.73327,
+      "matches_hist": {
+        "0": 217607,
+        "1": 205626,
+        "2": 67353,
+        "3": 9257,
+        "4": 550,
+        "5": 7,
+        "6": 0
+      },
+      "p3plus_obs": 0.019612,
+      "p3plus_exp_h0": 0.019245,
+      "fixed_3match_return_per_ticket": 0.8118,
+      "max_matches_seen": 5,
+      "paired_vs_uniform": {
+        "mean_diff_matches_per_ticket": 0.008092,
+        "z": 2.45,
+        "signflip_perm_p_two_sided": 0.0139,
+        "m_perm": 9999,
+        "p_floor": 0.0001
+      }
+    },
+    "hot_top6_w50": {
+      "replicates_per_draw": 100,
+      "tickets": 166800,
+      "draws": 834,
+      "mean_matches": 0.74395,
+      "expected_mean_h0": 0.73327,
+      "matches_hist": {
+        "0": 71039,
+        "1": 70543,
+        "2": 22240,
+        "3": 2844,
+        "4": 134,
+        "5": 0,
+        "6": 0
+      },
+      "p3plus_obs": 0.017854,
+      "p3plus_exp_h0": 0.019245,
+      "fixed_3match_return_per_ticket": 0.7794,
+      "max_matches_seen": 4,
+      "paired_vs_uniform": {
+        "mean_diff_matches_per_ticket": 0.011958,
+        "z": 0.75,
+        "signflip_perm_p_two_sided": 0.4615,
+        "m_perm": 9999,
+        "p_floor": 0.0001
+      }
+    },
+    "cold_bottom6_w50": {
+      "replicates_per_draw": 100,
+      "tickets": 166800,
+      "draws": 834,
+      "mean_matches": 0.69121,
+      "expected_mean_h0": 0.73327,
+      "matches_hist": {
+        "0": 77599,
+        "1": 66266,
+        "2": 19990,
+        "3": 2733,
+        "4": 212,
+        "5": 0,
+        "6": 0
+      },
+      "p3plus_obs": 0.017656,
+      "p3plus_exp_h0": 0.019245,
+      "fixed_3match_return_per_ticket": 0.6744,
+      "max_matches_seen": 4,
+      "paired_vs_uniform": {
+        "mean_diff_matches_per_ticket": -0.040787,
+        "z": -2.58,
+        "signflip_perm_p_two_sided": 0.0101,
+        "m_perm": 9999,
+        "p_floor": 0.0001
+      }
+    },
+    "overdue_gap": {
+      "replicates_per_draw": 100,
+      "tickets": 166800,
+      "draws": 834,
+      "mean_matches": 0.73103,
+      "expected_mean_h0": 0.73327,
+      "matches_hist": {
+        "0": 72626,
+        "1": 69470,
+        "2": 21646,
+        "3": 3058,
+        "4": 0,
+        "5": 0,
+        "6": 0
+      },
+      "p3plus_obs": 0.018333,
+      "p3plus_exp_h0": 0.019245,
+      "fixed_3match_return_per_ticket": 0.7593,
+      "max_matches_seen": 3,
+      "paired_vs_uniform": {
+        "mean_diff_matches_per_ticket": -0.000961,
+        "z": -0.06,
+        "signflip_perm_p_two_sided": 0.9544,
+        "m_perm": 9999,
+        "p_floor": 0.0001
+      }
+    },
+    "repeat_last_draw": {
+      "replicates_per_draw": 100,
+      "tickets": 166800,
+      "draws": 834,
+      "mean_matches": 0.72847,
+      "expected_mean_h0": 0.73327,
+      "matches_hist": {
+        "0": 74772,
+        "1": 66323,
+        "2": 22320,
+        "3": 2999,
+        "4": 382,
+        "5": 4,
+        "6": 0
+      },
+      "p3plus_obs": 0.020294,
+      "p3plus_exp_h0": 0.019245,
+      "fixed_3match_return_per_ticket": 0.6872,
+      "max_matches_seen": 5,
+      "paired_vs_uniform": {
+        "mean_diff_matches_per_ticket": -0.003527,
+        "z": -0.3,
+        "signflip_perm_p_two_sided": 0.7692,
+        "m_perm": 9999,
+        "p_floor": 0.0001
+      }
+    },
+    "markov_pair_order1": {
+      "replicates_per_draw": 100,
+      "tickets": 166800,
+      "draws": 834,
+      "mean_matches": 0.73903,
+      "expected_mean_h0": 0.73327,
+      "matches_hist": {
+        "0": 74820,
+        "1": 64656,
+        "2": 23702,
+        "3": 3284,
+        "4": 331,
+        "5": 7,
+        "6": 0
+      },
+      "p3plus_obs": 0.021715,
+      "p3plus_exp_h0": 0.019245,
+      "fixed_3match_return_per_ticket": 0.9239,
+      "max_matches_seen": 5,
+      "paired_vs_uniform": {
+        "mean_diff_matches_per_ticket": 0.007042,
+        "z": 0.42,
+        "signflip_perm_p_two_sided": 0.6702,
+        "m_perm": 9999,
+        "p_floor": 0.0001
+      }
+    }
+  },
+  "family_verdict": {
+    "family_id": "strategy-backtest",
+    "within_run_m": 7,
+    "sidak_alpha": 0.0073,
+    "min_p": 0.0061,
+    "any_flag": true,
+    "statement": "FLAG: at least one strategy differs from uniform at the \u0160id\u00e1k level \u2014 trace before reporting",
+    "trace": {
+      "driver": "count of drawn numbers > 31 per draw (marginal frequency of the high half of the pool)",
+      "numbers_above_31": {
+        "observed": 1912,
+        "expected_h0": 1844.36,
+        "z": 2.12
+      },
+      "per_draw_diff_correlations": {
+        "v1_vs_v2": 0.402,
+        "v1_vs_cold": 0.068,
+        "v2_vs_cold": -0.022
+      },
+      "charge": "one equivalence class (marginal-frequency shadow): the v1/v2 positive and cold negative deviations share driving rows; the registered per-game MC chi-square on the same confirmation draws is null (results/pcso_confirmation_2026-09-06.json)"
+    }
+  }
+}

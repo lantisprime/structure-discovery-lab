@@ -1,11 +1,11 @@
 {
-  "n_ledger_rows": 271,
-  "n_test_rows": 267,
+  "n_ledger_rows": 280,
+  "n_test_rows": 276,
   "n_live_test_rows": 195,
   "n_charge_rows": 4,
   "reconciliation": {
-    "run_ledger_declared": 267,
-    "test_rows": 267
+    "run_ledger_declared": 276,
+    "test_rows": 276
   },
   "violations": [],
   "warnings": [
@@ -155,6 +155,13 @@
     "equation_discovery": [
       "frozen-equation-confirmation",
       "null-equation-generator"
+    ],
+    "payout-sharing": [
+      "csi-winners-meandiff",
+      "csi-winners-rankcorr"
+    ],
+    "strategy-edge": [
+      "paired-draw-signflip"
     ]
   },
   "verdict": "PASS"
