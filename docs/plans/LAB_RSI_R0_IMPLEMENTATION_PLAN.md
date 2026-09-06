@@ -31,10 +31,12 @@ Freshness checks performed: `src/grade_agent_eval.py` exposes `RECORDS`,
 `N pass · N warn · N fail` line; five scripts expose `--verify` and print
 `PASS sha256=<64 hex>; ...; wrote=none` on success; `tools/check.sh` and
 `.github/workflows/ci.yml` run the same battery; agent definitions under
-`agents/*.md` last changed 2026-06-12 (`6da211a`) and 2026-06-11 (`e1bc32b`),
-while their eval records are dated 2026-06-11 -- so seven of eight definitions
-changed after their last eval, which is exactly the B9 condition R0 must
-surface rather than hide.
+`agents/*.md` last changed in `6da211a` (2026-06-12) and `e1bc32b`
+(2026-06-11), and the eval record directories were **added in the same commit
+`6da211a`**, so `git show 6da211a:agents/<name>.md` hashes equal the working
+tree today: the staleness check finds no stale definition at bootstrap. (An
+earlier draft of this plan assumed seven stale definitions from the dates
+alone; the blob hashes, not the dates, are the evidence.)
 
 ## §3 Objective
 
@@ -63,9 +65,13 @@ merge (R3).
 
 - Attribution to an introducing commit (R1), any proposal or repair (R2--R4),
   lessons or re-tiering (R5).
-- Re-dispatching agent evals (needs an LLM executor; the stale-eval rows this
-  stage emits are the input to R2). The seven stale definitions are recorded
-  as **known open defects** in the bootstrap ledger, not fixed here.
+- Re-dispatching agent evals (needs an LLM executor; any stale-eval rows this
+  stage emits are the input to R2). At bootstrap no definition is stale (§2);
+  five eval records grade `INCOMPLETE_RECORD` (thin 2026-06-11 records, info
+  severity), also left for R2.
+- Fixing defects the bootstrap surfaces. They are recorded as **known open
+  defects** in the committed ledger (§15) with a diagnosis note; the fix is R2
+  work unless it is a one-line, evidence-backed correction.
 - Editing any instrument, verifier, or grader. The collector wraps them.
 - A new JSON Schema framework (M2); schema v1 is a hand-checked dict contract.
 - Committing ledger rows from CI. CI observes into an artifact; the committed
@@ -147,7 +153,7 @@ Flags: `--sources a,b`, `--all`, `--gate`, `--ledger PATH` (or env), `--dry-run`
 3. `--dry-run` -- retain `--gate`.
 
 Do not cut: atomic append, dedup, stale-eval detection, new-defect gate, CI
-artifact, the bootstrap ledger with its seven known open defects.
+artifact, the bootstrap ledger with whatever known open defects it surfaces.
 
 ## §12 Contracts
 
@@ -197,12 +203,20 @@ with one byte changed (REQ-5, REQ-9), captured stdout strings for the slow
    yes, dedup keeps it a state-transition log) or only to a scratch path.
 2. Whether stale-eval defects should block merges once R2 can re-dispatch
    (deferred to R2; R0 records them as known open).
+3. `check.sh` keeps its own verifier and pytest lines (hard failures) and adds
+   the collector with `--all --gate` at the end, so the fast verifiers and the
+   three suites run twice (~+60 s measured). Chosen over replacing the lines:
+   the collector's gate is a ratchet and must not weaken `check.sh`.
+4. CI seeds a runner-temp copy of the committed ledger before collecting, so
+   "known" means known on the branch under test, and uploads the copy as the
+   `outcome-ledger-<os>` artifact. Committing rows from CI is deliberately not
+   done (§5).
 
 ## §18 Done Criteria
 
 - [ ] Every MUST in §4 has its mapped test passing.
-- [ ] Bootstrap ledger committed with one row per source and the seven
-      `STALE_EVAL` known defects.
+- [ ] Bootstrap ledger committed with one row per source observation and every
+      defect it surfaced left visible as a known open row.
 - [ ] `check.sh` and CI run the verify + collect steps; CI artifact uploaded.
 - [ ] `./tools/check.sh` ALL CHECKS PASSED at closeout.
 - [ ] §15 filled with real outputs; §19 records the review disposition.

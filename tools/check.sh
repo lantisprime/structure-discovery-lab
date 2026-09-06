@@ -32,6 +32,10 @@ run "relational docs verifier"    "$PY" src/verify_relational_docs.py
 run "repo tests (installer/ledger/webapp)" "$PY" -m pytest tests/ -q
 run "webapp unit tests"           "$PY" -m pytest webapp/test_server.py webapp/test_routing.py -q
 run "riemann regression tests"    "$PY" -m pytest riemann-zero-lab/tests -q
+# R0 (constitution A0): every signal above also lands in the outcome ledger;
+# the gate fails only on a NEW defect (known open defects stay visible).
+run "outcome ledger verify"       "$PY" src/outcome_ledger.py --verify
+run "outcome collect (R0 gate)"   "$PY" src/outcome_collect.py --all --gate
 
 if [ "${1:-}" = "--e2e" ]; then
   PORT=8798

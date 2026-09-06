@@ -155,6 +155,17 @@ def test_dedup_appends_on_state_change(tmp_path):
     assert len(OL.read_rows(str(p))) == 3
 
 
+def test_dedup_slot_includes_detail_subject(tmp_path):
+    p = tmp_path / "l.jsonl"
+    v1 = row(source="agent_eval", artifact="agents/independent-verifier.md", artifact_class="agent",
+             detail={"subject": "V-1", "checks": {"a": True}})
+    v2 = row(source="agent_eval", artifact="agents/independent-verifier.md", artifact_class="agent",
+             detail={"subject": "V-2", "checks": {"b": True}})
+    assert len(OL.append_rows(str(p), [v1, v2])) == 2
+    assert OL.append_rows(str(p), [v1, v2]) == []          # no thrash on re-run
+    assert len(OL.read_rows(str(p))) == 2
+
+
 def test_dedup_is_per_source_artifact(tmp_path):
     p = tmp_path / "l.jsonl"
     a = row(artifact="src/a.py", source="verify_entrypoint", artifact_class="instrument")

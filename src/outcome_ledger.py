@@ -120,11 +120,18 @@ def read_rows(path):
     return rows
 
 
+def slot(row):
+    """Dedup slot: (source, artifact, detail.subject). `subject` lets one
+    artifact carry several independent observations (e.g. evals V-1, V-2,
+    V-3 of one agent definition) without thrashing each other."""
+    return (row["source"], row["artifact"], str(row["detail"].get("subject", "")))
+
+
 def latest_keys(rows):
-    """Latest state key per (source, artifact), in ledger order."""
+    """Latest state key per slot, in ledger order."""
     latest = {}
     for r in rows:
-        latest[(r["source"], r["artifact"])] = state_key(r)
+        latest[slot(r)] = state_key(r)
     return latest
 
 
@@ -142,9 +149,9 @@ def append_rows(path, rows):
     appended = []
     for r in rows:
         k = state_key(r)
-        if latest.get((r["source"], r["artifact"])) == k:
+        if latest.get(slot(r)) == k:
             continue
-        latest[(r["source"], r["artifact"])] = k
+        latest[slot(r)] = k
         appended.append(r)
     if not appended:
         return []
