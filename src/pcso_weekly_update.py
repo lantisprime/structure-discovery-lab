@@ -5,6 +5,15 @@ This script does not fetch draws or edit the workbook. It validates the dated
 provenance manifest against the append-only CSVs, protects the frozen
 exploration prefixes, runs the standing m=9 monitoring family, and verifies
 the workbook's structural invariants.
+
+This is the July 2026 closeout kept as a historical record. Its inputs (the
+four dataset CSVs and the workbook) are read from the commit that closed that
+batch, INPUT_SNAPSHOT_COMMIT, not from the working tree: the dataset is
+append-only and has grown since (PR #20, 2026-09-06), and the registered
+result hashes the whole input files, so the working-tree copies can never
+reproduce the July payload again. Reading the snapshot keeps `--verify`
+byte-exact without touching the frozen result. Requires a clone that contains
+that commit (CI checks out full history for this reason).
 """
 
 from __future__ import annotations
@@ -12,6 +21,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import io
 import json
 import math
 import os
@@ -29,6 +39,13 @@ DEFAULT_MANIFEST = (
 )
 DEFAULT_OUTPUT = ROOT / "results" / "pcso_confirmation_2026-07-08.json"
 WORKBOOK = ROOT / "PCSO_Lotto_Analysis_Mar-Jun_2026.xlsx"
+# "Close July PCSO batch and document reliability plan" (2026-07-10): the last
+# commit that set every input below before the dataset grew. See module doc.
+INPUT_SNAPSHOT_COMMIT = "4d968207478cd30ad8ce21265054000f0879d895"
+# Which snapshot input_bytes() reads. main() sets it to INPUT_SNAPSHOT_COMMIT;
+# None means the working tree, which is what src/pcso_monitoring_run.py needs
+# when it imports the validators below for the live, growing dataset.
+ACTIVE_SNAPSHOT: str | None = None
 
 GAMES = {
     "Lotto 6/42": 42,
@@ -72,6 +89,31 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def input_bytes(path: Path) -> bytes:
+    """Bytes of an input: from ACTIVE_SNAPSHOT when set (the July closeout
+    runner), else from the working tree (the live monitoring runner)."""
+    if ACTIVE_SNAPSHOT is None:
+        return path.read_bytes()
+    rel = path.resolve().relative_to(ROOT).as_posix()
+    run = subprocess.run(
+        ["git", "show", f"{ACTIVE_SNAPSHOT}:{rel}"],
+        cwd=ROOT,
+        capture_output=True,
+        check=False,
+    )
+    if run.returncode != 0:
+        raise ValueError(
+            f"{rel}: cannot read input snapshot {ACTIVE_SNAPSHOT[:7]} "
+            f"(clone must contain that commit): "
+            f"{run.stderr.decode('utf-8', 'replace').strip()}"
+        )
+    return run.stdout
+
+
+def input_sha256(path: Path) -> str:
+    return hashlib.sha256(input_bytes(path)).hexdigest()
+
+
 def result_bytes(result: dict[str, object]) -> bytes:
     return (json.dumps(result, indent=2, ensure_ascii=True) + "\n").encode("utf-8")
 
@@ -110,8 +152,8 @@ def is_date(value: str) -> bool:
 
 
 def load_csv(path: Path) -> list[dict[str, str]]:
-    with path.open(newline="", encoding="utf-8-sig") as handle:
-        return list(csv.DictReader(handle))
+    text = input_bytes(path).decode("utf-8-sig")
+    return list(csv.DictReader(io.StringIO(text, newline="")))
 
 
 def dated_rows(path: Path, date_column: str) -> list[dict[str, str]]:
@@ -119,7 +161,7 @@ def dated_rows(path: Path, date_column: str) -> list[dict[str, str]]:
 
 
 def exploration_prefix_sha256(path: Path, date_column: str, cutoff: str) -> str:
-    lines = path.read_bytes().splitlines(keepends=True)
+    lines = input_bytes(path).splitlines(keepends=True)
     if not lines:
         raise ValueError(f"{path}: empty CSV")
     header = next(
@@ -138,7 +180,7 @@ def exploration_prefix_sha256(path: Path, date_column: str, cutoff: str) -> str:
 
 
 def require_crlf(path: Path) -> None:
-    raw = path.read_bytes()
+    raw = input_bytes(path)
     if raw.count(b"\n") != raw.count(b"\r\n"):
         raise ValueError(f"{path}: expected every line to use CRLF")
 
@@ -285,7 +327,8 @@ def workbook_invariants() -> dict[str, object]:
     except ImportError as exc:
         raise RuntimeError("openpyxl is required for workbook verification") from exc
 
-    formulas_book = load_workbook(WORKBOOK, data_only=False, read_only=False)
+    workbook_blob = input_bytes(WORKBOOK)
+    formulas_book = load_workbook(io.BytesIO(workbook_blob), data_only=False, read_only=False)
     expected_sheets = [
         "Read Me",
         "Draws",
@@ -309,7 +352,7 @@ def workbook_invariants() -> dict[str, object]:
     if formula_count != 786:
         raise ValueError(f"workbook: expected 786 formulas, got {formula_count}")
 
-    values_book = load_workbook(WORKBOOK, data_only=True, read_only=False)
+    values_book = load_workbook(io.BytesIO(workbook_blob), data_only=True, read_only=False)
     errors = [
         (sheet.title, cell.coordinate, cell.value)
         for sheet in values_book.worksheets
@@ -323,7 +366,7 @@ def workbook_invariants() -> dict[str, object]:
     if formulas_book["Draws"].max_row != 253:
         raise ValueError("workbook Draws sheet must contain 252 data rows")
     return {
-        "sha256": sha256(WORKBOOK),
+        "sha256": hashlib.sha256(workbook_blob).hexdigest(),
         "sheets": len(expected_sheets),
         "formulas": formula_count,
         "cached_value_errors": 0,
@@ -471,9 +514,11 @@ def run_monitoring(
         for filename in (*DRAW_FILES.keys(), ASTRO_FILE)
     ]
     input_hashes = {
-        str(path.relative_to(ROOT)): sha256(path) for path in inputs
+        str(path.relative_to(ROOT)): input_sha256(path) for path in inputs
     }
-    input_hashes[str(WORKBOOK.relative_to(ROOT))] = sha256(WORKBOOK)
+    input_hashes[str(WORKBOOK.relative_to(ROOT))] = input_sha256(WORKBOOK)
+    # The manifest is the run's registration, passed on the command line; it is
+    # read and hashed from the working tree as before.
     input_hashes[str(manifest_path.relative_to(ROOT))] = sha256(manifest_path)
 
     sizes = {
@@ -574,6 +619,8 @@ def git_status_bytes() -> bytes:
 
 
 def main() -> None:
+    global ACTIVE_SNAPSHOT
+    ACTIVE_SNAPSHOT = INPUT_SNAPSHOT_COMMIT
     args = parse_args()
     status_before = git_status_bytes() if args.verify else None
     manifest_path = args.manifest.resolve()
@@ -588,6 +635,7 @@ def main() -> None:
         status_after = git_status_bytes()
         evidence = {
             "command_argv": [sys.executable, *sys.argv],
+            "input_snapshot_commit": ACTIVE_SNAPSHOT,
             "input_sha256": result["_meta"]["input_sha256"],
             "output_sha256": digest,
             "exit_status": 0,

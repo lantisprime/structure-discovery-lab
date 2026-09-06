@@ -30,7 +30,7 @@ run "domain neutrality"           "$PY" src/lint_domain_neutrality.py
 run "design verifier"             "$PY" src/design_verifier.py
 run "relational docs verifier"    "$PY" src/verify_relational_docs.py
 run "repo tests (installer/ledger/webapp)" "$PY" -m pytest tests/ -q
-run "webapp unit tests"           "$PY" -m pytest webapp/test_server.py webapp/test_routing.py -q
+run "webapp unit tests"           "$PY" -m pytest webapp/test_server.py webapp/test_routing.py webapp/test_pcso_closeout.py -q
 run "riemann regression tests"    "$PY" -m pytest riemann-zero-lab/tests -q
 # R0 (constitution A0): every signal above also lands in the outcome ledger;
 # the gate fails only on a NEW defect (known open defects stay visible).

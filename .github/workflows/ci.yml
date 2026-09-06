@@ -18,6 +18,11 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history (repo is ~6 MB): the July closeout runner reads its
+          # frozen inputs from commit 4d96820, and the R0 collector compares
+          # agent definitions with their eval-record commits.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -54,7 +59,7 @@ jobs:
         run: .venv/bin/python -m pytest tests/ -q
 
       - name: Webapp unit tests
-        run: .venv/bin/python -m pytest webapp/test_server.py webapp/test_routing.py -q
+        run: .venv/bin/python -m pytest webapp/test_server.py webapp/test_routing.py webapp/test_pcso_closeout.py -q
 
       - name: Riemann regression tests
         run: .venv/bin/python -m pytest riemann-zero-lab/tests -q

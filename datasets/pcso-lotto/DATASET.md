@@ -102,7 +102,9 @@ pair affinity, gap law, rolling windows, backtests) — count it once (Governanc
   Illum — the §10 V2 rounding artifact), write a dated manifest with raw captures, then run
   the monitoring family.
 - Deterministic runners: `../../src/pcso_weekly_update.py` (July 2026 closeout, kept as the
-  historical record; hard-coded to its 28-draw manifest) and `../../src/pcso_monitoring_run.py`
+  historical record; hard-coded to its 28-draw manifest and, since 2026-09-06, reading its
+  inputs from the closeout commit `4d96820` so the append-only CSVs can grow without breaking
+  its byte-exact `--verify`) and `../../src/pcso_monitoring_run.py`
   (generalized: same validators and m=9 family imported from the July module; manifest declares
   `expected_new_draws`; `official_verified` accepted). Manifests:
   `provenance/pcso_weekly_2026-07-08.json`, `provenance/pcso_refresh_2026-09-06.json`.
