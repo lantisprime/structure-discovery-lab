@@ -46,9 +46,24 @@ def resolve(root, ref):
     return git(root, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
 
 
+def artifact_paths(artifact):
+    """Git paths behind a ledger artifact: a suite name such as
+    'webapp/test_server.py+test_routing.py' maps to its files."""
+    suites = dict(OC.PYTEST_SUITES)
+    return list(suites[artifact]) if artifact in suites else [artifact]
+
+
 def creation_commit(root, rel):
-    out = git(root, "log", "--diff-filter=A", "--format=%H", "--", rel)
-    return out.splitlines()[-1] if out else None
+    """Oldest commit that added any path behind the artifact."""
+    best = None
+    for p in artifact_paths(rel):
+        out = git(root, "log", "--diff-filter=A", "--format=%H %ct", "--", p)
+        if not out:
+            continue
+        sha, ct = out.splitlines()[-1].split()
+        if best is None or int(ct) < best[1]:
+            best = (sha, int(ct))
+    return best[0] if best else None
 
 
 def rev_range(root, good, bad, first_parent=True):
@@ -103,18 +118,26 @@ def run_check_at(root, commit, argv):
 
 def bisect(commits, probe):
     """First commit in `commits` (oldest..newest, assumed monotonic) for which
-    probe(commit) != 'PASS'. Returns (commit or None, steps)."""
-    steps, lo, hi, first_bad = [], 0, len(commits) - 1, None
+    probe(commit) != 'PASS'. An ERROR probe (worktree hiccup, timeout, artifact
+    absent) is retried once; a persistent ERROR is recorded as skipped and
+    treated as not-PASS, so the answer can only be conservative (no later than
+    the true commit) and is flagged `ambiguous` when it rests on a skipped
+    probe. Returns (commit or None, steps, skipped)."""
+    steps, skipped, lo, hi, first_bad = [], [], 0, len(commits) - 1, None
     while lo <= hi:
         mid = (lo + hi) // 2
         t0 = time.time()
         res = probe(commits[mid])
+        if res == "ERROR":
+            res = probe(commits[mid])
+            if res == "ERROR":
+                skipped.append(commits[mid][:7])
         steps.append({"commit": commits[mid][:7], "result": res, "seconds": round(time.time() - t0, 1)})
         if res == "PASS":
             lo = mid + 1
         else:
             first_bad, hi = commits[mid], mid - 1
-    return first_bad, steps
+    return first_bad, steps, skipped
 
 
 # ------------------------------------------------------------ attribute ----
@@ -167,7 +190,7 @@ def attribute_by_bisect(root, rows, defect, probe=None):
         return {"method": "bisect", "introduced_by": None, "last_good": None,
                 "steps": steps + [{"note": "no last-good bound: artifact never PASSed and has no creation commit"}]}
     commits = rev_range(root, good, bad)
-    first_bad, more = bisect(commits, probe)
+    first_bad, more, skipped = bisect(commits, probe)
     steps += more
     if first_bad is None:  # everything after good passes?? then the bad commit itself
         first_bad = bad
@@ -175,13 +198,17 @@ def attribute_by_bisect(root, rows, defect, probe=None):
     if git(root, "rev-parse", "--verify", "--quiet", f"{first_bad}^2"):
         merged_by = first_bad
         inner = rev_range(root, f"{first_bad}^1", f"{first_bad}^2", first_parent=False)
-        refined, more = bisect(inner, probe)
+        refined, more, skipped2 = bisect(inner, probe)
         steps += more
+        skipped += skipped2
         if refined:
             first_bad = refined
     out = {"method": "bisect", "introduced_by": first_bad[:7], "last_good": good[:7], "steps": steps}
     if merged_by:
         out["merged_by"] = merged_by[:7]
+    if skipped:
+        out["skipped"] = skipped
+        out["ambiguous"] = first_bad[:7] in skipped
     return out
 
 

@@ -70,18 +70,20 @@ def closed_defects(rows):
 
 
 def attributions(rows):
-    return {r["detail"].get("defect_key"): r for r in rows if r["source"] == "attribution"}
+    """Keyed per occurrence (defect_key, defect_commit), like R1 itself."""
+    return {(r["detail"].get("defect_key"), r["detail"].get("defect_commit")): r
+            for r in rows if r["source"] == "attribution"}
 
 
 def derive(rows, existing):
-    known = {l.get("defect_key") for l in existing}
+    known = {(l.get("defect_key"), l.get("defect_commit")) for l in existing}
     attr = attributions(rows)
     lessons = []
     for defect, fixed in closed_defects(rows):
         key = "|".join(OL.state_key(defect))
-        if key in known:
+        if (key, defect["commit"]) in known:
             continue
-        a = attr.get(key, {}).get("detail", {})
+        a = attr.get((key, defect["commit"]), {}).get("detail", {})
         intro = a.get("introduced_by")
         text = (f"{defect['artifact']} {defect['signal']} ({defect['evidence'][:120]}); "
                 f"introduced by {intro or 'unknown'}"
@@ -89,7 +91,8 @@ def derive(rows, existing):
                 + f"; passing again at {fixed['commit']} on {defect['detail'].get('subject') or 'n/a'}")
         lessons.append({"schema_version": SCHEMA_VERSION, "ts": now_ts(), "kind": "closed_defect",
                         "artifact": defect["artifact"], "artifact_class": defect["artifact_class"],
-                        "defect_key": key, "signal": defect["signal"], "evidence": defect["evidence"],
+                        "defect_key": key, "defect_commit": defect["commit"],
+                        "signal": defect["signal"], "evidence": defect["evidence"],
                         "introduced_by": intro, "merged_by": a.get("merged_by"),
                         "attribution_method": a.get("method"), "fixed_at": fixed["commit"],
                         "platform": defect["detail"].get("subject"), "lesson": text})

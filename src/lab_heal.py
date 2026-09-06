@@ -37,10 +37,38 @@ import outcome_attribute as OA  # noqa: E402
 import artifact_registry as AR  # noqa: E402
 import lab_learn as LL  # noqa: E402
 
-DEFAULT_AGENT_CMD = ("claude -p --model {model} --max-turns {max_turns} --permission-mode acceptEdits "
-                     "--allowedTools Read Edit Write Grep Glob Bash --output-format text")
+# The agent may edit files and run the lab's own checks; it may NOT commit,
+# push, or run arbitrary shell. The healer commits and gates after it exits.
+DEFAULT_AGENT_CMD = (
+    "claude -p --model {model} --max-turns {max_turns} --permission-mode acceptEdits "
+    "--allowedTools Read Edit Write Grep Glob "
+    "Bash(.venv/bin/python:*) Bash(python3:*) Bash(./tools/check.sh:*) "
+    "Bash(git diff:*) Bash(git status:*) Bash(git log:*) Bash(git show:*) Bash(git blame:*) "
+    "--disallowedTools Bash(git commit:*) Bash(git push:*) Bash(git checkout:*) Bash(git reset:*) "
+    "Bash(gh:*) Bash(curl:*) Bash(wget:*) Bash(ssh:*) Bash(scp:*) "
+    "--output-format text")
 DEFAULT_GATE_CMD = "./tools/check.sh"
 AGENT_TIMEOUT = 3600
+# Credentials never reach the agent's environment except the one it needs to
+# talk to its own model provider (ANTHROPIC_API_KEY, when the CLI relies on it).
+CREDENTIAL_ENV_RE = re.compile(r"(TOKEN|SECRET|PASSWORD|PASSWD|PRIVATE_KEY|_KEY$|^AWS_|^GH_|^GITHUB_)", re.I)
+CREDENTIAL_ENV_KEEP = {"ANTHROPIC_API_KEY"}
+# Anything that lands in a ledger row from agent or gate output is redacted first.
+SECRET_RE = re.compile(
+    r"(?i)(?:(api[_-]?key|token|secret|password|passwd|authorization|bearer)\s*[:=]\s*)[^\s,;]+"
+    r"|sk-[A-Za-z0-9_\-]{8,}|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,}"
+    r"|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----")
+
+
+def redact(text):
+    return SECRET_RE.sub(lambda m: (m.group(1) + "=<redacted>") if m.group(1) else "<redacted>", text or "")
+
+
+def agent_env():
+    env = {k: v for k, v in os.environ.items()
+           if k in CREDENTIAL_ENV_KEEP or not CREDENTIAL_ENV_RE.search(k)}
+    env.pop("CLAUDECODE", None)  # allow a nested headless session
+    return env
 
 
 def now_ts():
@@ -139,12 +167,12 @@ def dispatch_agent(wt, brief, model, max_turns, agent_cmd=None):
     argv = shlex.split(cmd)
     with open(os.path.join(wt, "HEAL_BRIEF.md"), "w", encoding="utf-8") as fh:
         fh.write(brief)
-    env = dict(os.environ)
-    env.pop("CLAUDECODE", None)  # allow a nested headless session
     try:
-        rc, out, err = sh(argv, wt, timeout=AGENT_TIMEOUT, env=env, stdin=brief)
+        rc, out, err = sh(argv, wt, timeout=AGENT_TIMEOUT, env=agent_env(), stdin=brief)
     except subprocess.TimeoutExpired:
         return 124, "", "agent timed out"
+    except OSError as e:
+        return 127, "", f"agent command failed to start: {e}"
     return rc, out, err
 
 
@@ -194,56 +222,65 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
              agent_cmd=None, gate_cmd=None, keep_worktree=False, out=sys.stdout):
     brief = brief_for(defect, rows, root)
     branch = slug(defect)
-    hw = HealWorktree(root, branch)
-    wt = hw.__enter__()
-    print(f"heal: {defect['artifact']} {defect['signal']} -> worktree {wt} on {branch}", file=out)
-    rc, aout, aerr = dispatch_agent(wt, brief, model, max_turns, agent_cmd)
-    files = [f for f in changed_files(wt) if f not in ("HEAL_BRIEF.md",)]
-    notes_path = os.path.join(wt, "HEAL_NOTES.md")
-    notes = open(notes_path, encoding="utf-8").read() if os.path.exists(notes_path) else ""
     ctx = OC.Ctx(root, rows)
     key = "|".join(OL.state_key(defect))
     base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key,
-                   "defect_commit": defect["commit"], "branch": branch,
-                   "agent_exit": rc, "files_changed": files, "model": model}
-    if rc != 0 or not files:
-        why = f"agent exit {rc}, {len(files)} file(s) changed" + (f": {aerr.strip()[-200:]}" if aerr.strip() else "")
-        row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "REJECTED", why[:OL.EVIDENCE_MAX],
-                      {**base_detail, "stage": "agent"})
+                   "defect_commit": defect["commit"], "branch": branch, "model": model}
+
+    def reject(stage, why, extra=None, keep=False):
+        row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "REJECTED",
+                      redact(why)[:OL.EVIDENCE_MAX], {**base_detail, "stage": stage, **(extra or {})})
         OL.append_rows(ledger, [row])
-        print(f"REJECTED (agent): {why}", file=out)
-        if not keep_worktree:
+        print(f"REJECTED ({stage}): {redact(why)}", file=out)
+        if keep:
+            print(f"worktree kept for inspection: {wt}", file=out)
+        return row
+
+    hw = HealWorktree(root, branch)
+    wt = hw.__enter__()
+    print(f"heal: {defect['artifact']} {defect['signal']} -> worktree {wt} on {branch}", file=out)
+    keep = False
+    try:
+        rc, aout, aerr = dispatch_agent(wt, brief, model, max_turns, agent_cmd)
+        files = [f for f in changed_files(wt) if f not in ("HEAL_BRIEF.md",)]
+        notes_path = os.path.join(wt, "HEAL_NOTES.md")
+        notes = redact(open(notes_path, encoding="utf-8").read()) if os.path.exists(notes_path) else ""
+        base_detail.update({"agent_exit": rc, "files_changed": files})
+        if rc != 0 or not files:
+            why = f"agent exit {rc}, {len(files)} file(s) changed" + (f": {aerr.strip()[-200:]}" if aerr.strip() else "")
+            return reject("agent", why)
+        os.remove(os.path.join(wt, "HEAL_BRIEF.md"))
+        ok, summary = gate(wt, defect, gate_cmd)
+        summary = redact(summary)
+        if not ok:
+            keep = True
+            return reject("gate", summary, {"gate_tail": summary[-1500:]}, keep=True)
+        title = f"heal: {defect['artifact']} {defect['signal']} ({defect['detail'].get('subject', '')})"
+        sha = commit_all(wt, title + "\n\nAutonomous repair (R4 healer). Brief and notes in HEAL_NOTES.md.\n\n"
+                         f"Defect key: {key}\n\nCo-Authored-By: lab-healer <healer@structure-discovery.local>")
+        if not sha:
+            return reject("commit", "git commit failed in the heal worktree")
+        pr_url, pr_err = (None, "")
+        if push:
+            body = (f"Autonomous repair proposed by `src/lab_heal.py` (Milestone R4, constitution A0) for the "
+                    f"outcome-ledger defect `{key}`.\n\n## Agent notes\n\n{notes or '(no HEAL_NOTES.md written)'}\n\n"
+                    f"## Gate\n\n```\n{summary}\n```\n\nMerging is R3 (not automated yet): review and merge, or close.")
+            pr_url, pr_err = open_pr(wt, branch, title, body)
+        ev = f"PROPOSED {pr_url or branch} commit {sha}; gate green" + (f"; {redact(pr_err)}" if pr_err else "")
+        row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "PROPOSED", ev[:OL.EVIDENCE_MAX],
+                      {**base_detail, "stage": "proposed", "commit": sha, "pr": pr_url, "notes": notes[:2000],
+                       "gate_tail": summary[-600:]})
+        OL.append_rows(ledger, [row])
+        print(ev, file=out)
+        keep = keep_worktree or not pr_url
+        if not pr_url:
+            print(f"branch {branch} committed locally at {sha}; worktree kept: {wt}", file=out)
+        return row
+    except Exception as e:  # never leak a worktree or lose the signal
+        return reject("exception", f"{type(e).__name__}: {e}")
+    finally:
+        if not keep and not keep_worktree:
             hw.remove()
-        return row
-    os.remove(os.path.join(wt, "HEAL_BRIEF.md"))
-    ok, summary = gate(wt, defect, gate_cmd)
-    if not ok:
-        row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "REJECTED", summary[:OL.EVIDENCE_MAX],
-                      {**base_detail, "stage": "gate", "gate_tail": summary[-1500:]})
-        OL.append_rows(ledger, [row])
-        print(f"REJECTED (gate): {summary}", file=out)
-        print(f"worktree kept for inspection: {wt}", file=out)
-        return row
-    title = f"heal: {defect['artifact']} {defect['signal']} ({defect['detail'].get('subject', '')})"
-    sha = commit_all(wt, title + "\n\nAutonomous repair (R4 healer). Brief and notes in HEAL_NOTES.md.\n\n"
-                     f"Defect key: {key}\n\nCo-Authored-By: lab-healer <healer@structure-discovery.local>")
-    pr_url, pr_err = (None, "")
-    if push:
-        body = (f"Autonomous repair proposed by `src/lab_heal.py` (Milestone R4, constitution A0) for the "
-                f"outcome-ledger defect `{key}`.\n\n## Agent notes\n\n{notes or '(no HEAL_NOTES.md written)'}\n\n"
-                f"## Gate\n\n```\n{summary}\n```\n\nMerging is R3 (not automated yet): review and merge, or close.")
-        pr_url, pr_err = open_pr(wt, branch, title, body)
-    ev = f"PROPOSED {pr_url or branch} commit {sha}; gate green" + (f"; {pr_err}" if pr_err else "")
-    row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "PROPOSED", ev[:OL.EVIDENCE_MAX],
-                  {**base_detail, "stage": "proposed", "commit": sha, "pr": pr_url, "notes": notes[:2000],
-                   "gate_tail": summary[-600:]})
-    OL.append_rows(ledger, [row])
-    print(ev, file=out)
-    if not keep_worktree and pr_url:
-        hw.remove()
-    elif not pr_url:
-        print(f"branch {branch} committed locally at {sha}; worktree kept: {wt}", file=out)
-    return row
 
 
 def run(ledger, root=ROOT, defect_key=None, **kw):

@@ -67,8 +67,8 @@ def test_lessons_derived_from_closed_defects_with_attribution(tmp_path):
     rows = [mkrow("verify_entrypoint", "src/x.py", "instrument", "FAIL", "aaaaaaa", "darwin",
                   {"exit": 1, "sha256": None, "args": ["--verify"]}),
             OL.make_row("attribution", "src/x.py", "instrument", "ATTRIBUTED", "introduced_by bbbbbbb",
-                        {"subject": "darwin", "defect_key": None, "method": "bisect", "introduced_by": "bbbbbbb",
-                         "merged_by": "ccccccc"}, "2026-09-06T10:30:00Z", "aaaaaaa", "tester"),
+                        {"subject": "darwin", "defect_key": None, "defect_commit": "aaaaaaa", "method": "bisect",
+                         "introduced_by": "bbbbbbb", "merged_by": "ccccccc"}, "2026-09-06T10:30:00Z", "aaaaaaa", "tester"),
             mkrow("verify_entrypoint", "src/x.py", "instrument", "PASS", "ddddddd", "darwin",
                   {"exit": 0, "sha256": "a" * 64, "args": ["--verify"]}, ts="2026-09-06T11:00:00Z"),
             mkrow("verify_entrypoint", "src/y.py", "instrument", "FAIL", "eeeeeee", "linux",
@@ -81,6 +81,14 @@ def test_lessons_derived_from_closed_defects_with_attribution(tmp_path):
     assert l["fixed_at"] == "ddddddd" and l["platform"] == "darwin"
     assert "introduced by bbbbbbb via merge ccccccc" in l["lesson"]
     assert LL.derive(rows, lessons) == []                     # idempotent
+    # the same failure state recurring at a later commit and refixed is a second lesson
+    rows += [mkrow("verify_entrypoint", "src/x.py", "instrument", "FAIL", "fffffff", "darwin",
+                   {"exit": 1, "sha256": None, "args": ["--verify"]}, ts="2026-09-06T12:00:00Z"),
+             mkrow("verify_entrypoint", "src/x.py", "instrument", "PASS", "ggggggg", "darwin",
+                   {"exit": 0, "sha256": "a" * 64, "args": ["--verify"]}, ts="2026-09-06T13:00:00Z")]
+    again = LL.derive(rows, lessons)
+    assert len(again) == 1 and again[0]["defect_commit"] == "fffffff" and again[0]["fixed_at"] == "ggggggg"
+    assert again[0]["introduced_by"] is None                  # no attribution for that occurrence
     path = str(tmp_path / "lessons.jsonl")
     LL.append_lessons(path, lessons)
     assert LL.relevant(LL.read_lessons(path), "src/x.py") == lessons
@@ -179,6 +187,38 @@ def test_heal_skips_defect_with_pending_proposal_but_not_attributed_ones(broken_
                                         {"subject": "linux", "defect_key": key, "defect_commit": sha, "branch": "heal/x"},
                                         "2026-09-06T10:20:00Z", sha, "tester")])
     assert LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w")) == []
+
+
+def test_heal_exception_path_cleans_worktree_and_records(broken_repo, tmp_path):
+    root, sha = broken_repo
+    ledger = str(tmp_path / "l.jsonl")
+    OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
+                                  {"exit": 1, "sha256": None, "args": ["--verify"]})])
+    rows = LH.run(ledger, root=str(root), agent_cmd="/nonexistent/agent --x", gate_cmd=OK_GATE, push=False,
+                  out=open(os.devnull, "w"))
+    assert rows[0]["signal"] == "REJECTED" and rows[0]["detail"]["agent_exit"] == 127
+    assert "lab-heal-" not in git(root, "worktree", "list")
+    assert OL.verify_ledger(ledger) == []
+
+
+def test_redaction_and_agent_env(monkeypatch):
+    assert LH.redact("token=abc123 and api_key: XYZ, ok=1") == "token=<redacted> and api_key=<redacted>, ok=1"
+    assert "<redacted>" in LH.redact("Authorization: Bearer sk-ant-abcdefghijklmnop")
+    assert LH.redact("ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345") == "<redacted>"
+    assert LH.redact("plain text 252 rows") == "plain text 252 rows"
+    monkeypatch.setenv("GH_TOKEN", "x"), monkeypatch.setenv("GITHUB_TOKEN", "x"), monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "x")
+    monkeypatch.setenv("MY_PASSWORD", "x"), monkeypatch.setenv("ANTHROPIC_API_KEY", "keep"), monkeypatch.setenv("CLAUDECODE", "1")
+    env = LH.agent_env()
+    for k in ("GH_TOKEN", "GITHUB_TOKEN", "AWS_SECRET_ACCESS_KEY", "MY_PASSWORD", "CLAUDECODE"):
+        assert k not in env
+    assert env["ANTHROPIC_API_KEY"] == "keep" and "PATH" in env
+
+
+def test_default_agent_command_has_no_raw_bash_or_git_write():
+    cmd = LH.DEFAULT_AGENT_CMD
+    tokens = cmd.split()
+    assert "Bash" not in tokens                                   # only scoped Bash(...) entries
+    assert "--disallowedTools" in cmd and "Bash(git commit:*)" in cmd and "Bash(git push:*)" in cmd
 
 
 def test_heal_noop_without_open_defects(tmp_path):

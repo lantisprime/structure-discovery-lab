@@ -104,6 +104,31 @@ def test_bisect_cleans_worktrees(planted_repo):
     assert git(root, "worktree", "list") == before
 
 
+def test_bisect_retries_error_once_and_flags_persistent_skips(planted_repo):
+    root, shas = planted_repo
+    real = probe_for(root)
+    calls = {"n": 0}
+
+    def flaky(c):                       # first probe of every commit errors, second succeeds
+        calls["n"] += 1
+        return "ERROR" if calls["n"] % 2 == 1 else real(c)
+    first_bad, steps, skipped = OA.bisect(shas[1:], flaky)
+    assert first_bad == shas[3] and skipped == []
+
+    def dead_at_c3(c):                  # c3 can never be probed
+        return "ERROR" if c == shas[3] else real(c)
+    first_bad, steps, skipped = OA.bisect(shas[1:], dead_at_c3)
+    assert first_bad == shas[3] and skipped == [shas[3][:7]]     # conservative, and flagged
+
+
+def test_creation_commit_resolves_composite_suite_names(planted_repo, monkeypatch):
+    root, shas = planted_repo
+    monkeypatch.setattr(OA.OC, "PYTEST_SUITES", [("src/inst.py+data.txt", ["src/inst.py", "data.txt"])])
+    assert OA.creation_commit(root, "src/inst.py+data.txt") == shas[0]
+    assert OA.creation_commit(root, "src/inst.py") == shas[0]
+    assert OA.creation_commit(root, "nope.txt") is None
+
+
 # REQ-5 -----------------------------------------------------------------------
 
 def test_not_reproducible_on_this_platform(planted_repo, tmp_path):

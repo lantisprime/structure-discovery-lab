@@ -47,6 +47,10 @@ propose or fix (R2).
 | REQ-7 | `tools/check.sh` and CI run `outcome_attribute.py --new` after the collector; with no new defects it is a no-op (< 2 s). | `./tools/check.sh` in §15; CI run | MUST |
 | REQ-8 | Ground truth: attributing the historical darwin `src/pcso_weekly_update.py` FAIL recovers `9488a9a` (`LAB_SLOW_TESTS=1`, real history, ~10 probes). | `test_real_history_attributes_pr20_append` (slow, opt-in) | MUST |
 | REQ-9 | No instrument, verifier, result, or ledger row is edited; only rows are appended. `./tools/check.sh` passes before and after. | §15 | MUST |
+| REQ-10 *(R4 minimal, added 2026-09-07)* | `src/lab_heal.py` heals only open defects without a pending `PROPOSED` row for the same occurrence; the agent runs in a git worktree on a `heal/…` branch with a scoped tool allowlist (no raw Bash, no `git commit/push/checkout/reset`, no `gh`/network tools) and a credential-stripped environment; the healer alone commits, and only after `./tools/check.sh` **and** the defect's own check pass. | `test_heal_proposes_when_agent_fixes_and_gate_passes`, `test_heal_rejects_when_defect_check_still_fails`, `test_heal_skips_defect_with_pending_proposal_but_not_attributed_ones`, `test_default_agent_command_has_no_raw_bash_or_git_write`, `test_redaction_and_agent_env` | MUST |
+| REQ-11 *(R4)* | Every attempt appends exactly one `heal` row (`PROPOSED` / `REJECTED` with stage agent, gate, commit or exception); agent output, notes and gate tails are secret-redacted before they enter a row; an exception never leaks a worktree. | `test_heal_exception_path_cleans_worktree_and_records`, `test_heal_rejects_when_agent_changes_nothing`, `test_redaction_and_agent_env` | MUST |
+| REQ-12 *(R5 minimal)* | `src/lab_learn.py --derive` appends one lesson per closed occurrence `(defect_key, defect_commit)` with the R1 attribution of that same occurrence; idempotent; a recurrence refixed yields a second lesson. | `test_lessons_derived_from_closed_defects_with_attribution`, `test_learn_cli_derive_and_add` | MUST |
+| REQ-13 *(R1 robustness)* | A probe `ERROR` is retried once; persistent errors are recorded as skipped and flagged `ambiguous` when the answer rests on them; composite suite names resolve to their files for the creation-commit bound. | `test_bisect_retries_error_once_and_flags_persistent_skips`, `test_creation_commit_resolves_composite_suite_names` | MUST |
 
 ## §5 Non-Goals
 
@@ -94,7 +98,7 @@ the first commit that added the artifact file.
 | Suites | `.venv/bin/python -m pytest tests/ -q` | `117 passed, 1 skipped in 10.06s` (R1: 3 registry + 8 attribution tests; R4/R5 minimal: 7 heal/learn tests with a fake agent) |
 | Ground truth | `LAB_SLOW_TESTS=1 .venv/bin/python -m pytest tests/test_outcome_attribute.py -q -k real_history` | `1 passed in 4.87s`: darwin July-runner FAIL → `introduced_by 9488a9a`, `merged_by 1aff3dc` (first-parent bisect, then refinement inside the merged PR #20 branch) |
 | Replay on the committed ledger | `.venv/bin/python src/outcome_attribute.py --replay` | 3 rows: darwin weekly → `9488a9a` (bisect, 7 steps); linux weekly and linux posterior → `commit_unavailable` (their defect commits are CI merge refs not present locally) |
-| Lessons | `.venv/bin/python src/lab_learn.py --derive` | 3 lessons (weekly darwin with introducing commit and merge; weekly linux; posterior linux) in `results/lessons.jsonl` |
+| Lessons | `.venv/bin/python src/lab_learn.py --derive` | 3 lessons (weekly darwin with introducing commit and merge; weekly linux; posterior linux) in `results/lessons.jsonl`. Regenerated once after review fix #6 changed the key to `(defect_key, defect_commit)`: the first derive after the change re-added the three rows, so the file (new in this PR) was rebuilt rather than committed with duplicates. |
 | Full battery | `./tools/check.sh` (now also registry, attribute --new, lessons --derive) | `ALL CHECKS PASSED`; new steps are no-ops on a clean ledger (`ARTIFACT REGISTRY: OK`, `no unattributed defects`, `lessons: 0 new`) |
 | Live closed loop (observe → attribute → heal → gate) | scratch clone of this branch; commit `7f87209` re-planted the July-runner defect (`ACTIVE_SNAPSHOT = None`); then `outcome_collect --sources verify_entrypoint`, `outcome_attribute --new`, `lab_heal --new --model sonnet --max-turns 30` with the real headless agent | Collector: `FAIL … expected 252 rows, got 380; 1 new defect`. Attribution: `introduced_by 7f87209 (bisect, 4 steps)`, `last_good 4242bb7`. Healer: agent made the exact one-line revert (`ACTIVE_SNAPSHOT = INPUT_SNAPSHOT_COMMIT`), wrote a correct root-cause note citing the attribution, `./tools/check.sh` gate green, `PROPOSED … commit 83cecec` on branch `heal/src-pcso-weekly-update-py-fail-20260906221048917`; no human action between the collector and the commit. Merging left to R3. |
 | CI | PR checks | filled at closeout |
@@ -117,4 +121,18 @@ the first commit that added the artifact file.
 
 ## §19 Review Consensus
 
-Filled at closeout.
+Codex channel still blocked by its preflight gate (not bypassed, kernel K-10);
+a Claude Sonnet read-only review of `git diff 0d76753` was used. Verdict
+before fixes: MERGE-WITH-FIXES. All findings accepted and fixed in the
+follow-up commit on PR #28:
+
+| # | Finding | Disposition | Action |
+|---|---|---|---|
+| 1 | Agent ran with raw `Bash`, auto-accept and the full environment; a worktree shares `.git`, so prose was the only barrier to `git push` from the main checkout or to exfiltrating inherited tokens. | ACCEPT | Scoped allowlist (`Bash(.venv/bin/python:*)`, `Bash(./tools/check.sh:*)`, read-only git) plus `--disallowedTools` for commit/push/checkout/reset/gh/curl/wget/ssh; `agent_env()` strips credential-like variables except the provider key the CLI needs. Tests REQ-10. |
+| 2 | Agent stderr, `HEAL_NOTES.md` and gate tails entered ledger rows unredacted. | ACCEPT | `redact()` over all three before truncation; test REQ-11. |
+| 3 | `HealWorktree.__exit__` no-op; an exception between dispatch and commit leaked the worktree and lost the signal. | ACCEPT | `heal_one` wrapped in try/except/finally: exception → `REJECTED` (stage `exception`), worktree removed unless kept on purpose; test REQ-11. |
+| 4 | `bisect()` treated a probe `ERROR` as `FAIL` with no retry. | ACCEPT | Retry once; persistent errors recorded as `skipped`, result flagged `ambiguous` when it rests on one; test REQ-13. |
+| 5 | Composite suite names (`a.py+b.py`) never matched `git log`, so a suite defect with no prior PASS had no bisect bound. | ACCEPT | `artifact_paths()` maps suite names to files; `creation_commit` takes the oldest; test REQ-13. |
+| 6 | Lessons keyed by `defect_key` only, unlike R1's per-occurrence key; recurrences skipped and could pair with the wrong attribution. | ACCEPT | `(defect_key, defect_commit)` throughout `lab_learn`; test REQ-12 extended with a refixed recurrence. |
+| 7 | No REQ rows for the R4/R5 scope added under the directive. | ACCEPT | REQ-10..13 added to §4. |
+| — | CI: full-history checkout and runner-temp artifacts judged correct. | — | none |
