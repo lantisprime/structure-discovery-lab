@@ -10,8 +10,8 @@ autonomous session under constitution article A0 (lab owner: "be autonomous").
 | Parent requirements | `LAB-RELIABILITY-2026Q3` v1.3 Milestone R stage R0; controls `C11`, `C6`, `C10`; baseline `B9` |
 | Governing article | `docs/THEOREM_GOVERNANCE.md` A0 (immutable), preserving A1--A8 |
 | Workplan checkpoint | PR #23, merge commit `92dec2d487b90bb72370e866747736127f71ddf7` |
-| Target branch | `feature/rsi-r0-outcome-ledger` |
-| Pull request | filled at closeout (§15) |
+| Target branch | `feature/rsi-r0-outcome-ledger` (slices `b852174`, `4a6f8c7`, `26b5fd3`) |
+| Pull request | `#24` |
 | Executor altitude | `low` -- every MUST has a falsifiable test |
 
 ## §2 Episode Search Summary
@@ -127,7 +127,7 @@ appended rows. Ledger order is append order; `ts` monotonic within a run.
 |---|---|---|---|
 | `agent_eval` | import `grade_agent_eval`, iterate `RECORDS`, call `grade_one` (never `--write-rerun`) | `agents/<name>.md` from the eval-id prefix map (V, D, A, O, R, E, Q, X); Z-slice rows use `riemann-zero-lab/results/agent_runs/zeta-eval-20260613` as artifact, class `agent` | grade verbatim; `detail` = checks, recorded grade, record path, `agent_sha256_now`, `agent_sha256_at_eval` |
 | `agent_eval` (staleness) | `git show <record-commit>:agents/<name>.md` hashed; record commit = first commit adding the record dir; if history is unavailable, the last ledger row's `agent_sha256_at_eval` | `agents/<name>.md` | `STALE_EVAL` when hashes differ |
-| `design_verifier` | subprocess `src/design_verifier.py` | `docs/design_map` (the verifier's subject) | `PASS`/`FAIL` from the verdict line, `ERROR` if the line is missing |
+| `design_verifier` | subprocess `src/design_verifier.py` | `results/multiplicity_ledger.jsonl` (the verifier's subject) | `PASS`/`FAIL` from the verdict line, `ERROR` if the line is missing |
 | `ledger_integrity` | subprocess `src/verify_ledger_integrity.py` | `results/run_ledger.jsonl` | `OK`->`PASS`, `FAIL`, `WARN` when warnings > 0 and no fail |
 | `verify_entrypoint` | subprocess each of the five scripts with `--verify` (`pcso_monitoring_run.py` with the refresh manifest) | the script path | `PASS` iff exit 0 and `^PASS sha256=[0-9a-f]{64}`; `detail.sha256` |
 | `pytest` | subprocess the three suites from `check.sh` | suite path | exit 0 -> `PASS`; `detail.summary` = the `N passed` line |
@@ -188,14 +188,15 @@ with one byte changed (REQ-5, REQ-9), captured stdout strings for the slow
 
 | Check | Command | Result |
 |---|---|---|
-| S1 unit suite | `.venv/bin/python -m pytest tests/test_outcome_ledger.py -q` | |
-| S2 unit suite | `.venv/bin/python -m pytest tests/test_outcome_collect.py -q` | |
-| Ledger verify | `.venv/bin/python src/outcome_ledger.py --verify` | |
-| Bootstrap collect | `.venv/bin/python src/outcome_collect.py --all` | |
-| Gate on known defects | `.venv/bin/python src/outcome_collect.py --all --gate; echo $?` | |
-| Altered-definition red | temp edit of `agents/data-reader.md`, `--gate` -> 1, revert | |
-| Full battery | `./tools/check.sh` | |
-| CI | PR checks | |
+| S1 + S2 suites (inside `tests/`) | `.venv/bin/python -m pytest tests/ -q` | `93 passed in 5.14s` (72 before S2) |
+| Ledger verify | `.venv/bin/python src/outcome_ledger.py --verify` | `OUTCOME LEDGER: OK (24 rows) results/outcome_ledger.jsonl` (inside `check.sh`) |
+| Bootstrap collect | `.venv/bin/python src/outcome_collect.py --all --gate` | 24 rows appended in 60.5 s; `1 new defect(s) -- GATE FAIL` (first observation of the defect below, as designed) |
+| Defect surfaced | `.venv/bin/python src/pcso_weekly_update.py --verify` | exit 1: `ValueError: data_draws.csv: expected 252 rows, got 380` -- PR #20 appended 128 draws; the July runner hard-codes its frozen input size. Known open; the M0 webapp `pcso_weekly_verify` job is red for the same cause. |
+| Gate on known defects | `./tools/check.sh` final step | `appended 0 of 24 rows ...; 0 new defect(s)` -- dedup and ratchet hold on the committed ledger |
+| Altered-definition red | `tests/test_outcome_collect.py::test_altered_agent_definition_turns_gate_red` (definition bytes altered in-process, not on disk) | passes: `STALE_EVAL` defect, gate red |
+| Full battery | `./tools/check.sh` | `ALL CHECKS PASSED` |
+| CI, first run (S1-S3) | PR #24 run 34027349516 | macOS green (24 known states, 0 new defects). **Ubuntu red at the R0 gate, as designed**: `src/pcso_next_draw_posterior.py --verify` exit 1 on Linux while it passes on macOS -- the committed posterior JSON is platform-dependent (second real defect surfaced; row adopted from the `outcome-ledger-ubuntu-latest` artifact via `--adopt`, executor `github-actions:34027349516`). The artifact also showed 11 duplicate agent rows caused by the shallow clone (§19 5c), fixed in S4. |
+| CI, after S4 | PR #24 checks | filled at closeout |
 
 ## §17 Open Decisions
 
@@ -223,7 +224,26 @@ with one byte changed (REQ-5, REQ-9), captured stdout strings for the slow
 
 ## §19 Review Consensus
 
-Filled at closeout.
+**Independent-review channel exception.** The Codex read-only review channel
+(`codex:codex-rescue`) is blocked by its preflight gate on this machine (bundle
+components missing, as in the r2/r3 PCSO reviews). Per kernel K-10 the gate was
+not bypassed. A Claude Sonnet read-only review (`general-purpose`, different
+instance and tier from the Fable author) was used instead; a different-family
+review remains owed and is ledgered for R3 (`C7`/`C8`).
+
+| # | Finding (Sonnet, verified by execution) | Disposition | Action |
+|---|---|---|---|
+| 1 | Gate built "known" from every state ever seen, so a defect that flipped to PASS and back to the identical FAIL never tripped the gate again. | ACCEPT | `known = set(latest_keys(prior).values())`; test `test_gate_fails_on_reopened_defect` (FAIL→PASS→FAIL). |
+| 2 | REQ-6 test only covered FAIL→FAIL. | ACCEPT | Same test. |
+| 3 | An uncaught exception in a `--verify` script left the ledger row with evidence `exit 1`; the diagnostic was on stderr. | ACCEPT | `parse_verify_output` falls back to the last non-empty stderr line; bootstrap ledger rebuilt (this PR's own artifact) so the open defect row reads `ValueError: data_draws.csv: expected 252 rows, got 380`. |
+| 4 | One timeout inside the verify or pytest loops discarded the items already collected. | ACCEPT | Per-item `try/except` → one `ERROR` row for that item, the rest kept. |
+| 5a | Plan §8.3 named `docs/design_map`; code uses `results/multiplicity_ledger.jsonl`. | ACCEPT | Plan corrected. |
+| 5b | Dead `PYTEST_RE`. | ACCEPT | Removed. |
+| 5c | Shallow CI clone makes `record_commit` resolve wrongly; staleness untested there. | ACCEPT (found independently from the CI artifact first) | `is_shallow()` → history treated as unavailable → committed-ledger hash used; provenance keys excluded from the state key; test `test_shallow_clone_uses_prior_row_and_still_detects_staleness`. |
+| CI | (own finding from the Ubuntu artifact) A byte-identity verdict is a per-platform observation; one slot per script would let macOS PASS and Linux FAIL overwrite each other and re-trip the gate on every run. | ACCEPT | `detail.subject = sys.platform` on `verify_entrypoint` and `pytest` rows; test `test_platform_is_the_slot_for_verify_and_pytest_rows`; `--adopt` added so CI-observed rows can be merged into the committed ledger with their CI executor identity. |
+
+Verdict before fixes: MERGE-WITH-FIXES. All fixes applied in slice S4; suite
+98 passed.
 
 ## §20 Lessons Encoded
 

@@ -166,6 +166,21 @@ def test_dedup_slot_includes_detail_subject(tmp_path):
     assert len(OL.read_rows(str(p))) == 2
 
 
+def test_dedup_ignores_provenance_detail_keys(tmp_path):
+    p = tmp_path / "l.jsonl"
+    a = row(source="agent_eval", artifact="agents/x.md", artifact_class="agent",
+            detail={"subject": "V-1", "checks": {"a": True}, "record_commit": "6da211a",
+                    "at_eval_from_prior_row": False})
+    b = row(source="agent_eval", artifact="agents/x.md", artifact_class="agent",
+            detail={"subject": "V-1", "checks": {"a": True}, "record_commit": "7548b95",
+                    "at_eval_from_prior_row": True})
+    assert len(OL.append_rows(str(p), [a])) == 1
+    assert OL.append_rows(str(p), [b]) == []          # same state, different provenance
+    c = row(source="agent_eval", artifact="agents/x.md", artifact_class="agent",
+            detail={"subject": "V-1", "checks": {"a": False}, "record_commit": "7548b95"})
+    assert len(OL.append_rows(str(p), [c])) == 1      # real state change still lands
+
+
 def test_dedup_is_per_source_artifact(tmp_path):
     p = tmp_path / "l.jsonl"
     a = row(artifact="src/a.py", source="verify_entrypoint", artifact_class="instrument")

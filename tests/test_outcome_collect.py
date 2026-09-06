@@ -66,6 +66,24 @@ def test_collect_verify_sources_parse_fixture_stdout(stdout, rc, expect):
     assert len(evidence) <= OL.EVIDENCE_MAX
 
 
+def test_platform_is_the_slot_for_verify_and_pytest_rows(tmp_path, monkeypatch):
+    """A Linux FAIL and a macOS PASS of the same script are different
+    observations: neither may overwrite the other's state or re-trip the gate."""
+    ledger = str(tmp_path / "l.jsonl")
+    linux_fail = OL.make_row("verify_entrypoint", "src/x.py", "instrument", "FAIL", "exit 1",
+                             {"subject": "linux", "exit": 1, "sha256": None, "args": ["--verify"]},
+                             "2026-09-06T10:00:00Z", "abc", "ci")
+    OL.append_rows(ledger, [linux_fail])
+    monkeypatch.setattr(OC, "VERIFY_ENTRYPOINTS", [("src/x.py", ["--verify"])])
+    monkeypatch.setattr(OC, "run_cmd", lambda root, argv: (0, "PASS sha256=" + "c" * 64 + "; wrote=none\n", ""))
+    _, nd = OC.run(["verify_entrypoint"], ledger, gate=True, out=open(os.devnull, "w"))
+    rows = OL.read_rows(ledger)
+    assert nd == [] and len(rows) == 2
+    assert {r["detail"]["subject"] for r in rows} == {"linux", sys.platform}
+    _, nd = OC.run(["verify_entrypoint"], ledger, gate=True, out=open(os.devnull, "w"))
+    assert nd == [] and len(OL.read_rows(ledger)) == 2          # stable on re-run
+
+
 def test_pytest_summary_parser_drops_timing():
     s = OC.parse_pytest_summary("....\n72 passed in 2.77s\n")
     assert s == {"passed": 72, "failed": 0, "errors": 0}
@@ -126,6 +144,60 @@ def test_shallow_history_falls_back_to_prior_row(tmp_path, monkeypatch):
     assert not [r for r in rows if r["signal"] == "INCOMPLETE_RECORD" and "cannot compare" in r["evidence"]]
 
 
+def test_shallow_clone_uses_prior_row_and_still_detects_staleness(tmp_path, monkeypatch):
+    """CI checkouts are shallow: git history must be treated as unavailable so
+    a changed definition is compared with the committed ledger's hash, not
+    with HEAD (which would equal the working tree and mask the change)."""
+    ledger = str(tmp_path / "l.jsonl")
+    OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))          # full-history baseline
+    monkeypatch.setattr(OC, "is_shallow", lambda root: True)
+    calls = []
+    real_show = OC.git_blob_sha256
+    monkeypatch.setattr(OC, "git_blob_sha256", lambda *a: calls.append(a) or real_show(*a))
+    target = os.path.join(REPO, "agents", "data-reader.md")
+    real = OC.read_agent_bytes
+    monkeypatch.setattr(OC, "read_agent_bytes",
+                        lambda p: real(p) + b"x" if os.path.abspath(p) == target else real(p))
+    _, nd = OC.run(["agent_eval"], ledger, gate=True, out=open(os.devnull, "w"))
+    assert calls == [], "shallow clone must not consult git show"
+    rows = OL.read_rows(ledger)
+    assert nd and nd[0]["signal"] == "STALE_EVAL" and nd[0]["artifact"] == "agents/data-reader.md"
+    changed_eval_rows = [r for r in rows if r["artifact"] == "agents/data-reader.md"
+                         and ":staleness" not in r["detail"]["subject"]]
+    assert len(changed_eval_rows) == 2                      # baseline + altered
+    assert changed_eval_rows[-1]["detail"]["at_eval_from_prior_row"] is True
+    assert changed_eval_rows[-1]["detail"]["record_commit"] is None
+    # unchanged definitions did not produce noise rows despite the shallow clone
+    dupes = [r for r in rows if r["artifact"] == "agents/research-scout.md" and ":staleness" not in r["detail"]["subject"]]
+    assert len(dupes) == 1
+
+
+def test_adopt_merges_only_new_states(tmp_path):
+    ledger = str(tmp_path / "l.jsonl")
+    art = str(tmp_path / "ci.jsonl")
+    reg = {"f": fake_source("PASS")}
+    OC.run(["f"], ledger, registry=reg, out=open(os.devnull, "w"))
+    OC.run(["f"], art, registry=reg, out=open(os.devnull, "w"))                 # same state
+    OC.run(["g"], art, registry={"g": fake_source("FAIL", artifact="src/g.py")}, out=open(os.devnull, "w"))
+    # the artifact rows were observed EARLIER than the ledger's last row
+    rows = OL.read_rows(art)
+    for r in rows:
+        r["ts"] = "2026-01-01T00:00:00Z"
+    with open(art, "w") as fh:
+        fh.write("".join(json.dumps(r) + "\n" for r in rows))
+    appended = OC.adopt(ledger, art, out=open(os.devnull, "w"))
+    assert [r["artifact"] for r in appended] == ["src/g.py"]
+    assert len(OL.read_rows(ledger)) == 2
+    assert OL.verify_ledger(ledger) == []                      # ts re-stamped, still monotonic
+    adopted = OL.read_rows(ledger)[-1]
+    assert adopted["ts"] != "2026-01-01T00:00:00Z"
+    assert adopted["executor"] == rows[-1]["executor"]         # observer identity kept
+    assert OC.adopt(ledger, art, out=open(os.devnull, "w")) == []
+    r = subprocess.run([sys.executable, os.path.join(REPO, "src", "outcome_collect.py"),
+                        "--adopt", art, "--ledger", ledger], capture_output=True, text=True, cwd=REPO)
+    assert r.returncode == 0 and "adopted 0 of" in r.stdout
+
+
 # REQ-6 -------------------------------------------------------------------
 
 def test_gate_fails_on_new_defect(tmp_path):
@@ -142,6 +214,25 @@ def test_gate_passes_on_known_defect(tmp_path):
     assert nd == []
     rows = OL.read_rows(ledger)
     assert len(rows) == 1 and rows[0]["signal"] == "FAIL"   # still visible, still open
+
+
+def test_gate_fails_on_reopened_defect(tmp_path):
+    """FAIL -> PASS -> identical FAIL: the third run is a regression and must
+    trip the gate even though that exact state was seen before (review #1)."""
+    ledger = str(tmp_path / "l.jsonl")
+    quiet = open(os.devnull, "w")
+    OC.run(["f"], ledger, gate=True, registry={"f": fake_source("FAIL")}, out=quiet)
+    OC.run(["f"], ledger, gate=True, registry={"f": fake_source("PASS")}, out=quiet)
+    _, nd = OC.run(["f"], ledger, gate=True, registry={"f": fake_source("FAIL")}, out=quiet)
+    assert len(nd) == 1
+    assert len(OL.read_rows(ledger)) == 3
+
+
+def test_verify_evidence_falls_back_to_stderr():
+    signal, sha, evidence = OC.parse_verify_output(
+        "", 1, "Traceback (most recent call last):\n  ...\nValueError: data_draws.csv: expected 252 rows, got 380\n")
+    assert signal == "FAIL" and sha is None
+    assert evidence == "ValueError: data_draws.csv: expected 252 rows, got 380"
 
 
 def test_gate_passes_when_clean(tmp_path):

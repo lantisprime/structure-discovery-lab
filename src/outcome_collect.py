@@ -126,7 +126,17 @@ def git_blob_sha256(root, commit, rel):
     return sha256_bytes(p.stdout) if p.returncode == 0 else None
 
 
+def is_shallow(root):
+    """A shallow clone (CI default) grafts history onto HEAD, so `git log`
+    would attribute every record to HEAD and `git show HEAD:agents/x.md` would
+    equal the working tree even when the definition changed -- staleness would
+    be silently masked. Treat history as unavailable instead."""
+    return git(root, "rev-parse", "--is-shallow-repository") == "true"
+
+
 def record_commit(root, run_dir_rel):
+    if is_shallow(root):
+        return None
     out = git(root, "log", "--diff-filter=A", "--format=%h", "--", run_dir_rel)
     if not out:
         return None
@@ -251,30 +261,39 @@ def source_ledger_integrity(ctx):
 VERIFY_PASS_RE = re.compile(r"^PASS sha256=([0-9a-f]{64})", re.M)
 
 
-def parse_verify_output(stdout, rc):
-    """(signal, sha256, evidence) for a --verify entry point."""
+def parse_verify_output(stdout, rc, stderr=""):
+    """(signal, sha256, evidence) for a --verify entry point. When the script
+    dies with an uncaught exception there is no PASS/FAIL line on stdout, so
+    the evidence falls back to the last non-empty stderr line (the exception
+    message), never to a bare exit code when something better exists."""
     m = VERIFY_PASS_RE.search(stdout)
     first = next((l for l in stdout.splitlines() if l.startswith(("PASS", "FAIL"))), "")
+    last_err = next((l.strip() for l in reversed(stderr.splitlines()) if l.strip()), "")
     if m and rc == 0:
         return "PASS", m.group(1), first[:OL.EVIDENCE_MAX]
     if m and rc != 0:
         return "ERROR", m.group(1), f"PASS line but exit {rc}"
     if rc != 0:
-        return "FAIL", None, (first or f"exit {rc}")[:OL.EVIDENCE_MAX]
+        return "FAIL", None, (first or last_err or f"exit {rc}")[:OL.EVIDENCE_MAX]
     return "ERROR", None, "exit 0 without a PASS sha256 line"
 
 
 def source_verify_entrypoint(ctx):
     rows = []
     for script, args in VERIFY_ENTRYPOINTS:
-        rc, out, err = run_cmd(ctx.root, [PY, script, *args])
-        signal, sha, evidence = parse_verify_output(out, rc)
+        try:
+            rc, out, err = run_cmd(ctx.root, [PY, script, *args])
+        except Exception as e:  # one hung/broken script must not hide the others
+            rows.append(ctx.row("verify_entrypoint", script, "instrument", "ERROR",
+                                f"{type(e).__name__}: {e}"[:OL.EVIDENCE_MAX], {"args": args}))
+            continue
+        signal, sha, evidence = parse_verify_output(out, rc, err)
+        # subject = platform: byte-identity of a result is a per-platform
+        # observation (the Ubuntu CI run first showed this), so each platform
+        # is its own slot and macOS/Linux never overwrite each other's state.
         rows.append(ctx.row("verify_entrypoint", script, "instrument", signal, evidence,
-                            {"exit": rc, "sha256": sha, "args": args}))
+                            {"subject": sys.platform, "exit": rc, "sha256": sha, "args": args}))
     return rows
-
-
-PYTEST_RE = re.compile(r"(?:(\d+) failed)?(?:, )?(?:(\d+) passed)?")
 
 
 def parse_pytest_summary(stdout):
@@ -291,12 +310,17 @@ def parse_pytest_summary(stdout):
 def source_pytest(ctx):
     rows = []
     for name, paths in PYTEST_SUITES:
-        rc, out, err = run_cmd(ctx.root, [PY, "-m", "pytest", *paths, "-q"])
+        try:
+            rc, out, err = run_cmd(ctx.root, [PY, "-m", "pytest", *paths, "-q"])
+        except Exception as e:
+            rows.append(ctx.row("pytest", name, "suite", "ERROR",
+                                f"{type(e).__name__}: {e}"[:OL.EVIDENCE_MAX], {}))
+            continue
         s = parse_pytest_summary(out)
         signal = "PASS" if rc == 0 else "FAIL"
         rows.append(ctx.row("pytest", name, "suite", signal,
                             f"{s['passed']} passed, {s['failed']} failed, {s['errors']} errors (exit {rc})",
-                            {"exit": rc, **s}))
+                            {"subject": sys.platform, "exit": rc, **s}))
     return rows
 
 
@@ -334,7 +358,9 @@ def collect(names, root, prior_rows, registry=None):
 def run(names, ledger, root=ROOT, gate=False, dry_run=False, registry=None, out=sys.stdout):
     """Collect, append, report. Returns (appended_rows, new_defects)."""
     prior = OL.read_rows(ledger)
-    known = {OL.state_key(r) for r in prior}
+    # "known" = the state each slot was in immediately before this run, not
+    # every state ever seen: a defect that was closed and reappears is NEW.
+    known = set(OL.latest_keys(prior).values())
     rows = collect(names, root, prior, registry)
     for r in rows:
         print(f"{r['signal']:17s} {r['source']:17s} {r['artifact']}  {r['evidence']}", file=out)
@@ -351,6 +377,28 @@ def run(names, ledger, root=ROOT, gate=False, dry_run=False, registry=None, out=
     return appended, new_defects
 
 
+def adopt(ledger, artifact_ledger, out=sys.stdout):
+    """Merge rows observed elsewhere (a CI artifact ledger) into `ledger`.
+    Dedup applies, so only genuinely new states land; their executor field
+    keeps naming the CI run that observed them."""
+    rows = OL.read_rows(artifact_ledger)
+    problems = OL.verify_ledger(artifact_ledger)
+    if problems:
+        print("refusing to adopt an invalid ledger:", *problems, sep="\n  ", file=out)
+        return None
+    # `ts` is the time a row entered THIS ledger (monotonic per file, REQ-1);
+    # the observing run is still named by `executor`, and the state key does
+    # not include ts, so re-stamping changes nothing the gate looks at.
+    stamp = now_ts()
+    for r in rows:
+        r["ts"] = stamp
+    appended = OL.append_rows(ledger, rows)
+    for r in appended:
+        print(f"adopted {r['signal']:17s} {r['source']:17s} {r['artifact']}  {r['evidence']}  [{r['executor']}]", file=out)
+    print(f"adopted {len(appended)} of {len(rows)} rows from {artifact_ledger} into {ledger}", file=out)
+    return appended
+
+
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--sources", default="", help="comma list; alias fast")
@@ -358,7 +406,15 @@ def main(argv):
     ap.add_argument("--gate", action="store_true")
     ap.add_argument("--ledger", default=None)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--adopt", default=None, metavar="ARTIFACT_LEDGER",
+                    help="merge rows from another ledger (e.g. a CI artifact) and exit")
     a = ap.parse_args(argv)
+    if a.adopt:
+        ledger = OL.ledger_path(a.ledger)
+        if OL.verify_ledger(ledger):
+            print("refusing to append to an invalid ledger")
+            return 2
+        return 0 if adopt(ledger, a.adopt) is not None else 2
     if a.all:
         names = list(SOURCES)
     else:

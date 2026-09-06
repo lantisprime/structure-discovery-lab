@@ -49,8 +49,14 @@ def severity_for(signal):
     return "defect" if signal in DEFECT_SIGNALS else "info"
 
 
+# Provenance fields inside `detail` that describe HOW the observation was
+# made, not WHAT was observed; they never make a row a new state.
+NON_STATE_DETAIL_KEYS = frozenset({"record_commit", "at_eval_from_prior_row"})
+
+
 def detail_hash(detail):
-    canon = json.dumps(detail, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    state = {k: v for k, v in detail.items() if k not in NON_STATE_DETAIL_KEYS}
+    canon = json.dumps(state, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return hashlib.sha256(canon.encode("utf-8")).hexdigest()
 
 
