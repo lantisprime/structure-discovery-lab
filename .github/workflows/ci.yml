@@ -76,12 +76,24 @@ jobs:
         run: |
           cp results/outcome_ledger.jsonl "$RUNNER_TEMP/outcome_ledger.jsonl"
           LAB_OUTCOME_LEDGER="$RUNNER_TEMP/outcome_ledger.jsonl" .venv/bin/python src/outcome_collect.py --all --gate
+      # R1/R5: attribute new defects observed on this platform (bisection in a temp
+      # worktree, needs full history) and derive lessons; both no-ops when nothing
+      # is new. Rows land in the same runner-temp ledger/lessons artifacts.
+      - name: Outcome attribute (R1) + lessons (R5)
+        if: always()
+        run: |
+          .venv/bin/python src/artifact_registry.py --check-ledger
+          LAB_OUTCOME_LEDGER="$RUNNER_TEMP/outcome_ledger.jsonl" .venv/bin/python src/outcome_attribute.py --new
+          cp results/lessons.jsonl "$RUNNER_TEMP/lessons.jsonl" 2>/dev/null || true
+          LAB_OUTCOME_LEDGER="$RUNNER_TEMP/outcome_ledger.jsonl" LAB_LESSONS="$RUNNER_TEMP/lessons.jsonl" .venv/bin/python src/lab_learn.py --derive
       - name: Upload outcome ledger
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: outcome-ledger-${{ matrix.os }}
-          path: ${{ runner.temp }}/outcome_ledger.jsonl
+          path: |
+            ${{ runner.temp }}/outcome_ledger.jsonl
+            ${{ runner.temp }}/lessons.jsonl
           if-no-files-found: ignore
 
   verify-windows:

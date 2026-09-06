@@ -210,6 +210,18 @@ all stdlib, all read-only except where noted:
   turns it red (the "no eval pass, no dispatch" rule, made mechanical).
   `--sources fast` runs the seconds-long sources only; `--dry-run` prints rows
   without appending.
+- `python3 src/outcome_attribute.py --new` *(R1, 2026-09-07)* — for every new
+  defect, bisects the check in a temporary worktree (or walks the definition's
+  history for a stale eval) and appends an `attribution` row naming
+  `introduced_by`. `python3 src/lab_learn.py --derive` *(R5, minimal)* appends a
+  lesson to `results/lessons.jsonl` for every defect that has since closed.
+- `python3 src/lab_heal.py --new [--push]` *(R4, minimal)* — dispatches a repair
+  agent (headless `claude -p`, model configurable, default sonnet) in a git
+  worktree for each open defect, gates the result with `./tools/check.sh` plus
+  the defect's own check, commits on a `heal/…` branch and, with `--push`,
+  opens the PR. Merging stays human (R3 not yet built). The brief the agent
+  receives carries the ledger row, the attribution, the relevant lessons and
+  the A0/A1–A8 guardrails; `HEAL_NOTES.md` is its report.
 
 These gates are additive to, not a substitute for, the handoff contract and
 cross-executor verification above.

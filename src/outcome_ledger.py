@@ -29,9 +29,14 @@ DEFAULT_LEDGER = os.path.join("results", "outcome_ledger.jsonl")
 
 SCHEMA_VERSION = 1
 SOURCES = ("agent_eval", "design_verifier", "ledger_integrity",
-           "verify_entrypoint", "pytest", "collector")
-ARTIFACT_CLASSES = ("agent", "instrument", "ledger", "design", "suite", "collector")
-SIGNALS = ("PASS", "FAIL", "WARN", "INCOMPLETE_RECORD", "STALE_EVAL", "ERROR")
+           "verify_entrypoint", "pytest", "collector",
+           "attribution",            # R1: who/what introduced a defect
+           "heal")                   # R4: a repair was proposed (PR) or rejected by the gate
+ARTIFACT_CLASSES = ("agent", "instrument", "ledger", "design", "suite", "collector",
+                    "theorem_card", "adapter_manifest")
+SIGNALS = ("PASS", "FAIL", "WARN", "INCOMPLETE_RECORD", "STALE_EVAL", "ERROR",
+           "ATTRIBUTED",             # R1: info row naming introduced_by
+           "PROPOSED", "REJECTED")   # R4: healer outcome for one defect (info; the defect row stays)
 DEFECT_SIGNALS = ("FAIL", "STALE_EVAL", "ERROR")
 SEVERITIES = ("info", "defect")
 EVIDENCE_MAX = 300
