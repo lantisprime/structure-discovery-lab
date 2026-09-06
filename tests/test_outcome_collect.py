@@ -9,6 +9,7 @@ stdout so this suite stays seconds long and never recurses into itself.
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -26,6 +27,20 @@ def load(name):
 
 OC = load("outcome_collect")
 OL = OC.OL
+
+
+@pytest.fixture
+def seeded_ledger(tmp_path):
+    """A scratch ledger seeded from the committed one, exactly as CI seeds its
+    runner-temp copy. Needed wherever a test relies on definition hashes at
+    eval time: in a shallow checkout (CI default) git history is unavailable
+    and the collector must fall back to the hashes the committed ledger
+    carries -- the same path production takes."""
+    src = os.path.join(REPO, "results", "outcome_ledger.jsonl")
+    dst = tmp_path / "seeded.jsonl"
+    if os.path.exists(src):
+        shutil.copy(src, dst)
+    return str(dst)
 
 
 def fake_source(signal, artifact="src/fake.py", detail=None):
@@ -93,8 +108,8 @@ def test_pytest_summary_parser_drops_timing():
 
 # REQ-5 -------------------------------------------------------------------
 
-def test_no_stale_row_when_hashes_match(tmp_path):
-    ledger = str(tmp_path / "l.jsonl")
+def test_no_stale_row_when_hashes_match(seeded_ledger):
+    ledger = seeded_ledger
     OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
     rows = OL.read_rows(ledger)
     stale = [r for r in rows if r["signal"] == "STALE_EVAL"]
@@ -105,7 +120,7 @@ def test_no_stale_row_when_hashes_match(tmp_path):
                for r in with_hashes)
 
 
-def test_stale_eval_detected_when_definition_changes(tmp_path, monkeypatch):
+def test_stale_eval_detected_when_definition_changes(seeded_ledger, monkeypatch):
     target = os.path.join(REPO, "agents", "data-reader.md")
     real = OC.read_agent_bytes
 
@@ -113,7 +128,7 @@ def test_stale_eval_detected_when_definition_changes(tmp_path, monkeypatch):
         b = real(path)
         return b + b"\n<!-- altered by test -->\n" if os.path.abspath(path) == target else b
     monkeypatch.setattr(OC, "read_agent_bytes", altered)
-    ledger = str(tmp_path / "l.jsonl")
+    ledger = seeded_ledger
     OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
     stale = [r for r in OL.read_rows(ledger) if r["signal"] == "STALE_EVAL"]
     assert stale and all(r["artifact"] == "agents/data-reader.md" for r in stale)
@@ -121,8 +136,8 @@ def test_stale_eval_detected_when_definition_changes(tmp_path, monkeypatch):
     assert os.path.exists(target) and b"altered by test" not in real(target)
 
 
-def test_altered_agent_definition_turns_gate_red(tmp_path, monkeypatch):
-    ledger = str(tmp_path / "l.jsonl")
+def test_altered_agent_definition_turns_gate_red(seeded_ledger, monkeypatch):
+    ledger = seeded_ledger
     # baseline: clean run, gate green
     _, nd = OC.run(["agent_eval"], ledger, gate=True, out=open(os.devnull, "w"))
     assert nd == []
@@ -134,8 +149,8 @@ def test_altered_agent_definition_turns_gate_red(tmp_path, monkeypatch):
     assert nd and nd[0]["signal"] == "STALE_EVAL"
 
 
-def test_shallow_history_falls_back_to_prior_row(tmp_path, monkeypatch):
-    ledger = str(tmp_path / "l.jsonl")
+def test_shallow_history_falls_back_to_prior_row(seeded_ledger, monkeypatch):
+    ledger = seeded_ledger
     OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
     monkeypatch.setattr(OC, "git_blob_sha256", lambda *a: None)
     OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
@@ -144,12 +159,12 @@ def test_shallow_history_falls_back_to_prior_row(tmp_path, monkeypatch):
     assert not [r for r in rows if r["signal"] == "INCOMPLETE_RECORD" and "cannot compare" in r["evidence"]]
 
 
-def test_shallow_clone_uses_prior_row_and_still_detects_staleness(tmp_path, monkeypatch):
+def test_shallow_clone_uses_prior_row_and_still_detects_staleness(seeded_ledger, monkeypatch):
     """CI checkouts are shallow: git history must be treated as unavailable so
     a changed definition is compared with the committed ledger's hash, not
     with HEAD (which would equal the working tree and mask the change)."""
-    ledger = str(tmp_path / "l.jsonl")
-    OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))          # full-history baseline
+    ledger = seeded_ledger
+    OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))          # baseline (seeded, as CI is)
     monkeypatch.setattr(OC, "is_shallow", lambda root: True)
     calls = []
     real_show = OC.git_blob_sha256
