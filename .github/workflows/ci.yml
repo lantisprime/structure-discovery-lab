@@ -79,6 +79,26 @@ jobs:
           path: ${{ runner.temp }}/outcome_ledger.jsonl
           if-no-files-found: ignore
 
+      # DIAG (branch diag/posterior-linux-bytes, do not merge): regenerate the
+      # posterior JSON on this runner and upload it so the Linux/macOS byte
+      # difference (R0 known defect 2) can be diffed offline.
+      - name: DIAG regenerate posterior JSON
+        if: always()
+        run: |
+          .venv/bin/python src/pcso_next_draw_posterior.py > "$RUNNER_TEMP/posterior_stdout.txt" 2>&1 || true
+          cp results/pcso_next_draw_posterior_2026-09-06.json "$RUNNER_TEMP/posterior_${{ matrix.os }}.json"
+          .venv/bin/python -c "import numpy, sys, platform; print(numpy.__version__, sys.version, platform.machine())" > "$RUNNER_TEMP/posterior_env_${{ matrix.os }}.txt"
+          git checkout -- results/pcso_next_draw_posterior_2026-09-06.json
+      - name: DIAG upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: posterior-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/posterior_${{ matrix.os }}.json
+            ${{ runner.temp }}/posterior_stdout.txt
+            ${{ runner.temp }}/posterior_env_${{ matrix.os }}.txt
+
   verify-windows:
     # Informational only (continue-on-error): Windows is not a supported lab
     # platform, but the installer handles its paths — this job reports drift.
