@@ -55,7 +55,7 @@ def broken_repo(tmp_path):
 def fake_agent(tmp_path, body):
     p = tmp_path / "fake_agent.py"
     p.write_text("import sys\nbrief = sys.stdin.read()\n" + body)
-    return f"{sys.executable} {p}"
+    return f'"{sys.executable}" "{p.as_posix()}"'
 
 
 OK_GATE = f'{sys.executable} -c "import sys; sys.exit(0)"'

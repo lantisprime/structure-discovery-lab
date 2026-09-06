@@ -164,7 +164,7 @@ class HealWorktree:
 def dispatch_agent(wt, brief, model, max_turns, agent_cmd=None):
     cmd = (agent_cmd or os.environ.get("LAB_HEAL_AGENT_CMD") or DEFAULT_AGENT_CMD).format(
         model=model, max_turns=max_turns)
-    argv = shlex.split(cmd)
+    argv = shlex.split(cmd, posix=(os.name != "nt"))  # keep Windows backslash paths intact
     with open(os.path.join(wt, "HEAL_BRIEF.md"), "w", encoding="utf-8") as fh:
         fh.write(brief)
     try:
@@ -179,7 +179,7 @@ def dispatch_agent(wt, brief, model, max_turns, agent_cmd=None):
 def gate(wt, defect, gate_cmd=None):
     """(ok, summary). ok iff the gate command exits 0 AND the defect's own check passes."""
     cmd = gate_cmd or os.environ.get("LAB_HEAL_GATE_CMD") or DEFAULT_GATE_CMD
-    rc, out, err = sh(shlex.split(cmd), wt, timeout=1800)
+    rc, out, err = sh(shlex.split(cmd, posix=(os.name != "nt")), wt, timeout=1800)
     tail = "\n".join((out + err).strip().splitlines()[-6:])
     if rc != 0:
         return False, f"gate exit {rc}: {tail}"
