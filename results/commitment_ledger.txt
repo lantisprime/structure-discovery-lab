@@ -947,3 +947,26 @@ f8232b7a52cff46d  ./docs/THEOREM_SYNTHESIS.md
 216cfb04f98ef2fc  ./src/pcso_strategy_backtest.py
 11978ce0d866e85d  ./src/verify_relational_docs.py
 29727f6448e15228  ./webapp/test_server.py
+# Snapshot 2026-09-06T04:41:07+00:00 — PCSO refresh 2026-09-06 r2: codex gpt-6-astra review applied (product-weight posterior, HC1+Holm, conditional null), picker v2.1
+# chain-prev: 17434fc283e9744f8d67efe992ab391e362e4c89d46a52ebc001d7e7f12b33d6
+# (20 changed of 486 tracked files; hashed BEFORE any run script executes)
+e3b0c44298fc1c14  ./.checkpoints/.post-checkpoint-required.d6b3e0b7-918a-4043-8669-44e8c86d2bfb
+54308ecb77b92406  ./.checkpoints/classify/02fbb56385433e2e610f0dfb8d45996c07adc1bc138d0caafc42d668bcf504d0.json
+808a8979ccb3df21  ./.checkpoints/classify/34941acad781fbbc436de90dbb6271c54ff08dc1dad322e55a279c456d12c988.json
+9c825c26a0131548  ./.checkpoints/classify/7cdf4b61f85875faa3768ee6f2ebe12c04e8b865e63b94a2b4207f386a84dc30.json
+5c50ecaa0f0627cc  ./.checkpoints/classify/9bd9003753d57e93fe9c5c6e0deea61587e7ad2e595cd9a8a454bde2c0a51f3f.json
+1b598297c7c112c0  ./.checkpoints/classify/ae79e9388a613b8245669bae5336982457a80723e0cec2690271c8fa7c1ee3a8.json
+b24a7e70997e01b5  ./.checkpoints/classify/c325ddb2e1e27cc0357ac7750838e8348712b4eaed55ae2ffe8f9553b4afd559.json
+68f4051969fce9da  ./.checkpoints/classify/c9a7b09855a03d9f88464bf60b333caefb22e0c8d9b7ceabea5791d8425ce818.json
+6a8298fce5e83992  ./.checkpoints/gate-log.jsonl
+ad8f4eb432421884  ./bundles/codex-review-channel-current.md
+e8c40c82303de614  ./docs/RESEARCH_NOTES.md
+28a9c97c1ac5206b  ./docs/RESULTS_PCSO_REFRESH_2026-09-06.md
+68cb44d817ae0384  ./docs/THEOREM_SYNTHESIS.md
+9468440961907aed  ./docs/kb/conscious-selection-popularity.md
+53a92c8d711e277e  ./lotto_picker.html
+7b224ca5c0ff84b8  ./src/csi_popularity.py
+afdda35d1dfb99d7  ./src/pcso_monitoring_run.py
+1aee10d7115a2ddd  ./src/pcso_next_draw_posterior.py
+b14d963020de545b  ./src/pcso_strategy_backtest.py
+c7222962bf8dba10  ./src/verify_relational_docs.py

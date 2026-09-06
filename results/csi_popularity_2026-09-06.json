@@ -191,17 +191,29 @@
       "m_perm": 19999,
       "p_floor": 5e-05
     },
-    "poisson_glm_descriptive": {
-      "model": "winners ~ game fixed effects + z_csi(within game) + log jackpot (centred within game)",
+    "poisson_glm": {
+      "model": "winning bets ~ game fixed effects + z_csi(within game) + log jackpot (centred within game); Poisson pseudo-MLE, HC1 sandwich inference",
       "beta_z_csi": 0.5185,
-      "se_z_csi": 0.075,
-      "wald_z_csi": 6.91,
+      "se_hc1_z_csi": 0.0771,
+      "wald_z_hc1": 6.72,
+      "se_poisson_information_z_csi_descriptive_only": 0.075,
+      "count_ratio_per_sd_csi": 1.68,
+      "count_ratio_per_sd_95ci_hc1": [
+        1.444,
+        1.954
+      ],
       "beta_log_jackpot": 0.3277,
-      "se_log_jackpot": 0.1522,
+      "se_hc1_log_jackpot": 0.192,
       "dispersion": 2.226,
-      "sharing_multiplier_top_vs_bottom_tertile": 2.84
+      "exposure_caveat": "ticket sales N_t are not published; the coefficient is a count contrast at equal game/jackpot, not popularity per purchased bet",
+      "descriptive_tertile_contrast_exp_beta_dz": 2.84
     },
-    "csi_tertiles_within_game": {
+    "holm_adjusted_p": {
+      "T1": 0.0001,
+      "T2": 0.0001,
+      "family_alpha": 0.05
+    },
+    "csi_tertiles_within_game_descriptive": {
       "low": {
         "draws": 397,
         "share_with_winner": 0.0504,
@@ -349,12 +361,12 @@
     "family": {
       "family_id": "payout-sharing",
       "within_run_m": 2,
-      "sidak_alpha": 0.02532,
+      "correction": "Holm",
       "grade": "G0 exploratory (weights declared before this run; no confirmation set yet)"
     },
-    "power": {
-      "alternative": "Poisson slope = observed beta_csi",
-      "alpha": 0.02532,
+    "power_model_conditional": {
+      "alternative": "Poisson slope = observed beta_csi (post hoc; not independent validation)",
+      "alpha": 0.025,
       "trials": 500,
       "power_T1": 1.0
     },

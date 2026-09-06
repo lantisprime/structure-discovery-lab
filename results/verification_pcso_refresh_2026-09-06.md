@@ -9,11 +9,23 @@ Executor: Claude Fable 5.1 session (`claude-fable-5-1`) that also authored `src/
 The checks below are mechanical same-session verification, **not** the independent executor the
 cross-model rule requires. All three runs remain **G0 exploratory**.
 
-Cross-model execute-only re-run: dispatched to a Claude Haiku 4.5 subagent (`claude-haiku-4-5-20251001`)
-with the three `--verify` commands; the dispatch **terminated before running** (API rate limit, HTTP 429,
-request id `req_011CemHsFk6JmH4VNXnDQaHW`, 2026-09-06 ~09:50 Asia/Manila). **Cross-model check pending**
-— the exact commands are in `docs/RESULTS_PCSO_REFRESH_2026-09-06.md` §6; any different model instance
-running them and reporting `PASS sha256=…; wrote=none` for all three closes this item.
+Cross-model execute-only re-run: a Claude Haiku 4.5 dispatch (`claude-haiku-4-5-20251001`) with the
+three `--verify` commands **terminated before running** (API rate limit, HTTP 429, request id
+`req_011CemHsFk6JmH4VNXnDQaHW`, 2026-09-06 ~09:50 Asia/Manila).
+
+Cross-model mathematical review (r2, ~11:55–12:30 Asia/Manila): **Codex gpt-6-astra** (OpenAI Codex
+CLI, `--sandbox read-only`, files edited: 0) reviewed the four scripts and the draft predictor,
+reconstructed the CSI first-run values and the backtest means from the data (its report states
+"CSI `--verify` passed; reconstructed backtest means matched stored results"), and computed the
+product-weight posterior, Bayes factors and order-1 tests independently; after the review was applied,
+`src/pcso_next_draw_posterior.py` agrees with its numbers to three decimals (RESULTS §8). Report:
+`results/codex_review_2026-09-06.md`. This satisfies the different-model-family requirement for the
+CSI instrument and the posterior predictor; a separate-instance byte re-run of the monitoring and
+backtest `--verify` commands remains the open item.
+
+r2 two-run SHA-256 (after applying the review): `csi_popularity` `a1af7008d0d5c980…`,
+`pcso_strategy_backtest` `67ddd1d039711995…`, `pcso_confirmation` `a2a4309bc58b97d6…` (within-game
+lunar variant added), `pcso_next_draw_posterior` `e9308ba0252709f3…`.
 
 ## Checks (same session)
 

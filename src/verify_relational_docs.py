@@ -254,11 +254,13 @@ LIVE = [r for r in T if 'superseded_by' not in r and not r.get('exploratory')]
 # payout-sharing x2, strategy-backtest x7); live rows and global_m unchanged at 195.
 # The meta panel (results/meta_uniformity.json) predates them and still reports the
 # 7-row exploratory stratum of its own run — rerun the panel to refresh that count.
-chk('ledger rows', len(L), 280)
-chk('ledger test rows', len(T), 276)
+# r2 (same day, after the codex review): the 9 rows were superseded by 9 corrected rows.
+chk('ledger rows', len(L), 289)
+chk('ledger test rows', len(T), 285)
 chk('ledger live test rows', len(LIVE), 195)
-chk('ledger exploratory rows', sum(1 for r in T if r.get('exploratory')), 16)
-chk('ledger exploratory rows: 2026-09-06 refresh', sum(1 for r in T if r.get('run_id') == 'pcso_refresh_2026_09_06'), 9)
+chk('ledger exploratory rows', sum(1 for r in T if r.get('exploratory')), 25)
+chk('ledger exploratory rows: 2026-09-06 refresh (superseded)', sum(1 for r in T if r.get('run_id') == 'pcso_refresh_2026_09_06' and r.get('superseded_by') == 'pcso_refresh_2026_09_06_r2'), 9)
+chk('ledger exploratory rows: 2026-09-06 refresh r2', sum(1 for r in T if r.get('run_id') == 'pcso_refresh_2026_09_06_r2'), 9)
 chk('ledger charge rows', len(L) - len(T), 4)
 chk('ledger global_m pinned', {r.get('global_m') for r in LIVE}, {195})
 chk('ex-suspicious lmax row at m=399 (review B1)',

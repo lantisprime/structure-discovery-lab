@@ -254,6 +254,18 @@
       "expected": 4.036364,
       "p_two_sided": 0.427453,
       "flag": false
+    },
+    "pearson_permutation_20000_within_game_variant": {
+      "mean_drawn_vs_moon_altitude": {
+        "r": -0.015379,
+        "p_within_game": 0.835708,
+        "n": 186
+      },
+      "mean_drawn_vs_moon_illumination": {
+        "r": 0.004786,
+        "p_within_game": 0.952002,
+        "n": 186
+      }
     }
   },
   "flags": [],

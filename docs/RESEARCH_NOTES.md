@@ -233,10 +233,17 @@ per Part 3: null trial caught a pool-size confound (pooled T1 null mean +0.004, 
 statistics re-specified within game before any real-data claim; first run: winner draws sit +0.74
 sd higher on the popularity proxy (perm. p=5e-05, floor), rank corr +0.16 (p=1e-04), top-tertile
 draws share jackpots 2.8× as often — a statement about players, not the machine; G0 exploratory.
-Draw-paired backtest of eight selection rules (834 draws, sign-flip null, m=7): no rule changes
-P(match); one flag (the old four-filter picker, p=0.0061) traced to this year's above-31 marginal
-excess (z=+2.12, n.s.) and charged once with the chi-square class. Literature scan (sourced brief,
-2026-09-06): no peer-reviewed method beats chance on a physical draw; PRNG-recovery results
-(Mersenne Twister, 2024–25 transformer work) apply only to software RNGs. Web picker rebuilt on
-these outputs: CSPRNG uniform + CSI-filtered disjoint pair, official Feb-2026 prize matrix, Poisson
-co-winner split with the exploratory sharing multiplier; P(win) unchanged and stated as such.
+Draw-paired backtest of eight selection rules (834 draws; r2: conditional Monte Carlo null with the
+generated tickets fixed, Holm over 7): no rule differs from uniform (min Holm p 0.055); the first-pass
+sign-flip null and its "one flag charged once" reading were withdrawn after an independent read-only
+mathematical review by Codex gpt-6-astra (results/codex_review_2026-09-06.md), which was applied in
+full: HC1 sandwich inference and Holm in the popularity instrument (count ratio per SD 1.68
+[1.44, 1.95]); a product-weight 6-without-replacement posterior predictor with a fixed Dirichlet(100)
+prior replacing a Dirichlet-multinomial/empirical-Bayes draft (results §8: maximum-predictive sets
+carry R 1.48–1.64 with credible intervals reaching 1; BF₀₁ 0.22–0.95 at a=100, 46–6976 at a=10;
+model-averaged 1.25–1.52; order-1 overlap tests null at Bonferroni 0.01). Literature scan (sourced
+brief, 2026-09-06): no peer-reviewed method beats chance on a physical draw; PRNG-recovery results
+(Mersenne Twister, 2024–25 transformer work) apply only to software RNGs. Web picker v2.1: posterior
+maximum-predictive tickets with R, CrI, R_mix and BF₀₁ per game, plus the CSPRNG low-popularity pair,
+official Feb-2026 prize matrix, Poisson co-winner split; P(win) under the uniform model unchanged
+and stated as such.

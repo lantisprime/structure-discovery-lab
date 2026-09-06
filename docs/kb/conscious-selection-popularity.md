@@ -41,10 +41,12 @@ play-slip position effects (Polin et al. 2021 found first-row numbers most popul
 PCSO slip layout has not been measured).
 
 **Finite-sample cautions**: one year of official data (984 draws, 77 draws with ≥1 winning bet,
-94 winning bets) — the observable effect is a contrast between the top CSI tertile and the rest,
-not a calibrated q(c). Winner counts are overdispersed relative to Poisson (Baker & McHale 2009
-predict exactly this under conscious selection), so Wald z from the Poisson GLM is descriptive; the
-permutation p-values are the inferential statement. Multiple-bet inflation (e.g. 10 winning bets on
+94 winning bets) — the observable effect is a count contrast per within-game SD of CSI at equal game
+and jackpot, not a calibrated q(c) per purchased bet (ticket sales N are not published, so exposure
+cannot enter the mean). Winner counts are overdispersed relative to Poisson (Baker & McHale 2009
+predict exactly this under conscious selection), so inference on the Poisson pseudo-MLE uses the HC1
+sandwich covariance, never the information matrix; the two permutation p-values are corrected by
+Holm (Šidák is not guaranteed under dependence). Pooled tertile contrasts are descriptive only. Multiple-bet inflation (e.g. 10 winning bets on
 6/58 2026-05-05 for a low-CSI combination, CSI 0.09) adds noise that cannot be separated from
 popularity. Weights were fixed from the literature before the first run; they must not be tuned on
 these 984 draws — any refit is a new instrument requiring a fresh card and a held-out set.
@@ -89,6 +91,8 @@ only: its output never feeds detection. C9/C10 not relational.
 
 **Use in this project**: EXPLORATORY (G0) decision-layer instrument, first run 2026-09-06 on 984
 official draws (`results/csi_popularity_2026-09-06.json`, `docs/RESULTS_PCSO_REFRESH_2026-09-06.md`).
-The web picker uses the same CSI (parity vectors in the results JSON) to reject the top 60% most
-popular candidate tickets; this changes expected payout only, never P(win), and the picker says so.
+First-run result (r2, after the codex gpt-6-astra review in `results/codex_review_2026-09-06.md`):
+T1 = +0.736 sd, T2 = +0.162, Holm p = 1e-04 for both; count ratio per SD of CSI 1.68 [1.44, 1.95]
+(HC1). The web picker uses the same CSI (parity vectors in the results JSON) to reject the top 60%
+most popular candidate tickets; this changes expected payout only, never P(win), and the picker says so.
 Promotion to a confirmation family requires a reset boundary and fresh draws (Step 8).

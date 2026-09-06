@@ -1,7 +1,9 @@
 # RESULTS — PCSO refresh 2026-09-06: official data, monitoring, conscious-selection instrument, strategy backtest
 
 Grade: **G0 exploratory** throughout (no REGISTRATION_*.md was opened; nothing here enters the
-confirmation family). Executor: Claude Fable 5.1 session (author of the three scripts); verification:
+confirmation family). **Revision r2 (same day):** an independent read-only mathematical review by
+Codex gpt-6-astra (`results/codex_review_2026-09-06.md`) was applied in full — see §3, §4 and §8;
+the superseded first-pass values are kept in the ledger with `superseded_by`. Executor: Claude Fable 5.1 session (author of the three scripts); verification:
 two-run byte-identical for every output, cross-model execute-only re-run recorded in
 `results/verification_pcso_refresh_2026-09-06.md`. Commitment snapshot before execution:
 `results/commitment_ledger.txt` digest `83b4bcdc3df1ad58…` (pre-run); a closeout snapshot follows.
@@ -47,35 +49,34 @@ without a sequential alpha-spending rule.
 Script `src/pcso_strategy_backtest.py`, 834 draws after a 30-draw warm-up, 2 tickets per play,
 300 replicates per draw for the three pickers (100 for the "prediction" rules), seed 20260906.
 Unit of independence = the draw (replicate tickets scored on one draw are correlated through it);
-statistic = mean per-draw difference in matches per ticket versus the uniform-disjoint baseline on
-the **same** draws; p from a sign-flip permutation (m=9,999, floor 1e-4); Šidák α for m=7 = 0.0073.
-Output `results/pcso_strategy_backtest_2026-09-06.json` (SHA-256 `b5195e2023828dc4…`).
+statistic = D_t = Σᵢ a_{t,i} X_{t,i}, the per-draw difference in mean matches per ticket versus the
+uniform-disjoint baseline on the **same** draws, with a = q_s − q₀ the difference in ticket inclusion
+fractions. **Null (r2, codex review §6):** conditional on the generated tickets, uniform draws give
+E[D_t]=0 and Var₀(D_t) = 6(P−6)/(P(P−1))·Σᵢ a²_{t,i}; calibration regenerates the 834 draws uniformly
+9,999 times with the tickets held fixed (add-one MC p, floor 1e-4). The sign-flip null of the first
+pass was withdrawn (E[D_t]=0 does not imply sign symmetry). Multiplicity: **Holm** over the 7 rules.
+Output `results/pcso_strategy_backtest_2026-09-06.json` (SHA-256 `67ddd1d039711995…`).
 
-| Strategy | mean matches/ticket (H₀ 0.7333) | Δ vs uniform, same draws | z | p | P(≥3) obs / H₀ |
+| Strategy | mean matches/ticket (H₀ 0.7333) | Δ vs uniform, same draws | conditional-null z | MC p | Holm p |
 |---|---|---|---|---|---|
-| uniform disjoint pair (baseline) | 0.7320 | — | — | — | 0.01902 / 0.01925 |
-| picker v1 (four pattern filters, the previous web page) | 0.7360 | +0.0040 | +2.71 | **0.0061** | 0.01929 / 0.01925 |
-| picker v2 (CSI-filtered, this page) | 0.7401 | +0.0081 | +2.45 | 0.0139 | 0.01961 / 0.01925 |
-| hot top-6 (trailing 50 draws) | 0.7440 | +0.0120 | +0.75 | 0.46 | 0.01785 / 0.01925 |
-| cold bottom-6 (trailing 50) | 0.6912 | −0.0408 | −2.58 | 0.0101 | 0.01766 / 0.01925 |
-| overdue (longest gap) | 0.7310 | −0.0010 | −0.06 | 0.95 | 0.01833 / 0.01925 |
-| repeat last draw | 0.7285 | −0.0035 | −0.30 | 0.77 | 0.02029 / 0.01925 |
-| Markov order-1 pair proxy | 0.7390 | +0.0070 | +0.42 | 0.67 | 0.02172 / 0.01925 |
+| uniform disjoint pair (baseline) | 0.7320 | — | — | — | — |
+| picker v1 (four pattern filters, the previous web page) | 0.7360 | +0.0040 | +2.66 | 0.0078 | 0.055 |
+| picker v2 (CSI-filtered) | 0.7401 | +0.0081 | +2.46 | 0.0134 | 0.067 |
+| hot top-6 (trailing 50 draws) | 0.7440 | +0.0120 | +0.74 | 0.46 | 1 |
+| cold bottom-6 (trailing 50) | 0.6912 | −0.0408 | −2.54 | 0.0106 | 0.064 |
+| overdue (longest gap) | 0.7310 | −0.0010 | −0.06 | 0.96 | 1 |
+| repeat last draw | 0.7285 | −0.0035 | −0.31 | 0.76 | 1 |
+| Markov order-1 pair proxy | 0.7390 | +0.0070 | +0.43 | 0.66 | 1 |
 
 Best result in 1.67 million backtested tickets: one 5-match (three strategies), never a jackpot.
 Fixed 3-match return ₱0.67–0.92 per ₱25 ticket.
 
-**One flag** (picker v1, p = 0.0061 < 0.0073). A3/A4 trace before reporting: the v1 and v2 filters
-push tickets toward numbers above 31, and in this sample the drawn numbers above 31 exceed their
-expectation (1,912 vs 1,844.4, z = +2.12, itself not significant); the per-draw v1 and v2 differences
-correlate at 0.40 (same driving rows), while cold does not share them (0.07). The registered per-game
-chi-square on the same confirmation draws is null (§2), so this is the marginal-frequency
-fluctuation of one year seen through a filter that happens to lean on it — **charged once as the
-marginal-frequency class, not as evidence of an exploitable edge**; per A4 it stands as an
-exploratory flag that only a fresh-draw replication can promote or dissolve. No "prediction" rule
-(hot, cold, overdue, repeat, Markov) differs from uniform. Power statement: with 834 paired draws the
-test detects a shift of ≈0.004 matches/ticket at z≈2.7, i.e. effects an order of magnitude smaller
-than any that would matter for payout.
+**Verdict: no rule differs from uniform after Holm (min Holm p = 0.055).** Descriptive trace,
+retained without any multiplicity charge: the v1/v2 filters lean on numbers above 31, which this
+sample over-drew (1,912 vs 1,844.4 expected, z = +2.12); per-draw v1/v2 differences correlate at
+0.40, v1/cold at 0.07. The first pass's "charged once as one equivalence class" reading was withdrawn
+per the review: these correlations do not establish a single hypothesis. Power: with 834 paired
+draws the conditional-null test resolves shifts of ≈0.004 matches/ticket at |z|≈2.7.
 
 ## 4. Conscious-selection instrument — first run (kb card 28, family `payout-sharing`, m=2)
 
@@ -90,20 +91,23 @@ independent of the combination): T1 null mean 0.0010, sd 0.112 (499 distinct val
 0.0002, sd 0.031 — non-degenerate, centred on theory. C3 null correlation with the chi-square
 frequency statistic on the same simulated draws: −0.03 / −0.05 (new equivalence class).
 
-Step 6 first run (winners permuted within game, m=19,999, floor 5e-5; Šidák α for m=2 = 0.0253):
+Step 6 first run (winners permuted within game, m=19,999, floor 5e-5; **Holm** over m=2 — Šidák
+withdrawn per review §5):
 
-| Statistic | observed | null (Step 4) | z | perm. p |
-|---|---|---|---|---|
-| T1: mean within-game-standardized CSI, winner draws − winner-less draws | **+0.736 sd** | 0.001 ± 0.112 | 6.6 | **5e-05 (floor)** |
-| T2: rank correlation (within-game CSI rank, winning bets) | **+0.162** | 0.000 ± 0.031 | 5.2 | **1e-04** |
+| Statistic | observed | null (Step 4) | z | perm. p | Holm p |
+|---|---|---|---|---|---|
+| T1: mean within-game-standardized CSI, winner draws − winner-less draws | **+0.736 sd** | 0.001 ± 0.112 | 6.6 | 5e-05 (floor) | **1e-04** |
+| T2: rank correlation (within-game CSI rank, winning bets) | **+0.162** | 0.000 ± 0.031 | 5.2 | 1e-04 | **1e-04** |
 
-Descriptive Poisson GLM with game fixed effects: winning bets ∝ exp(0.52 ± 0.075 · z_CSI) (Wald
-z 6.9), log-jackpot slope +0.33 ± 0.15 (bigger jackpots, more bets, as expected), dispersion 2.2
-(overdispersed, as Baker & McHale predict). Within-game tertiles of CSI: share of draws with a
-winner 5.0% / 5.8% / **13.5%** (bottom / middle / top); winning bets per draw 0.050 / 0.089 / 0.162;
-top-vs-bottom sharing multiplier ≈ **2.8×**. Power at the observed slope: 1.00.
+Poisson pseudo-MLE with game fixed effects, **HC1 sandwich** inference (information-matrix SE
+retained as descriptive only): winning bets ∝ exp(0.519 · z_CSI), HC1 SE 0.077 (Wald z 6.7),
+**count ratio per within-game SD of CSI 1.68 [1.44, 1.95]**; log-jackpot slope +0.33 (HC1 SE 0.19);
+dispersion 2.2 (overdispersed, as Baker & McHale predict). Ticket sales N_t are not published, so
+this is a count contrast at equal game and jackpot, not popularity per purchased bet. Within-game
+tertiles, descriptive only: share of draws with a winner 5.0% / 5.8% / 13.5% (bottom / middle / top).
+Model-conditional post-hoc power at the observed slope: 1.00 (not independent validation).
 
-**Verdict: both tests reject at the floor — the popularity proxy predicts jackpot sharing on PCSO
+**Verdict: both tests reject after Holm — the popularity proxy predicts jackpot sharing on PCSO
 data.** This is a statement about *players*, not about the draw (A7: decision layer only). It changes
 expected payout, never P(win). Caveats (card 28): winners are winning *bets* (one bettor can hold
 several), only the jackpot tier is observable, weights are literature proxies that were fixed before
@@ -128,5 +132,39 @@ Promotion (Step 8) requires a reset boundary and fresh draws.
 .venv/bin/python src/pcso_monitoring_run.py --manifest datasets/pcso-lotto/provenance/pcso_refresh_2026-09-06.json --verify
 .venv/bin/python src/csi_popularity.py --verify
 .venv/bin/python src/pcso_strategy_backtest.py --verify
+.venv/bin/python src/pcso_next_draw_posterior.py --verify
 ```
 Each prints `PASS sha256=…; wrote=none` when the regenerated bytes equal the committed file.
+
+## 7. Monitoring addendum (r2)
+
+Within-game permutation variant of the two lunar tests (review §7: permute within game, not
+globally), reported beside the registered global-permutation family without altering it:
+moon altitude r = −0.015, p = 0.836; moon illumination r = +0.005, p = 0.952. Same verdict.
+
+## 8. Next-draw posterior predictive (r2; `src/pcso_next_draw_posterior.py`)
+
+Model (review §1): 6-without-replacement product-weight draw, f_w(S) = ∏_{i∈S} w_i / e₆(w);
+likelihood ∏ᵢ w_i^{c_i} / e₆(w)^T; prior Dirichlet(a) with a **fixed a priori** (a=100; sensitivity
+a=10, 1000); posterior by importance sampling from Dirichlet(a+c) with weights z(w)^{−T}, 200,000
+samples per game (effective size ≥ 195,000). The first-pass predictor (Dirichlet-multinomial on ball
+counts, empirical-Bayes a, product of posterior means) was withdrawn: it omits the e₆ normalizer, its
+conjugacy does not survive, and it let the data choose the prior. Output
+`results/pcso_next_draw_posterior_2026-09-06.json` (SHA-256 `e9308ba0252709f3…`); Codex's independent
+computation agrees to three decimals.
+
+| Game | maximum-predictive set S* | R = C(P,6)·E[f_w(S*)] [95% CrI] | BF₀₁ (a=10 / 100 / 1000) | R_mix (equal model odds) | order-1 overlap exact p |
+|---|---|---|---|---|---|
+| 6/42 | 03 06 12 36 39 41 (6 tied with 18, 35) | 1.48 [0.99, 2.13] | 6976 / 0.95 / 0.95 | 1.25 | 0.65 |
+| 6/45 | 04 05 08 24 25 27 | 1.50 [0.99, 2.16] | 1237 / 0.59 / 0.90 | 1.32 | 0.14 |
+| 6/49 | 08 14 16 26 36 44 | 1.56 [1.03, 2.26] | 3514 / 0.69 / 0.91 | 1.33 | 0.041 |
+| 6/55 | 05 42 44 45 48 50 | 1.64 [1.07, 2.38] | 46 / 0.22 / 0.80 | 1.52 | 0.053 |
+| 6/58 | 12 15 17 43 50 57 | 1.50 [0.98, 2.20] | 557 / 0.49 / 0.89 | 1.34 | 0.17 |
+
+P(any ball's inclusion probability deviates >10% from 6/P | data, M₁(100)) ≈ 1 in every game, which is
+a property of the conditional model, not evidence for it; at equal model odds it is 0.51–0.82, and
+under a=1000 it is 0.012–0.029. Under the uniform model every history-based rule has R = 1 and
+Δ = 0 exactly. **Verdict: the maximum-predictive sets and their multipliers are the complete
+mathematically derived prediction this repository supports; the evidence for unequal weights is weak
+to absent (BF₀₁ ≥ 0.22 everywhere, and prior-sensitive), and no serial-dependence rule adds to it.
+G0 exploratory.**

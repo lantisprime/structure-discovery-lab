@@ -186,10 +186,15 @@ def poisson_glm(X, y):
             break
     mu = [math.exp(sum(b * v for b, v in zip(beta, row))) for row in X]
     A = [[sum(mu[i] * X[i][a] * X[i][b] for i in range(n)) for b in range(p)] for a in range(p)]
-    cov = invert(A)
-    se = [math.sqrt(max(cov[a][a], 0.0)) for a in range(p)]
+    Ainv = invert(A)
+    se = [math.sqrt(max(Ainv[a][a], 0.0)) for a in range(p)]
+    # HC1 sandwich (codex review 2026-09-06 §5): V = n/(n-p) A^-1 [sum (y-mu)^2 x x^T] A^-1
+    Bm = [[sum((y[i] - mu[i]) ** 2 * X[i][a] * X[i][b] for i in range(n)) for b in range(p)] for a in range(p)]
+    AB = [[sum(Ainv[a][k] * Bm[k][b] for k in range(p)) for b in range(p)] for a in range(p)]
+    V = [[n / (n - p) * sum(AB[a][k] * Ainv[k][b] for k in range(p)) for b in range(p)] for a in range(p)]
+    se_hc1 = [math.sqrt(max(V[a][a], 0.0)) for a in range(p)]
     disp = sum((y[i] - mu[i]) ** 2 / mu[i] for i in range(n)) / (n - p)
-    return beta, se, disp
+    return beta, se, disp, se_hc1
 
 
 def invert(m):
@@ -289,8 +294,12 @@ def main():
     p1 = (c1 + 1) / (args.perms + 1); p2 = (c2 + 1) / (args.perms + 1)
     # Poisson GLM with game fixed effects: winners ~ game + z_csi + logJ(centred within game)
     X = [[1.0 if glist[i] == g else 0.0 for g in games] + [zx[i], zc[i]] for i in range(n)]
-    beta, se, disp = poisson_glm(X, y)
+    beta, se, disp, se_hc1 = poisson_glm(X, y)
     b_csi, se_csi, b_j, se_j = beta[-2], se[-2], beta[-1], se[-1]
+    hc_csi, hc_j = se_hc1[-2], se_hc1[-1]
+    # Holm step-down for the m=2 permutation family (codex review §5: Šidák not guaranteed under dependence)
+    ps = sorted([(p1, "T1"), (p2, "T2")])
+    holm = {ps[0][1]: min(1.0, 2 * ps[0][0]), ps[1][1]: min(1.0, max(2 * ps[0][0], ps[1][0]))}
     # within-game tertiles of CSI, pooled
     tert_idx = {"low": [], "mid": [], "high": []}
     for idx in groups:
@@ -302,8 +311,8 @@ def main():
         return {"draws": len(idx), "share_with_winner": round(sum(1 for i in idx if y[i] > 0) / len(idx), 4),
                 "mean_winning_bets": round(sum(y[i] for i in idx) / len(idx), 4)}
     tertiles = {k: band(v) for k, v in tert_idx.items()}
-    # ---- power statement: alternative = observed GLM slope on standardized CSI, at Šidák alpha for m=2
-    alpha = 1 - (1 - 0.05) ** 0.5
+    # ---- model-conditional power at the observed GLM slope, at the Holm/Bonferroni level for the smallest of m=2
+    alpha = 0.05 / 2
     crit = sorted(abs(v) for v in null_t1)[int((1 - alpha) * len(null_t1)) - 1]
     hits = 0
     for _ in range(args.power_trials):
@@ -338,15 +347,20 @@ def main():
             "T2_rankcorr": {"observed": round(obs_t2, 6), "null_mean": null_trial["T2_rankcorr"]["mean"], "null_sd": null_trial["T2_rankcorr"]["sd"],
                             "z_vs_null_trial": round((obs_t2 - null_trial["T2_rankcorr"]["mean"]) / null_trial["T2_rankcorr"]["sd"], 2),
                             "perm_p_two_sided": p2, "m_perm": args.perms, "p_floor": 1 / (args.perms + 1)},
-            "poisson_glm_descriptive": {"model": "winners ~ game fixed effects + z_csi(within game) + log jackpot (centred within game)",
-                                        "beta_z_csi": round(b_csi, 4), "se_z_csi": round(se_csi, 4), "wald_z_csi": round(b_csi / se_csi, 2),
-                                        "beta_log_jackpot": round(b_j, 4), "se_log_jackpot": round(se_j, 4), "dispersion": round(disp, 3),
-                                        "sharing_multiplier_top_vs_bottom_tertile": round(math.exp(b_csi * (zhi - zlo)), 2)},
-            "csi_tertiles_within_game": tertiles,
+            "poisson_glm": {"model": "winning bets ~ game fixed effects + z_csi(within game) + log jackpot (centred within game); Poisson pseudo-MLE, HC1 sandwich inference",
+                            "beta_z_csi": round(b_csi, 4), "se_hc1_z_csi": round(hc_csi, 4), "wald_z_hc1": round(b_csi / hc_csi, 2),
+                            "se_poisson_information_z_csi_descriptive_only": round(se_csi, 4),
+                            "count_ratio_per_sd_csi": round(math.exp(b_csi), 3),
+                            "count_ratio_per_sd_95ci_hc1": [round(math.exp(b_csi - 1.96 * hc_csi), 3), round(math.exp(b_csi + 1.96 * hc_csi), 3)],
+                            "beta_log_jackpot": round(b_j, 4), "se_hc1_log_jackpot": round(hc_j, 4), "dispersion": round(disp, 3),
+                            "exposure_caveat": "ticket sales N_t are not published; the coefficient is a count contrast at equal game/jackpot, not popularity per purchased bet",
+                            "descriptive_tertile_contrast_exp_beta_dz": round(math.exp(b_csi * (zhi - zlo)), 2)},
+            "holm_adjusted_p": {"T1": holm["T1"], "T2": holm["T2"], "family_alpha": 0.05},
+            "csi_tertiles_within_game_descriptive": tertiles,
             "multi_winner_draws": [{"game": g, "date": d, "numbers": nums, "winning_bets": w, "csi": round(csi(nums, POOL[g]), 4)}
                                    for g in games for d, nums, J, w in by_game[g] if w > 1],
-            "family": {"family_id": "payout-sharing", "within_run_m": 2, "sidak_alpha": round(alpha, 5), "grade": "G0 exploratory (weights declared before this run; no confirmation set yet)"},
-            "power": {"alternative": "Poisson slope = observed beta_csi", "alpha": round(alpha, 5), "trials": args.power_trials, "power_T1": power},
+            "family": {"family_id": "payout-sharing", "within_run_m": 2, "correction": "Holm", "grade": "G0 exploratory (weights declared before this run; no confirmation set yet)"},
+            "power_model_conditional": {"alternative": "Poisson slope = observed beta_csi (post hoc; not independent validation)", "alpha": round(alpha, 5), "trials": args.power_trials, "power_T1": power},
             "caveats": ["'Winners' are winning standard bets per PCSO: one bettor holding k identical bets counts k times",
                         "Only jackpot-tier sharing is observable; Category II/III pool sharing is not published per draw",
                         "CSI weights are literature proxies for other lotteries; PCSO play-slip position effects are unmeasured",
@@ -364,7 +378,7 @@ def main():
         return
     out.write_bytes(payload)
     print(f"wrote {out} sha256={hashlib.sha256(payload).hexdigest()}")
-    print(f"n={n} winners={sum(1 for v in y if v > 0)}  T1={obs_t1:.4f} p={p1}  T2={obs_t2:.4f} p={p2}  beta_z_csi={b_csi:.3f}±{se_csi:.3f}  power={power:.2f}")
+    print(f"n={n} winners={sum(1 for v in y if v > 0)}  T1={obs_t1:.4f} p={p1}  T2={obs_t2:.4f} p={p2}  beta_z_csi={b_csi:.3f} HC1 se={hc_csi:.3f}  ratio/sd={math.exp(b_csi):.3f}  holm={holm}  power={power:.2f}")
     print("null trial:", json.dumps(null_trial))
     print("tertiles:", json.dumps(tertiles))
 

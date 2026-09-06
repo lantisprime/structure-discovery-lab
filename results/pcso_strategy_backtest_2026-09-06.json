@@ -4,7 +4,7 @@
     "script": "src/pcso_strategy_backtest.py",
     "run_date": "2026-09-06",
     "seed": 20260906,
-    "seed_scheme": "single random.Random(seed) stream in strategy order; CSI thresholds from random.Random(seed+P)",
+    "seed_scheme": "random.Random(seed) for ticket generation in strategy order; CSI thresholds random.Random(seed+P); conditional-null draws numpy default_rng(seed+1)",
     "registration": "docs/RESULTS_PCSO_REFRESH_2026-09-06.md \u00a73 (G0 exploratory backtest; not in the confirmation family)",
     "input_sha256": {
       "datasets/pcso-lotto/data_official_draws_jackpots.csv": "54fb48368758df5c6f1cba3a330da8cd2c7eda64d91b13a137f6fdf9c5a694c8"
@@ -17,7 +17,7 @@
       "55": 0.0172,
       "58": 0.0033
     },
-    "null": "i.i.d. uniform draws => every fixed ticket has E[matches]=36/P; paired sign-flip null on per-draw differences"
+    "null": "i.i.d. uniform draws => every fixed ticket has E[matches]=36/P; conditional Monte Carlo null on per-draw differences given the generated tickets"
   },
   "draws_used": 834,
   "strategies": {
@@ -62,10 +62,13 @@
       "max_matches_seen": 5,
       "paired_vs_uniform": {
         "mean_diff_matches_per_ticket": 0.004007,
-        "z": 2.71,
-        "signflip_perm_p_two_sided": 0.0061,
+        "conditional_null_z": 2.663,
+        "conditional_null_var_total": 1.574605,
+        "mc_p_two_sided": 0.0078,
         "m_perm": 9999,
-        "p_floor": 0.0001
+        "p_floor": 0.0001,
+        "null": "uniform draws regenerated with the generated tickets' inclusion fractions held fixed",
+        "holm_p": 0.0546
       }
     },
     "picker_v2_csi": {
@@ -89,10 +92,13 @@
       "max_matches_seen": 5,
       "paired_vs_uniform": {
         "mean_diff_matches_per_ticket": 0.008092,
-        "z": 2.45,
-        "signflip_perm_p_two_sided": 0.0139,
+        "conditional_null_z": 2.464,
+        "conditional_null_var_total": 7.501034,
+        "mc_p_two_sided": 0.0134,
         "m_perm": 9999,
-        "p_floor": 0.0001
+        "p_floor": 0.0001,
+        "null": "uniform draws regenerated with the generated tickets' inclusion fractions held fixed",
+        "holm_p": 0.067
       }
     },
     "hot_top6_w50": {
@@ -116,10 +122,13 @@
       "max_matches_seen": 4,
       "paired_vs_uniform": {
         "mean_diff_matches_per_ticket": 0.011958,
-        "z": 0.75,
-        "signflip_perm_p_two_sided": 0.4615,
+        "conditional_null_z": 0.743,
+        "conditional_null_var_total": 180.026384,
+        "mc_p_two_sided": 0.4621,
         "m_perm": 9999,
-        "p_floor": 0.0001
+        "p_floor": 0.0001,
+        "null": "uniform draws regenerated with the generated tickets' inclusion fractions held fixed",
+        "holm_p": 1.0
       }
     },
     "cold_bottom6_w50": {
@@ -143,10 +152,13 @@
       "max_matches_seen": 4,
       "paired_vs_uniform": {
         "mean_diff_matches_per_ticket": -0.040787,
-        "z": -2.58,
-        "signflip_perm_p_two_sided": 0.0101,
+        "conditional_null_z": -2.541,
+        "conditional_null_var_total": 179.198753,
+        "mc_p_two_sided": 0.0106,
         "m_perm": 9999,
-        "p_floor": 0.0001
+        "p_floor": 0.0001,
+        "null": "uniform draws regenerated with the generated tickets' inclusion fractions held fixed",
+        "holm_p": 0.0636
       }
     },
     "overdue_gap": {
@@ -170,10 +182,13 @@
       "max_matches_seen": 3,
       "paired_vs_uniform": {
         "mean_diff_matches_per_ticket": -0.000961,
-        "z": -0.06,
-        "signflip_perm_p_two_sided": 0.9544,
+        "conditional_null_z": -0.057,
+        "conditional_null_var_total": 199.341323,
+        "mc_p_two_sided": 0.9561,
         "m_perm": 9999,
-        "p_floor": 0.0001
+        "p_floor": 0.0001,
+        "null": "uniform draws regenerated with the generated tickets' inclusion fractions held fixed",
+        "holm_p": 1.0
       }
     },
     "repeat_last_draw": {
@@ -197,10 +212,13 @@
       "max_matches_seen": 5,
       "paired_vs_uniform": {
         "mean_diff_matches_per_ticket": -0.003527,
-        "z": -0.3,
-        "signflip_perm_p_two_sided": 0.7692,
+        "conditional_null_z": -0.31,
+        "conditional_null_var_total": 90.305411,
+        "mc_p_two_sided": 0.7561,
         "m_perm": 9999,
-        "p_floor": 0.0001
+        "p_floor": 0.0001,
+        "null": "uniform draws regenerated with the generated tickets' inclusion fractions held fixed",
+        "holm_p": 1.0
       }
     },
     "markov_pair_order1": {
@@ -224,21 +242,26 @@
       "max_matches_seen": 5,
       "paired_vs_uniform": {
         "mean_diff_matches_per_ticket": 0.007042,
-        "z": 0.42,
-        "signflip_perm_p_two_sided": 0.6702,
+        "conditional_null_z": 0.435,
+        "conditional_null_var_total": 182.413188,
+        "mc_p_two_sided": 0.6625,
         "m_perm": 9999,
-        "p_floor": 0.0001
+        "p_floor": 0.0001,
+        "null": "uniform draws regenerated with the generated tickets' inclusion fractions held fixed",
+        "holm_p": 1.0
       }
     }
   },
   "family_verdict": {
     "family_id": "strategy-backtest",
     "within_run_m": 7,
-    "sidak_alpha": 0.0073,
-    "min_p": 0.0061,
-    "any_flag": true,
-    "statement": "FLAG: at least one strategy differs from uniform at the \u0160id\u00e1k level \u2014 trace before reporting",
-    "trace": {
+    "correction": "Holm",
+    "family_alpha": 0.05,
+    "min_raw_p": 0.0078,
+    "min_holm_p": 0.0546,
+    "any_flag": false,
+    "statement": "no selection rule changed the match rate against the actual draws beyond chance (Holm)",
+    "descriptive_trace": {
       "driver": "count of drawn numbers > 31 per draw (marginal frequency of the high half of the pool)",
       "numbers_above_31": {
         "observed": 1912,
@@ -250,7 +273,7 @@
         "v1_vs_cold": 0.068,
         "v2_vs_cold": -0.022
       },
-      "charge": "one equivalence class (marginal-frequency shadow): the v1/v2 positive and cold negative deviations share driving rows; the registered per-game MC chi-square on the same confirmation draws is null (results/pcso_confirmation_2026-09-06.json)"
+      "note": "descriptive only; these correlations do not establish one equivalent hypothesis and no multiplicity charge is merged on their basis (codex review \u00a76)"
     }
   }
 }

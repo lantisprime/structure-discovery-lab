@@ -133,26 +133,33 @@ def main():
     draw_list = [(g, t) for g in games for t in range(WARM, len(by_game[g]))]
     T = len(draw_list)
     per_draw = {}
+    incl = {}      # name -> list over draws of inclusion-fraction vectors q_{s,t,i} (length P) of the generated tickets
     results = {}
     for name, fn in strategies.items():
         reps = args.reps if name in ("uniform_disjoint", "picker_v1_filters", "picker_v2_csi") else max(args.reps // 3, 20)
         matches = Counter()
         cat4_pesos = 0.0
         means = []
+        qs = []
         for g, t in draw_list:
             P = POOL[g]
             hist = [d[1] for d in by_game[g]]
             actual = set(hist[t])
             ks = []
+            q = [0] * P
             for _ in range(reps):
                 for tk in fn(P, hist[:t]):
                     k = len(actual & set(tk))
                     ks.append(k)
                     matches[k] += 1
+                    for v in tk:
+                        q[v - 1] += 1
                     if k == 3:
                         cat4_pesos += FIXED_CAT4[g]
             means.append(sum(ks) / len(ks))
+            qs.append([x / (2 * reps) for x in q])
         per_draw[name] = means
+        incl[name] = qs
         n_t = sum(matches.values())
         results[name] = {"replicates_per_draw": reps, "tickets": n_t, "draws": T,
                          "mean_matches": round(sum(k * c for k, c in matches.items()) / n_t, 5),
@@ -162,34 +169,53 @@ def main():
                          "p3plus_exp_h0": round(sum(sum(p_match(POOL[g], k) for k in range(3, 7)) for g, _ in draw_list) / T, 6),
                          "fixed_3match_return_per_ticket": round(cat4_pesos / n_t, 4),
                          "max_matches_seen": max(k for k in matches if matches[k] > 0)}
-    # paired comparison vs uniform on the same draws, sign-flip permutation p (two-sided, add-one)
+    # ---- paired comparison vs uniform on the same draws.
+    # Conditional null (codex review 2026-09-06 §6): given the tickets generated before each draw, the
+    # per-draw difference D_t = sum_i a_{t,i} X_{t,i} with a = q_s - q_0 has E[D_t]=0 and
+    # Var_0(D_t) = 6(P-6)/(P(P-1)) * sum_i a_{t,i}^2 under uniform draws. Calibration: regenerate the T draws
+    # uniformly m times with the ticket inclusion fractions held fixed (add-one Monte Carlo p, lattice m).
+    # The sign-flip null used previously is not exact (E[D_t]=0 does not imply sign symmetry) and is dropped.
+    import numpy as np
+    nrng = np.random.default_rng(args.seed + 1)
     base = per_draw["uniform_disjoint"]
-    fam = []
-    for name in strategies:
-        if name == "uniform_disjoint":
-            continue
-        diffs = [a - b for a, b in zip(per_draw[name], base)]
-        md = sum(diffs) / T
-        sd = math.sqrt(sum((d - md) ** 2 for d in diffs) / (T - 1))
-        z = md / (sd / math.sqrt(T))
-        cnt = 0
-        for _ in range(args.perms):
-            s = sum(d if rng.random() < 0.5 else -d for d in diffs) / T
-            cnt += abs(s) >= abs(md) - 1e-15
+    names = [n for n in strategies if n != "uniform_disjoint"]
+    A = {n: [np.array(incl[n][t]) - np.array(incl["uniform_disjoint"][t]) for t in range(T)] for n in names}
+    sim = {n: np.zeros(args.perms) for n in names}
+    var0 = {n: 0.0 for n in names}
+    for t, (g, _) in enumerate(draw_list):
+        P = POOL[g]
+        idx = nrng.random((args.perms, P)).argpartition(6, axis=1)[:, :6]     # m uniform 6-sets for this draw
+        for n in names:
+            a = A[n][t]
+            sim[n] += a[idx].sum(axis=1)
+            var0[n] += 6 * (P - 6) / (P * (P - 1)) * float(np.sum(a * a))
+    raw = {}
+    for n in names:
+        obs = sum(per_draw[n][t] - base[t] for t in range(T))
+        cnt = int(np.sum(np.abs(sim[n]) >= abs(obs) - 1e-12))
         p = (cnt + 1) / (args.perms + 1)
-        results[name].update({"paired_vs_uniform": {"mean_diff_matches_per_ticket": round(md, 6), "z": round(z, 2),
-                                                    "signflip_perm_p_two_sided": p, "m_perm": args.perms, "p_floor": 1 / (args.perms + 1)}})
-        fam.append(p)
-    m = len(fam)
-    sidak = 1 - (1 - 0.05) ** (1 / m)
-    verdict = {"family_id": "strategy-backtest", "within_run_m": m, "sidak_alpha": round(sidak, 5),
-               "min_p": min(fam), "any_flag": min(fam) < sidak,
-               "statement": "no selection rule changed the match rate against the actual draws beyond chance"
-               if min(fam) >= sidak else "FLAG: at least one strategy differs from uniform at the Šidák level — trace before reporting"}
-    # ---- A3/A4 trace: driving rows. The pickers (v1, v2) and the cold strategy are all functions of the
-    # marginal frequency of numbers > 31 in this sample (the filters push tickets above 31; cold picks the
-    # least-drawn numbers). Report that marginal driver directly and the correlation of the per-draw
-    # differences between strategies, so a flag is charged once (equivalence class), not per strategy.
+        z = obs / math.sqrt(var0[n])
+        results[n].update({"paired_vs_uniform": {"mean_diff_matches_per_ticket": round(obs / T, 6),
+                                                 "conditional_null_z": round(z, 3), "conditional_null_var_total": round(var0[n], 6),
+                                                 "mc_p_two_sided": p, "m_perm": args.perms, "p_floor": 1 / (args.perms + 1),
+                                                 "null": "uniform draws regenerated with the generated tickets' inclusion fractions held fixed"}})
+        raw[n] = p
+    # Holm step-down over the m=7 strategies (dependent tests share draws and the baseline; Holm stays valid)
+    order = sorted(names, key=lambda n: raw[n])
+    m = len(order)
+    holm = {}
+    running = 0.0
+    for i, n in enumerate(order):
+        running = max(running, min(1.0, (m - i) * raw[n]))
+        holm[n] = running
+        results[n]["paired_vs_uniform"]["holm_p"] = round(running, 4)
+    fam = [raw[n] for n in names]
+    verdict = {"family_id": "strategy-backtest", "within_run_m": m, "correction": "Holm", "family_alpha": 0.05,
+               "min_raw_p": min(fam), "min_holm_p": round(min(holm.values()), 4), "any_flag": min(holm.values()) < 0.05,
+               "statement": "no selection rule changed the match rate against the actual draws beyond chance (Holm)"
+               if min(holm.values()) >= 0.05 else "FLAG: at least one strategy differs from uniform after Holm — trace before reporting"}
+    # ---- descriptive trace (NOT a multiplicity charge): the marginal driver the pickers lean on, and the
+    # correlation of per-draw differences between strategies.
     high_obs = high_exp = high_var = 0.0
     for g, t in draw_list:
         P = POOL[g]
@@ -204,20 +230,19 @@ def main():
         sab = sum((x - ma) * (y - mb) for x, y in zip(a, b))
         return sab / math.sqrt(sum((x - ma) ** 2 for x in a) * sum((y - mb) ** 2 for y in b))
     d = {n: [a - b for a, b in zip(per_draw[n], base)] for n in strategies if n != "uniform_disjoint"}
-    verdict["trace"] = {
+    verdict["descriptive_trace"] = {
         "driver": "count of drawn numbers > 31 per draw (marginal frequency of the high half of the pool)",
         "numbers_above_31": {"observed": int(high_obs), "expected_h0": round(high_exp, 2), "z": round(z_high, 2)},
         "per_draw_diff_correlations": {"v1_vs_v2": round(corr(d["picker_v1_filters"], d["picker_v2_csi"]), 3),
                                        "v1_vs_cold": round(corr(d["picker_v1_filters"], d["cold_bottom6_w50"]), 3),
                                        "v2_vs_cold": round(corr(d["picker_v2_csi"], d["cold_bottom6_w50"]), 3)},
-        "charge": "one equivalence class (marginal-frequency shadow): the v1/v2 positive and cold negative deviations share driving rows; "
-                  "the registered per-game MC chi-square on the same confirmation draws is null (results/pcso_confirmation_2026-09-06.json)"}
+        "note": "descriptive only; these correlations do not establish one equivalent hypothesis and no multiplicity charge is merged on their basis (codex review §6)"}
     result = {"_meta": {"schema_version": 1, "script": "src/pcso_strategy_backtest.py", "run_date": args.run_date, "seed": args.seed,
-                        "seed_scheme": "single random.Random(seed) stream in strategy order; CSI thresholds from random.Random(seed+P)",
+                        "seed_scheme": "random.Random(seed) for ticket generation in strategy order; CSI thresholds random.Random(seed+P); conditional-null draws numpy default_rng(seed+1)",
                         "registration": "docs/RESULTS_PCSO_REFRESH_2026-09-06.md §3 (G0 exploratory backtest; not in the confirmation family)",
                         "input_sha256": {str(OFFICIAL.relative_to(ROOT)): sha256(OFFICIAL)}, "warmup_draws": WARM,
                         "csi_acceptance_threshold_q40": thresholds,
-                        "null": "i.i.d. uniform draws => every fixed ticket has E[matches]=36/P; paired sign-flip null on per-draw differences"},
+                        "null": "i.i.d. uniform draws => every fixed ticket has E[matches]=36/P; conditional Monte Carlo null on per-draw differences given the generated tickets"},
               "draws_used": T, "strategies": results, "family_verdict": verdict}
     payload = (json.dumps(result, indent=2, ensure_ascii=True) + "\n").encode("utf-8")
     out = ROOT / "results" / f"pcso_strategy_backtest_{args.run_date}.json"
@@ -225,15 +250,15 @@ def main():
         existing = out.read_bytes()
         if existing != payload:
             raise SystemExit(f"VERIFY MISMATCH: regenerated bytes differ from {out}")
-        print(f"PASS sha256={hashlib.sha256(existing).hexdigest()}; draws={T}; min_p={min(fam)}; wrote=none")
+        print(f"PASS sha256={hashlib.sha256(existing).hexdigest()}; draws={T}; min_raw_p={min(fam)}; wrote=none")
         return
     out.write_bytes(payload)
     print(f"wrote {out} sha256={hashlib.sha256(payload).hexdigest()}")
     for name, r in results.items():
         pv = r.get("paired_vs_uniform", {})
         print(f"{name:20s} mean_k={r['mean_matches']:.4f} exp={r['expected_mean_h0']:.4f} "
-              f"diff_vs_uniform={pv.get('mean_diff_matches_per_ticket', 0):+.5f} z={pv.get('z', 0):+.2f} p={pv.get('signflip_perm_p_two_sided', '-')}")
-    print("family verdict:", verdict["statement"], f"(min p={verdict['min_p']}, Šidák α={verdict['sidak_alpha']})")
+              f"diff={pv.get('mean_diff_matches_per_ticket', 0):+.5f} z={pv.get('conditional_null_z', 0):+.2f} p={pv.get('mc_p_two_sided', '-')} holm={pv.get('holm_p', '-')}")
+    print("family verdict:", verdict["statement"], f"(min raw p={verdict['min_raw_p']}, min Holm p={verdict['min_holm_p']})")
 
 
 if __name__ == "__main__":

@@ -128,6 +128,30 @@ def main() -> None:
     result = base.run_monitoring(manifest, confirmation, astro, manifest_path)
     result["_meta"]["script"] = "src/pcso_monitoring_run.py (validators + family imported from src/pcso_weekly_update.py)"
     result["_meta"]["raw_source_capture"] = manifest.get("raw_source_capture", {})
+    # Within-game permutation variant of the two lunar tests (codex review 2026-09-06 §7: permute within game,
+    # not globally). Reported alongside the registered global-permutation family; separate seed stream.
+    import random as _random
+    rng2 = _random.Random(int(manifest["seed"]) + 1)
+    trials = int(manifest["permutation_trials"])
+    variant = {}
+    for test_id, covariate in (("mean_drawn_vs_moon_altitude", base.MOON_ALT), ("mean_drawn_vs_moon_illumination", base.MOON_ILLUM)):
+        predictor, response = base.within_game_predictor(confirmation, astro, covariate)
+        games_of = [str(r["game"]) for g in base.GAMES for r in confirmation if r["game"] == g]
+        groups = {}
+        for i, g in enumerate(games_of):
+            groups.setdefault(g, []).append(i)
+        observed = base.pearson(predictor, response)
+        exceed = 0
+        for _ in range(trials):
+            permuted = list(response)
+            for idx in groups.values():
+                vals = [response[i] for i in idx]
+                rng2.shuffle(vals)
+                for j, i in enumerate(idx):
+                    permuted[i] = vals[j]
+            exceed += abs(base.pearson(predictor, permuted)) >= abs(observed) - 1e-15
+        variant[test_id] = {"r": round(observed, 6), "p_within_game": round((exceed + 1) / (trials + 1), 6), "n": len(predictor)}
+    result["tests"][f"pearson_permutation_{trials}_within_game_variant"] = variant
     payload = base.result_bytes(result)
     if args.verify:
         digest = base.verify_existing_result(out, payload)
