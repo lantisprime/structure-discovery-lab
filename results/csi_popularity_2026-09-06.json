@@ -1,0 +1,439 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/csi_popularity.py",
+    "run_date": "2026-09-06",
+    "seed": 20260906,
+    "seed_scheme": "single random.Random(seed) stream: null trial -> permutations -> power; per-pool reference streams seed+P",
+    "registration": "docs/kb/conscious-selection-popularity.md (Part-3 onboarding; EXPLORATORY, G0)",
+    "input_sha256": {
+      "datasets/pcso-lotto/data_official_draws_jackpots.csv": "54fb48368758df5c6f1cba3a330da8cd2c7eda64d91b13a137f6fdf9c5a694c8"
+    },
+    "null_simulator": "draws: random.sample(range(1,P+1),6) per draw; winners: Poisson(per-game observed mean) independent of the combination",
+    "stratification": "CSI standardized and ranked WITHIN game; permutations shuffle winners within game; GLM has game fixed effects (pool size confounds CSI level and win rate \u2014 see step4_null_trial)",
+    "weights": {
+      "birthday": 0.3,
+      "calendar": 0.1,
+      "lucky": 0.1,
+      "ap6": 0.5,
+      "ap5": 0.2,
+      "run4": 0.3,
+      "run3": 0.1,
+      "gcd": 0.35,
+      "lastdigit": 0.3,
+      "parity": 0.05
+    },
+    "lucky_set": [
+      1,
+      3,
+      5,
+      7,
+      9,
+      11,
+      12,
+      13
+    ],
+    "parity_vectors": [
+      {
+        "ticket": [
+          9,
+          18,
+          27,
+          36,
+          45,
+          54
+        ],
+        "pool": 55,
+        "csi": 0.852482
+      },
+      {
+        "ticket": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "pool": 42,
+        "csi": 1.0
+      },
+      {
+        "ticket": [
+          3,
+          7,
+          11,
+          13,
+          21,
+          27
+        ],
+        "pool": 45,
+        "csi": 0.441278
+      },
+      {
+        "ticket": [
+          32,
+          38,
+          39,
+          40,
+          41,
+          43
+        ],
+        "pool": 49,
+        "csi": 0.3
+      },
+      {
+        "ticket": [
+          2,
+          12,
+          22,
+          32,
+          42,
+          52
+        ],
+        "pool": 58,
+        "csi": 1.0
+      },
+      {
+        "ticket": [
+          5,
+          14,
+          23,
+          33,
+          44,
+          57
+        ],
+        "pool": 58,
+        "csi": 0.003333
+      },
+      {
+        "ticket": [
+          1,
+          16,
+          25,
+          26,
+          43,
+          58
+        ],
+        "pool": 58,
+        "csi": 0.088519
+      },
+      {
+        "ticket": [
+          10,
+          20,
+          30,
+          40,
+          50,
+          55
+        ],
+        "pool": 55,
+        "csi": 0.55
+      }
+    ]
+  },
+  "data": {
+    "n_draws": 984,
+    "per_game": {
+      "Grand Lotto 6/55": 197,
+      "Lotto 6/42": 196,
+      "Mega Lotto 6/45": 197,
+      "Super Lotto 6/49": 197,
+      "Ultra Lotto 6/58": 197
+    },
+    "draws_with_winner": 77,
+    "total_winning_bets": 94,
+    "date_range": [
+      "2025-06-01",
+      "2026-09-05"
+    ]
+  },
+  "step4_null_trial": {
+    "trials": 500,
+    "T1_meandiff": {
+      "mean": 0.00102,
+      "sd": 0.11164,
+      "min": -0.32149,
+      "max": 0.38314,
+      "distinct": 499
+    },
+    "T2_rankcorr": {
+      "mean": 0.00021,
+      "sd": 0.03132,
+      "min": -0.09129,
+      "max": 0.08105,
+      "distinct": 500
+    },
+    "c3_null_correlation_with_chi_square": {
+      "T1": -0.0264,
+      "T2": -0.0529,
+      "merge_rule": "|rho| > 0.9 would merge into a hit-count family (results/families.json)"
+    },
+    "non_degenerate": true,
+    "location_matches_theory": true
+  },
+  "step6_first_run": {
+    "T1_meandiff": {
+      "observed": 0.735656,
+      "null_mean": 0.00102,
+      "null_sd": 0.11164,
+      "z_vs_null_trial": 6.58,
+      "perm_p_two_sided": 5e-05,
+      "m_perm": 19999,
+      "p_floor": 5e-05
+    },
+    "T2_rankcorr": {
+      "observed": 0.162076,
+      "null_mean": 0.00021,
+      "null_sd": 0.03132,
+      "z_vs_null_trial": 5.17,
+      "perm_p_two_sided": 0.0001,
+      "m_perm": 19999,
+      "p_floor": 5e-05
+    },
+    "poisson_glm": {
+      "model": "winning bets ~ game fixed effects + z_csi(within game) + log jackpot (centred within game); Poisson pseudo-MLE, HC1 sandwich inference",
+      "beta_z_csi": 0.5185,
+      "se_hc1_z_csi": 0.0771,
+      "wald_z_hc1": 6.72,
+      "se_poisson_information_z_csi_descriptive_only": 0.075,
+      "count_ratio_per_sd_csi": 1.68,
+      "count_ratio_per_sd_95ci_hc1": [
+        1.444,
+        1.954
+      ],
+      "beta_log_jackpot": 0.3277,
+      "se_hc1_log_jackpot": 0.192,
+      "dispersion": 2.226,
+      "exposure_caveat": "ticket sales N_t are not published; the coefficient is a count contrast at equal game/jackpot, not popularity per purchased bet",
+      "descriptive_tertile_contrast_exp_beta_dz": 2.84
+    },
+    "holm_adjusted_p": {
+      "T1": 0.0001,
+      "T2": 0.0001,
+      "family_alpha": 0.05
+    },
+    "csi_tertiles_within_game_descriptive": {
+      "low": {
+        "draws": 397,
+        "share_with_winner": 0.0504,
+        "mean_winning_bets": 0.0504
+      },
+      "mid": {
+        "draws": 291,
+        "share_with_winner": 0.0584,
+        "mean_winning_bets": 0.0893
+      },
+      "high": {
+        "draws": 296,
+        "share_with_winner": 0.1351,
+        "mean_winning_bets": 0.1622
+      }
+    },
+    "multi_winner_draws": [
+      {
+        "game": "Grand Lotto 6/55",
+        "date": "2026-02-21",
+        "numbers": [
+          9,
+          23,
+          3,
+          49,
+          50,
+          1
+        ],
+        "winning_bets": 2,
+        "csi": 0.1484
+      },
+      {
+        "game": "Lotto 6/42",
+        "date": "2026-01-10",
+        "numbers": [
+          20,
+          8,
+          10,
+          1,
+          4,
+          24
+        ],
+        "winning_bets": 2,
+        "csi": 0.3533
+      },
+      {
+        "game": "Mega Lotto 6/45",
+        "date": "2025-08-11",
+        "numbers": [
+          40,
+          10,
+          16,
+          28,
+          7,
+          9
+        ],
+        "winning_bets": 2,
+        "csi": 0.19
+      },
+      {
+        "game": "Mega Lotto 6/45",
+        "date": "2026-01-21",
+        "numbers": [
+          28,
+          12,
+          2,
+          15,
+          23,
+          13
+        ],
+        "winning_bets": 2,
+        "csi": 0.328
+      },
+      {
+        "game": "Mega Lotto 6/45",
+        "date": "2026-04-27",
+        "numbers": [
+          6,
+          4,
+          5,
+          27,
+          34,
+          11
+        ],
+        "winning_bets": 2,
+        "csi": 0.3128
+      },
+      {
+        "game": "Super Lotto 6/49",
+        "date": "2026-01-08",
+        "numbers": [
+          9,
+          11,
+          30,
+          12,
+          24,
+          26
+        ],
+        "winning_bets": 2,
+        "csi": 0.374
+      },
+      {
+        "game": "Ultra Lotto 6/58",
+        "date": "2025-10-19",
+        "numbers": [
+          16,
+          9,
+          25,
+          17,
+          10,
+          15
+        ],
+        "winning_bets": 2,
+        "csi": 0.4193
+      },
+      {
+        "game": "Ultra Lotto 6/58",
+        "date": "2026-01-25",
+        "numbers": [
+          39,
+          37,
+          4,
+          11,
+          2,
+          9
+        ],
+        "winning_bets": 2,
+        "csi": 0.1658
+      },
+      {
+        "game": "Ultra Lotto 6/58",
+        "date": "2026-05-05",
+        "numbers": [
+          1,
+          58,
+          25,
+          43,
+          26,
+          16
+        ],
+        "winning_bets": 10,
+        "csi": 0.0885
+      }
+    ],
+    "family": {
+      "family_id": "payout-sharing",
+      "within_run_m": 2,
+      "correction": "Holm",
+      "grade": "G0 exploratory (weights declared before this run; no confirmation set yet)"
+    },
+    "power_model_conditional": {
+      "alternative": "Poisson slope = observed beta_csi (post hoc; not independent validation)",
+      "alpha": 0.025,
+      "trials": 500,
+      "power_T1": 1.0
+    },
+    "caveats": [
+      "'Winners' are winning standard bets per PCSO: one bettor holding k identical bets counts k times",
+      "Only jackpot-tier sharing is observable; Category II/III pool sharing is not published per draw",
+      "CSI weights are literature proxies for other lotteries; PCSO play-slip position effects are unmeasured",
+      "One year of draws, 77 winner events: effect size is the top-tertile contrast, not a calibrated per-combination model"
+    ]
+  },
+  "csi_uniform_reference": {
+    "Grand Lotto 6/55": {
+      "q40": 0.0172,
+      "q50": 0.058,
+      "q90": 0.2221,
+      "mean": 0.0797
+    },
+    "Lotto 6/42": {
+      "q40": 0.0243,
+      "q50": 0.1091,
+      "q90": 0.3176,
+      "mean": 0.1089
+    },
+    "Mega Lotto 6/45": {
+      "q40": 0.0091,
+      "q50": 0.028,
+      "q90": 0.3,
+      "mean": 0.0941
+    },
+    "Super Lotto 6/49": {
+      "q40": 0.0282,
+      "q50": 0.0395,
+      "q90": 0.218,
+      "mean": 0.0874
+    },
+    "Ultra Lotto 6/58": {
+      "q40": 0.0033,
+      "q50": 0.0193,
+      "q90": 0.2119,
+      "mean": 0.0739
+    }
+  },
+  "csi_observed_within_game_reference": {
+    "Grand Lotto 6/55": {
+      "n": 197,
+      "mean": 0.074822679337,
+      "sd": 0.093637899891
+    },
+    "Lotto 6/42": {
+      "n": 196,
+      "mean": 0.109025883081,
+      "sd": 0.12903359837
+    },
+    "Mega Lotto 6/45": {
+      "n": 197,
+      "mean": 0.099543610457,
+      "sd": 0.121632734284
+    },
+    "Super Lotto 6/49": {
+      "n": 197,
+      "mean": 0.103452031331,
+      "sd": 0.129107545078
+    },
+    "Ultra Lotto 6/58": {
+      "n": 197,
+      "mean": 0.070902572402,
+      "sd": 0.094544668148
+    }
+  }
+}

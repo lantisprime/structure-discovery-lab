@@ -1,0 +1,614 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/pcso_next_draw_posterior.py",
+    "run_date": "2026-09-06",
+    "seed": 20260906,
+    "model": "product-weight (conditional Poisson) 6-without-replacement; Dirichlet(a) prior with a fixed a priori; importance sampling from Dirichlet(a+c) with weights z(w)^-T",
+    "registration": "docs/RESULTS_PCSO_REFRESH_2026-09-06.md \u00a78 (G0 exploratory; codex review results/codex_review_2026-09-06.md \u00a71-3)",
+    "input_sha256": {
+      "datasets/pcso-lotto/data_draws_1yr.csv": "2dc1e93ff36aaaa61b175f8aa90c6daab66155911dbaa9b2c4aa507959122dce"
+    },
+    "note": "Under the uniform model every history-based rule has R=1 exactly; R_model_averaged folds in BF_01 at equal prior model odds"
+  },
+  "games": {
+    "Grand Lotto 6/55": {
+      "draws": 193,
+      "last_draw": "2026-09-05",
+      "pool": 55,
+      "prior_concentration": 100.0,
+      "importance_sampling": {
+        "samples": 200000,
+        "effective_sample_size": 197857.5
+      },
+      "bayes_factor_uniform_over_tilted": {
+        "100": 0.221,
+        "10": 46.0348,
+        "1000": 0.8005
+      },
+      "p_any_ball_inclusion_deviates_over_10pct_given_M1": 1.0,
+      "p_any_ball_inclusion_deviates_over_10pct_equal_model_odds": 0.819,
+      "inclusion_probability_posterior_mean_range": [
+        0.10071,
+        0.12224
+      ],
+      "uniform_inclusion": 0.10909,
+      "maximum_predictive_set": {
+        "set": [
+          5,
+          42,
+          44,
+          45,
+          48,
+          50
+        ],
+        "R_posterior_mean": 1.64,
+        "R_95_cri": [
+          1.0741,
+          2.3831
+        ],
+        "predictive_probability": 5.6573574597426324e-08,
+        "uniform_probability": 3.449504004442961e-08,
+        "R_model_averaged": 1.5242,
+        "count_ties_for_sixth_place": []
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          2,
+          9,
+          13,
+          20,
+          24,
+          41
+        ],
+        "R_posterior_mean": 1.2462,
+        "R_95_cri": [
+          0.8098,
+          1.8258
+        ],
+        "predictive_probability": 4.298785112727329e-08,
+        "uniform_probability": 3.449504004442961e-08,
+        "R_model_averaged": 1.2016
+      },
+      "bottom_six": {
+        "set": [
+          16,
+          18,
+          29,
+          30,
+          34,
+          47
+        ],
+        "R_posterior_mean": 0.6752,
+        "R_95_cri": [
+          0.4272,
+          1.0093
+        ],
+        "predictive_probability": 2.3292048271138075e-08,
+        "uniform_probability": 3.449504004442961e-08,
+        "R_model_averaged": 0.734
+      },
+      "hot_six_last_50": {
+        "set": [
+          4,
+          9,
+          26,
+          38,
+          42,
+          44
+        ],
+        "R_posterior_mean": 1.2157,
+        "R_95_cri": [
+          0.7884,
+          1.781
+        ],
+        "predictive_probability": 4.19351440476669e-08,
+        "uniform_probability": 3.449504004442961e-08,
+        "R_model_averaged": 1.1767
+      },
+      "last_draw_six": {
+        "set": [
+          1,
+          4,
+          22,
+          44,
+          47,
+          54
+        ],
+        "R_posterior_mean": 0.9916,
+        "R_95_cri": [
+          0.6357,
+          1.4663
+        ],
+        "predictive_probability": 3.420653056027608e-08,
+        "uniform_probability": 3.449504004442961e-08,
+        "R_model_averaged": 0.9931
+      },
+      "order1_overlap_test": {
+        "observed_total_overlap": 106,
+        "expected": 125.673,
+        "exact_two_sided_p": 0.052904,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
+      }
+    },
+    "Lotto 6/42": {
+      "draws": 192,
+      "last_draw": "2026-09-05",
+      "pool": 42,
+      "prior_concentration": 100.0,
+      "importance_sampling": {
+        "samples": 200000,
+        "effective_sample_size": 195744.9
+      },
+      "bayes_factor_uniform_over_tilted": {
+        "100": 0.9452,
+        "10": 6976.1317,
+        "1000": 0.9471
+      },
+      "p_any_ball_inclusion_deviates_over_10pct_given_M1": 0.99999,
+      "p_any_ball_inclusion_deviates_over_10pct_equal_model_odds": 0.5141,
+      "inclusion_probability_posterior_mean_range": [
+        0.13118,
+        0.15347
+      ],
+      "uniform_inclusion": 0.14286,
+      "maximum_predictive_set": {
+        "set": [
+          3,
+          6,
+          12,
+          36,
+          39,
+          41
+        ],
+        "R_posterior_mean": 1.4825,
+        "R_95_cri": [
+          0.9851,
+          2.1277
+        ],
+        "predictive_probability": 2.8260250173916205e-07,
+        "uniform_probability": 1.9062920218247562e-07,
+        "R_model_averaged": 1.248,
+        "count_ties_for_sixth_place": [
+          18,
+          35
+        ]
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          1,
+          18,
+          20,
+          23,
+          24,
+          35
+        ],
+        "R_posterior_mean": 1.2237,
+        "R_95_cri": [
+          0.8063,
+          1.771
+        ],
+        "predictive_probability": 2.3327653610587686e-07,
+        "uniform_probability": 1.9062920218247562e-07,
+        "R_model_averaged": 1.115
+      },
+      "bottom_six": {
+        "set": [
+          14,
+          19,
+          25,
+          31,
+          32,
+          40
+        ],
+        "R_posterior_mean": 0.6736,
+        "R_95_cri": [
+          0.4332,
+          0.993
+        ],
+        "predictive_probability": 1.2840555270965885e-07,
+        "uniform_probability": 1.9062920218247562e-07,
+        "R_model_averaged": 0.8322
+      },
+      "hot_six_last_50": {
+        "set": [
+          1,
+          6,
+          12,
+          13,
+          35,
+          39
+        ],
+        "R_posterior_mean": 1.3007,
+        "R_95_cri": [
+          0.8595,
+          1.8767
+        ],
+        "predictive_probability": 2.479462385972098e-07,
+        "uniform_probability": 1.9062920218247562e-07,
+        "R_model_averaged": 1.1546
+      },
+      "last_draw_six": {
+        "set": [
+          3,
+          24,
+          29,
+          35,
+          36,
+          37
+        ],
+        "R_posterior_mean": 1.1996,
+        "R_95_cri": [
+          0.7905,
+          1.7338
+        ],
+        "predictive_probability": 2.2867794437552463e-07,
+        "uniform_probability": 1.9062920218247562e-07,
+        "R_model_averaged": 1.1026
+      },
+      "order1_overlap_test": {
+        "observed_total_overlap": 169,
+        "expected": 163.714,
+        "exact_two_sided_p": 0.652336,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
+      }
+    },
+    "Mega Lotto 6/45": {
+      "draws": 193,
+      "last_draw": "2026-09-04",
+      "pool": 45,
+      "prior_concentration": 100.0,
+      "importance_sampling": {
+        "samples": 200000,
+        "effective_sample_size": 196375.6
+      },
+      "bayes_factor_uniform_over_tilted": {
+        "100": 0.591,
+        "10": 1237.2407,
+        "1000": 0.8979
+      },
+      "p_any_ball_inclusion_deviates_over_10pct_given_M1": 1.0,
+      "p_any_ball_inclusion_deviates_over_10pct_equal_model_odds": 0.6285,
+      "inclusion_probability_posterior_mean_range": [
+        0.12097,
+        0.14412
+      ],
+      "uniform_inclusion": 0.13333,
+      "maximum_predictive_set": {
+        "set": [
+          4,
+          5,
+          8,
+          24,
+          25,
+          27
+        ],
+        "R_posterior_mean": 1.5024,
+        "R_95_cri": [
+          0.9935,
+          2.1649
+        ],
+        "predictive_probability": 1.844563740935368e-07,
+        "uniform_probability": 1.2277380399898834e-07,
+        "R_model_averaged": 1.3158,
+        "count_ties_for_sixth_place": []
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          3,
+          10,
+          17,
+          41,
+          42,
+          43
+        ],
+        "R_posterior_mean": 1.2576,
+        "R_95_cri": [
+          0.8268,
+          1.8226
+        ],
+        "predictive_probability": 1.544063575701544e-07,
+        "uniform_probability": 1.2277380399898834e-07,
+        "R_model_averaged": 1.1619
+      },
+      "bottom_six": {
+        "set": [
+          7,
+          11,
+          20,
+          26,
+          30,
+          39
+        ],
+        "R_posterior_mean": 0.6532,
+        "R_95_cri": [
+          0.4183,
+          0.9667
+        ],
+        "predictive_probability": 8.019172739582874e-08,
+        "uniform_probability": 1.2277380399898834e-07,
+        "R_model_averaged": 0.782
+      },
+      "hot_six_last_50": {
+        "set": [
+          5,
+          13,
+          14,
+          19,
+          32,
+          43
+        ],
+        "R_posterior_mean": 1.0766,
+        "R_95_cri": [
+          0.7023,
+          1.5708
+        ],
+        "predictive_probability": 1.3217312140594662e-07,
+        "uniform_probability": 1.2277380399898834e-07,
+        "R_model_averaged": 1.0481
+      },
+      "last_draw_six": {
+        "set": [
+          11,
+          16,
+          17,
+          26,
+          35,
+          38
+        ],
+        "R_posterior_mean": 0.8831,
+        "R_95_cri": [
+          0.572,
+          1.2947
+        ],
+        "predictive_probability": 1.0842124342246387e-07,
+        "uniform_probability": 1.2277380399898834e-07,
+        "R_model_averaged": 0.9265
+      },
+      "order1_overlap_test": {
+        "observed_total_overlap": 170,
+        "expected": 153.6,
+        "exact_two_sided_p": 0.140577,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
+      }
+    },
+    "Super Lotto 6/49": {
+      "draws": 192,
+      "last_draw": "2026-09-03",
+      "pool": 49,
+      "prior_concentration": 100.0,
+      "importance_sampling": {
+        "samples": 200000,
+        "effective_sample_size": 197214.0
+      },
+      "bayes_factor_uniform_over_tilted": {
+        "100": 0.6906,
+        "10": 3513.9209,
+        "1000": 0.914
+      },
+      "p_any_ball_inclusion_deviates_over_10pct_given_M1": 1.0,
+      "p_any_ball_inclusion_deviates_over_10pct_equal_model_odds": 0.5915,
+      "inclusion_probability_posterior_mean_range": [
+        0.11558,
+        0.13547
+      ],
+      "uniform_inclusion": 0.12245,
+      "maximum_predictive_set": {
+        "set": [
+          8,
+          14,
+          16,
+          26,
+          36,
+          44
+        ],
+        "R_posterior_mean": 1.5603,
+        "R_95_cri": [
+          1.0277,
+          2.2622
+        ],
+        "predictive_probability": 1.1157616499223039e-07,
+        "uniform_probability": 7.151123842018516e-08,
+        "R_model_averaged": 1.3314,
+        "count_ties_for_sixth_place": []
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          6,
+          10,
+          13,
+          15,
+          23,
+          25
+        ],
+        "R_posterior_mean": 1.2144,
+        "R_95_cri": [
+          0.791,
+          1.7682
+        ],
+        "predictive_probability": 8.684197250155446e-08,
+        "uniform_probability": 7.151123842018516e-08,
+        "R_model_averaged": 1.1268
+      },
+      "bottom_six": {
+        "set": [
+          20,
+          29,
+          31,
+          35,
+          38,
+          39
+        ],
+        "R_posterior_mean": 0.6937,
+        "R_95_cri": [
+          0.4421,
+          1.0284
+        ],
+        "predictive_probability": 4.9610749427852246e-08,
+        "uniform_probability": 7.151123842018516e-08,
+        "R_model_averaged": 0.8188
+      },
+      "hot_six_last_50": {
+        "set": [
+          5,
+          8,
+          15,
+          36,
+          44,
+          47
+        ],
+        "R_posterior_mean": 1.364,
+        "R_95_cri": [
+          0.8921,
+          1.9806
+        ],
+        "predictive_probability": 9.754419866538281e-08,
+        "uniform_probability": 7.151123842018516e-08,
+        "R_model_averaged": 1.2153
+      },
+      "last_draw_six": {
+        "set": [
+          2,
+          8,
+          13,
+          15,
+          18,
+          45
+        ],
+        "R_posterior_mean": 1.1556,
+        "R_95_cri": [
+          0.7514,
+          1.689
+        ],
+        "predictive_probability": 8.264161590504087e-08,
+        "uniform_probability": 7.151123842018516e-08,
+        "R_model_averaged": 1.0921
+      },
+      "order1_overlap_test": {
+        "observed_total_overlap": 162,
+        "expected": 140.327,
+        "exact_two_sided_p": 0.040673,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
+      }
+    },
+    "Ultra Lotto 6/58": {
+      "draws": 192,
+      "last_draw": "2026-09-04",
+      "pool": 58,
+      "prior_concentration": 100.0,
+      "importance_sampling": {
+        "samples": 200000,
+        "effective_sample_size": 198276.8
+      },
+      "bayes_factor_uniform_over_tilted": {
+        "100": 0.4879,
+        "10": 557.4608,
+        "1000": 0.8865
+      },
+      "p_any_ball_inclusion_deviates_over_10pct_given_M1": 1.0,
+      "p_any_ball_inclusion_deviates_over_10pct_equal_model_odds": 0.6721,
+      "inclusion_probability_posterior_mean_range": [
+        0.09631,
+        0.11234
+      ],
+      "uniform_inclusion": 0.10345,
+      "maximum_predictive_set": {
+        "set": [
+          12,
+          15,
+          17,
+          43,
+          50,
+          57
+        ],
+        "R_posterior_mean": 1.5049,
+        "R_95_cri": [
+          0.9782,
+          2.2
+        ],
+        "predictive_probability": 3.718024353858872e-08,
+        "uniform_probability": 2.4706390490727716e-08,
+        "R_model_averaged": 1.3393,
+        "count_ties_for_sixth_place": []
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          19,
+          20,
+          23,
+          28,
+          30,
+          34
+        ],
+        "R_posterior_mean": 1.2492,
+        "R_95_cri": [
+          0.8068,
+          1.8351
+        ],
+        "predictive_probability": 3.086290621256182e-08,
+        "uniform_probability": 2.4706390490727716e-08,
+        "R_model_averaged": 1.1675
+      },
+      "bottom_six": {
+        "set": [
+          10,
+          21,
+          24,
+          25,
+          42,
+          55
+        ],
+        "R_posterior_mean": 0.6499,
+        "R_95_cri": [
+          0.4081,
+          0.9744
+        ],
+        "predictive_probability": 1.6055802787387052e-08,
+        "uniform_probability": 2.4706390490727716e-08,
+        "R_model_averaged": 0.7647
+      },
+      "hot_six_last_50": {
+        "set": [
+          1,
+          9,
+          11,
+          41,
+          43,
+          47
+        ],
+        "R_posterior_mean": 1.1685,
+        "R_95_cri": [
+          0.7518,
+          1.7199
+        ],
+        "predictive_probability": 2.8869042305073116e-08,
+        "uniform_probability": 2.4706390490727716e-08,
+        "R_model_averaged": 1.1132
+      },
+      "last_draw_six": {
+        "set": [
+          5,
+          9,
+          12,
+          34,
+          47,
+          53
+        ],
+        "R_posterior_mean": 1.0911,
+        "R_95_cri": [
+          0.7012,
+          1.6125
+        ],
+        "predictive_probability": 2.6956691937868054e-08,
+        "uniform_probability": 2.4706390490727716e-08,
+        "R_model_averaged": 1.0612
+      },
+      "order1_overlap_test": {
+        "observed_total_overlap": 105,
+        "expected": 118.552,
+        "exact_two_sided_p": 0.170842,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
+      }
+    }
+  }
+}

@@ -1,0 +1,273 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/pcso_monitoring_run.py (validators + family imported from src/pcso_weekly_update.py)",
+    "registration": "datasets/pcso-lotto/DATASET.md section 6",
+    "run_date": "2026-09-06",
+    "pipeline": "pcso-weekly-update",
+    "grade": "G0 exploratory forward monitoring",
+    "confirmation_cutoff": "2026-06-10",
+    "seed_scheme": "single random.Random(20260906) stream in published test order",
+    "null_simulator": "random.sample(range(1, P+1), 6) independently per draw",
+    "add_one_correction": true,
+    "test_order": [
+      "chi_square:Lotto 6/42",
+      "chi_square:Mega Lotto 6/45",
+      "chi_square:Super Lotto 6/49",
+      "chi_square:Grand Lotto 6/55",
+      "chi_square:Ultra Lotto 6/58",
+      "pearson:mean_drawn_vs_moon_altitude",
+      "pearson:mean_drawn_vs_moon_illumination",
+      "pearson:mean_drawn_vs_kp",
+      "binomial:Grand Lotto 6/55:number45"
+    ],
+    "input_sha256": {
+      "datasets/pcso-lotto/data_draws.csv": "44a69ceba5861f77fe78c722fdeea1ae78b671cf6beba2fb8856d4678e955a27",
+      "datasets/pcso-lotto/data_draws_1yr.csv": "2dc1e93ff36aaaa61b175f8aa90c6daab66155911dbaa9b2c4aa507959122dce",
+      "datasets/pcso-lotto/data_draws_1yr_audited.csv": "1473b192dde12a846e5d3f364e6d7e596fe4b1fedbbb43a36cb5a59c9179d5f2",
+      "datasets/pcso-lotto/data_astro_geomagnetic.csv": "2712359a584eaf2d9703bd4a69abd5ab493ea3fce355e2ef16f6b4d261802545",
+      "PCSO_Lotto_Analysis_Mar-Jun_2026.xlsx": "5400f8a227f2f23a2a3770019082bf6d5a6cc6566a72d315fd413f628b524fe1",
+      "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-06.json": "78ae7c13763a0143fbda0d7d731794c4ed5e260ab05bf9954521b7fd6385c1d7"
+    },
+    "exploration_prefix_sha256": {
+      "data_draws.csv": "8f38c1d2fc1f3778552f015b4dc690c603be4a0d8c3659d692691d2ceb5f5087",
+      "data_draws_1yr.csv": "0a9d06d08557bc6010d2a04415a3fb94ec696780f8214538afd4cd3c815c36b0",
+      "data_draws_1yr_audited.csv": "ddcaf22dc665d5837afe840bdb1816f11fdda4908ef0ff270ec091a477ce7693",
+      "data_astro_geomagnetic.csv": "ee511ace0a90f39afa105f40ab2e8f6e16bb6bfd3ccb626a9782fdde65ab9427"
+    },
+    "workbook": {
+      "sha256": "5400f8a227f2f23a2a3770019082bf6d5a6cc6566a72d315fd413f628b524fe1",
+      "sheets": 8,
+      "formulas": 786,
+      "cached_value_errors": 0,
+      "draw_rows": 252
+    },
+    "audit_correction": {
+      "supersedes_unreproducible_artifact_sha256": "a9e1424b3f2f8d752867f760b38b69f5b9ad39de2f787b6741beb26f6dcc7d50",
+      "reason": "the original untracked JSON had no generating script; this rerun applies the dataset card's declared null and publishes the RNG stream contract",
+      "verdict_changed": false
+    },
+    "raw_source_capture": {
+      "available": true,
+      "fetched_at": "2026-09-06T08:40:34+0800",
+      "official_query": {
+        "url": "https://www.pcso.gov.ph/SearchLottoResult.aspx",
+        "form": "SearchLottoResult.aspx date-range POST per game",
+        "ranges": [
+          [
+            "2026-07-01",
+            "2026-09-06"
+          ],
+          [
+            "2025-06-01",
+            "2026-09-06"
+          ]
+        ]
+      },
+      "files": [
+        {
+          "file": "provenance/raw_2026-09-06/official_13_2025-06-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "11e26ddaa54ee1792d309516430bf801f72c89c0a30c3d00c58d180b38251a5e",
+          "bytes": 118734
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_13_2026-07-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "523b66f71201f35852e8ffd131fe538b758b49ae28a18c0ee18ec807534461d5",
+          "bytes": 52518
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_17_2025-06-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "80d2ba61c09f6d5e585b406b99f65e57d870a360a2d044d962802225af6bee45",
+          "bytes": 122099
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_17_2026-07-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "17cca7a39a8514076d4e91712fadd1ca95739b85f8d7b3ff904708c6ee0fb469",
+          "bytes": 52966
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_18_2025-06-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "c6c1e63d83b7ce7b5882f88bdf0a788611490deb7cd6f7a68a8befbead60b239",
+          "bytes": 122176
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_18_2026-07-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "44c5d7dcfbff865b0be333893c27c26004363e30784979ce143c363cf1be9d22",
+          "bytes": 52607
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_1_2025-06-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "b3127c96edd688bd4e07610407068c8e8ffbf784e66d4956c466aea9006c5475",
+          "bytes": 121542
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_1_2026-07-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "8320dc374f5760160fb7884e322e18e5cdde97e452ac3b69d8171b686a9bb383",
+          "bytes": 52466
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_2_2025-06-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "995718baa001c86d491e19c23e042c4eb36509ddaa9a9db73770fc368051ecf7",
+          "bytes": 120952
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_2_2026-07-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "d98c7852dec298d41cabb8296d23b62b076dcef17c74b297bef4db8806ad1f12",
+          "bytes": 52808
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_get_2025-06-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "5d674a649e9efb8305abcf03cbbabbbe9b947ab74752277b5ba64a472b7f9d00",
+          "bytes": 51647
+        },
+        {
+          "file": "provenance/raw_2026-09-06/official_get_2026-07-01_2026-09-06.html.gz",
+          "sha256_uncompressed": "7df43d4161b6c2e36099c0b6dcb09905a360208e61a57f12325b70d848f1aa93",
+          "bytes": 51647
+        },
+        {
+          "file": "provenance/raw_2026-09-06/lottopcso_642.html.gz",
+          "sha256_uncompressed": "390b9d1b181ca735b632f98635d65a11188260260606010a6d67de1ed8edb334",
+          "bytes": 121749
+        },
+        {
+          "file": "provenance/raw_2026-09-06/lottopcso_645.html.gz",
+          "sha256_uncompressed": "32dacfcc4903009813d5b4cec904a7c5f8058bafe22a8e1528e772589c118d4d",
+          "bytes": 138922
+        },
+        {
+          "file": "provenance/raw_2026-09-06/lottopcso_649.html.gz",
+          "sha256_uncompressed": "10caf9a7380737e3a438e8328725d1017a1fbc203890dcc045c04801013018fa",
+          "bytes": 156652
+        },
+        {
+          "file": "provenance/raw_2026-09-06/lottopcso_655.html.gz",
+          "sha256_uncompressed": "c207a484b7f7650a3413784015f6c79f3ed36f377620e3f2e746b6c5541db1d5",
+          "bytes": 162287
+        },
+        {
+          "file": "provenance/raw_2026-09-06/lottopcso_658.html.gz",
+          "sha256_uncompressed": "f812d6cfef555af7ac2fd6cd82c09eec9e29f5568e1e5ccebe58c8d7e707dc28",
+          "bytes": 102542
+        },
+        {
+          "file": "provenance/raw_2026-09-06/pcsodraw_642.html.gz",
+          "sha256_uncompressed": "094354d5833da440c8667f461907b1ee4b2e7c9575e36a5e4a5b359704804849",
+          "bytes": 24724
+        },
+        {
+          "file": "provenance/raw_2026-09-06/pcsodraw_645.html.gz",
+          "sha256_uncompressed": "118b49c103d997e826074bd66e86b60ccd51142591123685993fb21cbb8a6c24",
+          "bytes": 24953
+        },
+        {
+          "file": "provenance/raw_2026-09-06/pcsodraw_649.html.gz",
+          "sha256_uncompressed": "997354e66979b41a1a842ec883ffede631f065b40722da02e3022dd0c3985d6a",
+          "bytes": 24951
+        },
+        {
+          "file": "provenance/raw_2026-09-06/pcsodraw_655.html.gz",
+          "sha256_uncompressed": "1692bbf808101c3d29b34f28160669ce43d665792843c7d30e2531f4eb52f393",
+          "bytes": 25160
+        },
+        {
+          "file": "provenance/raw_2026-09-06/pcsodraw_658.html.gz",
+          "sha256_uncompressed": "7ddb73b2cc34c784420a3e44ea99d58c5404b1a5d40faa4be1c5681cc3a345ed",
+          "bytes": 25195
+        }
+      ]
+    }
+  },
+  "confirmation_sizes": {
+    "Lotto 6/42": 38,
+    "Mega Lotto 6/45": 37,
+    "Super Lotto 6/49": 37,
+    "Grand Lotto 6/55": 37,
+    "Ultra Lotto 6/58": 37,
+    "total": 186
+  },
+  "registered_family_m": 9,
+  "computable_tests": 8,
+  "bonferroni_threshold": 0.005556,
+  "seed": 20260906,
+  "tests": {
+    "chi_square_mc_10000": {
+      "Lotto 6/42": {
+        "n": 38,
+        "chi2": 48.684211,
+        "p_mc": 0.066193,
+        "mc_exceedances": 661,
+        "flag": false
+      },
+      "Mega Lotto 6/45": {
+        "n": 37,
+        "chi2": 38.675676,
+        "p_mc": 0.49805,
+        "mc_exceedances": 4980,
+        "flag": false
+      },
+      "Super Lotto 6/49": {
+        "n": 37,
+        "chi2": 58.756757,
+        "p_mc": 0.045695,
+        "mc_exceedances": 456,
+        "flag": false
+      },
+      "Grand Lotto 6/55": {
+        "n": 37,
+        "chi2": 51.513514,
+        "p_mc": 0.375762,
+        "mc_exceedances": 3757,
+        "flag": false
+      },
+      "Ultra Lotto 6/58": {
+        "n": 37,
+        "chi2": 64.342342,
+        "p_mc": 0.106889,
+        "mc_exceedances": 1068,
+        "flag": false
+      }
+    },
+    "pearson_permutation_20000": {
+      "mean_drawn_vs_moon_altitude": {
+        "r": -0.015379,
+        "p": 0.832608,
+        "permutation_exceedances": 16652,
+        "n": 186,
+        "flag": false
+      },
+      "mean_drawn_vs_moon_illumination": {
+        "r": 0.004786,
+        "p": 0.950452,
+        "permutation_exceedances": 19009,
+        "n": 186,
+        "flag": false
+      },
+      "mean_drawn_vs_kp": {
+        "status": "not_computable",
+        "reason": "Kp blank for confirmation draws"
+      }
+    },
+    "binomial_655_number45": {
+      "n_655": 37,
+      "k": 2,
+      "expected": 4.036364,
+      "p_two_sided": 0.427453,
+      "flag": false
+    },
+    "pearson_permutation_20000_within_game_variant": {
+      "mean_drawn_vs_moon_altitude": {
+        "r": -0.015379,
+        "p_within_game": 0.835708,
+        "n": 186
+      },
+      "mean_drawn_vs_moon_illumination": {
+        "r": 0.004786,
+        "p_within_game": 0.952002,
+        "n": 186
+      }
+    }
+  },
+  "flags": [],
+  "note": "The m=9 threshold is within-look only. Weekly cumulative looks are exploratory monitoring without a registered sequential alpha-spending rule; any flag requires a separately registered fresh replication. Kp remains non-computable pending GFZ backfill."
+}

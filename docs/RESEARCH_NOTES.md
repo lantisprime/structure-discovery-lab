@@ -220,3 +220,30 @@ B1 measured *out* of the MP equivalence class (null-rho=+0.11 vs predicted >=0.9
 exclusion bounds shown vacuous at feasible n (~130-330 yrs for a 10% bound — logged
 as a capability boundary); Ramsey-trap baselines (3.2-4.4 forced APs per hot set)
 added to the failure-mode gallery. Confirmation arbiter: held-out draws >= 2026-06-12.
+
+## 10. Official-source refresh, conscious-selection instrument, strategy backtest (Sep 6, 2026)
+
+Full results: docs/RESULTS_PCSO_REFRESH_2026-09-06.md. Data: 128 draws (Jul 8 – Sep 5, 2026)
+appended from the official pcso.gov.ph date-range search with raw HTML retained; every one of the
+834 rows previously on file re-verified against the same official page (834/834 exact, including
+the three M4 "suspicious" rows); new official per-draw jackpot + winning-bet file (984 draws).
+Monitoring (m=9 family, n=186 confirmation draws): 0 flags, min p=0.046; #45 stays dead (2/37).
+New theorem card 28 (conscious selection, Stern–Cover/Cook–Clotfelter, decision layer) onboarded
+per Part 3: null trial caught a pool-size confound (pooled T1 null mean +0.004, 7 SE from 0) →
+statistics re-specified within game before any real-data claim; first run: winner draws sit +0.74
+sd higher on the popularity proxy (perm. p=5e-05, floor), rank corr +0.16 (p=1e-04), top-tertile
+draws share jackpots 2.8× as often — a statement about players, not the machine; G0 exploratory.
+Draw-paired backtest of eight selection rules (834 draws; r2: conditional Monte Carlo null with the
+generated tickets fixed, Holm over 7): no rule differs from uniform (min Holm p 0.055); the first-pass
+sign-flip null and its "one flag charged once" reading were withdrawn after an independent read-only
+mathematical review by Codex gpt-6-astra (results/codex_review_2026-09-06.md), which was applied in
+full: HC1 sandwich inference and Holm in the popularity instrument (count ratio per SD 1.68
+[1.44, 1.95]); a product-weight 6-without-replacement posterior predictor with a fixed Dirichlet(100)
+prior replacing a Dirichlet-multinomial/empirical-Bayes draft (results §8: maximum-predictive sets
+carry R 1.48–1.64 with credible intervals reaching 1; BF₀₁ 0.22–0.95 at a=100, 46–6976 at a=10;
+model-averaged 1.25–1.52; order-1 overlap tests null at Bonferroni 0.01). Literature scan (sourced
+brief, 2026-09-06): no peer-reviewed method beats chance on a physical draw; PRNG-recovery results
+(Mersenne Twister, 2024–25 transformer work) apply only to software RNGs. Web picker v2.1: posterior
+maximum-predictive tickets with R, CrI, R_mix and BF₀₁ per game, plus the CSPRNG low-popularity pair,
+official Feb-2026 prize matrix, Poisson co-winner split; P(win) under the uniform model unchanged
+and stated as such.

@@ -85,6 +85,21 @@
     }
   ],
   "families": {
+    "payout-sharing": {
+      "members": [
+        "csi-winners-meandiff",
+        "csi-winners-rankcorr"
+      ],
+      "class": "payout-sharing",
+      "status": "declared 2026-09-06 (docs/kb/conscious-selection-popularity.md): decision-layer player-behaviour statistics on official winner counts; not hit-count functions — null correlation with chi-square measured in src/csi_popularity.py step4_null_trial; EXPLORATORY G0"
+    },
+    "strategy-backtest": {
+      "members": [
+        "paired-draw-signflip"
+      ],
+      "class": "strategy-edge",
+      "status": "declared 2026-09-06 (docs/RESULTS_PCSO_REFRESH_2026-09-06.md §3): per-strategy match-rate vs uniform on the same draws, sign-flip permutation; EXPLORATORY G0"
+    },
     "hit-count-cooc": {
       "members": [
         "lambda-max",
