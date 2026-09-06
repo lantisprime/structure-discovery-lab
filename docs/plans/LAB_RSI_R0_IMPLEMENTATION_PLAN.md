@@ -196,7 +196,9 @@ with one byte changed (REQ-5, REQ-9), captured stdout strings for the slow
 | Altered-definition red | `tests/test_outcome_collect.py::test_altered_agent_definition_turns_gate_red` (definition bytes altered in-process, not on disk) | passes: `STALE_EVAL` defect, gate red |
 | Full battery | `./tools/check.sh` | `ALL CHECKS PASSED` |
 | CI, first run (S1-S3) | PR #24 run 34027349516 | macOS green (24 known states, 0 new defects). **Ubuntu red at the R0 gate, as designed**: `src/pcso_next_draw_posterior.py --verify` exit 1 on Linux while it passes on macOS -- the committed posterior JSON is platform-dependent (second real defect surfaced; row adopted from the `outcome-ledger-ubuntu-latest` artifact via `--adopt`, executor `github-actions:34027349516`). The artifact also showed 11 duplicate agent rows caused by the shallow clone (§19 5c), fixed in S4. |
-| CI, after S4 | PR #24 checks | filled at closeout |
+| CI, S4 (run 34028096413) | PR #24 checks | Ubuntu red in `tests/`: five agent-eval tests assumed git history; in a shallow clone the honest `is_shallow()` yields no hash to compare. Reproduced in a local `--depth 1` clone (5 failed / 20 passed), fixed by seeding the test ledger as CI does (S5: 49 passed shallow, 99 passed full). |
+| CI, S5 (run 34028220700) | PR #24 checks | Ubuntu red at the R0 gate, correctly: with per-platform slots the Linux slot had no known-defect baseline, so `src/pcso_weekly_update.py --verify` (same `ValueError`) was new for `linux`; the Linux posterior failure was already known and deduplicated (reproducible). All seven Linux rows adopted into the committed ledger (S6). |
+| CI, S6 | PR #24 checks | filled at closeout |
 
 ## §17 Open Decisions
 
