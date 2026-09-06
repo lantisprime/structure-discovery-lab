@@ -254,6 +254,14 @@ def main():
     rate = {g: sum(w for _, _, _, w in by_game[g]) / len(by_game[g]) for g in games}
     zx = within_game_standardize(x, glist)
     rx = within_game_rank(x, glist)
+    # fitted reference statistics (the covariate the GLM slope refers to): mean and sample SD of CSI over the
+    # observed official draws of each game — exported so the web page standardizes against the SAME quantity
+    ref_obs = {}
+    for g, idx in zip(games, groups):
+        vals = [x[i] for i in idx]
+        mu_g = sum(vals) / len(vals)
+        sd_g = math.sqrt(sum((v - mu_g) ** 2 for v in vals) / (len(vals) - 1))
+        ref_obs[g] = {"n": len(vals), "mean": round(mu_g, 12), "sd": round(sd_g, 12)}
 
     # ---- Step 4: null trial on simulated H0 data of the real shape (uniform draws, winners independent of CSI)
     null_t1, null_t2, null_chi = [], [], []
@@ -366,6 +374,7 @@ def main():
                         "CSI weights are literature proxies for other lotteries; PCSO play-slip position effects are unmeasured",
                         "One year of draws, 77 winner events: effect size is the top-tertile contrast, not a calibrated per-combination model"]},
         "csi_uniform_reference": ref,
+        "csi_observed_within_game_reference": ref_obs,
     }
     payload = (json.dumps(result, indent=2, ensure_ascii=True) + "\n").encode("utf-8")
     out = ROOT / "results" / f"csi_popularity_{args.run_date}.json"

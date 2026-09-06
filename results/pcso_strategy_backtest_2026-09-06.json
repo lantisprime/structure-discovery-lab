@@ -11,11 +11,11 @@
     },
     "warmup_draws": 30,
     "csi_acceptance_threshold_q40": {
-      "42": 0.0243,
-      "45": 0.0091,
-      "49": 0.0282,
-      "55": 0.0172,
-      "58": 0.0033
+      "42": 0.02431372549,
+      "45": 0.009090909091,
+      "49": 0.028184281843,
+      "55": 0.017210951674,
+      "58": 0.003333333333
     },
     "null": "i.i.d. uniform draws => every fixed ticket has E[matches]=36/P; conditional Monte Carlo null on per-draw differences given the generated tickets"
   },

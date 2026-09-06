@@ -114,17 +114,28 @@ several), only the jackpot tier is observable, weights are literature proxies th
 this run and must not be tuned on these draws, one era (Feb-2026 restructure inside the window).
 Promotion (Step 8) requires a reset boundary and fresh draws.
 
-## 5. Consequences for the web picker (`lotto_picker.html`)
+## 5. Consequences for the web picker (`lotto_picker.html`, v2.2 / r3)
 
-- Constants now come from these three JSONs (monitoring p-values, CSI thresholds and parity vectors,
-  backtest verdicts) and from the official page (jackpots, winners, Feb-2026 prize matrix).
-- Ticket generation: CSPRNG uniform, disjoint pair, both tickets required to fall in the bottom 40%
-  of the CSI distribution for that pool (q40 thresholds: 6/42 0.0243 · 6/45 0.0091 · 6/49 0.0282 ·
-  6/55 0.0172 · 6/58 0.0033); the v1 four-rule filter is a strict subset of this rule.
-- EV: hypergeometric tiers with the official Feb-2026 matrix (Category II/III are pools shared per
-  winning bet — sales-dependent), 20% tax above ₱10k, Poisson co-winner split with the exploratory
-  sharing multiplier exp(0.52·z_CSI) applied to the jackpot tier and shown as G0.
-- The page states, above the fold, that nothing on it changes P(win) = 1/C(P,6).
+A second read-only Codex gpt-6-astra review of the page (`results/codex_review_page_2026-09-06.md`)
+listed 12 required edits; all are applied:
+
+- Per game the page shows ticket A = maximum-predictive set with R, CrI, R_mix and P(next = A | M₁),
+  ticket B = posterior ranks 7–12 with its **own** R/CrI/R_mix (from the JSON's
+  `second_disjoint_set_ranks_7_12`), P(A or B wins) = (R_mix(A)+R_mix(B))/C, BF₀₁, the equal-odds
+  deviation probability, and the overlap test labelled as absolute-deviation.
+- Random pair: exact-uniform 12-sample (rejection sampling on 32-bit words), acceptance at or below
+  the full-precision q40 cutoffs of the backtest JSON, failure reported instead of rejected tickets.
+- z_CSI uses the fitted within-game mean/SD of the observed draws (exported by `csi_popularity.py`);
+  the CSI count contrast e^{βz}/E_U[e^{βz}] is displayed as an association only.
+- EV is a single uniform-draw scenario for all tickets and tiers, with the 20% tax applied to each
+  realized individual share above ₱10k inside the expectation; R_mix values are shown beside it, not
+  folded in; the Kelly line and the undocumented jackpot-growth constants are removed.
+- Text: Bayes-factor direction corrected (all BF₀₁ < 1 at a=100, reversed at a=10), CrI lower ends
+  0.98–1.07, serial-dependence scope narrowed to the tested statistics, backtest totals corrected
+  (2,335,200 evaluations, 42 five-matches, 0 six) with replicate counts and the adaptive-history
+  limitation, archive coverage stated as 128/128 and 100/100, within-look monitoring caveat, prize
+  matrix sourced to the archived official game pages, and a technical appendix with the omitted
+  formulas and the bottom/hot/last-draw R tables.
 
 ## 6. Reproduction
 
@@ -150,10 +161,13 @@ a=10, 1000); posterior by importance sampling from Dirichlet(a+c) with weights z
 samples per game (effective size ≥ 195,000). The first-pass predictor (Dirichlet-multinomial on ball
 counts, empirical-Bayes a, product of posterior means) was withdrawn: it omits the e₆ normalizer, its
 conjugacy does not survive, and it let the data choose the prior. Output
-`results/pcso_next_draw_posterior_2026-09-06.json` (SHA-256 `e9308ba0252709f3…`); Codex's independent
-computation agrees to three decimals.
+`results/pcso_next_draw_posterior_2026-09-06.json`. Codex's independent reconstruction uses the same
+model and reaches the same conclusions; its point estimates differ from the stored integration at the
+third decimal (e.g. 6/55 R 1.641 vs 1.640) and its order-1 test uses likelihood-ratio ordering,
+whereas this script orders by absolute deviation of the total overlap (6/49 p 0.041 vs 0.045; 6/55
+0.053 vs 0.048). The two are kept distinct; the page reports the stored values.
 
-| Game | maximum-predictive set S* | R = C(P,6)·E[f_w(S*)] [95% CrI] | BF₀₁ (a=10 / 100 / 1000) | R_mix (equal model odds) | order-1 overlap exact p |
+| Game | maximum-predictive set S* | R = C(P,6)·E[f_w(S*)] [95% CrI] | BF₀₁ (a=10 / 100 / 1000) | R_mix (equal model odds) | order-1 overlap exact p (absolute deviation) |
 |---|---|---|---|---|---|
 | 6/42 | 03 06 12 36 39 41 (6 tied with 18, 35) | 1.48 [0.99, 2.13] | 6976 / 0.95 / 0.95 | 1.25 | 0.65 |
 | 6/45 | 04 05 08 24 25 27 | 1.50 [0.99, 2.16] | 1237 / 0.59 / 0.90 | 1.32 | 0.14 |
@@ -164,7 +178,10 @@ computation agrees to three decimals.
 P(any ball's inclusion probability deviates >10% from 6/P | data, M₁(100)) ≈ 1 in every game, which is
 a property of the conditional model, not evidence for it; at equal model odds it is 0.51–0.82, and
 under a=1000 it is 0.012–0.029. Under the uniform model every history-based rule has R = 1 and
-Δ = 0 exactly. **Verdict: the maximum-predictive sets and their multipliers are the complete
-mathematically derived prediction this repository supports; the evidence for unequal weights is weak
-to absent (BF₀₁ ≥ 0.22 everywhere, and prior-sensitive), and no serial-dependence rule adds to it.
-G0 exploratory.**
+Δ = 0 exactly. Reading the Bayes factors correctly: at a=100 every BF₀₁ is below 1, i.e. the data
+lean toward unequal weights in all five games, most in 6/55 and least in 6/42, and the direction
+reverses at a=10 — the evidence is weak and prior-sensitive, not a verdict for either model.
+**Verdict: the maximum-predictive sets and their multipliers are the complete mathematically derived
+prediction this repository supports; the evidence for unequal weights is weak and prior-sensitive,
+and neither tested serial-dependence statistic rejects after Bonferroni (other transition
+alternatives were not exhausted). G0 exploratory.**

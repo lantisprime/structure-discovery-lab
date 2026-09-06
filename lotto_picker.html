@@ -9,6 +9,7 @@
   * { box-sizing:border-box; margin:0; }
   body { font-family:-apple-system, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--ink); padding:24px; max-width:940px; margin:0 auto; }
   h1 { font-size:1.5rem; margin-bottom:4px; }
+  h2 { font-size:1rem; margin:22px 0 6px; color:var(--ink); }
   .sub { color:var(--mut); font-size:.9rem; margin-bottom:16px; }
   .banner { background:#2b2030; border:1px solid #6b4f2a; border-radius:10px; padding:10px 14px; font-size:.85rem; color:#e8c98a; margin-bottom:14px; }
   .fact { background:#16281f; border:1px solid #2f5a3f; border-radius:10px; padding:10px 14px; font-size:.85rem; color:#bfe8cc; margin-bottom:20px; }
@@ -30,7 +31,7 @@
   .pred2 .ball { background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), #7f68b8; }
   .last .ball { width:30px; height:30px; font-size:.8rem; background:#3a4a63; color:var(--ink); }
   .evrow { display:flex; gap:10px; align-items:end; margin-top:12px; flex-wrap:wrap; }
-  .ev { font-size:.85rem; padding:6px 10px; border-radius:8px; }
+  .ev { font-size:.85rem; padding:6px 10px; border-radius:8px; line-height:1.5; }
   .neg { background:#3a1f24; color:var(--red); } .pos { background:#15331f; color:var(--grn); }
   button { background:var(--acc); border:0; color:#06121f; font-weight:700; padding:9px 16px; border-radius:8px; cursor:pointer; font-size:.9rem; }
   button:hover { filter:brightness(1.1); }
@@ -42,15 +43,15 @@
 </style>
 </head>
 <body>
-<h1>PCSO 2-Ticket Protocol Picker <span style="color:var(--mut);font-weight:400">v2.1 · 2026-09-06</span></h1>
+<h1>PCSO 2-Ticket Protocol Picker <span style="color:var(--mut);font-weight:400">v2.2 · 2026-09-06 (r3)</span></h1>
 <div class="sub">Pick a date &rarr; see which games draw that night (9 PM PHT), the last <b>official</b> result, the posterior-predictive tickets, and a low-popularity random pair.</div>
 <div class="banner mono">
-Model: 6-without-replacement product-weight draw, f<sub>w</sub>(S) = &prod;<sub>i&isin;S</sub> w<sub>i</sub> / e<sub>6</sub>(w); prior w ~ Dirichlet(a=100) fixed a priori<br>
-Prediction: S* = argmax P(next = S | data);  multiplier R = C(n,6)&middot;E[f<sub>w</sub>(S*) | data]  (R = 1 under the uniform model, exactly)<br>
-Model average: R<sub>mix</sub> = 1 + (R&minus;1)/(1+BF<sub>01</sub>),  BF<sub>01</sub> = evidence for uniform over unequal weights, equal prior odds<br>
-Payout: E[jackpot share] = J&middot;(1&minus;e<sup>&minus;&lambda;</sup>)/&lambda;, &lambda; = N&middot;q(c)  [Stern&ndash;Cover]; Category II/III pools shared per winning bet since 2026-02-01
+Model M<sub>1</sub>: 6-without-replacement product-weight draw, f<sub>w</sub>(S) = &prod;<sub>i&isin;S</sub> w<sub>i</sub> / e<sub>6</sub>(w); inclusion &pi;<sub>i</sub> = w<sub>i</sub> e<sub>5</sub>(w<sub>&minus;i</sub>) / e<sub>6</sub>(w), &sum;<sub>i</sub>&pi;<sub>i</sub> = 6; prior w ~ Dirichlet(a=100) fixed a priori<br>
+Prediction: S* = argmax P(next = S | data); R = C(n,6)&middot;E[f<sub>w</sub>(S*) | data]; under the uniform model M<sub>0</sub> every rule has R = 1 and &Delta; = 0 exactly<br>
+Model average (equal prior odds): R<sub>mix</sub> = 1 + (R&minus;1)/(1+BF<sub>01</sub>); credible intervals are on R<sub>w</sub>(S*) = C(n,6) f<sub>w</sub>(S*) and condition on M<sub>1</sub>(100)<br>
+Two distinct tickets: P(either wins) = [R(A)+R(B)]/C(n,6) &mdash; 2/C(n,6) under M<sub>0</sub>
 </div>
-<div class="fact"><b>Numbers, as the mathematics gives them (962 official-verified draws, corrected per the gpt-6-astra review):</b> the maximum-predictive six-set of each game carries a multiplier of 1.48&ndash;1.64 on P(jackpot) versus a uniform pick, with 95% credible intervals whose lower ends sit at 0.98&ndash;1.08; Bayes factors favour the uniform model in every game except weakly 6/55 (BF<sub>01</sub> 0.22&ndash;0.95 at a=100; 46&ndash;6,976 at a=10); model-averaged multipliers 1.25&ndash;1.52. Order-1 dependence between consecutive draws: none at Bonferroni 0.01. No selection rule beat uniform in the draw-paired backtest after Holm (min p 0.055). Popularity index: winning bets scale by 1.68 [1.44, 1.95] per within-game SD (HC1) &mdash; payout only, never P(win).</div>
+<div class="fact"><b>Numbers, as the mathematics gives them (962 official-verified draws, per-game fitting T = 192/193/192/193/192; corrected per two gpt-6-astra reviews):</b> conditional on M<sub>1</sub>(100), the maximum-predictive six-set of each game carries R = 1.48&ndash;1.64 on P(jackpot) versus a uniform pick, with 95% credible intervals whose lower ends are 0.98&ndash;1.07. At a=100 every Bayes factor BF<sub>01</sub> is below one (0.22&ndash;0.95): the data lean toward unequal weights in all five games, most in 6/55 and least in 6/42; at a=10 the direction reverses (BF<sub>01</sub> 46&ndash;6,976), so the evidence is weak and prior-sensitive. Model-averaged multipliers 1.25&ndash;1.52. Neither tested order-1 persistence statistic rejects at Bonferroni 0.01 (other transition alternatives were not exhausted). No selection rule differed from uniform in the draw-paired backtest after Holm (min Holm p 0.055; adaptive rules calibrated with tickets fixed, not by history replay). Popularity index: winning-bet counts scale by 1.68 [1.44, 1.95] per within-game SD at equal game and jackpot (HC1) &mdash; an association of counts; it establishes neither a draw-probability effect nor a calibrated payout gain.</div>
 
 <div class="controls">
   <div><label>Draw date</label><input type="date" id="d" min="2026-09-06"></div>
@@ -61,28 +62,44 @@ Payout: E[jackpot share] = J&middot;(1&minus;e<sup>&minus;&lambda;</sup>)/&lambd
 <div id="out"></div>
 <div id="parity"></div>
 
+<h2>Technical appendix</h2>
 <div class="foot">
-<b>Data (official, pcso.gov.ph SearchLottoResult, fetched 2026-09-06):</b> 984 draws Jun 1 2025 &ndash; Sep 5 2026 with jackpot and winning-bet counts; the 962-row canonical file (Jun 11 2025 &ndash; Sep 5 2026) matches the official page on every row (834/834 prior rows re-verified exactly, 128 new rows <span class="mono">official_verified</span>, cross-checked on two archives with draw-number continuity). Provenance: <span class="mono">datasets/pcso-lotto/provenance/pcso_refresh_2026-09-06.json</span> + raw HTML.<br><br>
-<b>Next-draw posterior (<span class="mono">src/pcso_next_draw_posterior.py</span>, <span class="mono">results/pcso_next_draw_posterior_2026-09-06.json</span>):</b> likelihood &prod;<sub>i</sub> w<sub>i</sub><sup>c<sub>i</sub></sup> / e<sub>6</sub>(w)<sup>T</sup> (the e<sub>6</sub> normalizer is what a multinomial-on-counts model omits); posterior by importance sampling from Dirichlet(a+c) with weights z(w)<sup>&minus;T</sup>, 200,000 samples per game (effective size &ge; 195,000); credible intervals on R<sub>w</sub>(S*) = C(n,6) f<sub>w</sub>(S*). Prior sensitivity: BF<sub>01</sub> at a=1000 is 0.80&ndash;0.95 (uniform indistinguishable); at a=10 it is 46&ndash;6,976 (uniform strongly favoured); P(any ball's inclusion deviates &gt;10% from 6/n) at equal model odds 0.51&ndash;0.82. Independent reconstruction by Codex gpt-6-astra (<span class="mono">results/codex_review_2026-09-06.md</span>) agrees to three decimals. The 6/42 sixth place is tied: 18 or 35 can replace 6 with the same predictive probability.<br><br>
-<b>Monitoring (registered m=9 family, confirmation set n=186 draws after the 2026-06-10 freeze):</b> per-game exact-MC chi-square p = 0.066 / 0.498 / 0.046 / 0.376 / 0.107 (6/42 &hellip; 6/58); mean-drawn vs moon altitude r=&minus;0.015 (p=0.83 global, 0.84 within-game), vs illumination r=+0.005 (p=0.95 / 0.95); 6/55 ball #45: 2 hits in 37 draws vs 4.0 expected (p=0.43). <b>0 flags at &alpha;=0.0056.</b> Kp non-computable (backfill pending).<br><br>
-<b>Random low-popularity pair (algorithm v2):</b> uniform via the browser's cryptographic RNG, one disjoint 12-number sample; both tickets must fall in the bottom 40% of the <i>conscious-selection index</i> for that pool (CSI: excess share of numbers &le;31, &le;12 and {1,3,5,7,9,11,12,13}; arithmetic progressions, runs, common divisors, single last digit, single parity; weights declared from Cook&ndash;Clotfelter, Stern&ndash;Cover, Simon, Farrell et al., Baker&ndash;McHale, Roger&ndash;Broihanne, Polin et al.); q40 thresholds 6/42 0.0243 &middot; 6/45 0.0091 &middot; 6/49 0.0282 &middot; 6/55 0.0172 &middot; 6/58 0.0033. Same function as <span class="mono">src/csi_popularity.py</span> (parity self-test below). PCSO validation (984 draws, within-game stratified, winners permuted within game): T1 = +0.74 sd, T2 = +0.16, Holm p = 1e-04 both; Poisson pseudo-MLE with game effects and HC1 sandwich: winning bets &prop; exp(0.52&middot;z<sub>CSI</sub>), count ratio per SD 1.68 [1.44, 1.95]. Ticket sales are not published, so this is a count contrast at equal game and jackpot, not popularity per purchased bet. G0 exploratory.<br><br>
-<b>Backtest (<span class="mono">results/pcso_strategy_backtest_2026-09-06.json</span>, 834 draws &times; 2 tickets, draw-paired, conditional Monte Carlo null with the generated tickets held fixed, Holm over 7 rules):</b> mean matches per ticket vs uniform on the same draws &mdash; v1 filters +0.0040 (p=0.0078, Holm 0.055), v2 CSI +0.0081 (0.013, 0.067), hot +0.012 (0.46), cold &minus;0.041 (0.011, 0.064), overdue &minus;0.001 (0.96), repeat-last &minus;0.004 (0.76), Markov +0.007 (0.66). <b>No rule differs from uniform after Holm.</b> Best of 1.67M tickets: one 5-match; never a jackpot.<br><br>
-<b>EV model:</b> hypergeometric tiers; official Feb-2026 matrix (ticket &#8369;25; Category II/III pools shared per winning bet, Category IV fixed); 20% tax above &#8369;10k; co-winner split E[1/(1+K)], K~Poisson(N&middot;p<sub>tier</sub>), with the popularity count ratio exp(0.52&middot;z<sub>CSI</sub>) applied to the jackpot tier and the posterior multiplier R<sub>mix</sub> applied to P(jackpot) of the predicted tickets. Jackpot defaults = last official draw (Sep 3&ndash;5, 2026); edit per draw night. Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun. Full methodology: docs/RESULTS_PCSO_REFRESH_2026-09-06.md, docs/kb/conscious-selection-popularity.md.
+<b>Data (official, pcso.gov.ph SearchLottoResult, fetched 2026-09-06):</b> 984 draws Jun 1 2025 &ndash; Sep 5 2026 with jackpot and winning-bet counts; the 962-row canonical file (Jun 11 2025 &ndash; Sep 5 2026) matches the official page on every row (834/834 prior rows re-verified exactly; 128 new rows <span class="mono">official_verified</span>, cross-checked 128/128 on lottopcso.com and 100/100 on pcsodraw.com, whose 20-draw window leaves 28 draws covered by draw-number continuity only). Provenance: <span class="mono">datasets/pcso-lotto/provenance/pcso_refresh_2026-09-06.json</span> + raw HTML. Prize matrix, ticket price and 9 PM draw time: official PCSO game pages fetched 2026-09-06 (<span class="mono">provenance/raw_2026-09-06/gamepage_*.html.gz</span>).<br><br>
+<b>Next-draw posterior (<span class="mono">src/pcso_next_draw_posterior.py</span> &rarr; <span class="mono">results/pcso_next_draw_posterior_2026-09-06.json</span>):</b> likelihood &prod;<sub>i</sub> w<sub>i</sub><sup>c<sub>i</sub></sup> / e<sub>6</sub>(w)<sup>T</sup> (the e<sub>6</sub> normalizer is what a multinomial-on-counts model omits, and Dirichlet conjugacy does not survive it); posterior expectations by importance sampling from Dirichlet(a+c) with weights z(w)<sup>&minus;T</sup>, z(w) = e<sub>6</sub>(n&middot;w)/C(n,6), 200,000 samples per game (effective size &ge; 195,000). BF<sub>10</sub>(a) = n<sup>6T</sup> &Gamma;(na)/&Gamma;(na+6T) &prod;<sub>i</sub> &Gamma;(a+c<sub>i</sub>)/&Gamma;(a) &middot; E<sub>Dir(a+c)</sub>[z(w)<sup>&minus;T</sup>]. The conditional probability that some ball's inclusion deviates more than 10% from 6/n is &asymp;1 under M<sub>1</sub>(100) in every game &mdash; a property of the conditional model, not evidence for it; at equal model odds it is 0.51&ndash;0.82; under a=1000 the independent reconstruction reports 0.012&ndash;0.029. Static-weight inference: it does not estimate a changing "hotness" or Markov mechanism. Independent reconstruction by Codex gpt-6-astra (<span class="mono">results/codex_review_2026-09-06.md</span>) uses the same model and reaches the same conclusions; its point estimates differ at the third decimal and its order-1 test uses likelihood-ratio ordering, whereas this page's overlap test is an exact absolute-deviation test on the total overlap of consecutive draws. The 6/42 sixth place is tied: 18 or 35 can replace 6 with the same predictive probability.<br>
+<table><tr><th>Game</th><th>T</th><th>Bottom six R [CrI]</th><th>Hot six (last 50) R [CrI]</th><th>Last draw's six R [CrI]</th><th>BF<sub>01</sub> a=10 / 100 / 1000</th></tr>
+<tr><td>6/42</td><td>192</td><td>0.674 [0.433, 0.993]</td><td>1.301 [0.860, 1.877]</td><td>1.200 [0.791, 1.734]</td><td>6976 / 0.945 / 0.947</td></tr>
+<tr><td>6/45</td><td>193</td><td>0.653 [0.418, 0.967]</td><td>1.077 [0.702, 1.571]</td><td>0.883 [0.572, 1.295]</td><td>1237 / 0.591 / 0.898</td></tr>
+<tr><td>6/49</td><td>192</td><td>0.694 [0.442, 1.028]</td><td>1.364 [0.892, 1.981]</td><td>1.156 [0.751, 1.689]</td><td>3514 / 0.691 / 0.914</td></tr>
+<tr><td>6/55</td><td>193</td><td>0.675 [0.427, 1.009]</td><td>1.216 [0.788, 1.781]</td><td>0.992 [0.636, 1.466]</td><td>46 / 0.221 / 0.800</td></tr>
+<tr><td>6/58</td><td>192</td><td>0.650 [0.408, 0.974]</td><td>1.169 [0.752, 1.720]</td><td>1.091 [0.701, 1.613]</td><td>557 / 0.488 / 0.887</td></tr></table>
+<b>Monitoring (registered m=9 family, confirmation set n=186 draws after the 2026-06-10 freeze, <span class="mono">results/pcso_confirmation_2026-09-06.json</span>):</b> per-game exact-MC chi-square p = 0.066 / 0.498 / 0.046 / 0.376 / 0.107 (6/42 &hellip; 6/58); mean-drawn vs moon altitude r=&minus;0.015 (p=0.83 global, 0.84 within-game), vs illumination r=+0.005 (p=0.95 / 0.95); 6/55 ball #45: 2 hits in 37 draws vs 4.0 expected (p=0.43). <b>0 flags at the within-look Bonferroni level 0.05/9 = 0.0056.</b> Kp non-computable (backfill pending). The threshold controls error within one look only; weekly cumulative looks are exploratory monitoring without a sequential alpha-spending rule.<br><br>
+<b>Random low-popularity pair:</b> a uniform 12-number sample by Fisher&ndash;Yates with the browser's cryptographic RNG (rejection sampling removes modulo bias), split into two disjoint tickets; the pair is accepted when both tickets' <i>conscious-selection index</i> is at or below the estimated 40th-percentile cutoff of the uniform CSI distribution for that pool (full-precision cutoffs from <span class="mono">results/pcso_strategy_backtest_2026-09-06.json</span>: 6/42 0.024313725 &middot; 6/45 0.009090909 &middot; 6/49 0.028184282 &middot; 6/55 0.017210952 &middot; 6/58 0.003333333; CSI is discrete, so the accepted fraction is not exactly 40%). If no pair is accepted within 20,000 proposals the page says so instead of showing rejected tickets. CSI ingredients: excess share of numbers &le;31, &le;12 and {1,3,5,7,9,11,12,13}; flags for arithmetic progressions, runs, common divisors, single last digit, single parity; weights are literature-motivated declared constants (Cook&ndash;Clotfelter, Stern&ndash;Cover, Simon, Farrell et al., Baker&ndash;McHale, Roger&ndash;Broihanne, Polin et al. motivate the ingredients; the decimal weights are the lab's declaration, not estimates from those papers). Same function as <span class="mono">src/csi_popularity.py</span> (parity self-test below). PCSO validation (984 draws, CSI standardized within game, winners permuted within game): T1 = +0.74 sd (raw p 5e-05), T2 = +0.16 rank correlation (raw p 1e-04), Holm p = 1e-04 both; Poisson pseudo-MLE with game effects and HC1 sandwich: winning bets &prop; exp(0.52&middot;z<sub>CSI</sub>) conditional on game and jackpot, count ratio per SD 1.68 [1.44, 1.95]. Ticket sales are not published, so this is a count contrast at equal game and jackpot, not popularity per purchased bet. The z<sub>CSI</sub> shown per ticket uses the fitted within-game mean/SD of the observed draws (the covariate the slope refers to). G0 exploratory.<br><br>
+<b>Backtest (<span class="mono">results/pcso_strategy_backtest_2026-09-06.json</span>, 834 draws after a 30-draw warm-up, 2 tickets per play, 300 replicates per draw for uniform/v1/v2 and 100 for the other rules; conditional Monte Carlo null with the generated tickets held fixed and the draws regenerated, m=9,999; Holm over 7 rules):</b> D<sub>t</sub> = &sum;<sub>i</sub> a<sub>t,i</sub> X<sub>t,i</sub> with a = q<sub>s</sub> &minus; q<sub>0</sub>; Var<sub>0</sub>(D<sub>t</sub>) = 6(n&minus;6)/(n(n&minus;1)) &sum;<sub>i</sub> a<sub>t,i</sub><sup>2</sup>; Z = &sum;D<sub>t</sub> / &radic;&sum;Var<sub>0</sub>.<br>
+<table><tr><th>Rule</th><th>&Delta; matches/ticket</th><th>Z</th><th>MC p</th><th>Holm p</th></tr>
+<tr><td>v1 four filters (previous page)</td><td>+0.0040</td><td>+2.66</td><td>0.0078</td><td>0.055</td></tr>
+<tr><td>v2 CSI cutoff</td><td>+0.0081</td><td>+2.46</td><td>0.013</td><td>0.067</td></tr>
+<tr><td>hot top-6 (last 50)</td><td>+0.0120</td><td>+0.74</td><td>0.46</td><td>1</td></tr>
+<tr><td>cold bottom-6 (last 50)</td><td>&minus;0.0408</td><td>&minus;2.54</td><td>0.011</td><td>0.064</td></tr>
+<tr><td>overdue (longest gap)</td><td>&minus;0.0010</td><td>&minus;0.06</td><td>0.96</td><td>1</td></tr>
+<tr><td>repeat last draw</td><td>&minus;0.0035</td><td>&minus;0.31</td><td>0.76</td><td>1</td></tr>
+<tr><td>Markov order-1 pair proxy</td><td>+0.0070</td><td>+0.43</td><td>0.66</td><td>1</td></tr></table>
+<b>No rule differs from uniform after Holm.</b> Across 2,335,200 simulated ticket evaluations (repeated tickets sharing 834 historical draws), 42 had five matches and none had six. Limitation: the hot/cold/overdue/repeat/Markov rules depend on history; the conditional null holds their tickets fixed rather than replaying the rules on regenerated histories.<br><br>
+<b>EV model (uniform-draw scenario M<sub>0</sub>, all tickets and tiers on the same model):</b> hypergeometric tiers h<sub>k</sub> = C(6,k)C(n&minus;6,6&minus;k)/C(n,6); official Feb-2026 matrix (ticket &#8369;25; Category II/III fixed pools shared per winning bet, Category IV fixed); co-winner count K ~ Poisson(N&middot;h<sub>k</sub>) under an assumed uniform, independent competitor-bet model (the results estimate no lower-tier co-winner distribution); the 20% tax is applied to each realized individual share above &#8369;10,000 inside the expectation, E[T(A/(1+K))]. The posterior jackpot-probability multipliers R<sub>mix</sub>(A), R<sub>mix</sub>(B) are shown beside the tickets as separate information and are not folded into the EV. The CSI count contrast e<sup>&beta;z(S)</sup>/E<sub>U</sub>[e<sup>&beta;z</sup>] is shown per ticket as an association only; it is not used as a sharing probability. Jackpot defaults = last official draw (Sep 3&ndash;5, 2026); edit per draw night. N is an assumption. Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun. Full methodology: docs/RESULTS_PCSO_REFRESH_2026-09-06.md, docs/kb/conscious-selection-popularity.md; page review: results/codex_review_page_2026-09-06.md.
 </div>
 
 <script>
 // ---- official facts (pcso.gov.ph, 2026-09-06)
 const GAMES = {
-  "Lotto 6/42":      {pool:42, days:[2,4,6], minJack:10000000, cat2:1100000, cat3:1000000, cat4:20,  q40:0.0243,
-                      last:{date:"2026-09-05", nums:[29,35,37,24,3,36], jack:28197852.66, win:0}, growth:2883029, chiP:0.066, n:38},
-  "Mega Lotto 6/45": {pool:45, days:[1,3,5], minJack:15000000, cat2:1200000, cat3:1100000, cat4:30,  q40:0.0091,
-                      last:{date:"2026-09-04", nums:[26,38,17,35,11,16], jack:41598513.75, win:0}, growth:3098930, chiP:0.498, n:37},
-  "Super Lotto 6/49":{pool:49, days:[0,2,4], minJack:25000000, cat2:1300000, cat3:1200000, cat4:50,  q40:0.0282,
-                      last:{date:"2026-09-03", nums:[15,45,13,18,8,2], jack:25239749.17, win:0}, growth:61838, chiP:0.046, n:37},
-  "Grand Lotto 6/55":{pool:55, days:[1,3,6], minJack:45000000, cat2:1400000, cat3:1300000, cat4:60,  q40:0.0172,
-                      last:{date:"2026-09-05", nums:[22,44,4,54,47,1], jack:177438115.66, win:0}, growth:4928699, chiP:0.376, n:37, note:" (#45: 2/37 hits, p=0.43)"},
-  "Ultra Lotto 6/58":{pool:58, days:[0,2,5], minJack:75000000, cat2:1500000, cat3:1400000, cat4:100, q40:0.0033,
-                      last:{date:"2026-09-04", nums:[53,34,12,9,5,47], jack:265466683.02, win:0}, growth:6667770, chiP:0.107, n:37}
+  "Lotto 6/42":      {pool:42, days:[2,4,6], minJack:10000000, cat2:1100000, cat3:1000000, cat4:20,  q40:0.02431372549,
+                      last:{date:"2026-09-05", nums:[29,35,37,24,3,36], jack:28197852.66, win:0}, chiP:0.066, n:38, T:192},
+  "Mega Lotto 6/45": {pool:45, days:[1,3,5], minJack:15000000, cat2:1200000, cat3:1100000, cat4:30,  q40:0.009090909091,
+                      last:{date:"2026-09-04", nums:[26,38,17,35,11,16], jack:41598513.75, win:0}, chiP:0.498, n:37, T:193},
+  "Super Lotto 6/49":{pool:49, days:[0,2,4], minJack:25000000, cat2:1300000, cat3:1200000, cat4:50,  q40:0.028184281843,
+                      last:{date:"2026-09-03", nums:[15,45,13,18,8,2], jack:25239749.17, win:0}, chiP:0.046, n:37, T:192},
+  "Grand Lotto 6/55":{pool:55, days:[1,3,6], minJack:45000000, cat2:1400000, cat3:1300000, cat4:60,  q40:0.017210951674,
+                      last:{date:"2026-09-05", nums:[22,44,4,54,47,1], jack:177438115.66, win:0}, chiP:0.376, n:37, T:193, note:" (#45: 2/37 hits, p=0.43)"},
+  "Ultra Lotto 6/58":{pool:58, days:[0,2,5], minJack:75000000, cat2:1500000, cat3:1400000, cat4:100, q40:0.003333333333,
+                      last:{date:"2026-09-04", nums:[53,34,12,9,5,47], jack:265466683.02, win:0}, chiP:0.107, n:37, T:192}
 };
 // ball counts over the 962 canonical draws (index 0 = ball 1)
 const COUNTS = {
@@ -92,14 +109,17 @@ const COUNTS = {
   "Grand Lotto 6/55": [23,25,20,18,28,19,16,18,24,16,18,21,25,20,17,11,23,16,24,26,19,18,20,26,19,18,18,18,15,14,17,24,24,12,19,21,17,24,24,18,27,37,21,30,37,21,13,28,23,28,18,20,18,24,20],
   "Ultra Lotto 6/58": [22,18,14,14,19,14,19,21,22,11,18,28,15,21,26,21,26,17,24,24,11,22,24,11,13,18,16,24,20,25,19,17,22,25,19,22,23,16,22,20,24,12,31,19,21,17,21,16,22,30,22,20,15,22,12,16,28,21]
 };
-// posterior predictive (results/pcso_next_draw_posterior_2026-09-06.json, a=100)
+// posterior predictive (results/pcso_next_draw_posterior_2026-09-06.json, a=100): A = maximum-predictive set, B = ranks 7-12
 const POST = {
-  "Grand Lotto 6/55": {top:[5,42,44,45,48,50], R:1.64, cri:[1.0741,2.3831], Rmix:1.5242, bf01:0.221, pE10:0.819, overlapP:0.0529, ties:[]},
-  "Lotto 6/42":       {top:[3,6,12,36,39,41], R:1.4825, cri:[0.9851,2.1277], Rmix:1.248, bf01:0.9452, pE10:0.5141, overlapP:0.6523, ties:[18,35]},
-  "Mega Lotto 6/45":  {top:[4,5,8,24,25,27], R:1.5024, cri:[0.9935,2.1649], Rmix:1.3158, bf01:0.591, pE10:0.6285, overlapP:0.1406, ties:[]},
-  "Super Lotto 6/49": {top:[8,14,16,26,36,44], R:1.5603, cri:[1.0277,2.2622], Rmix:1.3314, bf01:0.6906, pE10:0.5915, overlapP:0.0407, ties:[]},
-  "Ultra Lotto 6/58": {top:[12,15,17,43,50,57], R:1.5049, cri:[0.9782,2.2], Rmix:1.3393, bf01:0.4879, pE10:0.6721, overlapP:0.1708, ties:[]}
+  "Grand Lotto 6/55": {top:[5,42,44,45,48,50], R:1.64, cri:[1.0741,2.3831], Rmix:1.5242, B:{set:[2,9,13,20,24,41], R:1.2462, cri:[0.8098,1.8258], Rmix:1.2016}, bf01:0.221, pE10:0.819, overlapP:0.0529, ties:[]},
+  "Lotto 6/42":       {top:[3,6,12,36,39,41], R:1.4825, cri:[0.9851,2.1277], Rmix:1.248, B:{set:[1,18,20,23,24,35], R:1.2237, cri:[0.8063,1.771], Rmix:1.115}, bf01:0.9452, pE10:0.5141, overlapP:0.6523, ties:[18,35]},
+  "Mega Lotto 6/45":  {top:[4,5,8,24,25,27], R:1.5024, cri:[0.9935,2.1649], Rmix:1.3158, B:{set:[3,10,17,41,42,43], R:1.2576, cri:[0.8268,1.8226], Rmix:1.1619}, bf01:0.591, pE10:0.6285, overlapP:0.1406, ties:[]},
+  "Super Lotto 6/49": {top:[8,14,16,26,36,44], R:1.5603, cri:[1.0277,2.2622], Rmix:1.3314, B:{set:[6,10,13,15,23,25], R:1.2144, cri:[0.791,1.7682], Rmix:1.1268}, bf01:0.6906, pE10:0.5915, overlapP:0.0407, ties:[]},
+  "Ultra Lotto 6/58": {top:[12,15,17,43,50,57], R:1.5049, cri:[0.9782,2.2], Rmix:1.3393, B:{set:[19,20,23,28,30,34], R:1.2492, cri:[0.8068,1.8351], Rmix:1.1675}, bf01:0.4879, pE10:0.6721, overlapP:0.1708, ties:[]}
 };
+// fitted within-game CSI reference (results/csi_popularity_2026-09-06.json csi_observed_within_game_reference)
+const REFOBS = {42:{mean:0.109025883081, sd:0.12903359837}, 45:{mean:0.099543610457, sd:0.121632734284}, 49:{mean:0.103452031331, sd:0.129107545078},
+                55:{mean:0.074822679337, sd:0.093637899891}, 58:{mean:0.070902572402, sd:0.094544668148}};
 const HITS = [["6/49","2026-08-23",[47,20,36,43,7,6],25413563.73,1],["6/42","2026-08-13",[20,21,14,41,6,12],31911511.47,1],
   ["6/49","2026-08-04",[11,20,12,36,44,26],25187181.56,1],["6/45","2026-08-03",[27,29,34,8,32,36],15000000,1],
   ["6/49","2026-07-26",[4,10,19,14,13,5],91161911.76,1],["6/45","2026-07-24",[14,20,19,31,2,11],20899725.81,1],
@@ -130,34 +150,34 @@ const PARITY=[[[9,18,27,36,45,54],55,0.852482],[[1,2,3,4,5,6],42,1.0],[[3,7,11,1
   [[2,12,22,32,42,52],58,1.0],[[5,14,23,33,44,57],58,0.003333],[[1,16,25,26,43,58],58,0.088519],[[10,20,30,40,50,55],55,0.55]];
 const parityOK = PARITY.every(([t,P,v])=>Math.abs(csi(t,P)-v)<1e-5);
 
-function sampleUnif(P,k){ const arr=Array.from({length:P},(_,i)=>i+1); const buf=new Uint32Array(1);
-  for(let i=arr.length-1;i>0;i--){crypto.getRandomValues(buf); const j=buf[0]%(i+1); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr.slice(0,k); }
-const REF={};
-for(const g of Object.keys(GAMES)){const P=GAMES[g].pool; const v=[]; for(let i=0;i<20000;i++) v.push(csi(sampleUnif(P,6),P));
-  const m=v.reduce((a,b)=>a+b,0)/v.length, sd=Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/(v.length-1)); REF[P]={mean:m,sd:sd};}
+// ---- exact-uniform integer in [0,m) by rejection sampling on 32-bit words (no modulo bias)
+const _buf=new Uint32Array(1);
+function randBelow(m){ const lim=4294967296 - (4294967296 % m); let x; do{ crypto.getRandomValues(_buf); x=_buf[0]; }while(x>=lim); return x % m; }
+function sampleUnif(P,k){ const arr=Array.from({length:P},(_,i)=>i+1); for(let i=arr.length-1;i>0;i--){const j=randBelow(i+1); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr.slice(0,k); }
+function zcsi(t,P){return (csi(t,P)-REFOBS[P].mean)/REFOBS[P].sd;}   // fitted covariate of the GLM slope
+// E_U[exp(beta z)] per pool for the descriptive count contrast (one-off Monte Carlo, 20,000 uniform tickets)
+const EU={}; for(const g of Object.keys(GAMES)){const P=GAMES[g].pool; let s=0; for(let i=0;i<20000;i++) s+=Math.exp(BETA_CSI*zcsi(sampleUnif(P,6),P)); EU[P]=s/20000;}
+function contrast(t,P){return Math.exp(BETA_CSI*zcsi(t,P))/EU[P];}
 function comb(n,k){let r=1;for(let i=0;i<k;i++)r=r*(n-i)/(i+1);return Math.round(r);}
 function pmatch(P,k){return comb(6,k)*comb(P-6,6-k)/comb(P,6);}
-function share(lam){return lam<1e-9?1:(1-Math.exp(-lam))/lam;}
-function zcsi(t,P){return (csi(t,P)-REF[P].mean)/REF[P].sd;}
-function posteriorTickets(game){ // rank balls by count (ties by number); ticket A = ranks 1-6 = the posterior maximum; ticket B = ranks 7-12 (disjoint)
-  const c=COUNTS[game]; const order=Array.from({length:c.length},(_,i)=>i+1).sort((a,b)=>(c[b-1]-c[a-1])||(a-b));
-  return [order.slice(0,6).sort((a,b)=>a-b), order.slice(6,12).sort((a,b)=>a-b)];
+function taxed(x){return x>10000?0.8*x:x;}
+function expShare(A,lam){ // E[T(A/(1+K))], K~Poisson(lam), tax threshold applied to the realized individual share
+  let p=Math.exp(-lam), s=0; for(let k=0;k<400;k++){ s+=p*taxed(A/(1+k)); p*=lam/(k+1); if(p<1e-15&&k>lam) break; } return s;
 }
+function posteriorTickets(game){ const c=COUNTS[game]; const order=Array.from({length:c.length},(_,i)=>i+1).sort((a,b)=>(c[b-1]-c[a-1])||(a-b));
+  return [order.slice(0,6).sort((a,b)=>a-b), order.slice(6,12).sort((a,b)=>a-b)]; }
 function randomPair(game){
-  const P=GAMES[game].pool, thr=GAMES[game].q40; let best=null;
-  for(let tries=0;tries<400;tries++){
+  const P=GAMES[game].pool, thr=GAMES[game].q40;
+  for(let tries=0;tries<20000;tries++){
     const a=sampleUnif(P,12); const A=a.slice(0,6).sort((x,y)=>x-y), B=a.slice(6,12).sort((x,y)=>x-y);
-    const m=Math.max(csi(A,P),csi(B,P)); if(!best||m<best.m) best={A,B,m};
-    if(m<=thr) return [A,B];
+    if(csi(A,P)<=thr && csi(B,P)<=thr) return [A,B];
   }
-  return [best.A,best.B];
+  return null;
 }
-function ev(game,J,N,tickets,Rp){
-  const g=GAMES[game], P=g.pool, C=comb(P,6), p6=Rp/C, p5=pmatch(P,5), p4=pmatch(P,4), p3=pmatch(P,3);
-  const mult = Math.exp(BETA_CSI*(tickets.map(t=>zcsi(t,P)).reduce((a,b)=>a+b,0)/tickets.length));
-  const jack = 0.8*J*p6*share(N*(1/C)*mult);
-  const c2 = 0.8*g.cat2*p5*share(N*p5), c3 = 0.8*g.cat3*p4*share(N*p4), c4 = g.cat4*p3;
-  return {total:jack+c2+c3+c4, jack, low:c2+c3+c4, odds:C, mult};
+function ev(game,J,N){ // uniform-draw scenario, per ticket; identical for every ticket
+  const g=GAMES[game], P=g.pool, C=comb(P,6), p5=pmatch(P,5), p4=pmatch(P,4), p3=pmatch(P,3);
+  const jack=(1/C)*expShare(J,N/C), c2=p5*expShare(g.cat2,N*p5), c3=p4*expShare(g.cat3,N*p4), c4=g.cat4*p3;
+  return {total:jack+c2+c3+c4, jack, low:c2+c3+c4};
 }
 function fmt(n){return "₱"+Math.round(n).toLocaleString();}
 function balls(nums){return nums.map(n=>`<span class="ball">${String(n).padStart(2,"0")}</span>`).join("");}
@@ -173,22 +193,24 @@ function render(newPicks){
   if(sel!=="all"&&!tonight.includes(sel)){out.innerHTML=`<div class="nodraw">${sel} does not draw on that date. Games that night: ${tonight.join(", ")||"none"}.</div>`;return;}
   if(!show.length){out.innerHTML='<div class="nodraw">No 6-number draws that date.</div>';return;}
   for(const g of show){
-    const G=GAMES[g], P=G.pool, Q=POST[g];
-    if(newPicks===true||!G.rnd) G.rnd=randomPair(g);
-    const [A,B]=posteriorTickets(g), [C1,D1]=G.rnd, id="j_"+g.replace(/\W/g,"");
+    const G=GAMES[g], P=G.pool, Q=POST[g], C=comb(P,6);
+    if(newPicks===true||G.rnd===undefined) G.rnd=randomPair(g);
+    const [A,B]=posteriorTickets(g), id="j_"+g.replace(/\W/g,"");
     const def=G.last.win>0?G.minJack:G.last.jack;
+    const rnd = G.rnd ? `<div class="tk"><b>Ticket C</b>${balls(G.rnd[0])}<small>CSI ${csi(G.rnd[0],P).toFixed(3)} (z ${zcsi(G.rnd[0],P).toFixed(2)}, count contrast ${contrast(G.rnd[0],P).toFixed(2)})</small></div>
+      <div class="tk b2"><b>Ticket D</b>${balls(G.rnd[1])}<small>CSI ${csi(G.rnd[1],P).toFixed(3)} (z ${zcsi(G.rnd[1],P).toFixed(2)}, count contrast ${contrast(G.rnd[1],P).toFixed(2)})</small></div>`
+      : `<div class="meta">No pair with both CSI at or below the cutoff was found in 20,000 proposals; press "New random pair".</div>`;
     const card=document.createElement("div"); card.className="card";
     card.innerHTML=`<div class="gname">${g}</div>
-      <div class="meta">Draw ${dateStr}, 9:00 PM PHT &middot; uniform P(jackpot)=1/${comb(P,6).toLocaleString()} per ticket</div>
+      <div class="meta">Draw ${dateStr}, 9:00 PM PHT &middot; uniform P(jackpot)=1/${C.toLocaleString()} per ticket &middot; fitting T=${G.T} draws</div>
       <div class="tk last"><b>Last official</b>${balls(G.last.nums)}<small>${G.last.date} &middot; jackpot ${fmt(G.last.jack)} &middot; ${G.last.win} winning bet${G.last.win===1?"":"s"}</small></div>
-      <div class="sec">Posterior prediction (product-weight model, a=100)</div>
-      <div class="tk pred"><b>Ticket A</b>${balls(A)}<small>maximum-predictive set &middot; R=${Q.R.toFixed(3)} [${Q.cri[0].toFixed(3)}, ${Q.cri[1].toFixed(3)}] &middot; R<sub>mix</sub>=${Q.Rmix.toFixed(3)}${Q.ties.length?" &middot; sixth place tied with "+Q.ties.join(", "):""} &middot; CSI ${csi(A,P).toFixed(3)}</small></div>
-      <div class="tk pred2"><b>Ticket B</b>${balls(B)}<small>posterior ranks 7&ndash;12, disjoint from A (multiplier not computed; &le; R) &middot; CSI ${csi(B,P).toFixed(3)}</small></div>
-      <div class="meta mono">BF<sub>01</sub>(a=100)=${Q.bf01.toFixed(3)} &middot; P(any ball &gt;10% off 6/${P} | equal model odds)=${Q.pE10.toFixed(2)} &middot; order-1 overlap exact p=${Q.overlapP.toFixed(3)} &middot; confirmation-set &chi;&sup2; p=${G.chiP.toFixed(3)}${G.note||""}</div>
-      <div class="sec">Random low-popularity pair (CSI &le; q40)</div>
-      <div class="tk"><b>Ticket C</b>${balls(C1)}<small>CSI ${csi(C1,P).toFixed(3)} (z ${zcsi(C1,P).toFixed(2)})</small></div>
-      <div class="tk b2"><b>Ticket D</b>${balls(D1)}<small>CSI ${csi(D1,P).toFixed(3)} (z ${zcsi(D1,P).toFixed(2)})</small></div>
-      <div class="meta mono">E[matches]=${(36/P).toFixed(3)} &middot; H=log&#8322;C(${P},6)=${Math.log2(comb(P,6)).toFixed(1)} bits &middot; Kelly bankroll for &#8369;25 &asymp; ${fmt(25*comb(P,6))} &middot; official jackpot growth per rollover draw &asymp; ${fmt(G.growth)}</div>
+      <div class="sec">Posterior prediction (product-weight model, a=100; intervals condition on M&#8321;)</div>
+      <div class="tk pred"><b>Ticket A</b>${balls(A)}<small>maximum-predictive set &middot; R=${Q.R.toFixed(3)} [${Q.cri[0].toFixed(3)}, ${Q.cri[1].toFixed(3)}] &middot; R<sub>mix</sub>=${Q.Rmix.toFixed(3)} &middot; P(next=A|M&#8321;)=${(Q.R/C).toExponential(3)}${Q.ties.length?" &middot; sixth place tied with "+Q.ties.join(", "):""} &middot; CSI ${csi(A,P).toFixed(3)} (z ${zcsi(A,P).toFixed(2)})</small></div>
+      <div class="tk pred2"><b>Ticket B</b>${balls(B)}<small>posterior ranks 7&ndash;12, disjoint from A (the maximum-predictive set outside A; not a proven optimal pair) &middot; R=${Q.B.R.toFixed(3)} [${Q.B.cri[0].toFixed(3)}, ${Q.B.cri[1].toFixed(3)}] &middot; R<sub>mix</sub>=${Q.B.Rmix.toFixed(3)} &middot; CSI ${csi(B,P).toFixed(3)} (z ${zcsi(B,P).toFixed(2)})</small></div>
+      <div class="meta mono">P(A or B wins) = (R<sub>mix</sub>(A)+R<sub>mix</sub>(B))/C = ${((Q.Rmix+Q.B.Rmix)/C).toExponential(3)} vs 2/C = ${(2/C).toExponential(3)} &middot; BF<sub>01</sub>(a=100)=${Q.bf01.toFixed(3)} &middot; P(any ball &gt;10% off 6/${P} | equal model odds)=${Q.pE10.toFixed(2)} &middot; order-1 overlap, absolute-deviation exact p=${Q.overlapP.toFixed(3)} &middot; confirmation-set &chi;&sup2; p=${G.chiP.toFixed(3)}${G.note||""}</div>
+      <div class="sec">Random low-popularity pair (CSI at or below the estimated q40 cutoff)</div>
+      ${rnd}
+      <div class="meta mono">E[matches] under M&#8320; = ${(36/P).toFixed(3)} per ticket, &Delta;=0 for every rule &middot; H=log&#8322;C(${P},6)=${Math.log2(C).toFixed(1)} bits</div>
       <div class="evrow">
         <div><label>Jackpot for this draw (edit; default = last official)</label><input type="number" id="${id}" value="${def}" step="1000000" style="width:190px" onchange="evUpdate('${g}','${id}')"></div>
         <div class="ev neg" id="${id}_ev"></div>
@@ -198,17 +220,15 @@ function render(newPicks){
   const hits=document.createElement("div"); hits.className="card";
   hits.innerHTML=`<div class="gname" style="font-size:.95rem">Official jackpot hits since 2026-07-01</div><table><tr><th>Date</th><th>Game</th><th>Combination (as drawn)</th><th>Jackpot</th><th>Bets</th><th>CSI</th></tr>`+
     HITS.map(([gm,dt,nm,J,w])=>`<tr><td>${dt}</td><td>${gm}</td><td class="mono">${nm.map(v=>String(v).padStart(2,"0")).join("-")}</td><td>${fmt(J)}</td><td>${w}</td><td>${csi(nm,Number(gm.slice(2))).toFixed(3)}</td></tr>`).join("")+`</table>
-    <div class="meta">Full year: 77 winner draws, 94 winning bets; winning bets per draw scale by 1.68 [1.44, 1.95] per within-game SD of CSI.</div>`;
+    <div class="meta">Official sample, Jun 1 2025 &ndash; Sep 5 2026: 77 winner draws, 94 winning bets; winning bets per draw scale by 1.68 [1.44, 1.95] per within-game SD of CSI at equal game and jackpot.</div>`;
   out.appendChild(hits);
   document.getElementById("parity").textContent = parityOK ? "CSI parity self-test vs src/csi_popularity.py: 8/8 vectors OK" : "CSI PARITY FAILED — do not trust the CSI values on this page";
 }
 function evUpdate(g,id){
   const G=GAMES[g], J=Number(document.getElementById(id).value)||G.minJack, N=Number(document.getElementById("n").value)||500000;
-  const [A,B]=posteriorTickets(g), Q=POST[g];
-  const eP=ev(g,J,N,[A,B],Q.Rmix), eR=ev(g,J,N,G.rnd,1), el=document.getElementById(id+"_ev");
-  const line=(lab,e)=>`${lab}: EV ${fmt(e.total)} per ₱25 (net ${e.total-25>=0?"+":""}${fmt(e.total-25)}; jackpot tier ${fmt(e.jack)}, lower tiers ${fmt(e.low)}, sharing ${e.mult.toFixed(2)}&times;)`;
-  el.innerHTML=`${line("Posterior A/B at R<sub>mix</sub>="+Q.Rmix.toFixed(2),eP)}<br>${line("Random C/D",eR)} — at N=${N.toLocaleString()}; ${Math.max(eP.total,eR.total)>25?"+EV: re-check sales":"−EV in both"}`;
-  el.className="ev "+(Math.max(eP.total,eR.total)>25?"pos":"neg");
+  const e=ev(g,J,N), el=document.getElementById(id+"_ev"), net=e.total-25;
+  el.innerHTML=`Uniform-draw scenario, any ticket: EV ${fmt(e.total)} per ₱25 (net ${net>=0?"+":""}${fmt(net)}; jackpot tier ${fmt(e.jack)}, lower tiers ${fmt(e.low)}) at N=${N.toLocaleString()} — ${net>0?"+EV: re-check the sales assumption":"−EV"}<br><span style="opacity:.8">Posterior information (not folded in): P(jackpot) multipliers R<sub>mix</sub>(A)=${POST[g].Rmix.toFixed(2)}, R<sub>mix</sub>(B)=${POST[g].B.Rmix.toFixed(2)}; the CSI count contrast is an association, not a sharing probability.</span>`;
+  el.className="ev "+(net>0?"pos":"neg");
 }
 (function(){
   const gSel=document.getElementById("g");

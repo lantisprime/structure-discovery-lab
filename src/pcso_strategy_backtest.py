@@ -115,7 +115,7 @@ def make_strategies(rng, seed):
 
     return {"uniform_disjoint": uniform, "picker_v1_filters": v1, "picker_v2_csi": v2, "hot_top6_w50": hot,
             "cold_bottom6_w50": cold, "overdue_gap": overdue, "repeat_last_draw": repeat_last,
-            "markov_pair_order1": markov_pair}, {str(P): round(t, 4) for P, t in thr.items()}
+            "markov_pair_order1": markov_pair}, {str(P): round(t, 12) for P, t in thr.items()}
 
 
 def main():

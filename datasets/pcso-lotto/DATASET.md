@@ -20,7 +20,7 @@ per game, at observed sequence lengths.
 | `data_draws.csv` | 380 | Short-window append-only dataset; its 194-row exploration prefix is frozen — see §6 |
 | `data_astro_geomagnetic.csv` | 380+ | Per-draw Moon/Sun ephemeris + legacy Kp columns + summary block; confirmation Kp is blank |
 | `data_official_draws_jackpots.csv` | 984 | **Official per-draw record** (pcso.gov.ph SearchLottoResult, Jun 1 2025 – Sep 5 2026): combination, jackpot (PHP), winning bets — the payout-layer input (kb card 28) |
-| `provenance/pcso_refresh_2026-09-06.json` + `provenance/raw_2026-09-06/` | 128 draws · 22 captures | Sep-2026 refresh manifest with per-draw sources, draw-number continuity, and gzipped raw HTML of every page parsed |
+| `provenance/pcso_refresh_2026-09-06.json` + `provenance/raw_2026-09-06/` | 128 draws · 27 captures | Sep-2026 refresh manifest with per-draw sources, draw-number continuity, gzipped raw HTML of every results page parsed, and the five official game pages (`gamepage_*.html.gz`, prize matrix / ticket price / draw time of record) |
 | `data_astro_geomagnetic_1yr.csv` | 776 | **Full-year covariate file** — all 776 draws, 13 columns incl. solar tidal — see §10 |
 | `data_future_schedule.csv` | 64 | Draw schedule + picks (historic snapshot, Jun–Jul 2026) |
 | `_655_2025_verification.csv` | 88 | Row-by-row 6/55 2025 verification vs pcsodraw.com |

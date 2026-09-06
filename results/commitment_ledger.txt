@@ -970,3 +970,22 @@ afdda35d1dfb99d7  ./src/pcso_monitoring_run.py
 1aee10d7115a2ddd  ./src/pcso_next_draw_posterior.py
 b14d963020de545b  ./src/pcso_strategy_backtest.py
 c7222962bf8dba10  ./src/verify_relational_docs.py
+# Snapshot 2026-09-06T05:02:04+00:00 — PCSO refresh 2026-09-06 r3: codex page review applied (12 edits), picker v2.2
+# chain-prev: 7a7e211325ab7bda28136becc430af559ad4c60e4e8ee4f10b7ba1ae2ce143d2
+# (16 changed of 494 tracked files; hashed BEFORE any run script executes)
+d6e9aafc3b5689a7  ./.checkpoints/classify/1d055321a8638e0efd6ee9bc9fec494c800288e01512579a8e695cc2c6b5f145.json
+a5d02d457864bcfb  ./.checkpoints/classify/e6721dd3d568922ed8edbae71cc413f7398bea12ffdc1017eebcfa2a3092ae46.json
+b87e383473d44dcf  ./.checkpoints/classify/ee0da3bec53648a15987b08cd7d3930c9464162adf21fb438816d07cee46683b.json
+ca55fa51663654d9  ./.checkpoints/gate-log.jsonl
+e9ce1218fb905ba7  ./datasets/pcso-lotto/DATASET.md
+f490f1c0d9b4c275  ./datasets/pcso-lotto/provenance/raw_2026-09-06/gamepage_pcso_642.html.gz
+60ce92bb3cad753a  ./datasets/pcso-lotto/provenance/raw_2026-09-06/gamepage_pcso_645.html.gz
+1a2cd092aa16c19e  ./datasets/pcso-lotto/provenance/raw_2026-09-06/gamepage_pcso_649.html.gz
+c9f2b1190f2e0404  ./datasets/pcso-lotto/provenance/raw_2026-09-06/gamepage_pcso_655.html.gz
+441a076782251276  ./datasets/pcso-lotto/provenance/raw_2026-09-06/gamepage_pcso_658.html.gz
+9438a6d57be4f049  ./docs/RESULTS_PCSO_REFRESH_2026-09-06.md
+40f0c0b50e643c20  ./docs/THEOREM_SYNTHESIS.md
+9702c466842e9d83  ./lotto_picker.html
+3eb12b73921c5020  ./src/csi_popularity.py
+abebced18148627d  ./src/pcso_next_draw_posterior.py
+993329ff92b5544c  ./src/pcso_strategy_backtest.py

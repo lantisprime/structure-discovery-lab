@@ -52,6 +52,24 @@
         "R_model_averaged": 1.5242,
         "count_ties_for_sixth_place": []
       },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          2,
+          9,
+          13,
+          20,
+          24,
+          41
+        ],
+        "R_posterior_mean": 1.2462,
+        "R_95_cri": [
+          0.8098,
+          1.8258
+        ],
+        "predictive_probability": 4.298785112727329e-08,
+        "uniform_probability": 3.449504004442961e-08,
+        "R_model_averaged": 1.2016
+      },
       "bottom_six": {
         "set": [
           16,
@@ -109,7 +127,8 @@
       "order1_overlap_test": {
         "observed_total_overlap": 106,
         "expected": 125.673,
-        "exact_two_sided_p": 0.052904
+        "exact_two_sided_p": 0.052904,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
       }
     },
     "Lotto 6/42": {
@@ -154,6 +173,24 @@
           18,
           35
         ]
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          1,
+          18,
+          20,
+          23,
+          24,
+          35
+        ],
+        "R_posterior_mean": 1.2237,
+        "R_95_cri": [
+          0.8063,
+          1.771
+        ],
+        "predictive_probability": 2.3327653610587686e-07,
+        "uniform_probability": 1.9062920218247562e-07,
+        "R_model_averaged": 1.115
       },
       "bottom_six": {
         "set": [
@@ -212,7 +249,8 @@
       "order1_overlap_test": {
         "observed_total_overlap": 169,
         "expected": 163.714,
-        "exact_two_sided_p": 0.652336
+        "exact_two_sided_p": 0.652336,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
       }
     },
     "Mega Lotto 6/45": {
@@ -254,6 +292,24 @@
         "uniform_probability": 1.2277380399898834e-07,
         "R_model_averaged": 1.3158,
         "count_ties_for_sixth_place": []
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          3,
+          10,
+          17,
+          41,
+          42,
+          43
+        ],
+        "R_posterior_mean": 1.2576,
+        "R_95_cri": [
+          0.8268,
+          1.8226
+        ],
+        "predictive_probability": 1.544063575701544e-07,
+        "uniform_probability": 1.2277380399898834e-07,
+        "R_model_averaged": 1.1619
       },
       "bottom_six": {
         "set": [
@@ -312,7 +368,8 @@
       "order1_overlap_test": {
         "observed_total_overlap": 170,
         "expected": 153.6,
-        "exact_two_sided_p": 0.140577
+        "exact_two_sided_p": 0.140577,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
       }
     },
     "Super Lotto 6/49": {
@@ -354,6 +411,24 @@
         "uniform_probability": 7.151123842018516e-08,
         "R_model_averaged": 1.3314,
         "count_ties_for_sixth_place": []
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          6,
+          10,
+          13,
+          15,
+          23,
+          25
+        ],
+        "R_posterior_mean": 1.2144,
+        "R_95_cri": [
+          0.791,
+          1.7682
+        ],
+        "predictive_probability": 8.684197250155446e-08,
+        "uniform_probability": 7.151123842018516e-08,
+        "R_model_averaged": 1.1268
       },
       "bottom_six": {
         "set": [
@@ -412,7 +487,8 @@
       "order1_overlap_test": {
         "observed_total_overlap": 162,
         "expected": 140.327,
-        "exact_two_sided_p": 0.040673
+        "exact_two_sided_p": 0.040673,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
       }
     },
     "Ultra Lotto 6/58": {
@@ -454,6 +530,24 @@
         "uniform_probability": 2.4706390490727716e-08,
         "R_model_averaged": 1.3393,
         "count_ties_for_sixth_place": []
+      },
+      "second_disjoint_set_ranks_7_12": {
+        "set": [
+          19,
+          20,
+          23,
+          28,
+          30,
+          34
+        ],
+        "R_posterior_mean": 1.2492,
+        "R_95_cri": [
+          0.8068,
+          1.8351
+        ],
+        "predictive_probability": 3.086290621256182e-08,
+        "uniform_probability": 2.4706390490727716e-08,
+        "R_model_averaged": 1.1675
       },
       "bottom_six": {
         "set": [
@@ -512,7 +606,8 @@
       "order1_overlap_test": {
         "observed_total_overlap": 105,
         "expected": 118.552,
-        "exact_two_sided_p": 0.170842
+        "exact_two_sided_p": 0.170842,
+        "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) \u2014 not the LR ordering of the codex review \u00a74"
       }
     }
   }

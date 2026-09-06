@@ -157,8 +157,9 @@ def main():
             "inclusion_probability_posterior_mean_range": [round(float(pi_mean.min()), 5), round(float(pi_mean.max()), 5)],
             "uniform_inclusion": round(K / P, 5),
             "maximum_predictive_set": {**R_of(top), "count_ties_for_sixth_place": ties},
+            "second_disjoint_set_ranks_7_12": R_of(order[K:2 * K]),
             "bottom_six": R_of(bottom), "hot_six_last_50": R_of(hot50), "last_draw_six": R_of(last),
-            "order1_overlap_test": overlap_test(draws, P),
+            "order1_overlap_test": {**overlap_test(draws, P), "statistic": "total overlap of consecutive draws; two-sided by absolute deviation from its null mean (exact convolution of hypergeometric overlaps) — not the LR ordering of the codex review §4"},
         }
     result = {"_meta": {"schema_version": 1, "script": "src/pcso_next_draw_posterior.py", "run_date": args.run_date, "seed": args.seed,
                         "model": "product-weight (conditional Poisson) 6-without-replacement; Dirichlet(a) prior with a fixed a priori; importance sampling from Dirichlet(a+c) with weights z(w)^-T",

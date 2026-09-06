@@ -18,8 +18,10 @@ CLI, `--sandbox read-only`, files edited: 0) reviewed the four scripts and the d
 reconstructed the CSI first-run values and the backtest means from the data (its report states
 "CSI `--verify` passed; reconstructed backtest means matched stored results"), and computed the
 product-weight posterior, Bayes factors and order-1 tests independently; after the review was applied,
-`src/pcso_next_draw_posterior.py` agrees with its numbers to three decimals (RESULTS §8). Report:
-`results/codex_review_2026-09-06.md`. This satisfies the different-model-family requirement for the
+`src/pcso_next_draw_posterior.py` reaches the same conclusions with third-decimal differences in the
+point estimates and a different overlap-test ordering (RESULTS §8). Report:
+`results/codex_review_2026-09-06.md`. A second read-only Codex review of `lotto_picker.html`
+(`results/codex_review_page_2026-09-06.md`) listed 12 required edits, all applied in r3. This satisfies the different-model-family requirement for the
 CSI instrument and the posterior predictor; a separate-instance byte re-run of the monitoring and
 backtest `--verify` commands remains the open item.
 
