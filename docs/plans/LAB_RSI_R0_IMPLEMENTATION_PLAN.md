@@ -2,8 +2,10 @@
 
 ## §1 Status
 
-Current stage: **IN PROGRESS (2026-09-06)** -- authored and executed in one
-autonomous session under constitution article A0 (lab owner: "be autonomous").
+Current stage: **COMPLETE, CI GREEN, MERGED VIA PR #24 (2026-09-06)** --
+authored and executed in one autonomous session under constitution article A0
+(lab owner: "be autonomous"). Six slices S1-S6; two real defects surfaced on
+first observation and left open for R1/R2 (§15).
 
 | Field | Value |
 |---|---|
@@ -198,7 +200,7 @@ with one byte changed (REQ-5, REQ-9), captured stdout strings for the slow
 | CI, first run (S1-S3) | PR #24 run 34027349516 | macOS green (24 known states, 0 new defects). **Ubuntu red at the R0 gate, as designed**: `src/pcso_next_draw_posterior.py --verify` exit 1 on Linux while it passes on macOS -- the committed posterior JSON is platform-dependent (second real defect surfaced; row adopted from the `outcome-ledger-ubuntu-latest` artifact via `--adopt`, executor `github-actions:34027349516`). The artifact also showed 11 duplicate agent rows caused by the shallow clone (§19 5c), fixed in S4. |
 | CI, S4 (run 34028096413) | PR #24 checks | Ubuntu red in `tests/`: five agent-eval tests assumed git history; in a shallow clone the honest `is_shallow()` yields no hash to compare. Reproduced in a local `--depth 1` clone (5 failed / 20 passed), fixed by seeding the test ledger as CI does (S5: 49 passed shallow, 99 passed full). |
 | CI, S5 (run 34028220700) | PR #24 checks | Ubuntu red at the R0 gate, correctly: with per-platform slots the Linux slot had no known-defect baseline, so `src/pcso_weekly_update.py --verify` (same `ValueError`) was new for `linux`; the Linux posterior failure was already known and deduplicated (reproducible). All seven Linux rows adopted into the committed ledger (S6). |
-| CI, S6 | PR #24 checks | filled at closeout |
+| CI, S6 (run 34028448862) | PR #24 checks | **all green**: install + verify ubuntu 3m9s, macOS 4m7s, windows (informational) 1m18s, browser e2e 1m9s. Ubuntu R0 gate green with both Linux-slot defects known. |
 
 ## §17 Open Decisions
 
@@ -217,12 +219,17 @@ with one byte changed (REQ-5, REQ-9), captured stdout strings for the slow
 
 ## §18 Done Criteria
 
-- [ ] Every MUST in §4 has its mapped test passing.
-- [ ] Bootstrap ledger committed with one row per source observation and every
-      defect it surfaced left visible as a known open row.
-- [ ] `check.sh` and CI run the verify + collect steps; CI artifact uploaded.
-- [ ] `./tools/check.sh` ALL CHECKS PASSED at closeout.
-- [ ] §15 filled with real outputs; §19 records the review disposition.
+- [x] Every MUST in §4 has its mapped test passing (99 passed; REQ-8/9 CI
+      rows in §15).
+- [x] Bootstrap ledger committed with one row per source observation and every
+      defect it surfaced left visible as a known open row (32 rows: darwin
+      bootstrap, adopted Linux baseline; open defects: July runner on both
+      platforms, posterior predictor on linux).
+- [x] `check.sh` and CI run the verify + collect steps; CI artifact
+      `outcome-ledger-<os>` uploaded on every run.
+- [x] `./tools/check.sh` ALL CHECKS PASSED at closeout (0 new defects).
+- [x] §15 filled with real outputs; §19 records the review disposition
+      (Sonnet second opinion; Codex channel exception recorded).
 
 ## §19 Review Consensus
 
