@@ -201,5 +201,15 @@ all stdlib, all read-only except where noted:
 - `python3 install.py --verify-only` — environment health (deps, frozen
   convention, ledger presence + integrity) without changing anything.
 
+- `python3 src/outcome_ledger.py --verify` and
+  `python3 src/outcome_collect.py --all --gate` *(added 2026-09-06, R0 of
+  constitution A0)* — every defect signal (eval grades, definition staleness,
+  design verifier, ledger integrity, `--verify` entry points, test suites)
+  lands as a row in `results/outcome_ledger.jsonl`; the gate fails only on a
+  **new** defect. Changing a file under `agents/` without a fresh eval record
+  turns it red (the "no eval pass, no dispatch" rule, made mechanical).
+  `--sources fast` runs the seconds-long sources only; `--dry-run` prints rows
+  without appending.
+
 These gates are additive to, not a substitute for, the handoff contract and
 cross-executor verification above.
