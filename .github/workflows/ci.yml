@@ -62,6 +62,23 @@ jobs:
       - name: Installer verify-only gate
         run: python3 install.py --verify-only
 
+      # R0 (constitution A0): observe every signal into the outcome ledger.
+      # CI never dirties the checkout: it seeds a runner-temp copy from the
+      # committed ledger (so known open defects stay known) and uploads it.
+      - name: Outcome ledger verify
+        run: .venv/bin/python src/outcome_ledger.py --verify
+      - name: Outcome collect (R0 gate, fails only on a NEW defect)
+        run: |
+          cp results/outcome_ledger.jsonl "$RUNNER_TEMP/outcome_ledger.jsonl"
+          LAB_OUTCOME_LEDGER="$RUNNER_TEMP/outcome_ledger.jsonl" .venv/bin/python src/outcome_collect.py --all --gate
+      - name: Upload outcome ledger
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outcome-ledger-${{ matrix.os }}
+          path: ${{ runner.temp }}/outcome_ledger.jsonl
+          if-no-files-found: ignore
+
   verify-windows:
     # Informational only (continue-on-error): Windows is not a supported lab
     # platform, but the installer handles its paths — this job reports drift.

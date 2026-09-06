@@ -726,6 +726,7 @@ data's exact shape; FPR must sit within 3-SE of α; p-distribution must be unifo
 | Run ledger | `results/run_ledger.jsonl` | 10 runs: script, seed scheme, executor identities, grade, output SHA-256 |
 | Multiplicity ledger | `results/multiplicity_ledger.jsonl` | 173 real-data tests, one row per test: claim type, method, raw p, m_perm, p_floor, family ID, data filter |
 | Commitment hash ledger | `results/commitment_ledger.txt` | SHA-256 of every doc/script/result at each batch snapshot; blind-eval commitment chain |
+| Outcome ledger *(A0 / R0, 2026-09-06)* | `results/outcome_ledger.jsonl` | One row per state change of every defect signal (agent-eval grades and definition staleness, design verifier, ledger integrity, every `--verify` entry point, test suites); written only by `src/outcome_collect.py`; `--gate` fails on a new defect. Observation, not evidence. |
 
 **Meta-uniformity panel** (source: `results/meta_uniformity.json`): across the 126
 lotto-side real-data p-values from the relational batches, KS vs uniform p = 0.385,

@@ -164,16 +164,24 @@ schema-versioned) that every signal source writes to: eval grades, null-trial
 and calibration results, monitoring flags, CI job conclusions, `--verify`
 verdicts, source-drift detections. Re-grade the agent eval set automatically
 whenever a file under `agents/` changes.
-- [ ] Define the outcome-ledger row schema (source, artifact under test, signal,
-  severity, evidence path, commit, executor identity).
-- [ ] Emit rows from `grade_agent_eval.py`, `design_verifier.py`,
+- [x] Define the outcome-ledger row schema (source, artifact under test, signal,
+  severity, evidence path, commit, executor identity). -- `src/outcome_ledger.py`
+  schema v1, PR #24.
+- [x] Emit rows from `grade_agent_eval.py`, `design_verifier.py`,
   `verify_ledger_integrity.py`, every `--verify` entry point, and the CI
-  workflow.
-- [ ] CI job: any change under `agents/` re-runs the machine-graded evals and
-  fails on a new FAIL.
+  workflow. -- done by wrapping, not editing: `src/outcome_collect.py` runs each
+  source and parses its verdict; the instruments keep their no-write contract.
+- [x] CI job: any change under `agents/` re-runs the machine-graded evals and
+  fails on a new FAIL. -- implemented as: CI re-grades every recorded eval and
+  compares each definition's hash with its hash at the eval record's commit;
+  a changed definition without a fresh record is a `STALE_EVAL` defect and the
+  gate goes red. Re-dispatching evals (an LLM run) is R2 work.
 - Gate R0: every signal source listed above produces a ledger row in a clean
   CI run; a deliberately broken agent definition turns CI red without human
-  action.
+  action. -- First observation (2026-09-06) surfaced a real open defect:
+  `src/pcso_weekly_update.py --verify` fails since PR #20 grew its input
+  (see `docs/plans/LAB_RSI_R0_IMPLEMENTATION_PLAN.md` §15); it is the first
+  target for R1/R2.
 
 **R1 -- Attribute.** Map each ledger row to the artifact responsible and the
 change that introduced it.
