@@ -109,6 +109,36 @@ class TestPCSOCloseout(unittest.TestCase):
             self.assertEqual(output.read_bytes(), b"old-complete-bytes\n")
             self.assertEqual(list(Path(directory).glob(".result.json.tmp-*")), [])
 
+    def test_inputs_come_from_the_july_snapshot_not_the_working_tree(self):
+        # The dataset is append-only and has grown since the July closeout
+        # (PR #20): the working-tree CSV no longer equals the registered input,
+        # while the snapshot still validates against the manifest's 252 rows.
+        draws = pcso.DATASET_DIR / "data_draws.csv"
+        column = pcso.DRAW_FILES["data_draws.csv"]
+        with mock.patch.object(pcso, "ACTIVE_SNAPSHOT", pcso.INPUT_SNAPSHOT_COMMIT):
+            snapshot = pcso.input_bytes(draws)
+            self.assertNotEqual(snapshot, draws.read_bytes())
+            self.assertEqual(len(pcso.dated_rows(draws, column)), 252)
+            self.assertEqual(
+                pcso.input_sha256(draws), hashlib.sha256(snapshot).hexdigest()
+            )
+
+    def test_shared_validators_default_to_the_working_tree(self):
+        # src/pcso_monitoring_run.py imports these validators for the live,
+        # growing dataset: without an active snapshot they must read disk.
+        draws = pcso.DATASET_DIR / "data_draws.csv"
+        self.assertIsNone(pcso.ACTIVE_SNAPSHOT)
+        self.assertEqual(pcso.input_bytes(draws), draws.read_bytes())
+        self.assertGreater(
+            len(pcso.dated_rows(draws, pcso.DRAW_FILES["data_draws.csv"])), 252
+        )
+
+    def test_missing_snapshot_commit_fails_closed(self):
+        with mock.patch.object(pcso, "ACTIVE_SNAPSHOT", "0" * 40):
+            with self.assertRaises(ValueError) as ctx:
+                pcso.input_bytes(pcso.DATASET_DIR / "data_draws.csv")
+        self.assertIn("cannot read input snapshot", str(ctx.exception))
+
     def test_cli_verify_reproduces_canonical_hash_without_git_change(self):
         status_cmd = ["git", "status", "--porcelain=v1", "-z"]
         before = subprocess.check_output(status_cmd, cwd=ROOT)
@@ -129,6 +159,7 @@ class TestPCSOCloseout(unittest.TestCase):
         )
         evidence = json.loads(evidence_line.removeprefix("VERIFY_EVIDENCE "))
         self.assertEqual(evidence["command_argv"][-1], "--verify")
+        self.assertEqual(evidence["input_snapshot_commit"], pcso.INPUT_SNAPSHOT_COMMIT)
         self.assertEqual(evidence["output_sha256"], CANONICAL_RESULT_SHA256)
         self.assertTrue(evidence["input_sha256"])
         self.assertEqual(evidence["exit_status"], 0)
