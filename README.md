@@ -173,7 +173,15 @@ before they are ever trusted on real data.
 
 Source: `docs/THEOREM_GOVERNANCE.md`.
 
-### Harmonization articles (A1–A7, plus deterministic-math extension A8)
+### Harmonization articles (prime directive A0, A1–A7, plus deterministic-math extension A8)
+
+**A0. Prime directive — autonomous recursive self-improvement.** *(Ratified by the lab
+owner 2026-09-06. Immutable.)* The top priority of this repository is to become an
+autonomous, self-learning, self-correcting, self-healing system (RSI): it observes its own
+outcomes, attributes each defect to the agent, instrument, theorem card, adapter or method
+responsible, applies the correction, and re-evaluates, without waiting for a human to notice.
+Every roadmap and milestone is ordered by its contribution to this goal. A1–A8 constrain the
+means, never the goal. Only the lab owner may amend this article.
 
 **A1. One generative null, many lenses.** Every instrument's null distribution is
 derived by Monte Carlo from the same constrained generative model — never from textbook
