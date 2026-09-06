@@ -161,6 +161,26 @@ def test_heal_rejects_when_defect_check_still_fails(broken_repo, tmp_path):
             git(root, "worktree", "remove", "--force", line.split(" ", 1)[1])
 
 
+def test_heal_skips_defect_with_pending_proposal_but_not_attributed_ones(broken_repo, tmp_path):
+    root, sha = broken_repo
+    ledger = str(tmp_path / "l.jsonl")
+    defect = mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
+                   {"exit": 1, "sha256": None, "args": ["--verify"]})
+    key = "|".join(OL.state_key(defect))
+    OL.append_rows(ledger, [defect,
+                            OL.make_row("attribution", "src/inst.py", "instrument", "ATTRIBUTED", "introduced_by x",
+                                        {"subject": "linux", "defect_key": key, "defect_commit": sha, "method": "bisect",
+                                         "introduced_by": sha}, "2026-09-06T10:10:00Z", sha, "tester")])
+    # attributed but not yet healed -> still a healer target
+    agent = fake_agent(tmp_path, "pass\n")
+    rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
+    assert len(rows) == 1 and rows[0]["signal"] == "REJECTED"
+    OL.append_rows(ledger, [OL.make_row("heal", "src/inst.py", "instrument", "PROPOSED", "PROPOSED heal/x",
+                                        {"subject": "linux", "defect_key": key, "defect_commit": sha, "branch": "heal/x"},
+                                        "2026-09-06T10:20:00Z", sha, "tester")])
+    assert LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w")) == []
+
+
 def test_heal_noop_without_open_defects(tmp_path):
     ledger = str(tmp_path / "l.jsonl")
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "PASS", "abc1234", "linux",

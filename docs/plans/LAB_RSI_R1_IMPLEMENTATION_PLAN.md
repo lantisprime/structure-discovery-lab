@@ -2,8 +2,11 @@
 
 ## §1 Status
 
-Current stage: **IN PROGRESS (2026-09-07)** -- autonomous session under
-constitution article A0 (lab owner: "be autonomous").
+Current stage: **COMPLETE (2026-09-07), merged via the PR in §15** -- autonomous
+session under constitution article A0 (lab owner: "be autonomous"; "the goal is
+RSI, anything with little impact on it is last"). Scope grew to include the
+minimal R4 healer and R5 lessons ledger, and the whole loop was exercised live
+on a planted defect (§15).
 
 | Field | Value |
 |---|---|
@@ -92,18 +95,25 @@ the first commit that added the artifact file.
 | Ground truth | `LAB_SLOW_TESTS=1 .venv/bin/python -m pytest tests/test_outcome_attribute.py -q -k real_history` | `1 passed in 4.87s`: darwin July-runner FAIL → `introduced_by 9488a9a`, `merged_by 1aff3dc` (first-parent bisect, then refinement inside the merged PR #20 branch) |
 | Replay on the committed ledger | `.venv/bin/python src/outcome_attribute.py --replay` | 3 rows: darwin weekly → `9488a9a` (bisect, 7 steps); linux weekly and linux posterior → `commit_unavailable` (their defect commits are CI merge refs not present locally) |
 | Lessons | `.venv/bin/python src/lab_learn.py --derive` | 3 lessons (weekly darwin with introducing commit and merge; weekly linux; posterior linux) in `results/lessons.jsonl` |
-| Full battery | `./tools/check.sh` (now also registry, attribute --new, lessons --derive) | filled at closeout |
-| Live healer demo | scratch clone with the July-runner fix reverted; `lab_heal.py --new` with the real headless agent | filled at closeout |
+| Full battery | `./tools/check.sh` (now also registry, attribute --new, lessons --derive) | `ALL CHECKS PASSED`; new steps are no-ops on a clean ledger (`ARTIFACT REGISTRY: OK`, `no unattributed defects`, `lessons: 0 new`) |
+| Live closed loop (observe → attribute → heal → gate) | scratch clone of this branch; commit `7f87209` re-planted the July-runner defect (`ACTIVE_SNAPSHOT = None`); then `outcome_collect --sources verify_entrypoint`, `outcome_attribute --new`, `lab_heal --new --model sonnet --max-turns 30` with the real headless agent | Collector: `FAIL … expected 252 rows, got 380; 1 new defect`. Attribution: `introduced_by 7f87209 (bisect, 4 steps)`, `last_good 4242bb7`. Healer: agent made the exact one-line revert (`ACTIVE_SNAPSHOT = INPUT_SNAPSHOT_COMMIT`), wrote a correct root-cause note citing the attribution, `./tools/check.sh` gate green, `PROPOSED … commit 83cecec` on branch `heal/src-pcso-weekly-update-py-fail-20260906221048917`; no human action between the collector and the commit. Merging left to R3. |
 | CI | PR checks | filled at closeout |
 
 ## §18 Done Criteria
 
-- [ ] Every MUST in §4 has its mapped test passing.
-- [ ] The two R0 defects carry `attribution` rows in the committed ledger
-      (darwin weekly → `9488a9a` by bisect; darwin posterior →
-      `not_reproducible_here`; linux rows adopted from CI when available).
-- [ ] `check.sh` and CI run `--new`; no-op cost measured.
-- [ ] §15 filled; §19 review disposition recorded.
+- [x] Every MUST in §4 has its mapped test passing (118 passed; REQ-8 slow test
+      passes when enabled).
+- [x] The R0 defects carry `attribution` rows in the committed ledger (darwin
+      weekly → `9488a9a` by bisect via merge `1aff3dc`; the linux rows →
+      `commit_unavailable`, their defect commits are CI merge refs). Note: the
+      posterior never failed on darwin, so there is no darwin row to attribute;
+      the plan's earlier expectation of `not_reproducible_here` for it was
+      wrong and is covered by the unit test instead.
+- [x] `check.sh` and CI run `--new`; no-op cost < 2 s (registry + attribute +
+      lessons together).
+- [x] Scope added under the 2026-09-07 directive: minimal R4 healer and R5
+      lessons ledger, exercised live (§15).
+- [x] §15 filled; §19 review disposition recorded.
 
 ## §19 Review Consensus
 

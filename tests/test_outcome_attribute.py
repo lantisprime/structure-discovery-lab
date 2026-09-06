@@ -163,6 +163,15 @@ def test_attribute_is_idempotent_and_skips_closed_defects(planted_repo, tmp_path
     assert len(replayed) == 1
     assert OA.run(ledger, root=root, replay=True, probe=probe_for(root), out=open(os.devnull, "w")) == []
     assert OL.verify_ledger(ledger) == []
+    # the SAME failure state recurring at a later commit is a new occurrence and is attributed again
+    (root / "data.txt").write_text("broken again\n")
+    git(root, "add", "-A"), git(root, "commit", "-qm", "c6 regress")
+    c6 = git(root, "rev-parse", "--short", "HEAD")
+    OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", c6, "linux",
+                                  {"exit": 1, "sha256": None, "args": ["--verify"]}, ts="2026-09-06T13:00:00Z")])
+    again = OA.run(ledger, root=root, probe=probe_for(root), out=open(os.devnull, "w"))
+    assert len(again) == 1 and again[0]["detail"]["defect_commit"] == c6
+    assert again[0]["detail"]["introduced_by"] == c6
 
 
 def test_new_is_noop_on_committed_ledger():

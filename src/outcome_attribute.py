@@ -194,16 +194,28 @@ def attribute(root, rows, defect, probe=None):
 # --------------------------------------------------------------- driver ----
 
 def attributed_keys(rows):
-    return {r["detail"].get("defect_key") for r in rows if r["source"] == "attribution"}
+    """(defect_key, defect_commit) pairs already attributed. Keyed per
+    OCCURRENCE, not per state: the same failure recurring at a later commit
+    (a regression after a fix) is a new defect with its own introducing commit."""
+    return {(r["detail"].get("defect_key"), r["detail"].get("defect_commit"))
+            for r in rows if r["source"] == "attribution"}
 
 
-def open_defects(rows, replay=False):
+def open_defects(rows):
+    """Defect rows that are the latest state of their slot (still open),
+    whether or not they have been attributed or healed."""
     latest = {}
     for r in rows:
+        if r["source"] in ("attribution", "heal"):
+            continue
         latest[OL.slot(r)] = r
+    return [r for r in latest.values() if r["severity"] == "defect"]
+
+
+def unattributed(rows, replay=False):
     done = attributed_keys(rows)
-    pool = rows if replay else latest.values()
-    return [r for r in pool if r["severity"] == "defect" and "|".join(OL.state_key(r)) not in done]
+    pool = [r for r in rows if r["severity"] == "defect"] if replay else open_defects(rows)
+    return [r for r in pool if ("|".join(OL.state_key(r)), r["commit"]) not in done]
 
 
 def attribution_row(ctx, defect, result, registry):
@@ -221,7 +233,7 @@ def attribution_row(ctx, defect, result, registry):
 
 def run(ledger, root=ROOT, replay=False, dry_run=False, probe=None, out=sys.stdout):
     rows = OL.read_rows(ledger)
-    todo = open_defects(rows, replay)
+    todo = unattributed(rows, replay)
     if not todo:
         print("attribution: no unattributed defects", file=out)
         return []

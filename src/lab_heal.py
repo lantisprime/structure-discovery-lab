@@ -203,7 +203,8 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
     notes = open(notes_path, encoding="utf-8").read() if os.path.exists(notes_path) else ""
     ctx = OC.Ctx(root, rows)
     key = "|".join(OL.state_key(defect))
-    base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key, "branch": branch,
+    base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key,
+                   "defect_commit": defect["commit"], "branch": branch,
                    "agent_exit": rc, "files_changed": files, "model": model}
     if rc != 0 or not files:
         why = f"agent exit {rc}, {len(files)} file(s) changed" + (f": {aerr.strip()[-200:]}" if aerr.strip() else "")
@@ -247,7 +248,11 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
 
 def run(ledger, root=ROOT, defect_key=None, **kw):
     rows = OL.read_rows(ledger)
-    todo = OA.open_defects(rows)
+    # open defects without a pending proposal for this same occurrence
+    proposed = {(r["detail"].get("defect_key"), r["detail"].get("defect_commit"))
+                for r in rows if r["source"] == "heal" and r["signal"] == "PROPOSED"}
+    todo = [d for d in OA.open_defects(rows)
+            if ("|".join(OL.state_key(d)), d["commit"]) not in proposed]
     if defect_key:
         todo = [r for r in rows if "|".join(OL.state_key(r)) == defect_key and r["severity"] == "defect"][-1:]
     if not todo:
