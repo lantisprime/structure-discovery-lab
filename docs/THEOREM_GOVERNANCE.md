@@ -125,7 +125,21 @@ instrument (e.g. entropic GW) is a NEW instrument requiring fresh onboarding und
 
 ---
 
-## Part 2 — Harmonization constitution (seven articles, plus a deterministic-math extension A8)
+## Part 2 — Harmonization constitution (prime directive A0, seven articles, plus a deterministic-math extension A8)
+
+**A0. Prime directive — autonomous recursive self-improvement.** *(Ratified by the lab
+owner 2026-09-06. Immutable.)* The top priority of this repository is to become an
+autonomous, self-learning, self-correcting, self-healing system — recursive
+self-improvement (RSI). The lab must, on its own, observe its own outcomes (eval scores,
+calibration results, monitoring flags, verification and CI failures), attribute each to
+the agent definition, instrument, theorem card, dataset adapter or method responsible,
+propose and apply the correction, and re-evaluate — closing the loop without waiting for a
+human to notice the defect. Every roadmap, milestone, implementation plan and agent
+definition in this repository is ordered by its contribution to this goal; work that does
+not serve it is subordinate to work that does. A1–A8 are the invariants the self-improving
+system must preserve while it changes itself: they constrain the *means*, never the goal.
+**This article may not be altered, weakened, deprioritized or reinterpreted by any agent,
+plan or review. Only the lab owner may amend it.**
 
 **A1. One generative null, many lenses.** Every instrument's null distribution is
 derived from the SAME constrained generative model (here: 6-without-replacement,
@@ -308,3 +322,8 @@ module, which extends the lab from stochastic datasets to deterministic mathemat
 A8 leaves A1–A7 intact for all stochastic questions; it only supplies an admission path for
 claims that have no sampling model. See `riemann-zero-lab/docs/kb/INDEX.md` §Governance and
 `riemann-zero-lab/docs/RESULTS_ZETA_ZERO_BATCH1.md`.*
+
+*Amended Sep 6, 2026: article **A0** (prime directive — autonomous recursive
+self-improvement) added by decision of the lab owner. A0 sets the repository's top
+priority and is immutable; A1–A8 are unchanged and bind the self-improving system as
+invariants. `docs/LAB_IMPROVEMENT_PLAN.md` is to be re-ordered under A0 in its next revision.*
