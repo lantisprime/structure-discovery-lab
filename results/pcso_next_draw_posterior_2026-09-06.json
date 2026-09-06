@@ -9,7 +9,8 @@
     "input_sha256": {
       "datasets/pcso-lotto/data_draws_1yr.csv": "2dc1e93ff36aaaa61b175f8aa90c6daab66155911dbaa9b2c4aa507959122dce"
     },
-    "note": "Under the uniform model every history-based rule has R=1 exactly; R_model_averaged folds in BF_01 at equal prior model odds"
+    "note": "Under the uniform model every history-based rule has R=1 exactly; R_model_averaged folds in BF_01 at equal prior model odds",
+    "float_precision": "predictive_probability rounded to 12 significant digits (r4, 2026-09-06): byte identity across platforms; all other reported floats were already rounded"
   },
   "games": {
     "Grand Lotto 6/55": {
@@ -47,7 +48,7 @@
           1.0741,
           2.3831
         ],
-        "predictive_probability": 5.6573574597426324e-08,
+        "predictive_probability": 5.65735745974e-08,
         "uniform_probability": 3.449504004442961e-08,
         "R_model_averaged": 1.5242,
         "count_ties_for_sixth_place": []
@@ -66,7 +67,7 @@
           0.8098,
           1.8258
         ],
-        "predictive_probability": 4.298785112727329e-08,
+        "predictive_probability": 4.29878511273e-08,
         "uniform_probability": 3.449504004442961e-08,
         "R_model_averaged": 1.2016
       },
@@ -84,7 +85,7 @@
           0.4272,
           1.0093
         ],
-        "predictive_probability": 2.3292048271138075e-08,
+        "predictive_probability": 2.32920482711e-08,
         "uniform_probability": 3.449504004442961e-08,
         "R_model_averaged": 0.734
       },
@@ -102,7 +103,7 @@
           0.7884,
           1.781
         ],
-        "predictive_probability": 4.19351440476669e-08,
+        "predictive_probability": 4.19351440477e-08,
         "uniform_probability": 3.449504004442961e-08,
         "R_model_averaged": 1.1767
       },
@@ -120,7 +121,7 @@
           0.6357,
           1.4663
         ],
-        "predictive_probability": 3.420653056027608e-08,
+        "predictive_probability": 3.42065305603e-08,
         "uniform_probability": 3.449504004442961e-08,
         "R_model_averaged": 0.9931
       },
@@ -166,7 +167,7 @@
           0.9851,
           2.1277
         ],
-        "predictive_probability": 2.8260250173916205e-07,
+        "predictive_probability": 2.82602501739e-07,
         "uniform_probability": 1.9062920218247562e-07,
         "R_model_averaged": 1.248,
         "count_ties_for_sixth_place": [
@@ -188,7 +189,7 @@
           0.8063,
           1.771
         ],
-        "predictive_probability": 2.3327653610587686e-07,
+        "predictive_probability": 2.33276536106e-07,
         "uniform_probability": 1.9062920218247562e-07,
         "R_model_averaged": 1.115
       },
@@ -206,7 +207,7 @@
           0.4332,
           0.993
         ],
-        "predictive_probability": 1.2840555270965885e-07,
+        "predictive_probability": 1.2840555271e-07,
         "uniform_probability": 1.9062920218247562e-07,
         "R_model_averaged": 0.8322
       },
@@ -224,7 +225,7 @@
           0.8595,
           1.8767
         ],
-        "predictive_probability": 2.479462385972098e-07,
+        "predictive_probability": 2.47946238597e-07,
         "uniform_probability": 1.9062920218247562e-07,
         "R_model_averaged": 1.1546
       },
@@ -242,7 +243,7 @@
           0.7905,
           1.7338
         ],
-        "predictive_probability": 2.2867794437552463e-07,
+        "predictive_probability": 2.28677944376e-07,
         "uniform_probability": 1.9062920218247562e-07,
         "R_model_averaged": 1.1026
       },
@@ -288,7 +289,7 @@
           0.9935,
           2.1649
         ],
-        "predictive_probability": 1.844563740935368e-07,
+        "predictive_probability": 1.84456374094e-07,
         "uniform_probability": 1.2277380399898834e-07,
         "R_model_averaged": 1.3158,
         "count_ties_for_sixth_place": []
@@ -307,7 +308,7 @@
           0.8268,
           1.8226
         ],
-        "predictive_probability": 1.544063575701544e-07,
+        "predictive_probability": 1.5440635757e-07,
         "uniform_probability": 1.2277380399898834e-07,
         "R_model_averaged": 1.1619
       },
@@ -325,7 +326,7 @@
           0.4183,
           0.9667
         ],
-        "predictive_probability": 8.019172739582874e-08,
+        "predictive_probability": 8.01917273958e-08,
         "uniform_probability": 1.2277380399898834e-07,
         "R_model_averaged": 0.782
       },
@@ -343,7 +344,7 @@
           0.7023,
           1.5708
         ],
-        "predictive_probability": 1.3217312140594662e-07,
+        "predictive_probability": 1.32173121406e-07,
         "uniform_probability": 1.2277380399898834e-07,
         "R_model_averaged": 1.0481
       },
@@ -361,7 +362,7 @@
           0.572,
           1.2947
         ],
-        "predictive_probability": 1.0842124342246387e-07,
+        "predictive_probability": 1.08421243422e-07,
         "uniform_probability": 1.2277380399898834e-07,
         "R_model_averaged": 0.9265
       },
@@ -407,7 +408,7 @@
           1.0277,
           2.2622
         ],
-        "predictive_probability": 1.1157616499223039e-07,
+        "predictive_probability": 1.11576164992e-07,
         "uniform_probability": 7.151123842018516e-08,
         "R_model_averaged": 1.3314,
         "count_ties_for_sixth_place": []
@@ -426,7 +427,7 @@
           0.791,
           1.7682
         ],
-        "predictive_probability": 8.684197250155446e-08,
+        "predictive_probability": 8.68419725016e-08,
         "uniform_probability": 7.151123842018516e-08,
         "R_model_averaged": 1.1268
       },
@@ -444,7 +445,7 @@
           0.4421,
           1.0284
         ],
-        "predictive_probability": 4.9610749427852246e-08,
+        "predictive_probability": 4.96107494279e-08,
         "uniform_probability": 7.151123842018516e-08,
         "R_model_averaged": 0.8188
       },
@@ -462,7 +463,7 @@
           0.8921,
           1.9806
         ],
-        "predictive_probability": 9.754419866538281e-08,
+        "predictive_probability": 9.75441986654e-08,
         "uniform_probability": 7.151123842018516e-08,
         "R_model_averaged": 1.2153
       },
@@ -480,7 +481,7 @@
           0.7514,
           1.689
         ],
-        "predictive_probability": 8.264161590504087e-08,
+        "predictive_probability": 8.2641615905e-08,
         "uniform_probability": 7.151123842018516e-08,
         "R_model_averaged": 1.0921
       },
@@ -526,7 +527,7 @@
           0.9782,
           2.2
         ],
-        "predictive_probability": 3.718024353858872e-08,
+        "predictive_probability": 3.71802435386e-08,
         "uniform_probability": 2.4706390490727716e-08,
         "R_model_averaged": 1.3393,
         "count_ties_for_sixth_place": []
@@ -545,7 +546,7 @@
           0.8068,
           1.8351
         ],
-        "predictive_probability": 3.086290621256182e-08,
+        "predictive_probability": 3.08629062126e-08,
         "uniform_probability": 2.4706390490727716e-08,
         "R_model_averaged": 1.1675
       },
@@ -563,7 +564,7 @@
           0.4081,
           0.9744
         ],
-        "predictive_probability": 1.6055802787387052e-08,
+        "predictive_probability": 1.60558027874e-08,
         "uniform_probability": 2.4706390490727716e-08,
         "R_model_averaged": 0.7647
       },
@@ -581,7 +582,7 @@
           0.7518,
           1.7199
         ],
-        "predictive_probability": 2.8869042305073116e-08,
+        "predictive_probability": 2.88690423051e-08,
         "uniform_probability": 2.4706390490727716e-08,
         "R_model_averaged": 1.1132
       },
@@ -599,7 +600,7 @@
           0.7012,
           1.6125
         ],
-        "predictive_probability": 2.6956691937868054e-08,
+        "predictive_probability": 2.69566919379e-08,
         "uniform_probability": 2.4706390490727716e-08,
         "R_model_averaged": 1.0612
       },

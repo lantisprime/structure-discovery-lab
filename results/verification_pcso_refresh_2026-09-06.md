@@ -27,6 +27,17 @@ hashes equal `shasum -a 256` of the committed r3 result files (r3 regenerated th
 posterior JSONs, so the r2 hashes below are superseded for those three; `pcso_confirmation` is
 unchanged since r2). The separate-instance byte re-run is no longer an open item.
 
+**r4 (2026-09-06, platform-stable bytes).** The R0 outcome ledger (PR #24) found the r3 posterior
+JSON platform-dependent: `pcso_next_draw_posterior.py --verify` passed on macOS (arm64, Apple libm)
+and failed on Ubuntu (x86_64, glibc) in CI. A diagnostic run (34029043417) showed the two platforms
+differ only in the last digit of 13 `predictive_probability` values, the one field that was
+serialised unrounded; every other reported float was already rounded. r4 rounds that field to
+12 significant digits and records the rule in `_meta.float_precision`. New posterior hash
+`080ed89937dc4c7bacb465e139deb730a7409f0cb7380f532a26eca757676907`; r3 hash `8494e09f…`
+superseded in the run ledger (`superseded_output_sha256_r3`). No statistic, R, CrI, Bayes factor
+or p-value changed. Cross-platform identity is verified by the CI `verify_entrypoint` rows for
+`linux` and `darwin` in `results/outcome_ledger.jsonl`.
+
 Cross-model mathematical review (r2, ~11:55–12:30 Asia/Manila): **Codex gpt-6-astra** (OpenAI Codex
 CLI, `--sandbox read-only`, files edited: 0) reviewed the four scripts and the draft predictor,
 reconstructed the CSI first-run values and the backtest means from the data (its report states

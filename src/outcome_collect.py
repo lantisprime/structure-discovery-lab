@@ -386,6 +386,13 @@ def adopt(ledger, artifact_ledger, out=sys.stdout):
     if problems:
         print("refusing to adopt an invalid ledger:", *problems, sep="\n  ", file=out)
         return None
+    # Adopt each slot's LATEST state in the artifact, never its history: a CI
+    # artifact is seeded from a committed ledger and replaying older states
+    # would append stale FAIL/PASS transitions here.
+    latest = {}
+    for r in rows:
+        latest[OL.slot(r)] = r
+    rows = list(latest.values())
     # `ts` is the time a row entered THIS ledger (monotonic per file, REQ-1);
     # the observing run is still named by `executor`, and the state key does
     # not include ts, so re-stamping changes nothing the gate looks at.

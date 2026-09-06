@@ -66,6 +66,14 @@ def wquant(x, wts, q):
     return float(x[o][np.searchsorted(cw, q)])
 
 
+def round_sig(x, n=12):
+    """Platform-stable float: libm (glibc x86_64 vs Apple arm64) differs in the
+    last ulp of exp/log chains, which showed up in CI run 34029043417 as
+    last-digit differences in the unrounded predictive probabilities. Twelve
+    significant digits keep every reported digit and drop the noise."""
+    return float(f"{x:.{n}g}")
+
+
 def overlap_test(draws, P):
     """exact two-sided test of sum_t |S_t ∩ S_{t-1}| against the convolution of hypergeometric(P,6,6) overlaps."""
     T = len(draws)
@@ -137,7 +145,7 @@ def main():
             mean = float(np.sum(wt * Rw))
             return {"set": sorted(S), "R_posterior_mean": round(mean, 4),
                     "R_95_cri": [round(wquant(Rw, wt, 0.025), 4), round(wquant(Rw, wt, 0.975), 4)],
-                    "predictive_probability": mean / C, "uniform_probability": 1.0 / C,
+                    "predictive_probability": round_sig(mean / C, 12), "uniform_probability": 1.0 / C,
                     "R_model_averaged": round(1 + (mean - 1) / (1 + bf01[str(int(args.prior))]), 4)}
 
         order = sorted(range(1, P + 1), key=lambda v: (-c[v - 1], v))
@@ -165,7 +173,8 @@ def main():
                         "model": "product-weight (conditional Poisson) 6-without-replacement; Dirichlet(a) prior with a fixed a priori; importance sampling from Dirichlet(a+c) with weights z(w)^-T",
                         "registration": "docs/RESULTS_PCSO_REFRESH_2026-09-06.md §8 (G0 exploratory; codex review results/codex_review_2026-09-06.md §1-3)",
                         "input_sha256": {str(DRAWS.relative_to(ROOT)): hashlib.sha256(DRAWS.read_bytes()).hexdigest()},
-                        "note": "Under the uniform model every history-based rule has R=1 exactly; R_model_averaged folds in BF_01 at equal prior model odds"},
+                        "note": "Under the uniform model every history-based rule has R=1 exactly; R_model_averaged folds in BF_01 at equal prior model odds",
+                        "float_precision": "predictive_probability rounded to 12 significant digits (r4, 2026-09-06): byte identity across platforms; all other reported floats were already rounded"},
               "games": out}
     payload = (json.dumps(result, indent=2, ensure_ascii=True) + "\n").encode("utf-8")
     dst = ROOT / "results" / f"pcso_next_draw_posterior_{args.run_date}.json"

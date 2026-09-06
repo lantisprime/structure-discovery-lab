@@ -194,6 +194,9 @@ def test_adopt_merges_only_new_states(tmp_path):
     OC.run(["f"], ledger, registry=reg, out=open(os.devnull, "w"))
     OC.run(["f"], art, registry=reg, out=open(os.devnull, "w"))                 # same state
     OC.run(["g"], art, registry={"g": fake_source("FAIL", artifact="src/g.py")}, out=open(os.devnull, "w"))
+    # history inside the artifact must not be replayed: g flipped FAIL -> PASS
+    # there, so only its latest state (PASS) may be adopted
+    OC.run(["g"], art, registry={"g": fake_source("PASS", artifact="src/g.py")}, out=open(os.devnull, "w"))
     # the artifact rows were observed EARLIER than the ledger's last row
     rows = OL.read_rows(art)
     for r in rows:
@@ -201,7 +204,7 @@ def test_adopt_merges_only_new_states(tmp_path):
     with open(art, "w") as fh:
         fh.write("".join(json.dumps(r) + "\n" for r in rows))
     appended = OC.adopt(ledger, art, out=open(os.devnull, "w"))
-    assert [r["artifact"] for r in appended] == ["src/g.py"]
+    assert [(r["artifact"], r["signal"]) for r in appended] == [("src/g.py", "PASS")]
     assert len(OL.read_rows(ledger)) == 2
     assert OL.verify_ledger(ledger) == []                      # ts re-stamped, still monotonic
     adopted = OL.read_rows(ledger)[-1]
