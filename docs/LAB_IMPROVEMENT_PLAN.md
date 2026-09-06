@@ -185,10 +185,15 @@ whenever a file under `agents/` changes.
 
 **R1 -- Attribute.** Map each ledger row to the artifact responsible and the
 change that introduced it.
-- [ ] Artifact registry: agent definitions, instruments (`src/*.py` with
+- [x] Artifact registry: agent definitions, instruments (`src/*.py` with
   `--verify`), theorem cards (`docs/kb/*.md`), dataset adapters, model tiers.
-- [ ] Bisection over the commit range between last-good and first-bad for every
-  new FAIL, recorded on the ledger row.
+  -- `src/artifact_registry.py`, derived from the repo (2026-09-07).
+- [x] Bisection over the commit range between last-good and first-bad for every
+  new FAIL, recorded on the ledger row. -- `src/outcome_attribute.py`: bisect in
+  a temporary worktree (merge commits refined into the merged branch), path
+  history for stale evals, `not_reproducible_here` for other-platform defects;
+  appended as `attribution` rows. Ground truth: the July-runner defect
+  bisects to `9488a9a` via merge `1aff3dc`.
 - Gate R1: a planted regression in an instrument and one in an agent prompt are
   each attributed to the correct artifact and introducing commit with no human
   input.
@@ -215,6 +220,13 @@ non-reserved changes.
   action.
 
 **R4 -- Heal.** Detect and repair breakage that no eval covers.
+- [x] *Minimal closed loop (2026-09-07, lab owner directive "RSI first"):*
+  `src/lab_heal.py` takes each open ledger defect, dispatches a repair agent
+  (headless `claude -p`) in a git worktree with a brief carrying the defect,
+  its attribution, the relevant lessons and the A0/A1--A8 guardrails, gates the
+  result with `./tools/check.sh` plus the defect's own check, commits on a
+  `heal/…` branch and opens the PR (`--push`). Every attempt is a `heal` row
+  (`PROPOSED` / `REJECTED`). Merging remains R3.
 - [ ] Source-drift fixtures (M4) and stale-hash detection open ledger rows and
   trigger R2 automatically.
 - [ ] Scheduled clean-checkout replay (M1) opens a row on any non-deterministic
@@ -223,6 +235,10 @@ non-reserved changes.
   each end in a merged repair or an owner-routed decision.
 
 **R5 -- Learn.** Feed outcomes back into how the loop itself works.
+- [x] *Minimal (2026-09-07):* `results/lessons.jsonl` written by
+  `src/lab_learn.py --derive` for every defect that closed (evidence,
+  introducing commit from R1, fixing commit, platform) and read by the healer
+  into every repair brief. Three lessons recorded from the two R0 defects.
 - [ ] Lessons ledger consumed by agent definitions at dispatch (recorded
   lesson → prompt section, hash-linked).
 - [ ] Model re-tiering from eval outcomes: a seat that passes at a cheaper tier
@@ -431,20 +447,21 @@ Use small, reviewable changes in this order:
 | 1 | Webapp verifier job and safe closeout staging | M0 | COMPLETE -- PR #17 |
 | 2 | **R0** outcome ledger, signal emitters, eval re-grade on `agents/` change | R0 | NEXT -- implementation plan next; no substrate dependency |
 | 3 | Complete dependency declaration, lockfile, clean CI | M1 | ACTIVE -- may run in parallel with change set 2 |
-| 4 | **R1** artifact registry and attribution bisection | R1 | PLANNED -- after R0 |
-| 5 | Schemas, registration source of truth, atomic artifact writes | M2 | PLANNED -- blocked by M1 |
-| 6 | **R2** proposer agent, proposal record, proposer evals | R2 | PLANNED -- after R1 and M2 |
-| 7 | Null contracts, RNG streams, MC uncertainty, calibration suite | M3 | PLANNED -- blocked by M2 |
-| 8 | Sequential multiplicity controller and prospective PCSO registration | M3 | PLANNED -- blocked by M2 |
-| 9 | Raw-source adapters, run bundles, holdout seal, role enforcement | M4 | PLANNED -- blocked by M1-M3 |
-| 10 | **R3** mechanical gate and auto-merge, owner-reserved routing | R3 | PLANNED -- after R2, M3, M4 |
-| 11 | Independent recomputation, generated workbook, semantic verifiers | M5 | PLANNED -- blocked by M1-M4 |
-| 12 | **R4** source-drift and replay healing | R4 | PLANNED -- after R3, M4 |
-| 13 | **R5** lessons ledger, model re-tiering, hypothesis-to-registration | R5 | PLANNED -- after R3 |
+| 4 | **R1** artifact registry and attribution bisection | R1 | IN PROGRESS (2026-09-07) |
+| 5 | **R4 + R5, minimal closed loop**: healer that takes an open ledger defect, dispatches a repair agent in a worktree, gates it with the full check battery and opens the PR; lessons ledger written on every closed defect and read by the healer | R4, R5 | NEXT -- lab owner directive 2026-09-07: RSI stages first |
+| 6 | **R2** proposer generalized (artifact-class-restricted proposer with its own evals; the healer's dispatch becomes the proposer) | R2 | after 5 |
+| 7 | **R3** mechanical gate and auto-merge, owner-reserved routing | R3 | after 6 |
+| 8 | **R4 + R5, full**: source-drift and replay triggers; model re-tiering; hypothesis-to-registration | R4, R5 | after 7 |
+| 9 | Complete dependency declaration, lockfile, clean CI | M1 | LAST TIER -- only when an R stage needs deterministic replay |
+| 10 | Schemas, registration source of truth, atomic artifact writes | M2 | LAST TIER -- only when the proposer needs machine-readable contracts |
+| 11 | Null contracts, RNG streams, MC uncertainty, calibration suite; sequential controller | M3 | LAST TIER -- only when the gate needs calibration fixtures |
+| 12 | Raw-source adapters, run bundles, holdout seal, role enforcement | M4 | LAST TIER -- parts already delivered by PR #20, #24 |
+| 13 | Independent recomputation, generated workbook, semantic verifiers | M5 | LAST TIER |
 
-Ordering rule under A0: when two change sets are both unblocked, the one that
-closes more of the loop (an R stage) goes first. M-stages are pulled forward
-only when an R stage is blocked on them.
+Ordering rule under A0 (restated by the lab owner 2026-09-07): **the goal is
+RSI; anything that does not contribute to it, or contributes little, is last.**
+R stages run first and back to back. An M-stage is pulled forward only when an
+R stage cannot proceed without it, and then only the part the R stage needs.
 
 Do not combine a statistical-method change with a historical artifact migration in
 the same change set. Reviewers, human or loop, must be able to distinguish
@@ -513,6 +530,7 @@ A1--A8 invariant violated along the way (acceptance gate R).
 | 1.1 | 2026-07-10 | Recorded M0 delivery through PR #17 and activated M1 without overstating partial CI/dependency controls. |
 | 1.2 | 2026-07-10 | Recorded the merged PR #18 planning checkpoint and added explicit delivery status to every change set. |
 | 1.3 | 2026-09-06 | Re-ordered the program under constitution article A0 (PR #21): A0 becomes the primary objective; added baseline finding B9, control C11, constraints 6-7 (owner-reserved decisions, A1-A8 preserved), Milestone R (closed-loop self-improvement, stages R0-R5) as the organizing milestone, a "serves A0 as" note on M1-M5, the interleaved 13-step delivery sequence, loop metrics, and the A0 completion condition. Recorded PR #20's ahead-of-sequence M4 evidence. M0-M5 checklists unchanged. |
+| 1.4 | 2026-09-07 | Lab owner directive: the goal is RSI and anything with little impact on it is last. Delivery sequence re-ordered: R1, then a minimal R4+R5 closed loop (healer + lessons ledger), then R2, R3, full R4+R5; M1-M5 moved to the last tier, pulled forward only when an R stage needs them. R0 recorded COMPLETE (PR #24, defects closed by PR #25, #27). |
 
 ## 11. Method references
 

@@ -36,6 +36,11 @@ run "riemann regression tests"    "$PY" -m pytest riemann-zero-lab/tests -q
 # the gate fails only on a NEW defect (known open defects stay visible).
 run "outcome ledger verify"       "$PY" src/outcome_ledger.py --verify
 run "outcome collect (R0 gate)"   "$PY" src/outcome_collect.py --all --gate
+# R1: attribute any new defect (bisection in a temp worktree; no-op when none).
+# R5: record a lesson for every defect that has since closed (no-op when none).
+run "artifact registry"           "$PY" src/artifact_registry.py --check-ledger
+run "outcome attribute (R1)"      "$PY" src/outcome_attribute.py --new
+run "lessons derive (R5)"         "$PY" src/lab_learn.py --derive
 
 if [ "${1:-}" = "--e2e" ]; then
   PORT=8798
