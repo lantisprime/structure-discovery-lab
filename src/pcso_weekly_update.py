@@ -620,7 +620,7 @@ def git_status_bytes() -> bytes:
 
 def main() -> None:
     global ACTIVE_SNAPSHOT
-    ACTIVE_SNAPSHOT = None
+    ACTIVE_SNAPSHOT = INPUT_SNAPSHOT_COMMIT
     args = parse_args()
     status_before = git_status_bytes() if args.verify else None
     manifest_path = args.manifest.resolve()
