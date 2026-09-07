@@ -150,6 +150,12 @@ class HealWorktree:
         rc, out, err = sh(["git", "worktree", "add", "--quiet", "-b", self.branch, self.path, self.base], self.root)
         if rc != 0:
             raise RuntimeError(f"worktree add failed: {err.strip()}")
+        # The lab's interpreter lives in the main checkout's .venv (ignored by git);
+        # link it so the brief's check command and ./tools/check.sh run with the
+        # right dependencies instead of the agent hunting for one (live run 2026-09-07).
+        venv = os.path.join(self.root, ".venv")
+        if os.path.isdir(venv) and not os.path.lexists(os.path.join(self.path, ".venv")):
+            os.symlink(venv, os.path.join(self.path, ".venv"))
         return self.path
 
     def __exit__(self, *exc):
@@ -194,7 +200,7 @@ def gate(wt, defect, gate_cmd=None):
 
 
 def commit_all(wt, message):
-    sh(["git", "add", "-A"], wt)
+    sh(["git", "add", "-A", "--", ".", ":(exclude).venv"], wt)
     rc, out, err = sh(["git", "-c", "user.name=lab-healer", "-c", "user.email=healer@structure-discovery.local",
                        "commit", "-q", "-m", message], wt)
     if rc != 0:
@@ -204,7 +210,7 @@ def commit_all(wt, message):
 
 
 def changed_files(wt):
-    rc, out, err = sh(["git", "status", "--porcelain"], wt)
+    rc, out, err = sh(["git", "status", "--porcelain", "--", ".", ":(exclude).venv"], wt)
     return [l[3:] for l in out.splitlines() if l.strip()]
 
 
@@ -246,9 +252,13 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
         files = [f for f in changed_files(wt) if f not in ("HEAL_BRIEF.md",)]
         notes_path = os.path.join(wt, "HEAL_NOTES.md")
         notes = redact(open(notes_path, encoding="utf-8").read()) if os.path.exists(notes_path) else ""
-        base_detail.update({"agent_exit": rc, "files_changed": files})
-        if rc != 0 or not files:
-            why = f"agent exit {rc}, {len(files)} file(s) changed" + (f": {aerr.strip()[-200:]}" if aerr.strip() else "")
+        # A non-zero exit (e.g. "Reached max turns") with files changed is still a
+        # candidate: the gate decides, not the exit code (live run 2026-09-07: the
+        # agent had made the exact fix and written its notes before the turn cap).
+        base_detail.update({"agent_exit": rc, "files_changed": files,
+                            "agent_tail": redact((aout.strip() or aerr.strip())[-300:])})
+        if not files:
+            why = f"agent exit {rc}, no file changed" + (f": {(aout.strip() or aerr.strip())[-200:]}" if (aout + aerr).strip() else "")
             return reject("agent", why)
         os.remove(os.path.join(wt, "HEAL_BRIEF.md"))
         ok, summary = gate(wt, defect, gate_cmd)

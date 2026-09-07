@@ -219,9 +219,22 @@ all stdlib, all read-only except where noted:
   agent (headless `claude -p`, model configurable, default sonnet) in a git
   worktree for each open defect, gates the result with `./tools/check.sh` plus
   the defect's own check, commits on a `heal/…` branch and, with `--push`,
-  opens the PR. Merging stays human (R3 not yet built). The brief the agent
-  receives carries the ledger row, the attribution, the relevant lessons and
-  the A0/A1–A8 guardrails; `HEAL_NOTES.md` is its report.
+  opens the PR. The brief the agent receives carries the ledger row, the
+  attribution, the relevant lessons and the A0/A1–A8 guardrails;
+  `HEAL_NOTES.md` is its report.
+- `python3 src/lab_gate.py --new [--verifier pi|codex] [--dry-run]` *(R3,
+  2026-09-07)* — decides every heal PR with no human: **MERGED** when the
+  required CI checks are green, the defect's own check passes at the PR head
+  in a fresh worktree, the scope is clean (ledger files append-only, no test
+  deletions, constitution untouched) and a read-only verifier of a different
+  model family than the healer's agrees (C7, enforced in code); **REJECTED**
+  (PR closed with the reasons) otherwise; **ROUTED** to the owner as a
+  labelled issue with the evidence when the change is owner-reserved
+  (constitution, registrations, G3+ grades, the gate's own machinery, an
+  `OWNER-RESERVED` flag in the notes, or the heal attempt cap). Every decision
+  is a `gate` ledger row. `./tools/lab_loop.sh` runs the whole cycle
+  (collect → attribute → heal → gate → learn, then commits the appended rows)
+  and `--install-launchd` schedules it every 6 h on the lab machine.
 
 These gates are additive to, not a substitute for, the handoff contract and
 cross-executor verification above.
