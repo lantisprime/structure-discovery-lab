@@ -31,12 +31,14 @@ SCHEMA_VERSION = 1
 SOURCES = ("agent_eval", "design_verifier", "ledger_integrity",
            "verify_entrypoint", "pytest", "collector",
            "attribution",            # R1: who/what introduced a defect
-           "heal")                   # R4: a repair was proposed (PR) or rejected by the gate
+           "heal",                   # R4: a repair was proposed (PR) or rejected by the healer's own gate
+           "gate")                   # R3: a proposal was merged, rejected, or routed to the owner
 ARTIFACT_CLASSES = ("agent", "instrument", "ledger", "design", "suite", "collector",
                     "theorem_card", "adapter_manifest")
 SIGNALS = ("PASS", "FAIL", "WARN", "INCOMPLETE_RECORD", "STALE_EVAL", "ERROR",
            "ATTRIBUTED",             # R1: info row naming introduced_by
-           "PROPOSED", "REJECTED")   # R4: healer outcome for one defect (info; the defect row stays)
+           "PROPOSED", "REJECTED",   # R4: healer outcome for one defect (info; the defect row stays)
+           "MERGED", "ROUTED")       # R3: gate outcome (REJECTED is shared); info, the defect row stays
 DEFECT_SIGNALS = ("FAIL", "STALE_EVAL", "ERROR")
 SEVERITIES = ("info", "defect")
 EVIDENCE_MAX = 300
