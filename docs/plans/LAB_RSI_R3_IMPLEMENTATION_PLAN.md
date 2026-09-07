@@ -16,7 +16,7 @@ planted defect and the merge, and surfaced two healer defects on the way
 | Parent requirements | `LAB-RELIABILITY-2026Q3` v1.4 Milestone R stage R3; controls `C7`, `C8`, `C11`; constraints 6--7; change set 7 |
 | Predecessor | R1 + minimal R4/R5 (`docs/plans/LAB_RSI_R1_IMPLEMENTATION_PLAN.md`, PR #28) |
 | Target branch | `feature/rsi-r3-gate` |
-| Pull request | filled at closeout |
+| Pull request | #30 (live-proof heal PR: #29, merged by the gate) |
 | Executor altitude | `low` -- every MUST has a falsifiable test |
 
 ## §2 Freshness checks
@@ -124,7 +124,7 @@ every 6 h with the user's login environment (gh and provider auth), a
 | Live: gate (R3) | `lab_gate.py --new --verifier pi` | `MERGED PR #29 -> 38dd427; ci ok, check ok, scope ok, verifier AGREE (openweights/minimax)`: the verifier's five reasons name the root cause, the untouched checks, the append-only ledger, the minimality and A1--A8; merge commit `Merge PR #29: heal: src/pcso_weekly_update.py FAIL (darwin)`, branch deleted |
 | Live: close + learn (R0, R5) | `git pull`; `outcome_collect.py --sources verify_entrypoint`; `lab_learn.py --derive` | `PASS sha256=11c8af72…` (defect closed); `lessons: 1 new` (`introduced by dc48068; passing again at 38dd427 on darwin`) |
 | Owner routing | unit tests only (`test_gate_routes_owner_reserved_changes` × 6, `_reuses_existing_issue`, `_routes_at_attempt_cap`) | not exercised live: creating a real `owner-decision` issue for a fake decision would be noise for the owner |
-| CI on this PR | filled at closeout | |
+| CI on this PR | PR #30 checks | Run 34072343430 on `96eb20a` (after the review fixes): ubuntu, macOS and browser e2e green; Windows informational fail (heal tests, unchanged contract) |
 
 ## §18 Done Criteria
 
@@ -132,7 +132,7 @@ every 6 h with the user's login environment (gh and provider auth), a
 - [x] Live proof (REQ-9) recorded in §15 with PR #29, CI run 34071256126,
       verifier `openweights/minimax` via pi/LiteLLM, merge commit `38dd427`.
 - [x] `check.sh` green before and after the live run.
-- [ ] CI green on the PR to master; §19 review disposition recorded.
+- [x] CI green on the PR to master (run 34072343430); §19 review disposition recorded.
 
 ### Lessons (for the handoff and the lessons ledger)
 
