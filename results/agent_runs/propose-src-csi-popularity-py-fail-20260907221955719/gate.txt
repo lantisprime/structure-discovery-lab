@@ -1,0 +1,7 @@
+ok
+test_required_imports_present (__main__.TestLabRuntimeDeps.test_required_imports_present) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.059s
+
+OK
