@@ -188,6 +188,11 @@ def test_shallow_clone_uses_prior_row_and_still_detects_staleness(seeded_ledger,
     with HEAD (which would equal the working tree and mask the change)."""
     ledger = seeded_ledger
     OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))          # baseline (seeded, as CI is)
+
+    def eval_rows(artifact):
+        return [r for r in OL.read_rows(ledger) if r["artifact"] == artifact
+                and ":staleness" not in r["detail"]["subject"]]
+    baseline = len(eval_rows("agents/data-reader.md"))     # the committed history (grows with every re-dispatch)
     monkeypatch.setattr(OC, "is_shallow", lambda root: True)
     calls = []
     real_show = OC.git_blob_sha256
@@ -200,9 +205,8 @@ def test_shallow_clone_uses_prior_row_and_still_detects_staleness(seeded_ledger,
     assert calls == [], "shallow clone must not consult git show"
     rows = OL.read_rows(ledger)
     assert nd and nd[0]["signal"] == "STALE_EVAL" and nd[0]["artifact"] == "agents/data-reader.md"
-    changed_eval_rows = [r for r in rows if r["artifact"] == "agents/data-reader.md"
-                         and ":staleness" not in r["detail"]["subject"]]
-    assert len(changed_eval_rows) == 2                      # baseline + altered
+    changed_eval_rows = eval_rows("agents/data-reader.md")
+    assert len(changed_eval_rows) == baseline + 1           # exactly one new state: the altered one
     assert changed_eval_rows[-1]["detail"]["at_eval_from_prior_row"] is True
     assert changed_eval_rows[-1]["detail"]["record_commit"] is None
     # unchanged definitions did not produce noise rows despite the shallow clone
