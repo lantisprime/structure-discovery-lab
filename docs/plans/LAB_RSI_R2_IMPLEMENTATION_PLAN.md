@@ -172,7 +172,10 @@ every dispatch ever made for an eval side by side.
       gated → **MERGED 277925e** (PR #32, verifier openweights/minimax AGREE)
       → closed → lesson 6.
 - [x] `./tools/check.sh` ALL CHECKS PASSED before and after the live runs.
-- [ ] CI green on the PR to master; §19 review disposition recorded.
+- [x] CI green on the PR to master: PR #33, run 34168758974 on cda8112
+      (ubuntu, macOS, browser e2e green; Windows informational fail, unchanged
+      contract); §19 review disposition recorded (APPROVE-WITH-CHANGES, BLOCK
+      finding applied and live-exercised through `--stale`).
 - [x] `docs/LAB_IMPROVEMENT_PLAN.md` v1.6: row 6 COMPLETE (minimal); open
       inside R2: M2 contracts, repeated rolls before trusting a tier; carried
       to change set 8: stale `results/meta_uniformity.json`, faster routing of
