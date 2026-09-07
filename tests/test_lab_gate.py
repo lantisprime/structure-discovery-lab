@@ -251,6 +251,9 @@ def test_real_git_diff_sees_renames_ledger_rewrites_and_reserved_paths(tmp_path)
     (root / "tests").mkdir(), (root / "results").mkdir(), (root / "src").mkdir(), (root / "docs").mkdir()
     (root / "tests" / "test_x.py").write_text("def test_x(): pass\n")
     (root / "results" / "l.jsonl").write_text('{"a":1}\n{"a":2}\n')
+    (root / "results" / "frozen.json").write_text('{"v": 1}\n')
+    (root / "results" / "agent_runs" / "eval-old").mkdir(parents=True)
+    (root / "results" / "agent_runs" / "eval-old" / "grade.json").write_text('{"grade": "FAIL"}\n')
     (root / "src" / "lab_gate.py").write_text("gate = 1\n")
     (root / "docs" / "THEOREM_GOVERNANCE.md").write_text("A0\n")
     git(root, "checkout", "-q", "-b", "main"), git(root, "add", "-A"), git(root, "commit", "-qm", "base")
@@ -259,16 +262,35 @@ def test_real_git_diff_sees_renames_ledger_rewrites_and_reserved_paths(tmp_path)
     git(root, "mv", "tests/test_x.py", "tests/test_x.py.bak")
     git(root, "mv", "src/lab_gate.py", "src/lab_gate2.py")
     (root / "results" / "l.jsonl").write_text('{"a":1}\n{"a":3}\n')          # rewrote a line
+    (root / "results" / "frozen.json").write_text('{"v": 2}\n')                # rewrote a frozen result
+    (root / "results" / "agent_runs" / "eval-old" / "grade.json").write_text('{"grade": "PASS"}\n')  # rewrote history
+    (root / "results" / "new_version.json").write_text('{"v": 2}\n')           # a NEW file is fine
     (root / "docs" / "THEOREM_GOVERNANCE.md").write_text("A0 changed\n")
     git(root, "add", "-A"), git(root, "commit", "-qm", "bad heal"), git(root, "push", "-q", "-u", "origin", "heal/x")
     diff = LG.GitHub(str(root)).diff("main", "heal/x")
     assert "tests/test_x.py" in diff["deleted"] and "src/lab_gate.py" in diff["deleted"]
     assert diff["ledger_deletions"] == {"results/l.jsonl": 1}
+    assert sorted(diff["results_modified"]) == ["results/agent_runs/eval-old/grade.json", "results/frozen.json"]
     assert diff["truncated"] is False and diff["text_chars"] > 0
-    assert any("test file deleted: tests/test_x.py" in r for r in LG.scope_reasons(diff))
+    reasons = LG.scope_reasons(diff)
+    assert any("test file deleted: tests/test_x.py" in r for r in reasons)
+    assert any("frozen result or historical record rewritten: results/frozen.json" in r for r in reasons)
+    assert any("eval-old/grade.json" in r for r in reasons) and not any("new_version" in r for r in reasons)
     routed = LG.reserved_reasons(diff, "", 0)
     assert any("docs/THEOREM_GOVERNANCE.md" in r for r in routed)
     assert any("src/lab_gate.py" in r for r in routed) and any("src/lab_gate2.py" in r for r in routed)
+
+
+def test_gate_rejects_rewritten_frozen_result_without_calling_verifier(tmp_path):
+    d = defect_row()
+    ledger = ledger_with(tmp_path, [d, heal_row(d)])
+    gh = FakeGH(diff={"paths": ["src/inst.py", "results/frozen.json"], "deleted": [], "ledger_deletions": {},
+                      "results_modified": ["results/frozen.json"], "kb_added_lines": [], "text": "x"})
+    called = []
+    rows = run(ledger, gh, verifier=lambda b, c: called.append(1) or {"family": "openai", "model": "x",
+                                                                       "verdict": "AGREE", "reasons": []})
+    assert rows[0]["signal"] == "REJECTED" and "frozen result or historical record rewritten" in rows[0]["evidence"]
+    assert called == [] and all(c[0] != "merge" for c in gh.calls)
 
 
 def test_gate_rejects_same_family_verifier(tmp_path):

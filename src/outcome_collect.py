@@ -154,6 +154,20 @@ def load_grader(root):
     return mod
 
 
+DEFINITION_HASH_RE = re.compile(r"definition sha256: ([0-9a-f]{64})")
+
+
+def record_definition_hash(run_dir):
+    """The definition hash the R2 dispatcher wrote into the record's agent.txt
+    (None for the 2026-06 records, which carry only an identity stamp)."""
+    p = os.path.join(run_dir, "agent.txt")
+    if not os.path.exists(p):
+        return None
+    with open(p, encoding="utf-8") as fh:
+        m = DEFINITION_HASH_RE.search(fh.read())
+    return m.group(1) if m else None
+
+
 def prior_at_eval_hash(ctx, artifact, subject):
     for r in reversed(ctx.prior_rows):
         if (r["source"] == "agent_eval" and r["artifact"] == artifact
@@ -192,6 +206,10 @@ def source_agent_eval(ctx):
             rc = record_commit(ctx.root, rel)
             at_eval = git_blob_sha256(ctx.root, rc, artifact) if rc else None
             fallback = False
+            if at_eval is None:
+                # a record not yet committed (dispatched this cycle, R2): the
+                # dispatcher stamped the definition hash into its agent.txt
+                at_eval = record_definition_hash(run_dir)
             if at_eval is None:
                 at_eval = prior_at_eval_hash(ctx, artifact, eval_id)
                 fallback = at_eval is not None

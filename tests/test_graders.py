@@ -54,7 +54,7 @@ def test_record_regrades_cleanly(eval_id):
 
 def test_grading_never_mutates_records():
     before = {}
-    for rel in grader.RECORDS.values():
+    for rel in set(grader.RECORDS.values()) | set(grader.record_dirs().values()):   # floors and the latest re-dispatches
         d = os.path.join(REPO, rel)
         if os.path.isdir(d):
             before[rel] = sorted(os.listdir(d))
@@ -80,6 +80,10 @@ def test_latest_dated_record_wins(tmp_path):
     assert grader.record_dir("D-1+D-2", str(root)) == grader.RECORDS["D-1+D-2"]   # floor when nothing dated exists
     assert grader.record_slug("D-1+D-2") == "d1" and grader.record_slug("Z-V1") == "zv1"
     assert set(grader.record_dirs(str(root))) == set(grader.RECORDS)
+    slugs = [grader.record_slug(e) for e in grader.RECORDS if not e.startswith("Z-")]
+    assert len(slugs) == len(set(slugs)), "record slugs must be unique per eval (D-1 vs D-1+D-2 would collide)"
+    for e in ("P-1", "P-2"):
+        assert os.path.isdir(os.path.join(REPO, grader.RECORDS[e])), f"{e} floor must be a real record"
 
 
 def test_proposer_graders_read_the_healers_record(tmp_path):

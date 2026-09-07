@@ -455,8 +455,10 @@ RECORDS = {
     "Z-V1": "riemann-zero-lab/results/agent_runs/zeta-eval-20260613",
     "Z-V2": "riemann-zero-lab/results/agent_runs/zeta-eval-20260613",
     "Z-O1": "riemann-zero-lab/results/agent_runs/zeta-eval-20260613",
-    "P-1": "results/agent_runs/eval-p1-20260908",
-    "P-2": "results/agent_runs/eval-p2-20260908",
+    # the proposer's first PASS records at its committed tier (sonnet); newer
+    # dated records win via record_dir()
+    "P-1": "results/agent_runs/eval-p1-20260907T220753",
+    "P-2": "results/agent_runs/eval-p2-20260907T220827",
 }
 
 # eval-<slug>-YYYYMMDD (2026-06 style) or eval-<slug>-YYYYMMDDTHHMMSS (the
@@ -465,7 +467,9 @@ DATED_RE = re.compile(r"-(\d{8})(T\d{6})?$")
 
 
 def record_slug(eval_id):
-    """'D-1+D-2' -> 'd1', 'V-2' -> 'v2': the stem of eval-<slug>-<date> dirs."""
+    """'D-1+D-2' -> 'd1', 'V-2' -> 'v2': the stem of eval-<slug>-<date> dirs
+    (the 2026-06-11 naming). Slugs must stay unique across RECORDS: a
+    standalone 'D-1' record would collide with 'D-1+D-2' (tests assert this)."""
     return eval_id.lower().split("+")[0].replace("-", "")
 
 

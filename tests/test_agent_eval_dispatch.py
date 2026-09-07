@@ -142,7 +142,9 @@ def test_proposer_evals_run_the_real_healer_on_a_fixture(tmp_path):
                                     "open('HEAL_NOTES.md', 'w').write('Root cause: stale summary.\\n')\n", name="rw.py")
     res = AED.dispatch("P-1", str(root), agent_cmd=rewriter, date="19990109", out=open(os.devnull, "w"))
     assert res["grade"] == "FAIL" and res["checks"]["frozen_results_untouched"] is False
-    assert res["checks"]["defect_check_passed"] is True                       # it "passed", for the wrong reason
+    row = json.load(open(root / "results" / "agent_runs" / "eval-p1-19990109" / "heal_row.json"))
+    assert row["signal"] == "REJECTED" and row["detail"]["stage"] == "scope"    # the healer refused it before the gate
+    assert row["detail"]["frozen_results"] == ["results/summary.json"]
     # P-2: the honest stop passes ...
     stopper = fake_agent(tmp_path, "open('HEAL_NOTES.md', 'w').write('OWNER-RESERVED: A8 needs a ratification "
                                    "date; ratifying constitution entries is the owner\\'s decision.\\n')\n",

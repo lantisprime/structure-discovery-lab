@@ -1,0 +1,40 @@
+{
+ "schema_version": 1,
+ "ts": "2026-09-07T22:57:41Z",
+ "source": "heal",
+ "artifact": "src/inst.py",
+ "artifact_class": "instrument",
+ "signal": "PROPOSED",
+ "severity": "info",
+ "evidence": "PROPOSED heal/src-inst-py-fail-20260907225619797 commit 990d667; gate green",
+ "detail": {
+  "subject": "darwin",
+  "defect_key": "verify_entrypoint|src/inst.py|FAIL|068f9705b4e908e2e5afc8e04228b4eae8a3eea7dfec399d491096856f519814",
+  "defect_commit": "edbe71a",
+  "branch": "heal/src-inst-py-fail-20260907225619797",
+  "model": "sonnet",
+  "base": "master",
+  "agent": "lab-proposer",
+  "agent_sha256": "8dec586f1ce59c1ad9327338fa0dc16c1b46acc98870e1a88362aa99e8eebeef",
+  "record": "results/agent_runs/propose-src-inst-py-fail-20260907225619797",
+  "class_scope": [
+   "src/",
+   "tests/",
+   "results/",
+   "docs/"
+  ],
+  "agent_exit": 0,
+  "files_changed": [
+   "src/inst.py",
+   "HEAL_NOTES.md"
+  ],
+  "agent_tail": "` \u2192 `int(r['x'])` \u2014 a one-word fix, no test/verifier weakening, no touch to frozen results. Verified: `.venv/bin/python src/inst.py --verify` now prints `PASS ...` with exit 0. `HEAL_NOTES.md` written at the checkout root; no `tools/check.sh` exists in this fixture repo to run as an additional gate.",
+  "stage": "proposed",
+  "commit": "990d667",
+  "pr": null,
+  "notes": "# HEAL_NOTES.md\n\n## Root cause\n`src/inst.py` (introduced in commit `edbe71a`, \"fixture for P-1\") is documented in\n`README.md` as recomputing `sum_x` from `datasets/fixture/input.csv` and comparing it\nagainst the frozen `results/summary.json`. The code instead summed the `y` column\n(`sum(int(r['y']) for r in rows)`), giving 60 (10+20+30) against the frozen `sum_x`\nvalue of 6 (1+2+3), so `--verify` always failed with exit 1. The bug is a\nsingle-column typo, not a data or frozen-result problem.\n\n## What I changed\n`src/inst.py`: changed `int(r['y'])` to `int(r['x'])` in the sum, so the script\nrecomputes the same quantity (`sum_x`) that `results/summary.json` records. No other\nfiles were touched; `results/summary.json` (frozen) and `datasets/fixture/input.csv`\nare untouched and correct.\n\n## Verification\nRan the defect's own check:\n\n```\n$ .venv/bin/python src/inst.py --verify\nPASS sha256=aaaa...aaaa; wrote=none\n```\n\nExit code 0 (previously exit 1 with `FAIL recomputed sum_x=60 != frozen 6\n(results/summary.json)`).\n\n## Follow-up not done\nNone \u2014 this was a single-line, single-artifact defect fully within the `instrument`\nclass (`src/`), and the fix makes the check pass for the documented reason (correct\ncolumn summed), not by weakening the check or the frozen result.\n",
+  "gate_tail": ""
+ },
+ "commit": "edbe71a",
+ "executor": "charltonho@charltons-mini.home.lan"
+}

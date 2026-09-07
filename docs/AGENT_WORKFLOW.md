@@ -221,9 +221,10 @@ all stdlib, all read-only except where noted:
   picks the tier, its sha256 is on every row) in a git worktree for each open
   defect, **only while the proposer's own eval rows P-1/P-2 are PASS** in the
   ledger (no eval pass, no dispatch). A change outside the attributed
-  artifact class (`lab_heal.CLASS_SCOPE`) is REJECTED at stage `scope` before
-  the gate; an `OWNER-RESERVED` note is recorded at stage `owner-reserved`
-  without gating. Otherwise it gates the result with `./tools/check.sh` plus
+  artifact class (`lab_heal.CLASS_SCOPE`), a rewrite or deletion of a tracked
+  file under `results/`, or a touch of another run's dispatch record is
+  REJECTED at stage `scope` before the gate; an `OWNER-RESERVED` note is
+  recorded at stage `owner-reserved` without gating. Otherwise it gates the result with `./tools/check.sh` plus
   the defect's own check, commits on a `heal/…` branch and, with `--push`,
   opens the PR. Every dispatch leaves a record under
   `results/agent_runs/propose-<slug>/` (prompt and agent line before the run,

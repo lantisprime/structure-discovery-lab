@@ -18,14 +18,17 @@ files only inside the artifact class the brief names.
 | class | you may touch |
 |---|---|
 | agent | `agents/` |
-| instrument | `src/`, `tests/`, `results/`, `docs/` (an instrument may regenerate the artefacts it owns) |
+| instrument | `src/`, `tests/`, `results/` (new files only), `docs/` |
 | theorem_card | `docs/kb/` |
 | adapter_manifest | `datasets/`, `src/`, `tests/` |
 | suite | `tests/`, `src/` |
 
 A fix that needs a file outside the scope is not yours to make: stop, write
 what you found in `HEAL_NOTES.md`, and change nothing else. A change outside
-the scope is rejected before it is even gated.
+the scope is rejected before it is even gated. So is any rewrite or deletion
+of a tracked file under `results/` (frozen results and historical dispatch
+records are immutable; a corrected result is a new file with provenance), and
+any touch of another run's record under `results/agent_runs/`.
 
 Rules that outrank the repair:
 - Constitution articles A1–A8 (`docs/THEOREM_GOVERNANCE.md` Part 2) hold; A0

@@ -65,6 +65,10 @@ PROPOSER_DEF = "agents/lab-proposer.md"
 PROPOSER_EVALS = ("P-1", "P-2")
 # Paths a proposal may change, by the artifact class the attribution named. A
 # class absent here (design, ledger, collector: gate machinery) allows nothing.
+# Under results/ only NEW files are ever allowed (a frozen result or a
+# historical dispatch record is never rewritten; a new version carries its own
+# provenance), and no other dispatch record may be touched at all -- both
+# enforced by scope_violations(), not by this table (review finding 1).
 CLASS_SCOPE = {
     "agent": ("agents/",),
     "instrument": ("src/", "tests/", "results/", "docs/"),
@@ -165,6 +169,23 @@ def out_of_scope(files, cls, record_rel):
             and not f.startswith(allowed)]
 
 
+def scope_violations(files, tracked, cls, record_rel):
+    """Mechanical scope verdict: {} when clean, else the offending paths by kind.
+    `files` = every changed path, `tracked` = the subset that existed at the base
+    (modified or deleted, i.e. not new)."""
+    v = {}
+    outside = out_of_scope(files, cls, record_rel)
+    if outside:
+        v["out_of_scope"] = outside
+    frozen = [p for p in tracked if p.startswith("results/")]
+    if frozen:
+        v["frozen_results"] = frozen            # a tracked file under results/ was rewritten or deleted
+    audit = [p for p in files if p.startswith(RECORD_DIR + "/") and not p.startswith(record_rel + "/")]
+    if audit:
+        v["audit_records"] = audit              # another dispatch record, new or old
+    return v
+
+
 def write_record(wt, rel, files):
     os.makedirs(os.path.join(wt, rel), exist_ok=True)
     for name, text in files.items():
@@ -206,7 +227,9 @@ def brief_for(defect, rows, root):
         "- Preserve constitution articles A1-A8 (docs/THEOREM_GOVERNANCE.md Part 2). Never edit A0.",
         "- Frozen results, registrations and existing ledger rows are immutable: append, never rewrite.",
         "  If a result must change, it becomes a new version with its provenance recorded in the run",
-        "  ledger row the way r3/r4 did (superseded_output_sha256_*, r*_note).",
+        "  ledger row the way r3/r4 did (superseded_output_sha256_*, r*_note). Under results/ you may",
+        "  add files, never modify or delete a tracked one, and never touch another dispatch record",
+        "  under results/agent_runs/ (the healer rejects such a tree before it is gated).",
         "- Owner-reserved decisions are not yours: amending A0, ratifying constitution entries,",
         "  unsealing holdout data, promoting an evidence grade to G3+. If the fix needs one, stop,",
         f"  change nothing else, and put the line `{OWNER_MARK}: <why>` in HEAL_NOTES.md; the healer",
@@ -300,6 +323,12 @@ def changed_files(wt):
     return [l[3:] for l in out.splitlines() if l.strip()]
 
 
+def tracked_changes(wt):
+    """Changed paths that existed at the base (modified or deleted; not '??' new files)."""
+    rc, out, err = sh(["git", "status", "--porcelain", "--untracked-files=all", "--", ".", ":(exclude).venv"], wt)
+    return [l[3:] for l in out.splitlines() if l.strip() and not l.startswith("??")]
+
+
 def pr_body(key, d, cls, notes, gate_summary):
     """PR description generated from the dispatch record (agent line, report, gate)."""
     return (f"Autonomous repair proposed by `src/lab_heal.py` (Milestone R2/R4, constitution A0) for the "
@@ -370,10 +399,13 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
         if not files:
             why = f"agent exit {rc}, no file changed" + (f": {(aout.strip() or aerr.strip())[-200:]}" if (aout + aerr).strip() else "")
             return reject("agent", why)
-        outside = out_of_scope(files, cls, record)
-        if outside:
-            return reject("scope", f"changed outside the {cls} class scope: {', '.join(outside)}",
-                          {"out_of_scope": outside})
+        bad = scope_violations(files, [f for f in tracked_changes(wt) if not f.startswith(record + "/")], cls, record)
+        if bad:
+            why = "; ".join({"out_of_scope": f"changed outside the {cls} class scope",
+                             "frozen_results": "rewrote or deleted a tracked file under results/ (frozen)",
+                             "audit_records": "touched another dispatch record"}[k] + ": " + ", ".join(v)
+                            for k, v in bad.items())
+            return reject("scope", why, bad)
         # The agent's note becomes the record's report (verbatim). The root copy goes --
         # restored, not deleted, when a HEAL_NOTES.md is tracked at the base (PR #29 left
         # one; the R2 live proof's first PR deleted it as a side effect).

@@ -98,8 +98,13 @@ step "$PY" src/lab_learn.py --derive
 echo; echo "step ledger commit: append-only diff of $LEDGERS + new dispatch records under results/agent_runs -> commit + push origin master"
 [ "$MODE" = "--dry-run" ] && exit 0
 # New eval/proposal records are new files only (the dispatcher never rewrites a
-# record); anything modified under results/agent_runs is left alone and reported.
+# record); a modified tracked record is an append-only violation: refuse, exit 5.
 NEW_RECORDS=$(git ls-files --others --exclude-standard -- results/agent_runs)
+MODIFIED_RECORDS=$(git diff --name-only -- results/agent_runs)
+if [ -n "$MODIFIED_RECORDS" ]; then
+  echo "lab-loop: historical dispatch record(s) modified (records are append-only); refusing to commit:"
+  echo "$MODIFIED_RECORDS"; exit 5
+fi
 if git diff --quiet -- $LEDGERS && [ -z "$NEW_RECORDS" ]; then
   echo "no new rows"
 else

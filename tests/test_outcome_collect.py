@@ -111,7 +111,10 @@ def test_pytest_summary_parser_drops_timing():
 def test_no_stale_row_when_hashes_match(seeded_ledger):
     ledger = seeded_ledger
     OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
-    rows = OL.read_rows(ledger)
+    latest = {}
+    for r in OL.read_rows(ledger):            # current state per slot: history legitimately holds past STALE rows
+        latest[OL.slot(r)] = r
+    rows = list(latest.values())
     stale = [r for r in rows if r["signal"] == "STALE_EVAL"]
     assert stale == [], [r["evidence"] for r in stale]
     with_hashes = [r for r in rows if r["detail"].get("agent_sha256_now")]
@@ -129,11 +132,25 @@ def test_stale_eval_detected_when_definition_changes(seeded_ledger, monkeypatch)
         return b + b"\n<!-- altered by test -->\n" if os.path.abspath(path) == target else b
     monkeypatch.setattr(OC, "read_agent_bytes", altered)
     ledger = seeded_ledger
-    OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
-    stale = [r for r in OL.read_rows(ledger) if r["signal"] == "STALE_EVAL"]
+    appended, _ = OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
+    stale = [r for r in appended if r["signal"] == "STALE_EVAL"]      # this run's rows, not the ledger's history
     assert stale and all(r["artifact"] == "agents/data-reader.md" for r in stale)
     assert all(r["severity"] == "defect" for r in stale)
     assert os.path.exists(target) and b"altered by test" not in real(target)
+
+
+def test_uncommitted_record_carries_its_definition_hash(tmp_path):
+    """A record dispatched this cycle has no record commit yet; its agent.txt
+    (R2 dispatcher) names the definition hash it ran against, which beats the
+    prior row's hash (the previous definition) and avoids a false STALE_EVAL."""
+    rec = tmp_path / "eval-p1-20260907T225619"
+    rec.mkdir()
+    assert OC.record_definition_hash(str(rec)) is None
+    (rec / "agent.txt").write_text("agent: lab-proposer | model: sonnet | definition sha256: " + "ab" * 32 +
+                                   " | eval: P-1 | 2026-09-07\n")
+    assert OC.record_definition_hash(str(rec)) == "ab" * 32
+    (rec / "agent.txt").write_text("agent: independent-verifier | model: haiku | id: ae820cd3825941c40 | eval: V-2\n")
+    assert OC.record_definition_hash(str(rec)) is None          # 2026-06 identity stamp
 
 
 def test_stale_slot_closes_when_definition_matches_again(seeded_ledger, monkeypatch):
@@ -145,8 +162,8 @@ def test_stale_slot_closes_when_definition_matches_again(seeded_ledger, monkeypa
     real = OC.read_agent_bytes
     monkeypatch.setattr(OC, "read_agent_bytes",
                         lambda p: real(p) + b"x" if os.path.abspath(p) == target else real(p))
-    OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
-    stale = [r for r in OL.read_rows(ledger) if r["signal"] == "STALE_EVAL"]
+    appended, _ = OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
+    stale = [r for r in appended if r["signal"] == "STALE_EVAL"]
     assert stale
     monkeypatch.setattr(OC, "read_agent_bytes", real)                 # back in sync
     appended, nd = OC.run(["agent_eval"], ledger, gate=True, out=open(os.devnull, "w"))
@@ -176,8 +193,7 @@ def test_shallow_history_falls_back_to_prior_row(seeded_ledger, monkeypatch):
     ledger = seeded_ledger
     OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
     monkeypatch.setattr(OC, "git_blob_sha256", lambda *a: None)
-    OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
-    rows = OL.read_rows(ledger)
+    rows, _ = OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))   # rows appended by this run
     assert not [r for r in rows if r["signal"] == "STALE_EVAL"]
     assert not [r for r in rows if r["signal"] == "INCOMPLETE_RECORD" and "cannot compare" in r["evidence"]]
 
@@ -207,8 +223,13 @@ def test_shallow_clone_uses_prior_row_and_still_detects_staleness(seeded_ledger,
     assert nd and nd[0]["signal"] == "STALE_EVAL" and nd[0]["artifact"] == "agents/data-reader.md"
     changed_eval_rows = eval_rows("agents/data-reader.md")
     assert len(changed_eval_rows) == baseline + 1           # exactly one new state: the altered one
-    assert changed_eval_rows[-1]["detail"]["at_eval_from_prior_row"] is True
-    assert changed_eval_rows[-1]["detail"]["record_commit"] is None
+    last = changed_eval_rows[-1]["detail"]
+    assert last["record_commit"] is None
+    # without git history the hash at eval comes from the record's own agent.txt (an R2
+    # record) or, for a 2026-06 record, from the prior committed row -- never from HEAD
+    g = OC.load_grader(REPO)
+    stamped = OC.record_definition_hash(os.path.join(REPO, g.record_dir("D-1+D-2")))
+    assert last["agent_sha256_at_eval"] == stamped if stamped else last["at_eval_from_prior_row"] is True
     # unchanged definitions did not produce noise rows despite the shallow clone
     dupes = [r for r in rows if r["artifact"] == "agents/research-scout.md" and ":staleness" not in r["detail"]["subject"]]
     assert len(dupes) == 1

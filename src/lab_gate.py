@@ -112,6 +112,11 @@ class GitHub:
         rc, numstat, _ = sh(["git", "diff", "--no-renames", "--numstat", rng], r)
         paths = [l.split("\t")[2] for l in numstat.splitlines() if l.count("\t") >= 2]
         rc, deleted, _ = sh(["git", "diff", "--no-renames", "--diff-filter=D", "--name-only", rng], r)
+        # A tracked file under results/ that is modified or deleted (not added): a frozen
+        # result or a historical dispatch record rewritten. Ledger .jsonl files are judged
+        # by the append-only line count below instead (R2 review finding 1).
+        rc, touched, _ = sh(["git", "diff", "--no-renames", "--diff-filter=MD", "--name-only", rng, "--", "results"], r)
+        results_modified = [p for p in touched.split() if not p.endswith(".jsonl")]
         ledger_paths = [p for p in paths if p.startswith(LEDGER_GLOB_PREFIX) and p.endswith(".jsonl")]
         ledger_deletions = {}
         for p in ledger_paths:
@@ -126,6 +131,7 @@ class GitHub:
             kb_added += [l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++")]
         rc, text, _ = sh(["git", "diff", "--no-renames", rng, "--", ".", ":(exclude)*.jsonl"], r)
         return {"paths": paths, "deleted": deleted.split(), "ledger_deletions": ledger_deletions,
+                "results_modified": results_modified,
                 "kb_added_lines": kb_added, "text": text[:DIFF_MAX], "truncated": len(text) > DIFF_MAX,
                 "text_chars": len(text)}
 
@@ -190,6 +196,7 @@ def scope_reasons(diff):
     why = [f"ledger file lost {n} line(s) (append-only): {p}" for p, n in diff.get("ledger_deletions", {}).items()]
     why += [f"test file deleted: {p}" for p in diff.get("deleted", [])
             if p.startswith("tests/") or os.path.basename(p).startswith("test_")]
+    why += [f"frozen result or historical record rewritten: {p}" for p in diff.get("results_modified", [])]
     return why
 
 
@@ -405,7 +412,8 @@ class Gate:
         diff = self.gh.diff(pr["baseRefName"], pr["headRefName"])
         attempts = heal_attempts(rows, key, dcommit)
         checks["scope"] = {"paths": diff["paths"][:50], "deleted": diff.get("deleted", []),
-                           "ledger_deletions": diff.get("ledger_deletions", {})}
+                           "ledger_deletions": diff.get("ledger_deletions", {}),
+                           "results_modified": diff.get("results_modified", [])}
         routed = reserved_reasons(diff, d.get("notes"), attempts)
         if routed:
             return self._route(proposal, defect, attr, base_detail, checks, routed)

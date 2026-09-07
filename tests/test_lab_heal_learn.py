@@ -45,21 +45,26 @@ def broken_repo(tmp_path):
     git(root, "config", "user.email", "t@t"), git(root, "config", "user.name", "t")
     (root / "src").mkdir(), (root / "results").mkdir()
     (root / "HEAL_NOTES.md").write_text("notes of an earlier repair, tracked at the base\n")
+    # The planted defect is in the instrument (it expects the token 'okay'); the frozen
+    # data file is correct. The honest fix edits src/inst.py; rewriting results/data.txt
+    # is the wrong-reason fix and is rejected by the scope check.
     (root / "src" / "inst.py").write_text(
         "import sys\nd=open('results/data.txt').read().strip()\n"
-        "print('PASS sha256=' + 'a'*64 + '; wrote=none') if d=='ok' else sys.exit(1)\n")
-    (root / "results/data.txt").write_text("broken\n")
+        "print('PASS sha256=' + 'a'*64 + '; wrote=none') if d=='okay' else sys.exit(1)\n")
+    (root / "results/data.txt").write_text("ok\n")
     git(root, "add", "-A"), git(root, "commit", "-qm", "broken state")
     return root, git(root, "rev-parse", "--short", "HEAD")
 
 
-def fake_agent(tmp_path, body):
-    p = tmp_path / "fake_agent.py"
+def fake_agent(tmp_path, body, name="fake_agent.py"):
+    p = tmp_path / name
     p.write_text("import sys\nbrief = sys.stdin.read()\n" + body)
     return f'"{sys.executable}" "{p.as_posix()}"'
 
 
 OK_GATE = f'{sys.executable} -c "import sys; sys.exit(0)"'
+# the honest fix for broken_repo: one token in the instrument
+FIX = "s = open('src/inst.py').read().replace(\"'okay'\", \"'ok'\")\nopen('src/inst.py', 'w').write(s)\n"
 
 
 def proposer_green_rows(ts="2026-09-06T09:00:00Z"):
@@ -131,18 +136,17 @@ def test_heal_proposes_when_agent_fixes_and_gate_passes(broken_repo, tmp_path, m
     monkeypatch.setenv("LAB_LESSONS", str(tmp_path / "lessons.jsonl"))
     LL.append_lessons(str(tmp_path / "lessons.jsonl"),
                       [{"schema_version": 1, "ts": "2026-09-06T00:00:00Z", "kind": "manual", "artifact": "src/inst.py",
-                        "artifact_class": "instrument", "defect_key": None, "lesson": "results/data.txt must say ok"}])
+                        "artifact_class": "instrument", "defect_key": None, "lesson": "inst.py must expect the token ok"}])
     ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                                   {"exit": 1, "sha256": None, "args": ["--verify"]})])
-    agent = fake_agent(tmp_path, "assert 'results/data.txt must say ok' in brief\n"
-                                 "open('results/data.txt','w').write('ok\\n')\n"
-                                 "open('HEAL_NOTES.md','w').write('root cause: data drift\\n')\n")
+    agent = fake_agent(tmp_path, "assert 'inst.py must expect the token ok' in brief\n" + FIX +
+                                 "open('HEAL_NOTES.md','w').write('root cause: token typo\\n')\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False,
                   keep_worktree=True, out=open(os.devnull, "w"))
     assert len(rows) == 1 and rows[0]["signal"] == "PROPOSED"
     d = rows[0]["detail"]
-    assert d["stage"] == "proposed" and d["commit"] and sorted(d["files_changed"]) == ["HEAL_NOTES.md", "results/data.txt"]
+    assert d["stage"] == "proposed" and d["commit"] and sorted(d["files_changed"]) == ["HEAL_NOTES.md", "src/inst.py"]
     assert "root cause" in d["notes"]
     assert d["branch"].startswith("heal/src-inst-py-fail-")
     # the fix is committed on the heal branch, HEAD of the repo untouched
@@ -165,14 +169,13 @@ def test_heal_links_venv_and_proceeds_when_agent_exits_nonzero_after_changing_fi
     ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                                   {"exit": 1, "sha256": None, "args": ["--verify"]})])
-    agent = fake_agent(tmp_path, "import os\nassert os.path.islink('.venv') and os.path.isdir('.venv/bin')\n"
-                                 "open('results/data.txt','w').write('ok\\n')\n"
+    agent = fake_agent(tmp_path, "import os\nassert os.path.islink('.venv') and os.path.isdir('.venv/bin')\n" + FIX +
                                  "open('HEAL_NOTES.md','w').write('fixed\\n')\n"
                                  "print('Error: Reached max turns (30)')\nsys.exit(1)\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
     assert rows[0]["signal"] == "PROPOSED" and rows[0]["detail"]["agent_exit"] == 1
     assert "max turns" in rows[0]["detail"]["agent_tail"]
-    assert sorted(rows[0]["detail"]["files_changed"]) == ["HEAL_NOTES.md", "results/data.txt"]
+    assert sorted(rows[0]["detail"]["files_changed"]) == ["HEAL_NOTES.md", "src/inst.py"]
     assert ".venv" not in git(root, "show", "--name-only", "--format=", rows[0]["detail"]["branch"])
     for line in git(root, "worktree", "list", "--porcelain").splitlines():
         if line.startswith("worktree ") and "lab-heal-" in line:
@@ -195,7 +198,8 @@ def test_heal_rejects_when_defect_check_still_fails(broken_repo, tmp_path):
     ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                                   {"exit": 1, "sha256": None, "args": ["--verify"]})])
-    agent = fake_agent(tmp_path, "open('results/data.txt','w').write('still wrong\\n')\n"
+    agent = fake_agent(tmp_path, "s = open('src/inst.py').read().replace(\"'okay'\", \"'nope'\")\n"
+                                 "open('src/inst.py', 'w').write(s)\n"
                                  "open('HEAL_NOTES.md','w').write('tried\\n')\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
     assert rows[0]["signal"] == "REJECTED" and rows[0]["detail"]["stage"] == "gate"
@@ -307,7 +311,7 @@ def defect_row(sha):
 
 def test_heal_refuses_when_proposer_eval_not_green(broken_repo, tmp_path, capsys):
     root, sha = broken_repo
-    agent = fake_agent(tmp_path, "open('results/data.txt','w').write('ok\\n')\nopen('HEAL_NOTES.md','w').write('x\\n')\n")
+    agent = fake_agent(tmp_path, FIX + "open('HEAL_NOTES.md','w').write('x\\n')\n")
     # (a) no eval rows at all
     bare = str(tmp_path / "bare.jsonl")
     OL.append_rows(bare, [defect_row(sha)])
@@ -348,7 +352,7 @@ def test_heal_dispatches_registered_proposer_with_record(broken_repo, tmp_path):
                                  "rec = [d for d in os.listdir('results/agent_runs') if d.startswith('propose-')][0]\n"
                                  "assert open('results/agent_runs/' + rec + '/prompt.md').read() == brief\n"
                                  "assert 'definition sha256' in open('results/agent_runs/' + rec + '/agent.txt').read()\n"
-                                 "open('results/data.txt','w').write('ok\\n')\n"
+                                 + FIX +
                                  "open('HEAL_NOTES.md','w').write('root cause: drift\\n')\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
     assert rows[0]["signal"] == "PROPOSED", rows[0]
@@ -356,7 +360,7 @@ def test_heal_dispatches_registered_proposer_with_record(broken_repo, tmp_path):
     assert d["agent"] == "lab-proposer" and d["model"] == meta["model"] and d["agent_sha256"] == digest
     assert d["record"].startswith("results/agent_runs/propose-src-inst-py-fail-")
     assert d["class_scope"] == list(LH.CLASS_SCOPE["instrument"])
-    assert sorted(d["files_changed"]) == ["HEAL_NOTES.md", "results/data.txt"]     # the record is not the agent's change
+    assert sorted(d["files_changed"]) == ["HEAL_NOTES.md", "src/inst.py"]     # the record is not the agent's change
     committed = git(root, "show", "--name-only", "--format=", d["branch"]).splitlines()
     assert "HEAL_NOTES.md" not in committed                                         # moved into the record
     for name in ("prompt.md", "agent.txt", "report.md", "gate.txt"):
@@ -378,7 +382,7 @@ def test_heal_rejects_out_of_scope_changes_before_gate(broken_repo, tmp_path):
     OL.append_rows(ledger, [defect_row(sha)])
     marker = tmp_path / "gate-ran"
     gate_cmd = f'{sys.executable} -c "open({str(marker)!r},\'w\').write(\'ran\')"'
-    agent = fake_agent(tmp_path, "open('results/data.txt','w').write('ok\\n')\n"
+    agent = fake_agent(tmp_path, FIX +
                                  "open('config.toml','w').write('x\\n')\n"          # outside instrument scope
                                  "open('HEAL_NOTES.md','w').write('n\\n')\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=gate_cmd, push=False, out=open(os.devnull, "w"))
@@ -386,6 +390,28 @@ def test_heal_rejects_out_of_scope_changes_before_gate(broken_repo, tmp_path):
     assert rows[0]["detail"]["out_of_scope"] == ["config.toml"] and "config.toml" in rows[0]["evidence"]
     assert not marker.exists()                                                      # gate never ran
     assert "lab-heal-" not in git(root, "worktree", "list")
+    # rewriting the frozen data file (in the instrument's prefix, but tracked) is the wrong-reason fix
+    rewriter = fake_agent(tmp_path, "open('results/data.txt','w').write('okay\\n')\nopen('HEAL_NOTES.md','w').write('n\\n')\n",
+                          name="rewriter.py")
+    rows = LH.run(ledger, root=str(root), agent_cmd=rewriter, gate_cmd=gate_cmd, push=False, out=open(os.devnull, "w"))
+    assert rows[0]["detail"]["stage"] == "scope" and rows[0]["detail"]["frozen_results"] == ["results/data.txt"]
+    assert "frozen" in rows[0]["evidence"] and not marker.exists()
+    # touching another dispatch record is rejected too; adding a NEW results file is allowed
+    meddler = fake_agent(tmp_path, FIX + "import os\nos.makedirs('results/agent_runs/eval-old', exist_ok=True)\n"
+                                         "open('results/agent_runs/eval-old/grade.json','w').write('{}\\n')\n"
+                                         "open('HEAL_NOTES.md','w').write('n\\n')\n", name="meddler.py")
+    rows = LH.run(ledger, root=str(root), agent_cmd=meddler, gate_cmd=gate_cmd, push=False, out=open(os.devnull, "w"))
+    assert rows[0]["detail"]["stage"] == "scope"
+    assert rows[0]["detail"]["audit_records"] == ["results/agent_runs/eval-old/grade.json"]
+    adder = fake_agent(tmp_path, FIX + "open('results/new_version.json','w').write('{}\\n')\n"
+                                       "open('HEAL_NOTES.md','w').write('root cause: typo\\n')\n", name="adder.py")
+    key = "|".join(OL.state_key(defect_row(sha)))          # three attempts are spent: address the occurrence directly
+    rows = LH.run(ledger, root=str(root), defect_key=key, agent_cmd=adder, gate_cmd=OK_GATE, push=False,
+                  out=open(os.devnull, "w"))
+    assert rows[0]["signal"] == "PROPOSED", rows[0]
+    assert sorted(rows[0]["detail"]["files_changed"]) == ["HEAL_NOTES.md", "results/new_version.json", "src/inst.py"]
+    assert LH.scope_violations(["src/x.py", "results/a.json"], ["results/a.json"], "instrument", "r") == \
+        {"frozen_results": ["results/a.json"]}
     # a class the table does not know allows nothing
     assert LH.out_of_scope(["src/x.py"], "ledger", "results/agent_runs/propose-x") == ["src/x.py"]
 
