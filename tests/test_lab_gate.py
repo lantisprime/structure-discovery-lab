@@ -364,6 +364,15 @@ def test_verifier_verdict_parsing():
     assert LG.parse_verdict(two)["verdict"] == "DISAGREE"      # the last one counts
     assert LG.parse_verdict("no json here") is None
     assert LG.parse_verdict('{"verdict": "MAYBE"}') is None
+    # braces inside a reason (the R2 live proof's real verifier output, PR #31): a brace regex
+    # could not span "(ledger_deletions: {})" and a genuine AGREE became "no verdict"
+    live = ('<think>weighing the diff</think>\n{"verdict": "AGREE", "reasons": ["Frozen result untouched and no '
+            'ledger rows are deleted (ledger_deletions: {}); stale HEAL_NOTES.md replaced.", "Scope {instrument} ok"]}\n')
+    assert LG.parse_verdict(live) == {"verdict": "AGREE", "reasons": [
+        "Frozen result untouched and no ledger rows are deleted (ledger_deletions: {}); stale HEAL_NOTES.md replaced.",
+        "Scope {instrument} ok"]}
+    assert LG.parse_verdict('{"nested": {"verdict": "AGREE"}} {"verdict": "DISAGREE", "reasons": ["x"]}')["verdict"] == "DISAGREE"
+    assert LG.parse_verdict('```json\n{"verdict": "AGREE", "reasons": ["a {b} c"]}\n```')["verdict"] == "AGREE"
 
 
 def test_verifier_presets_are_read_only_and_not_the_healer_family(monkeypatch):

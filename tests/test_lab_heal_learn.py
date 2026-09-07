@@ -44,6 +44,7 @@ def broken_repo(tmp_path):
     git(root, "init", "-q", "-b", "main")
     git(root, "config", "user.email", "t@t"), git(root, "config", "user.name", "t")
     (root / "src").mkdir(), (root / "results").mkdir()
+    (root / "HEAL_NOTES.md").write_text("notes of an earlier repair, tracked at the base\n")
     (root / "src" / "inst.py").write_text(
         "import sys\nd=open('results/data.txt').read().strip()\n"
         "print('PASS sha256=' + 'a'*64 + '; wrote=none') if d=='ok' else sys.exit(1)\n")

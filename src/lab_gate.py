@@ -271,17 +271,29 @@ def verify_brief(defect, attr, notes, diff, checks):
     ]) + "\n"
 
 
-VERDICT_RE = re.compile(r"\{[^{}]*\"verdict\"[^{}]*\}", re.S)
 
 
 def parse_verdict(text):
+    """The last JSON object in the output that carries a verdict. Decoded with
+    raw_decode from every '{' rather than a brace regex: the R2 live proof's
+    verifier wrote "(ledger_deletions: {})" inside a reason, the regex could
+    not span the nested braces, and a real AGREE was recorded as "no verdict"
+    (PR #31, 2026-09-07)."""
+    text = text or ""
+    dec = json.JSONDecoder()
     last = None
-    for m in VERDICT_RE.finditer(text or ""):
+    pos = 0
+    while True:
+        start = text.find("{", pos)
+        if start < 0:
+            break
         try:
-            obj = json.loads(m.group(0))
+            obj, end = dec.raw_decode(text, start)
         except json.JSONDecodeError:
+            pos = start + 1
             continue
-        if str(obj.get("verdict", "")).upper() in ("AGREE", "DISAGREE"):
+        pos = end
+        if isinstance(obj, dict) and str(obj.get("verdict", "")).upper() in ("AGREE", "DISAGREE"):
             last = {"verdict": obj["verdict"].upper(),
                     "reasons": [str(r) for r in (obj.get("reasons") or [])][:10]}
     return last

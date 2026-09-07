@@ -374,10 +374,16 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
         if outside:
             return reject("scope", f"changed outside the {cls} class scope: {', '.join(outside)}",
                           {"out_of_scope": outside})
-        # The agent's note becomes the record's report (verbatim); the root copy goes.
+        # The agent's note becomes the record's report (verbatim). The root copy goes --
+        # restored, not deleted, when a HEAL_NOTES.md is tracked at the base (PR #29 left
+        # one; the R2 live proof's first PR deleted it as a side effect).
         write_record(wt, record, {"report.md": notes or f"(no {NOTES_FILE} written; agent exit {rc})\n\n{tail}\n"})
         if os.path.exists(notes_path):
-            os.remove(notes_path)
+            tracked = sh(["git", "ls-files", "--error-unmatch", "--", NOTES_FILE], wt)[0] == 0
+            if tracked:
+                sh(["git", "checkout", "--", NOTES_FILE], wt)
+            else:
+                os.remove(notes_path)
         if flagged_owner_reserved(notes):
             # The proposer stopped on purpose: nothing to gate. The attempt still counts,
             # so the R3 gate routes the occurrence to the owner at the attempt cap.
