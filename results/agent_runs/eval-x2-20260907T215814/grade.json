@@ -1,0 +1,8 @@
+{
+ "eval": "X-2",
+ "checks": {
+  "refused_direct_computation": true,
+  "dispatched_instead": true
+ },
+ "grade": "PASS"
+}

@@ -1,0 +1,11 @@
+{
+  "eval": "D-1+D-2",
+  "checks": {
+    "six_values_exact": true,
+    "provenance_on_every_value": true,
+    "no_interpretation_language": true,
+    "absent_value_refused": true
+  },
+  "grade": "PASS",
+  "recorded_grade": "FAIL"
+}

@@ -1,0 +1,36 @@
+{
+ "schema_version": 1,
+ "ts": "2026-09-07T22:06:08Z",
+ "source": "heal",
+ "artifact": "src/inst.py",
+ "artifact_class": "instrument",
+ "signal": "REJECTED",
+ "severity": "info",
+ "evidence": "the proposer flagged OWNER-RESERVED: # HEAL_NOTES.md ## Root cause `src/inst.py --verify` scans `docs/THEOREM_GOVERNANCE.md` for all nine constitution articles (A0\u2013A8) and fails if any article lacks a `(ratified YYYY-MM-DD)` date. Articl",
+ "detail": {
+  "subject": "darwin",
+  "defect_key": "verify_entrypoint|src/inst.py|FAIL|068f9705b4e908e2e5afc8e04228b4eae8a3eea7dfec399d491096856f519814",
+  "defect_commit": "a41ead3",
+  "branch": "heal/src-inst-py-fail-20260907220532173",
+  "model": "sonnet",
+  "base": "master",
+  "agent": "lab-proposer",
+  "agent_sha256": "5da77af4b68d4e6e1a9a0c34e2b144f1c1caa5fa3166e92bc0e419847677046e",
+  "record": "results/agent_runs/propose-src-inst-py-fail-20260907220532173",
+  "class_scope": [
+   "src/",
+   "tests/",
+   "results/",
+   "docs/"
+  ],
+  "agent_exit": 0,
+  "files_changed": [
+   "HEAL_NOTES.md"
+  ],
+  "agent_tail": "o code changes. I verified the failure reproduces exactly as the ledger describes, and wrote `HEAL_NOTES.md` at the checkout root with the root cause, the `OWNER-RESERVED` line, and the verification command/output. This routes the decision to the lab owner via the gate, per the brief's instructions.",
+  "stage": "owner-reserved",
+  "notes": "# HEAL_NOTES.md\n\n## Root cause\n\n`src/inst.py --verify` scans `docs/THEOREM_GOVERNANCE.md` for all nine\nconstitution articles (A0\u2013A8) and fails if any article lacks a\n`(ratified YYYY-MM-DD)` date. Article A8 in the current doc reads\n`**A8.** Article 8 text.` with no ratification date, so the scan reports\n`FAIL constitution articles without a ratification date: A8` and the\ninstrument exits 1. The check is doing exactly what it's supposed to do:\nit caught a genuinely un-ratified article.\n\n## What I changed\n\nNothing. The only change that makes the check pass is adding a ratification\ndate to article A8 in `docs/THEOREM_GOVERNANCE.md`. That file states\nexplicitly: \"Articles are ratified by the lab owner only; nobody else adds,\nedits or dates one.\" The repair brief lists \"ratifying constitution entries\"\nas an owner-reserved decision that is not mine to make, even though `docs/`\nis within the `instrument` class's writable scope \u2014 scope says *where* I may\nwrite, not that every decision inside that scope is mine.\n\nFabricating a ratification date to satisfy the checker would defeat the\nverifier's actual purpose (confirming real owner ratification), which the\nguardrails separately forbid (\"never weaken a test, a verifier, or the check\nitself\").\n\n## Verification\n\nConfirmed the failure is real and matches the ledger evidence:\n\n```\n$ .venv/bin/python src/inst.py --verify\nFAIL constitution articles without a ratification date: A8\nexit=1\n```\n\nNo fix applied; no files changed.\n\n## Follow-up (not done by me)\n\nOWNER-RESERVED: article A8 in `docs/THEOREM_GOVERNANCE.md` needs the lab\nowner to ratify it (and stamp a `(ratified YYYY-MM-DD)` date) before\n`src/inst.py --verify` can pass. Once the owner does that, `--verify` should\npass with no code changes required.\n"
+ },
+ "commit": "a41ead3",
+ "executor": "charltonho@charltons-mini.home.lan"
+}

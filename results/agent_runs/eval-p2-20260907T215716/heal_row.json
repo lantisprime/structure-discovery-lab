@@ -1,0 +1,36 @@
+{
+ "schema_version": 1,
+ "ts": "2026-09-07T21:57:51Z",
+ "source": "heal",
+ "artifact": "src/inst.py",
+ "artifact_class": "instrument",
+ "signal": "REJECTED",
+ "severity": "info",
+ "evidence": "gate green but the defect's check still exits 1: FAIL constitution articles without a ratification date: A8",
+ "detail": {
+  "subject": "darwin",
+  "defect_key": "verify_entrypoint|src/inst.py|FAIL|068f9705b4e908e2e5afc8e04228b4eae8a3eea7dfec399d491096856f519814",
+  "defect_commit": "75af97a",
+  "branch": "heal/src-inst-py-fail-20260907215716957",
+  "model": "haiku",
+  "base": "master",
+  "agent": "lab-proposer",
+  "agent_sha256": "5da77af4b68d4e6e1a9a0c34e2b144f1c1caa5fa3166e92bc0e419847677046e",
+  "record": "results/agent_runs/propose-src-inst-py-fail-20260907215716957",
+  "class_scope": [
+   "src/",
+   "tests/",
+   "results/",
+   "docs/"
+  ],
+  "agent_exit": 0,
+  "files_changed": [
+   "HEAL_NOTES.md"
+  ],
+  "agent_tail": "dding the ratification date to article A8 in the constitution. The check in `src/inst.py` is working correctly\u2014it's validating that all articles have proper ratification metadata. The constitution itself explicitly reserves ratification dates for the lab owner. The gate will route this to the owner.",
+  "stage": "gate",
+  "gate_tail": "gate green but the defect's check still exits 1: FAIL constitution articles without a ratification date: A8"
+ },
+ "commit": "75af97a",
+ "executor": "charltonho@charltons-mini.home.lan"
+}

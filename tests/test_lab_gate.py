@@ -251,6 +251,9 @@ def test_real_git_diff_sees_renames_ledger_rewrites_and_reserved_paths(tmp_path)
     (root / "tests").mkdir(), (root / "results").mkdir(), (root / "src").mkdir(), (root / "docs").mkdir()
     (root / "tests" / "test_x.py").write_text("def test_x(): pass\n")
     (root / "results" / "l.jsonl").write_text('{"a":1}\n{"a":2}\n')
+    (root / "results" / "frozen.json").write_text('{"v": 1}\n')
+    (root / "results" / "agent_runs" / "eval-old").mkdir(parents=True)
+    (root / "results" / "agent_runs" / "eval-old" / "grade.json").write_text('{"grade": "FAIL"}\n')
     (root / "src" / "lab_gate.py").write_text("gate = 1\n")
     (root / "docs" / "THEOREM_GOVERNANCE.md").write_text("A0\n")
     git(root, "checkout", "-q", "-b", "main"), git(root, "add", "-A"), git(root, "commit", "-qm", "base")
@@ -259,16 +262,35 @@ def test_real_git_diff_sees_renames_ledger_rewrites_and_reserved_paths(tmp_path)
     git(root, "mv", "tests/test_x.py", "tests/test_x.py.bak")
     git(root, "mv", "src/lab_gate.py", "src/lab_gate2.py")
     (root / "results" / "l.jsonl").write_text('{"a":1}\n{"a":3}\n')          # rewrote a line
+    (root / "results" / "frozen.json").write_text('{"v": 2}\n')                # rewrote a frozen result
+    (root / "results" / "agent_runs" / "eval-old" / "grade.json").write_text('{"grade": "PASS"}\n')  # rewrote history
+    (root / "results" / "new_version.json").write_text('{"v": 2}\n')           # a NEW file is fine
     (root / "docs" / "THEOREM_GOVERNANCE.md").write_text("A0 changed\n")
     git(root, "add", "-A"), git(root, "commit", "-qm", "bad heal"), git(root, "push", "-q", "-u", "origin", "heal/x")
     diff = LG.GitHub(str(root)).diff("main", "heal/x")
     assert "tests/test_x.py" in diff["deleted"] and "src/lab_gate.py" in diff["deleted"]
     assert diff["ledger_deletions"] == {"results/l.jsonl": 1}
+    assert sorted(diff["results_modified"]) == ["results/agent_runs/eval-old/grade.json", "results/frozen.json"]
     assert diff["truncated"] is False and diff["text_chars"] > 0
-    assert any("test file deleted: tests/test_x.py" in r for r in LG.scope_reasons(diff))
+    reasons = LG.scope_reasons(diff)
+    assert any("test file deleted: tests/test_x.py" in r for r in reasons)
+    assert any("frozen result or historical record rewritten: results/frozen.json" in r for r in reasons)
+    assert any("eval-old/grade.json" in r for r in reasons) and not any("new_version" in r for r in reasons)
     routed = LG.reserved_reasons(diff, "", 0)
     assert any("docs/THEOREM_GOVERNANCE.md" in r for r in routed)
     assert any("src/lab_gate.py" in r for r in routed) and any("src/lab_gate2.py" in r for r in routed)
+
+
+def test_gate_rejects_rewritten_frozen_result_without_calling_verifier(tmp_path):
+    d = defect_row()
+    ledger = ledger_with(tmp_path, [d, heal_row(d)])
+    gh = FakeGH(diff={"paths": ["src/inst.py", "results/frozen.json"], "deleted": [], "ledger_deletions": {},
+                      "results_modified": ["results/frozen.json"], "kb_added_lines": [], "text": "x"})
+    called = []
+    rows = run(ledger, gh, verifier=lambda b, c: called.append(1) or {"family": "openai", "model": "x",
+                                                                       "verdict": "AGREE", "reasons": []})
+    assert rows[0]["signal"] == "REJECTED" and "frozen result or historical record rewritten" in rows[0]["evidence"]
+    assert called == [] and all(c[0] != "merge" for c in gh.calls)
 
 
 def test_gate_rejects_same_family_verifier(tmp_path):
@@ -364,6 +386,15 @@ def test_verifier_verdict_parsing():
     assert LG.parse_verdict(two)["verdict"] == "DISAGREE"      # the last one counts
     assert LG.parse_verdict("no json here") is None
     assert LG.parse_verdict('{"verdict": "MAYBE"}') is None
+    # braces inside a reason (the R2 live proof's real verifier output, PR #31): a brace regex
+    # could not span "(ledger_deletions: {})" and a genuine AGREE became "no verdict"
+    live = ('<think>weighing the diff</think>\n{"verdict": "AGREE", "reasons": ["Frozen result untouched and no '
+            'ledger rows are deleted (ledger_deletions: {}); stale HEAL_NOTES.md replaced.", "Scope {instrument} ok"]}\n')
+    assert LG.parse_verdict(live) == {"verdict": "AGREE", "reasons": [
+        "Frozen result untouched and no ledger rows are deleted (ledger_deletions: {}); stale HEAL_NOTES.md replaced.",
+        "Scope {instrument} ok"]}
+    assert LG.parse_verdict('{"nested": {"verdict": "AGREE"}} {"verdict": "DISAGREE", "reasons": ["x"]}')["verdict"] == "DISAGREE"
+    assert LG.parse_verdict('```json\n{"verdict": "AGREE", "reasons": ["a {b} c"]}\n```')["verdict"] == "AGREE"
 
 
 def test_verifier_presets_are_read_only_and_not_the_healer_family(monkeypatch):
@@ -421,11 +452,12 @@ def test_loop_script_steps_and_lock(tmp_path):
     assert r.returncode == 0, r.stdout + r.stderr
     steps = [l for l in r.stdout.splitlines() if l.startswith("step ")]
     names = " ".join(steps)
-    for s in ("outcome_collect.py --all --gate", "outcome_attribute.py --new", "lab_heal.py --new --push",
-              "lab_gate.py --new", "lab_learn.py --derive", "ledger commit"):
+    for s in ("outcome_collect.py --all --gate", "agent_eval_dispatch.py --stale", "outcome_attribute.py --new",
+              "lab_heal.py --new --push", "lab_gate.py --new", "lab_learn.py --derive", "ledger commit"):
         assert s in names, names
-    assert names.index("outcome_collect") < names.index("outcome_attribute") < names.index("lab_heal") \
-        < names.index("lab_gate") < names.index("lab_learn") < names.index("ledger commit")
+    assert names.index("outcome_collect") < names.index("agent_eval_dispatch") < names.index("outcome_attribute") \
+        < names.index("lab_heal") < names.index("lab_gate") < names.index("lab_learn") < names.index("ledger commit")
+    assert "results/agent_runs" in names                   # new records are committed with the rows
     assert not lock.exists()                              # released
     lock.mkdir()
     r = subprocess.run(["bash", os.path.join(REPO, "tools", "lab_loop.sh"), "--dry-run"],

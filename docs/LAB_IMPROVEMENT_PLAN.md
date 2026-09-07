@@ -200,13 +200,28 @@ change that introduced it.
 
 **R2 -- Propose.** A proposal agent drafts the correction as a branch and PR:
 diff, ledger rows it addresses, and the checks it expects to flip.
-- [ ] `lab-proposer` agent definition (cheapest tier that passes its own eval),
-  restricted to the artifact class named in the attribution.
-- [ ] Proposal record saved before dispatch, PR body generated from it.
-- [ ] Proposal agent has its own rows in `EVAL_SET.md`; no eval pass, no
-  dispatch (existing rule, applied to the loop itself).
+- [x] `lab-proposer` agent definition (cheapest tier that passes its own eval),
+  restricted to the artifact class named in the attribution. -- `agents/lab-proposer.md`
+  (2026-09-08, `docs/plans/LAB_RSI_R2_IMPLEMENTATION_PLAN.md`): its body is
+  the healer's system prompt, its frontmatter picks the tier, its sha256 is on
+  every heal row; `lab_heal.CLASS_SCOPE` rejects any change outside the
+  attributed class before the gate runs. Tier **sonnet**: haiku passed P-1 but
+  dated the fixture constitution on one of two P-2 runs.
+- [x] Proposal record saved before dispatch, PR body generated from it. --
+  `results/agent_runs/propose-<slug>/` (prompt.md, agent.txt before the run;
+  report.md = the agent's notes; gate.txt), committed with the fix inside the
+  heal PR and quoted in its body.
+- [x] Proposal agent has its own rows in `EVAL_SET.md`; no eval pass, no
+  dispatch (existing rule, applied to the loop itself). -- P-1 (in-scope
+  repair), P-2 (owner-reserved stop), machine-graded from the healer's own
+  record; `lab_heal.run()` refuses to dispatch while their latest ledger state
+  is not PASS. `src/agent_eval_dispatch.py` re-dispatches any eval headlessly
+  into a new dated record (`--stale` is a loop step); the five thin 2026-06-11
+  records now have full re-dispatched records (regrade 16 PASS, 0
+  INCOMPLETE_RECORD).
 - Substrate: M2 machine-readable contracts, so a proposal can be validated
-  before it runs.
+  before it runs. -- not pulled: class scope + eval gate were enough for the
+  live proof.
 
 **R3 -- Gate and merge.** Mechanical acceptance replaces human review for
 non-reserved changes.
@@ -460,7 +475,7 @@ Use small, reviewable changes in this order:
 | 3 | Complete dependency declaration, lockfile, clean CI | M1 | ACTIVE -- may run in parallel with change set 2 |
 | 4 | **R1** artifact registry and attribution bisection | R1 | IN PROGRESS (2026-09-07) |
 | 5 | **R4 + R5, minimal closed loop**: healer that takes an open ledger defect, dispatches a repair agent in a worktree, gates it with the full check battery and opens the PR; lessons ledger written on every closed defect and read by the healer | R4, R5 | NEXT -- lab owner directive 2026-09-07: RSI stages first |
-| 6 | **R2** proposer generalized (artifact-class-restricted proposer with its own evals; the healer's dispatch becomes the proposer) | R2 | after 5 |
+| 6 | **R2** proposer generalized (artifact-class-restricted proposer with its own evals; the healer's dispatch becomes the proposer) | R2 | COMPLETE (minimal) -- 2026-09-08, `docs/plans/LAB_RSI_R2_IMPLEMENTATION_PLAN.md`; open inside R2: M2 contracts, repeated rolls before trusting a tier |
 | 7 | **R3** mechanical gate and auto-merge, owner-reserved routing, loop scheduler | R3 | COMPLETE (minimal) -- 2026-09-07, pulled ahead of 6 because heal PRs were waiting for a human |
 | 8 | **R4 + R5, full**: source-drift and replay triggers; model re-tiering; hypothesis-to-registration | R4, R5 | after 7 |
 | 9 | Complete dependency declaration, lockfile, clean CI | M1 | LAST TIER -- only when an R stage needs deterministic replay |
@@ -543,6 +558,7 @@ A1--A8 invariant violated along the way (acceptance gate R).
 | 1.3 | 2026-09-06 | Re-ordered the program under constitution article A0 (PR #21): A0 becomes the primary objective; added baseline finding B9, control C11, constraints 6-7 (owner-reserved decisions, A1-A8 preserved), Milestone R (closed-loop self-improvement, stages R0-R5) as the organizing milestone, a "serves A0 as" note on M1-M5, the interleaved 13-step delivery sequence, loop metrics, and the A0 completion condition. Recorded PR #20's ahead-of-sequence M4 evidence. M0-M5 checklists unchanged. |
 | 1.4 | 2026-09-07 | Lab owner directive: the goal is RSI and anything with little impact on it is last. Delivery sequence re-ordered: R1, then a minimal R4+R5 closed loop (healer + lessons ledger), then R2, R3, full R4+R5; M1-M5 moved to the last tier, pulled forward only when an R stage needs them. R0 recorded COMPLETE (PR #24, defects closed by PR #25, #27). |
 | 1.5 | 2026-09-07 | R3 delivered ahead of R2 (change set 7 before 6): heal PRs were waiting for a human, which constraint 6 counts as a loop defect. Recorded the minimal R3 gate (mechanical checks + different-family verifier + owner routing + scheduler) and what stays open in it (M3 fixtures, M5 semantic invariants). |
+| 1.6 | 2026-09-08 | R2 recorded COMPLETE (minimal): registered `lab-proposer` with class scope enforced in code, dispatch records committed inside heal PRs, "no eval pass, no dispatch" applied to the loop's own agent, headless eval re-dispatch as a loop step. Live findings folded in: the owner-reserved flag contract, the P-1 fixture that asked for a frozen-result rewrite, haiku's 1/2 on P-2 (tier sonnet), and a stale `results/meta_uniformity.json` surfaced by the A-2 re-run (carried to change set 8). |
 
 ## 11. Method references
 

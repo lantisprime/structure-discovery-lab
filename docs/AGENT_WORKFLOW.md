@@ -215,13 +215,27 @@ all stdlib, all read-only except where noted:
   history for a stale eval) and appends an `attribution` row naming
   `introduced_by`. `python3 src/lab_learn.py --derive` *(R5, minimal)* appends a
   lesson to `results/lessons.jsonl` for every defect that has since closed.
-- `python3 src/lab_heal.py --new [--push]` *(R4, minimal)* — dispatches a repair
-  agent (headless `claude -p`, model configurable, default sonnet) in a git
-  worktree for each open defect, gates the result with `./tools/check.sh` plus
+- `python3 src/lab_heal.py --new [--push]` *(R4 minimal; R2 proposer
+  2026-09-08)* — dispatches the registered repair agent `agents/lab-proposer.md`
+  (headless `claude -p`; its body is prepended to the brief, its frontmatter
+  picks the tier, its sha256 is on every row) in a git worktree for each open
+  defect, **only while the proposer's own eval rows P-1/P-2 are PASS** in the
+  ledger (no eval pass, no dispatch). A change outside the attributed
+  artifact class (`lab_heal.CLASS_SCOPE`), a rewrite or deletion of a tracked
+  file under `results/`, or a touch of another run's dispatch record is
+  REJECTED at stage `scope` before the gate; an `OWNER-RESERVED` note is
+  recorded at stage `owner-reserved` without gating. Otherwise it gates the result with `./tools/check.sh` plus
   the defect's own check, commits on a `heal/…` branch and, with `--push`,
-  opens the PR. The brief the agent receives carries the ledger row, the
-  attribution, the relevant lessons and the A0/A1–A8 guardrails;
-  `HEAL_NOTES.md` is its report.
+  opens the PR. Every dispatch leaves a record under
+  `results/agent_runs/propose-<slug>/` (prompt and agent line before the run,
+  the agent's `HEAL_NOTES.md` as `report.md`, the gate tail) that is committed
+  with the fix and quoted in the PR body.
+- `python3 src/agent_eval_dispatch.py --eval <ID> | --stale` *(R2,
+  2026-09-08)* — re-dispatches an agent eval headlessly into a new dated
+  record (prompts under `agents/evals/prompts/`; P-1/P-2 run the proposer on a
+  planted fixture); `--stale` re-runs whatever the ledger reports as
+  `STALE_EVAL` / `INCOMPLETE_RECORD`, once per definition hash, as a step of
+  the loop. See `agents/evals/EVAL_SET.md` "Re-dispatch without a human".
 - `python3 src/lab_gate.py --new [--verifier pi|codex] [--dry-run]` *(R3,
   2026-09-07)* — decides every heal PR with no human: **MERGED** when the
   required CI checks are green, the defect's own check passes at the PR head

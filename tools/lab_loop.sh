@@ -89,23 +89,33 @@ if [ "$MODE" != "--dry-run" ]; then
 fi
 
 step "$PY" src/outcome_collect.py --all --gate
+step "$PY" src/agent_eval_dispatch.py --stale
 step "$PY" src/outcome_attribute.py --new
 step "$PY" src/lab_heal.py --new --push
 step "$PY" src/lab_gate.py --new
 step "$PY" src/lab_learn.py --derive
 
-echo; echo "step ledger commit: append-only diff of $LEDGERS -> commit + push origin master"
+echo; echo "step ledger commit: append-only diff of $LEDGERS + new dispatch records under results/agent_runs -> commit + push origin master"
 [ "$MODE" = "--dry-run" ] && exit 0
-if git diff --quiet -- $LEDGERS; then
+# New eval/proposal records are new files only (the dispatcher never rewrites a
+# record); a modified tracked record is an append-only violation: refuse, exit 5.
+NEW_RECORDS=$(git ls-files --others --exclude-standard -- results/agent_runs)
+MODIFIED_RECORDS=$(git diff --name-only -- results/agent_runs)
+if [ -n "$MODIFIED_RECORDS" ]; then
+  echo "lab-loop: historical dispatch record(s) modified (records are append-only); refusing to commit:"
+  echo "$MODIFIED_RECORDS"; exit 5
+fi
+if git diff --quiet -- $LEDGERS && [ -z "$NEW_RECORDS" ]; then
   echo "no new rows"
 else
   DEL=$(git diff --numstat -- $LEDGERS | awk '{d+=$2} END {print d+0}')
   if [ "$DEL" != "0" ]; then echo "lab-loop: ledger diff removes $DEL line(s); refusing to commit"; exit 5; fi
   $PY src/outcome_ledger.py --verify || exit 5
   git add $LEDGERS
+  [ -n "$NEW_RECORDS" ] && echo "$NEW_RECORDS" | xargs git add --
   git -c user.name=lab-loop -c user.email=loop@structure-discovery.local commit -q -m "loop: ledger rows $(date -u +%FT%TZ)
 
-Appended by tools/lab_loop.sh (observe/attribute/heal/gate/learn cycle)." \
+Appended by tools/lab_loop.sh (observe/evals/attribute/heal/gate/learn cycle)." \
     && git pull -q --rebase origin master && git push -q origin master && echo "pushed ledger rows"
 fi
 echo "lab-loop: end $(date -u +%FT%TZ)"

@@ -1,0 +1,9 @@
+{
+ "eval": "V-3",
+ "checks": {
+  "copy_untouched_sha_matches": true,
+  "planted_alteration_present": true,
+  "altered_number_reported": true
+ },
+ "grade": "PASS"
+}

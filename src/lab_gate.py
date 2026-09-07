@@ -112,6 +112,11 @@ class GitHub:
         rc, numstat, _ = sh(["git", "diff", "--no-renames", "--numstat", rng], r)
         paths = [l.split("\t")[2] for l in numstat.splitlines() if l.count("\t") >= 2]
         rc, deleted, _ = sh(["git", "diff", "--no-renames", "--diff-filter=D", "--name-only", rng], r)
+        # A tracked file under results/ that is modified or deleted (not added): a frozen
+        # result or a historical dispatch record rewritten. Ledger .jsonl files are judged
+        # by the append-only line count below instead (R2 review finding 1).
+        rc, touched, _ = sh(["git", "diff", "--no-renames", "--diff-filter=MD", "--name-only", rng, "--", "results"], r)
+        results_modified = [p for p in touched.split() if not p.endswith(".jsonl")]
         ledger_paths = [p for p in paths if p.startswith(LEDGER_GLOB_PREFIX) and p.endswith(".jsonl")]
         ledger_deletions = {}
         for p in ledger_paths:
@@ -126,6 +131,7 @@ class GitHub:
             kb_added += [l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++")]
         rc, text, _ = sh(["git", "diff", "--no-renames", rng, "--", ".", ":(exclude)*.jsonl"], r)
         return {"paths": paths, "deleted": deleted.split(), "ledger_deletions": ledger_deletions,
+                "results_modified": results_modified,
                 "kb_added_lines": kb_added, "text": text[:DIFF_MAX], "truncated": len(text) > DIFF_MAX,
                 "text_chars": len(text)}
 
@@ -190,6 +196,7 @@ def scope_reasons(diff):
     why = [f"ledger file lost {n} line(s) (append-only): {p}" for p, n in diff.get("ledger_deletions", {}).items()]
     why += [f"test file deleted: {p}" for p in diff.get("deleted", [])
             if p.startswith("tests/") or os.path.basename(p).startswith("test_")]
+    why += [f"frozen result or historical record rewritten: {p}" for p in diff.get("results_modified", [])]
     return why
 
 
@@ -271,17 +278,29 @@ def verify_brief(defect, attr, notes, diff, checks):
     ]) + "\n"
 
 
-VERDICT_RE = re.compile(r"\{[^{}]*\"verdict\"[^{}]*\}", re.S)
 
 
 def parse_verdict(text):
+    """The last JSON object in the output that carries a verdict. Decoded with
+    raw_decode from every '{' rather than a brace regex: the R2 live proof's
+    verifier wrote "(ledger_deletions: {})" inside a reason, the regex could
+    not span the nested braces, and a real AGREE was recorded as "no verdict"
+    (PR #31, 2026-09-07)."""
+    text = text or ""
+    dec = json.JSONDecoder()
     last = None
-    for m in VERDICT_RE.finditer(text or ""):
+    pos = 0
+    while True:
+        start = text.find("{", pos)
+        if start < 0:
+            break
         try:
-            obj = json.loads(m.group(0))
+            obj, end = dec.raw_decode(text, start)
         except json.JSONDecodeError:
+            pos = start + 1
             continue
-        if str(obj.get("verdict", "")).upper() in ("AGREE", "DISAGREE"):
+        pos = end
+        if isinstance(obj, dict) and str(obj.get("verdict", "")).upper() in ("AGREE", "DISAGREE"):
             last = {"verdict": obj["verdict"].upper(),
                     "reasons": [str(r) for r in (obj.get("reasons") or [])][:10]}
     return last
@@ -393,7 +412,8 @@ class Gate:
         diff = self.gh.diff(pr["baseRefName"], pr["headRefName"])
         attempts = heal_attempts(rows, key, dcommit)
         checks["scope"] = {"paths": diff["paths"][:50], "deleted": diff.get("deleted", []),
-                           "ledger_deletions": diff.get("ledger_deletions", {})}
+                           "ledger_deletions": diff.get("ledger_deletions", {}),
+                           "results_modified": diff.get("results_modified", [])}
         routed = reserved_reasons(diff, d.get("notes"), attempts)
         if routed:
             return self._route(proposal, defect, attr, base_detail, checks, routed)

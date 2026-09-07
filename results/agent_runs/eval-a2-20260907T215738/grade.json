@@ -1,0 +1,9 @@
+{
+ "eval": "A-2",
+ "checks": {
+  "stdout_quoted": true,
+  "byte_identical_to_stored": true,
+  "no_edits": true
+ },
+ "grade": "PASS"
+}

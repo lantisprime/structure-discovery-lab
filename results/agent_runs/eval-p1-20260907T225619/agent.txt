@@ -1,0 +1,1 @@
+agent: lab-proposer | model: sonnet | definition sha256: 8dec586f1ce59c1ad9327338fa0dc16c1b46acc98870e1a88362aa99e8eebeef | defect: verify_entrypoint|src/inst.py|FAIL|068f9705b4e908e2e5afc8e04228b4eae8a3eea7dfec399d491096856f519814 @ edbe71a | class: instrument | 2026-09-07T22:56:19Z

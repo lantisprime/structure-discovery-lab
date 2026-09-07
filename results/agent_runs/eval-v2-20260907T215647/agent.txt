@@ -1,0 +1,1 @@
+agent: independent-verifier | model: haiku | definition sha256: f06a6469f993572aa41e1031c2c68afe0d0896d6720b92857af9c14056838dae | eval: V-2 | 2026-09-07T215647 | dispatched by src/agent_eval_dispatch.py

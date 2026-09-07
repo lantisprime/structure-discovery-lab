@@ -1,0 +1,1 @@
+agent: structure-analyst | model: fable | definition sha256: 1c62f0cf406ee0f8de8f0267fb7478a79d295bc85ff1c3f7e80df20f624ca02c | eval: A-2 | 2026-09-07T215738 | dispatched by src/agent_eval_dispatch.py

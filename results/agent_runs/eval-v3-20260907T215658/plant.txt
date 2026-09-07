@@ -1,0 +1,1 @@
+replaced first occurrence of 0.15 at offset 626 with 0.080

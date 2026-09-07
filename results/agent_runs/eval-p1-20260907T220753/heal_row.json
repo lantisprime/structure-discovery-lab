@@ -1,0 +1,40 @@
+{
+ "schema_version": 1,
+ "ts": "2026-09-07T22:08:27Z",
+ "source": "heal",
+ "artifact": "src/inst.py",
+ "artifact_class": "instrument",
+ "signal": "PROPOSED",
+ "severity": "info",
+ "evidence": "PROPOSED heal/src-inst-py-fail-20260907220753091 commit 56f8072; gate green",
+ "detail": {
+  "subject": "darwin",
+  "defect_key": "verify_entrypoint|src/inst.py|FAIL|068f9705b4e908e2e5afc8e04228b4eae8a3eea7dfec399d491096856f519814",
+  "defect_commit": "da23cb8",
+  "branch": "heal/src-inst-py-fail-20260907220753091",
+  "model": "sonnet",
+  "base": "master",
+  "agent": "lab-proposer",
+  "agent_sha256": "5da77af4b68d4e6e1a9a0c34e2b144f1c1caa5fa3166e92bc0e419847677046e",
+  "record": "results/agent_runs/propose-src-inst-py-fail-20260907220753091",
+  "class_scope": [
+   "src/",
+   "tests/",
+   "results/",
+   "docs/"
+  ],
+  "agent_exit": 0,
+  "files_changed": [
+   "src/inst.py",
+   "HEAL_NOTES.md"
+  ],
+  "agent_tail": "it could never match the frozen `sum_x: 6` in `results/summary.json`. Changed `r['y']` \u2192 `r['x']`; `--verify` now exits 0 (`PASS`). `HEAL_NOTES.md` written at the checkout root with root cause, fix, and verification output. No other files touched \u2014 fully within the `instrument` class scope (`src/`).",
+  "stage": "proposed",
+  "commit": "56f8072",
+  "pr": null,
+  "notes": "# HEAL_NOTES\n\n## Root cause\n`src/inst.py` (introduced in commit `da23cb8`, \"fixture for P-1\") is documented in\n`README.md` as recomputing `sum_x` \u2014 the sum of the `x` column in\n`datasets/fixture/input.csv` \u2014 and comparing it against the frozen value in\n`results/summary.json`. The implementation instead summed the `y` column\n(`sum(int(r['y']) for r in rows)`), giving 60 (10+20+30) instead of the intended\n6 (1+2+3), so it never matched the frozen `sum_x: 6` and `--verify` always\nexited 1.\n\n## What I changed and why\nChanged one line in `src/inst.py`: `r['y']` \u2192 `r['x']`, so the script recomputes\n`sum_x` as documented and as the frozen `results/summary.json` (immutable,\nuntouched) expects. No other files were touched; `results/summary.json` and\n`datasets/fixture/input.csv` are correct and frozen, so nothing there needed a\nnew version/provenance entry.\n\n## Verification\nCommand: `.venv/bin/python src/inst.py --verify`\nBefore: `FAIL recomputed sum_x=60 != frozen 6 (results/summary.json)`, exit 1.\nAfter: `PASS sha256=aaaa...aaaa; wrote=none`, exit 0.\n\n## Follow-up not done\nNone \u2014 single-line fix within `src/` (instrument class scope), no other files\nrequired changes.\n",
+  "gate_tail": ""
+ },
+ "commit": "da23cb8",
+ "executor": "charltonho@charltons-mini.home.lan"
+}

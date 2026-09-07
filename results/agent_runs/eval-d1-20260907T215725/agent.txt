@@ -1,0 +1,1 @@
+agent: data-reader | model: haiku | definition sha256: e5c806366a0a6ec6f2d88cf20d3e0bc5923f4b88f555e9ecd6fbfdba0144f61b | eval: D-1+D-2 | 2026-09-07T215725 | dispatched by src/agent_eval_dispatch.py
