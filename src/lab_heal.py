@@ -232,7 +232,7 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
     ctx = OC.Ctx(root, rows)
     key = "|".join(OL.state_key(defect))
     base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key,
-                   "defect_commit": defect["commit"], "branch": branch, "model": model}
+                   "defect_commit": defect["commit"], "branch": branch, "model": model, "base": base}
 
     def reject(stage, why, extra=None, keep=False):
         row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "REJECTED",

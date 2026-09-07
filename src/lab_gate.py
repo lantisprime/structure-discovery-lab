@@ -107,31 +107,37 @@ class GitHub:
         sh(["git", "fetch", "-q", "origin", f"+refs/heads/{base}:refs/remotes/origin/{base}",
             f"+refs/heads/{branch}:refs/remotes/origin/{branch}"], r, timeout=300)
         rng = f"origin/{base}...origin/{branch}"
-        rc, numstat, _ = sh(["git", "diff", "--numstat", rng], r)
+        # --no-renames: a moved test or gate file must show as a deletion plus an
+        # addition, so both old and new paths meet the scope checks (review finding 1).
+        rc, numstat, _ = sh(["git", "diff", "--no-renames", "--numstat", rng], r)
         paths = [l.split("\t")[2] for l in numstat.splitlines() if l.count("\t") >= 2]
-        rc, deleted, _ = sh(["git", "diff", "--diff-filter=D", "--name-only", rng], r)
+        rc, deleted, _ = sh(["git", "diff", "--no-renames", "--diff-filter=D", "--name-only", rng], r)
         ledger_paths = [p for p in paths if p.startswith(LEDGER_GLOB_PREFIX) and p.endswith(".jsonl")]
         ledger_deletions = {}
         for p in ledger_paths:
-            rc, d, _ = sh(["git", "diff", "-U0", rng, "--", p], r)
+            rc, d, _ = sh(["git", "diff", "--no-renames", "-U0", rng, "--", p], r)
             n = sum(1 for l in d.splitlines() if l.startswith("-") and not l.startswith("---"))
             if n:
                 ledger_deletions[p] = n
         kb = [p for p in paths if p.startswith("docs/kb/")]
         kb_added = []
         for p in kb:
-            rc, d, _ = sh(["git", "diff", "-U0", rng, "--", p], r)
+            rc, d, _ = sh(["git", "diff", "--no-renames", "-U0", rng, "--", p], r)
             kb_added += [l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++")]
-        rc, text, _ = sh(["git", "diff", rng, "--", ".", ":(exclude)*.jsonl"], r)
+        rc, text, _ = sh(["git", "diff", "--no-renames", rng, "--", ".", ":(exclude)*.jsonl"], r)
         return {"paths": paths, "deleted": deleted.split(), "ledger_deletions": ledger_deletions,
-                "kb_added_lines": kb_added, "text": text[:DIFF_MAX]}
+                "kb_added_lines": kb_added, "text": text[:DIFF_MAX], "truncated": len(text) > DIFF_MAX,
+                "text_chars": len(text)}
 
     def head_available(self, sha):
         rc, out, err = sh(["git", "cat-file", "-e", f"{sha}^{{commit}}"], self.root)
         return rc == 0
 
-    def merge(self, number, subject):
-        self._gh("pr", "merge", str(number), "--merge", "--subject", subject, "--delete-branch", timeout=300)
+    def merge(self, number, subject, head):
+        # --match-head-commit: GitHub refuses the merge if the branch moved after
+        # the head we verified (review finding 3, TOCTOU).
+        self._gh("pr", "merge", str(number), "--merge", "--subject", subject, "--delete-branch",
+                 "--match-head-commit", head, timeout=300)
         return (self.pr_view(number).get("mergeCommit") or {}).get("oid")
 
     def close(self, number, comment):
@@ -208,12 +214,34 @@ def run_defect_check(root, head_sha, defect):
 
 # ------------------------------------------------------------- verifier ----
 
+def family_of(cmd):
+    """Model family derived from the verifier command itself, not from a label:
+    the binary decides, and for `pi` the provider/model tokens do (review finding 4).
+    None when the binary is unknown."""
+    argv = shlex.split(cmd, posix=(os.name != "nt")) if cmd else []
+    if not argv:
+        return None
+    exe = os.path.basename(argv[0]).lower()
+    joined = " ".join(argv[1:]).lower()
+    if exe.startswith("claude"):
+        return "anthropic"
+    if exe.startswith("codex"):
+        return "openai"
+    if exe.startswith("gemini"):
+        return "google"
+    if exe == "pi":
+        return "anthropic" if ("anthropic" in joined or "claude" in joined) else "openweights"
+    return None
+
+
 def verifier_spec(preset=None):
     name = preset or os.environ.get("LAB_VERIFIER") or DEFAULT_VERIFIER
     p = dict(VERIFIER_PRESETS[name])
     p["model"] = os.environ.get("LAB_VERIFY_MODEL") or p["model"]
     p["cmd"] = os.environ.get("LAB_VERIFY_CMD") or p["cmd"]
-    p["family"] = os.environ.get("LAB_VERIFY_FAMILY") or p["family"]
+    # LAB_VERIFY_FAMILY only names a family for a binary the gate cannot classify;
+    # for claude/codex/pi/gemini the derived family wins over any label.
+    p["family"] = family_of(p["cmd"].format(model=p["model"])) or os.environ.get("LAB_VERIFY_FAMILY") or "unknown"
     p["name"] = name
     return p
 
@@ -327,8 +355,9 @@ def issue_body(defect, attr, proposal, reasons, checks):
 
 class Gate:
     def __init__(self, root=ROOT, gh=None, verifier=None, defect_check=None, verifier_preset=None,
-                 dry_run=False, out=sys.stdout):
+                 dry_run=False, base="master", out=sys.stdout):
         self.root = root
+        self.base = base
         self.gh = gh or GitHub(root)
         self.spec = verifier_spec(verifier_preset)
         self.verifier = verifier or (lambda brief, cwd: run_verifier(brief, cwd, self.spec))
@@ -339,15 +368,20 @@ class Gate:
     def decide(self, proposal, rows):
         d = proposal["detail"]
         key, dcommit, branch = d.get("defect_key"), d.get("defect_commit"), d.get("branch")
-        defect = find_defect(rows, key, dcommit) or {"artifact": proposal["artifact"], "signal": "FAIL",
-                                                     "artifact_class": proposal["artifact_class"],
-                                                     "source": "unknown", "evidence": "", "detail": {}, "commit": dcommit}
+        defect = find_defect(rows, key, dcommit)
         attr = find_attribution(rows, key, dcommit)
         num = pr_number(d.get("pr"))
         pr = self.gh.pr_view(num)
         base_detail = {"subject": d.get("subject", ""), "defect_key": key, "defect_commit": dcommit, "branch": branch,
                        "pr": d.get("pr"), "pr_number": num, "head": pr.get("headRefOid"), "base": pr.get("baseRefName")}
         checks, reasons = {}, []
+        if defect is None:          # no row to check against: fail closed (review finding 6)
+            return self._reject(proposal, num, base_detail, checks,
+                                [f"defect row not found in the ledger for {key} @ {dcommit}; nothing to verify the fix against"])
+        expected_base = d.get("base") or self.base
+        if pr.get("baseRefName") != expected_base:     # retargeted PR (review finding 2)
+            return self._reject(proposal, num, base_detail, checks,
+                                [f"PR base {pr.get('baseRefName')!r} is not the expected {expected_base!r}"])
         if pr.get("state") == "MERGED":          # a human merged it: record the fact, stop treating it as pending
             sha = (pr.get("mergeCommit") or {}).get("oid")
             return self._row(proposal, "MERGED", f"MERGED PR #{num} outside the gate (human action) -> {(sha or '?')[:7]}",
@@ -364,6 +398,8 @@ class Gate:
         if routed:
             return self._route(proposal, defect, attr, base_detail, checks, routed)
         reasons += scope_reasons(diff)
+        if diff.get("truncated"):   # the verifier must see the whole change (review finding 5)
+            reasons.append(f"diff too large to verify in full ({diff.get('text_chars')} chars > {DIFF_MAX})")
         checks["ci"] = check_ci(self.gh.checks(num))
         if not checks["ci"]["ok"]:
             reasons.append("required CI checks not all green: " + json.dumps(checks["ci"]["required"]))
@@ -378,13 +414,15 @@ class Gate:
         checks["verifier"] = {k: v.get(k) for k in ("family", "model", "verdict", "reasons", "raw", "exit")}
         if v.get("family") == HEALER_FAMILY:
             reasons.append(f"verifier family {v.get('family')!r} equals the healer's (C7: a different family is required)")
+        elif v.get("family") in (None, "", "unknown"):
+            reasons.append("verifier family unknown (C7 cannot be established; set LAB_VERIFY_FAMILY for an unclassified binary)")
         elif v.get("verdict") != "AGREE":
             reasons.append(f"independent verifier ({v.get('family')}/{v.get('model')}) did not agree: "
                            f"{v.get('verdict') or 'no verdict'} " + "; ".join(v.get("reasons") or [])[:300])
         if reasons:
             return self._reject(proposal, num, base_detail, checks, reasons)
         subject = f"Merge PR #{num}: {pr['title']}"
-        merge_sha = None if self.dry_run else self.gh.merge(num, subject)
+        merge_sha = None if self.dry_run else self.gh.merge(num, subject, pr["headRefOid"])
         ev = (f"MERGED PR #{num} -> {(merge_sha or 'dry-run')[:7]}; ci ok, check ok, scope ok, "
               f"verifier AGREE ({v.get('family')}/{v.get('model')})")
         return self._row(proposal, "MERGED", ev, base_detail, checks, [], merge_commit=merge_sha)
@@ -472,12 +510,13 @@ def main(argv):
     ap.add_argument("--verifier", choices=sorted(VERIFIER_PRESETS), default=None)
     ap.add_argument("--ledger", default=None)
     ap.add_argument("--dry-run", action="store_true", help="decide and print, but do not merge/close/route or append")
+    ap.add_argument("--base", default="master", help="expected PR base when the heal row records none (default master)")
     a = ap.parse_args(argv)
     ledger = OL.ledger_path(a.ledger)
     if OL.verify_ledger(ledger):
         print("refusing to work from an invalid ledger")
         return 2
-    rows = run(ledger, pr=a.pr, verifier_preset=a.verifier, dry_run=a.dry_run)
+    rows = run(ledger, pr=a.pr, verifier_preset=a.verifier, dry_run=a.dry_run, base=a.base)
     return 0 if all(r["signal"] == "MERGED" for r in rows) else 1
 
 

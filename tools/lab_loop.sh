@@ -57,39 +57,45 @@ EOF
   *) echo "usage: $0 [--dry-run|--install-launchd|--uninstall-launchd|--print-cron]"; exit 2 ;;
 esac
 
-if ! mkdir "$LOCK" 2>/dev/null; then
-  echo "lab-loop: already running (lock $LOCK)"; exit 3
+# One instance at a time. A lock left by a killed run (its pid is gone) is stale
+# and taken over; a live pid means another cycle is still running.
+take_lock() {
+  mkdir "$LOCK" 2>/dev/null && { echo $$ > "$LOCK/pid"; return 0; }
+  local pid; pid=$(cat "$LOCK/pid" 2>/dev/null || echo "")
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then return 1; fi
+  if [ -z "$pid" ] && [ -z "${LAB_LOOP_LOCK_TAKEOVER:-}" ]; then return 1; fi   # foreign lock dir: leave it
+  rm -rf "$LOCK" && mkdir "$LOCK" 2>/dev/null && { echo $$ > "$LOCK/pid"; return 0; }
+  return 1
+}
+if ! take_lock; then echo "lab-loop: already running (lock $LOCK)"; exit 3; fi
+trap 'rm -rf "$LOCK" 2>/dev/null' EXIT
+
+# step NAME ARGS...: print the step; run it unless --dry-run. Arguments are
+# passed as an array, never re-split (review finding 7).
+step() {
+  echo; echo "step $*"
+  [ "$MODE" = "--dry-run" ] && return 0
+  "$@" || echo "   ↑ exit $? (recorded in the ledger; the loop continues)"
+}
+
+if [ "$MODE" != "--dry-run" ]; then
+  mkdir -p "$LOG_DIR"
+  LOG="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ).log"
+  exec > >(tee -a "$LOG") 2>&1
+  echo "lab-loop: start $(date -u +%FT%TZ) in $REPO"
+  if [ -n "$(git status --porcelain)" ]; then echo "lab-loop: dirty tree, refusing"; exit 4; fi
+  if [ "$(git branch --show-current)" != "master" ]; then echo "lab-loop: not on master, refusing"; exit 4; fi
+  git fetch -q origin && git pull -q --ff-only origin master || { echo "lab-loop: cannot fast-forward master"; exit 4; }
 fi
-trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
-STEPS=(
-  "$PY src/outcome_collect.py --all --gate"
-  "$PY src/outcome_attribute.py --new"
-  "$PY src/lab_heal.py --new --push"
-  "$PY src/lab_gate.py --new"
-  "$PY src/lab_learn.py --derive"
-  "ledger commit: append-only diff of $LEDGERS -> commit + push origin master"
-)
-if [ "$MODE" = "--dry-run" ]; then
-  for s in "${STEPS[@]}"; do echo "step $s"; done
-  exit 0
-fi
+step "$PY" src/outcome_collect.py --all --gate
+step "$PY" src/outcome_attribute.py --new
+step "$PY" src/lab_heal.py --new --push
+step "$PY" src/lab_gate.py --new
+step "$PY" src/lab_learn.py --derive
 
-mkdir -p "$LOG_DIR"
-LOG="$LOG_DIR/$(date -u +%Y%m%dT%H%M%SZ).log"
-exec > >(tee -a "$LOG") 2>&1
-echo "lab-loop: start $(date -u +%FT%TZ) in $REPO"
-
-if [ -n "$(git status --porcelain)" ]; then echo "lab-loop: dirty tree, refusing"; exit 4; fi
-if [ "$(git branch --show-current)" != "master" ]; then echo "lab-loop: not on master, refusing"; exit 4; fi
-git fetch -q origin && git pull -q --ff-only origin master || { echo "lab-loop: cannot fast-forward master"; exit 4; }
-
-for s in "${STEPS[@]:0:5}"; do
-  echo; echo "── $s"
-  $s || echo "   ↑ exit $? (recorded in the ledger; the loop continues)"
-done
-
-echo; echo "── ${STEPS[5]}"
+echo; echo "step ledger commit: append-only diff of $LEDGERS -> commit + push origin master"
+[ "$MODE" = "--dry-run" ] && exit 0
 if git diff --quiet -- $LEDGERS; then
   echo "no new rows"
 else
