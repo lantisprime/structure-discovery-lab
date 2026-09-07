@@ -13,6 +13,15 @@ command (tests use a fake agent). Each attempt appends one `heal` row
 (PROPOSED with the PR url / branch, or REJECTED with the gate's last lines);
 the defect row itself is closed only when the collector observes it PASS.
 
+R2 (proposer): the repair agent is the registered `agents/lab-proposer.md`
+(its body is prepended to the brief, its frontmatter picks the model tier,
+its sha256 is on every row); it is dispatched only while its own eval rows
+(P-1, P-2) are PASS in the ledger; a change outside the attributed artifact
+class is REJECTED at stage `scope` before the gate runs; every dispatch
+leaves a record under results/agent_runs/propose-<slug>-<ts>/ (prompt.md and
+agent.txt written before the agent starts, report.md = its HEAL_NOTES.md,
+gate.txt) that is committed with the fix and quoted in the PR body.
+
 Guardrails given to the agent, verbatim in the brief: preserve A1-A8; never
 edit frozen results or existing ledger rows (append only); never touch
 docs/THEOREM_GOVERNANCE.md A0 or the owner-reserved decisions; explain the
@@ -50,6 +59,22 @@ DEFAULT_AGENT_CMD = (
 DEFAULT_GATE_CMD = "./tools/check.sh"
 AGENT_TIMEOUT = 3600
 HEAL_ATTEMPT_CAP = 3   # heal rows per occurrence; beyond it the R3 gate routes the defect to the owner
+# The registered repair agent (R2). Its eval rows must be PASS before any dispatch;
+# the ids must match the graders in src/grade_agent_eval.py (tests assert this).
+PROPOSER_DEF = "agents/lab-proposer.md"
+PROPOSER_EVALS = ("P-1", "P-2")
+# Paths a proposal may change, by the artifact class the attribution named. A
+# class absent here (design, ledger, collector: gate machinery) allows nothing.
+CLASS_SCOPE = {
+    "agent": ("agents/",),
+    "instrument": ("src/", "tests/", "results/", "docs/"),
+    "theorem_card": ("docs/kb/",),
+    "adapter_manifest": ("datasets/", "src/", "tests/"),
+    "suite": ("tests/", "src/"),
+}
+NOTES_FILE = "HEAL_NOTES.md"
+RECORD_DIR = "results/agent_runs"
+OWNER_MARK = "OWNER-RESERVED"   # in the notes: the proposer stopped; the gate routes the occurrence to the owner
 # Credentials never reach the agent's environment except the one it needs to
 # talk to its own model provider (ANTHROPIC_API_KEY, when the CLI relies on it).
 CREDENTIAL_ENV_RE = re.compile(r"(TOKEN|SECRET|PASSWORD|PASSWD|PRIVATE_KEY|_KEY$|^AWS_|^GH_|^GITHUB_)", re.I)
@@ -88,6 +113,51 @@ def slug(defect):
 
 
 # ---------------------------------------------------------------- brief ----
+
+def load_proposer(root=ROOT):
+    """(frontmatter, body, sha256) of the registered proposer definition."""
+    path = os.path.join(root, PROPOSER_DEF)
+    with open(path, "rb") as fh:
+        raw = fh.read()
+    text = raw.decode("utf-8")
+    m = AR.FRONTMATTER_RE.match(text)
+    body = text[m.end():].lstrip("\n") if m else text
+    return AR._frontmatter(path), body, OC.sha256_bytes(raw)
+
+
+def proposer_eval_block(rows):
+    """Why the proposer may not be dispatched ([] when its evals are green):
+    the latest ledger state of each P-* eval must be PASS and no P-*:staleness
+    slot may be an open defect. Absent rows block too (no eval pass, no dispatch)."""
+    latest = {}
+    for r in rows:
+        if r["source"] == "agent_eval" and r["artifact"] == PROPOSER_DEF:
+            latest[str(r["detail"].get("subject", ""))] = r
+    why = []
+    for ev in PROPOSER_EVALS:
+        r = latest.get(ev)
+        if r is None:
+            why.append(f"{ev}: no eval row for {PROPOSER_DEF}")
+        elif r["signal"] != "PASS":
+            why.append(f"{ev}: latest eval row is {r['signal']}")
+        s = latest.get(f"{ev}:staleness")
+        if s is not None and s["severity"] == "defect":
+            why.append(f"{ev}: definition is {s['signal']} against its eval record")
+    return why
+
+
+def out_of_scope(files, cls, record_rel):
+    allowed = CLASS_SCOPE.get(cls, ())
+    return [f for f in files if f != NOTES_FILE and not f.startswith(record_rel + "/")
+            and not f.startswith(allowed)]
+
+
+def write_record(wt, rel, files):
+    os.makedirs(os.path.join(wt, rel), exist_ok=True)
+    for name, text in files.items():
+        with open(os.path.join(wt, rel, name), "w", encoding="utf-8") as fh:
+            fh.write(text)
+
 
 def brief_for(defect, rows, root):
     key = "|".join(OL.state_key(defect))
@@ -168,14 +238,14 @@ class HealWorktree:
 
 # ---------------------------------------------------------------- steps ----
 
-def dispatch_agent(wt, brief, model, max_turns, agent_cmd=None):
+def dispatch_agent(wt, prompt, model, max_turns, agent_cmd=None):
+    """Run the agent in the worktree with the composed prompt on stdin. The prompt
+    is already on disk in the dispatch record (prompt.md, written before this)."""
     cmd = (agent_cmd or os.environ.get("LAB_HEAL_AGENT_CMD") or DEFAULT_AGENT_CMD).format(
         model=model, max_turns=max_turns)
     argv = shlex.split(cmd, posix=(os.name != "nt"))  # keep Windows backslash paths intact
-    with open(os.path.join(wt, "HEAL_BRIEF.md"), "w", encoding="utf-8") as fh:
-        fh.write(brief)
     try:
-        rc, out, err = sh(argv, wt, timeout=AGENT_TIMEOUT, env=agent_env(), stdin=brief)
+        rc, out, err = sh(argv, wt, timeout=AGENT_TIMEOUT, env=agent_env(), stdin=prompt)
     except subprocess.TimeoutExpired:
         return 124, "", "agent timed out"
     except OSError as e:
@@ -210,8 +280,22 @@ def commit_all(wt, message):
 
 
 def changed_files(wt):
-    rc, out, err = sh(["git", "status", "--porcelain", "--", ".", ":(exclude).venv"], wt)
+    # -uall lists every untracked file (not a collapsed directory) so the record
+    # dir can be filtered out and the class-scope check sees real paths.
+    rc, out, err = sh(["git", "status", "--porcelain", "--untracked-files=all", "--", ".", ":(exclude).venv"], wt)
     return [l[3:] for l in out.splitlines() if l.strip()]
+
+
+def pr_body(key, d, cls, notes, gate_summary):
+    """PR description generated from the dispatch record (agent line, report, gate)."""
+    return (f"Autonomous repair proposed by `src/lab_heal.py` (Milestone R2/R4, constitution A0) for the "
+            f"outcome-ledger defect `{key}`.\n\n## Dispatch record\n\n`{d['record']}/` in this PR: "
+            f"`{d['agent']}` at tier `{d['model']}`, definition sha256 `{d['agent_sha256'][:16]}`, "
+            f"class scope `{cls}` ({', '.join(d['class_scope']) or 'none'}).\n\n"
+            f"## Agent report\n\n{notes or f'(no {NOTES_FILE} written)'}\n\n"
+            f"## Gate\n\n```\n{gate_summary}\n```\n\nMerging is R3: `src/lab_gate.py` merges this when the required "
+            "CI checks are green, the defect's check passes at this head, the scope is clean and an "
+            "independent verifier of a different model family agrees; otherwise it closes or routes it.")
 
 
 def open_pr(wt, branch, title, body, base="master"):
@@ -225,14 +309,21 @@ def open_pr(wt, branch, title, body, base="master"):
 
 # --------------------------------------------------------------- driver ----
 
-def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=False,
+def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
              agent_cmd=None, gate_cmd=None, keep_worktree=False, base="master", out=sys.stdout):
+    meta, body, agent_sha = load_proposer()
+    model = model or meta.get("model") or "sonnet"
     brief = brief_for(defect, rows, root)
+    prompt = body.rstrip("\n") + "\n\n---\n\n" + brief
     branch = slug(defect)
     ctx = OC.Ctx(root, rows)
     key = "|".join(OL.state_key(defect))
+    cls = (AR.classify(defect["artifact"], AR.build_registry(root)) or {"class": defect["artifact_class"]})["class"]
+    record = f"{RECORD_DIR}/propose-{branch.split('/', 1)[-1]}"
     base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key,
-                   "defect_commit": defect["commit"], "branch": branch, "model": model, "base": base}
+                   "defect_commit": defect["commit"], "branch": branch, "model": model, "base": base,
+                   "agent": meta.get("name", "lab-proposer"), "agent_sha256": agent_sha, "record": record,
+                   "class_scope": list(CLASS_SCOPE.get(cls, ()))}
 
     def reject(stage, why, extra=None, keep=False):
         row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "REJECTED",
@@ -248,37 +339,50 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
     print(f"heal: {defect['artifact']} {defect['signal']} -> worktree {wt} on {branch}", file=out)
     keep = False
     try:
-        rc, aout, aerr = dispatch_agent(wt, brief, model, max_turns, agent_cmd)
-        files = [f for f in changed_files(wt) if f not in ("HEAL_BRIEF.md",)]
-        notes_path = os.path.join(wt, "HEAL_NOTES.md")
+        # Dispatch record, written BEFORE the agent starts (commitment; AGENT_WORKFLOW "Replay & audit").
+        write_record(wt, record, {
+            "prompt.md": prompt,
+            "agent.txt": f"agent: {base_detail['agent']} | model: {model} | definition sha256: {agent_sha} | "
+                         f"defect: {key} @ {defect['commit']} | class: {cls} | {now_ts()}\n"})
+        rc, aout, aerr = dispatch_agent(wt, prompt, model, max_turns, agent_cmd)
+        files = [f for f in changed_files(wt) if not f.startswith(record + "/")]
+        notes_path = os.path.join(wt, NOTES_FILE)
         notes = redact(open(notes_path, encoding="utf-8").read()) if os.path.exists(notes_path) else ""
+        tail = redact((aout.strip() or aerr.strip())[-300:])
         # A non-zero exit (e.g. "Reached max turns") with files changed is still a
         # candidate: the gate decides, not the exit code (live run 2026-09-07: the
         # agent had made the exact fix and written its notes before the turn cap).
-        base_detail.update({"agent_exit": rc, "files_changed": files,
-                            "agent_tail": redact((aout.strip() or aerr.strip())[-300:])})
+        base_detail.update({"agent_exit": rc, "files_changed": files, "agent_tail": tail})
         if not files:
             why = f"agent exit {rc}, no file changed" + (f": {(aout.strip() or aerr.strip())[-200:]}" if (aout + aerr).strip() else "")
             return reject("agent", why)
-        os.remove(os.path.join(wt, "HEAL_BRIEF.md"))
+        outside = out_of_scope(files, cls, record)
+        if outside:
+            return reject("scope", f"changed outside the {cls} class scope: {', '.join(outside)}",
+                          {"out_of_scope": outside})
+        # The agent's note becomes the record's report (verbatim); the root copy goes.
+        write_record(wt, record, {"report.md": notes or f"(no {NOTES_FILE} written; agent exit {rc})\n\n{tail}\n"})
+        if os.path.exists(notes_path):
+            os.remove(notes_path)
+        if OWNER_MARK in notes:
+            # The proposer stopped on purpose: nothing to gate. The attempt still counts,
+            # so the R3 gate routes the occurrence to the owner at the attempt cap.
+            return reject("owner-reserved", f"the proposer flagged {OWNER_MARK}: " +
+                          " ".join(notes.split())[:200], {"notes": notes[:2000]})
         ok, summary = gate(wt, defect, gate_cmd)
         summary = redact(summary)
+        write_record(wt, record, {"gate.txt": ("ok" if ok else "REJECTED") + "\n" + summary + "\n"})
         if not ok:
             keep = True
             return reject("gate", summary, {"gate_tail": summary[-1500:]}, keep=True)
         title = f"heal: {defect['artifact']} {defect['signal']} ({defect['detail'].get('subject', '')})"
-        sha = commit_all(wt, title + "\n\nAutonomous repair (R4 healer). Brief and notes in HEAL_NOTES.md.\n\n"
+        sha = commit_all(wt, title + f"\n\nAutonomous repair (R2 proposer / R4 healer). Dispatch record: {record}/\n\n"
                          f"Defect key: {key}\n\nCo-Authored-By: lab-healer <healer@structure-discovery.local>")
         if not sha:
             return reject("commit", "git commit failed in the heal worktree")
         pr_url, pr_err = (None, "")
         if push:
-            body = (f"Autonomous repair proposed by `src/lab_heal.py` (Milestone R4, constitution A0) for the "
-                    f"outcome-ledger defect `{key}`.\n\n## Agent notes\n\n{notes or '(no HEAL_NOTES.md written)'}\n\n"
-                    f"## Gate\n\n```\n{summary}\n```\n\nMerging is R3: `src/lab_gate.py` merges this when the required "
-                    "CI checks are green, the defect's check passes at this head, the scope is clean and an "
-                    "independent verifier of a different model family agrees; otherwise it closes or routes it.")
-            pr_url, pr_err = open_pr(wt, branch, title, body, base=base)
+            pr_url, pr_err = open_pr(wt, branch, title, pr_body(key, base_detail, cls, notes, summary), base=base)
         ev = f"PROPOSED {pr_url or branch} commit {sha}; gate green" + (f"; {redact(pr_err)}" if pr_err else "")
         row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "PROPOSED", ev[:OL.EVIDENCE_MAX],
                       {**base_detail, "stage": "proposed", "commit": sha, "pr": pr_url, "notes": notes[:2000],
@@ -298,6 +402,14 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
 
 def run(ledger, root=ROOT, defect_key=None, **kw):
     rows = OL.read_rows(ledger)
+    # No eval pass, no dispatch -- applied to the loop's own agent. No heal row is
+    # written: the proposer's eval defect is already the open ledger row, and a
+    # heal row here would spend the defect's attempt cap on the proposer's problem.
+    blocked = proposer_eval_block(rows)
+    if blocked:
+        print("heal: proposer not dispatchable (no eval pass, no dispatch): " + "; ".join(blocked),
+              file=kw.get("out", sys.stdout))
+        return []
     # Open defects without a pending proposal for this same occurrence. A proposal is
     # pending until the R3 gate has decided it (a `gate` row for the same branch);
     # a rejected one is retried, up to HEAL_ATTEMPT_CAP attempts per occurrence.
@@ -328,7 +440,7 @@ def main(argv):
     g.add_argument("--new", action="store_true")
     g.add_argument("--defect-key")
     ap.add_argument("--push", action="store_true")
-    ap.add_argument("--model", default="sonnet")
+    ap.add_argument("--model", default=None, help="override the tier in agents/lab-proposer.md (recorded)")
     ap.add_argument("--max-turns", type=int, default=40)
     ap.add_argument("--ledger", default=None)
     ap.add_argument("--keep-worktree", action="store_true")

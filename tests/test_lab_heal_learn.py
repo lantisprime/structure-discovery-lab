@@ -43,11 +43,11 @@ def broken_repo(tmp_path):
     root.mkdir()
     git(root, "init", "-q", "-b", "main")
     git(root, "config", "user.email", "t@t"), git(root, "config", "user.name", "t")
-    (root / "src").mkdir()
+    (root / "src").mkdir(), (root / "results").mkdir()
     (root / "src" / "inst.py").write_text(
-        "import sys\nd=open('data.txt').read().strip()\n"
+        "import sys\nd=open('results/data.txt').read().strip()\n"
         "print('PASS sha256=' + 'a'*64 + '; wrote=none') if d=='ok' else sys.exit(1)\n")
-    (root / "data.txt").write_text("broken\n")
+    (root / "results/data.txt").write_text("broken\n")
     git(root, "add", "-A"), git(root, "commit", "-qm", "broken state")
     return root, git(root, "rev-parse", "--short", "HEAD")
 
@@ -59,6 +59,19 @@ def fake_agent(tmp_path, body):
 
 
 OK_GATE = f'{sys.executable} -c "import sys; sys.exit(0)"'
+
+
+def proposer_green_rows(ts="2026-09-06T09:00:00Z"):
+    """The proposer's own eval rows as the collector records them when green
+    (no eval pass, no dispatch: every heal test needs these on the ledger)."""
+    return [OL.make_row("agent_eval", LH.PROPOSER_DEF, "agent", "PASS", f"{ev}: PASS", {"subject": ev},
+                        ts, "abc1234", "tester") for ev in LH.PROPOSER_EVALS]
+
+
+def new_ledger(tmp_path):
+    ledger = str(tmp_path / "l.jsonl")
+    OL.append_rows(ledger, proposer_green_rows())
+    return ledger
 
 
 # --------------------------------------------------------------- learn ----
@@ -117,18 +130,18 @@ def test_heal_proposes_when_agent_fixes_and_gate_passes(broken_repo, tmp_path, m
     monkeypatch.setenv("LAB_LESSONS", str(tmp_path / "lessons.jsonl"))
     LL.append_lessons(str(tmp_path / "lessons.jsonl"),
                       [{"schema_version": 1, "ts": "2026-09-06T00:00:00Z", "kind": "manual", "artifact": "src/inst.py",
-                        "artifact_class": "instrument", "defect_key": None, "lesson": "data.txt must say ok"}])
-    ledger = str(tmp_path / "l.jsonl")
+                        "artifact_class": "instrument", "defect_key": None, "lesson": "results/data.txt must say ok"}])
+    ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                                   {"exit": 1, "sha256": None, "args": ["--verify"]})])
-    agent = fake_agent(tmp_path, "assert 'data.txt must say ok' in brief\n"
-                                 "open('data.txt','w').write('ok\\n')\n"
+    agent = fake_agent(tmp_path, "assert 'results/data.txt must say ok' in brief\n"
+                                 "open('results/data.txt','w').write('ok\\n')\n"
                                  "open('HEAL_NOTES.md','w').write('root cause: data drift\\n')\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False,
                   keep_worktree=True, out=open(os.devnull, "w"))
     assert len(rows) == 1 and rows[0]["signal"] == "PROPOSED"
     d = rows[0]["detail"]
-    assert d["stage"] == "proposed" and d["commit"] and sorted(d["files_changed"]) == ["HEAL_NOTES.md", "data.txt"]
+    assert d["stage"] == "proposed" and d["commit"] and sorted(d["files_changed"]) == ["HEAL_NOTES.md", "results/data.txt"]
     assert "root cause" in d["notes"]
     assert d["branch"].startswith("heal/src-inst-py-fail-")
     # the fix is committed on the heal branch, HEAD of the repo untouched
@@ -148,17 +161,17 @@ def test_heal_links_venv_and_proceeds_when_agent_exits_nonzero_after_changing_fi
     (root / ".gitignore").write_text(".venv\n")
     git(root, "add", "-A"), git(root, "commit", "-qm", "ignore venv")
     sha = git(root, "rev-parse", "--short", "HEAD")
-    ledger = str(tmp_path / "l.jsonl")
+    ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                                   {"exit": 1, "sha256": None, "args": ["--verify"]})])
     agent = fake_agent(tmp_path, "import os\nassert os.path.islink('.venv') and os.path.isdir('.venv/bin')\n"
-                                 "open('data.txt','w').write('ok\\n')\n"
+                                 "open('results/data.txt','w').write('ok\\n')\n"
                                  "open('HEAL_NOTES.md','w').write('fixed\\n')\n"
                                  "print('Error: Reached max turns (30)')\nsys.exit(1)\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
     assert rows[0]["signal"] == "PROPOSED" and rows[0]["detail"]["agent_exit"] == 1
     assert "max turns" in rows[0]["detail"]["agent_tail"]
-    assert sorted(rows[0]["detail"]["files_changed"]) == ["HEAL_NOTES.md", "data.txt"]
+    assert sorted(rows[0]["detail"]["files_changed"]) == ["HEAL_NOTES.md", "results/data.txt"]
     assert ".venv" not in git(root, "show", "--name-only", "--format=", rows[0]["detail"]["branch"])
     for line in git(root, "worktree", "list", "--porcelain").splitlines():
         if line.startswith("worktree ") and "lab-heal-" in line:
@@ -167,7 +180,7 @@ def test_heal_links_venv_and_proceeds_when_agent_exits_nonzero_after_changing_fi
 
 def test_heal_rejects_when_agent_changes_nothing(broken_repo, tmp_path):
     root, sha = broken_repo
-    ledger = str(tmp_path / "l.jsonl")
+    ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                                   {"exit": 1, "sha256": None, "args": ["--verify"]})])
     agent = fake_agent(tmp_path, "pass\n")
@@ -178,10 +191,10 @@ def test_heal_rejects_when_agent_changes_nothing(broken_repo, tmp_path):
 
 def test_heal_rejects_when_defect_check_still_fails(broken_repo, tmp_path):
     root, sha = broken_repo
-    ledger = str(tmp_path / "l.jsonl")
+    ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                                   {"exit": 1, "sha256": None, "args": ["--verify"]})])
-    agent = fake_agent(tmp_path, "open('data.txt','w').write('still wrong\\n')\n"
+    agent = fake_agent(tmp_path, "open('results/data.txt','w').write('still wrong\\n')\n"
                                  "open('HEAL_NOTES.md','w').write('tried\\n')\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
     assert rows[0]["signal"] == "REJECTED" and rows[0]["detail"]["stage"] == "gate"
@@ -194,7 +207,7 @@ def test_heal_rejects_when_defect_check_still_fails(broken_repo, tmp_path):
 
 def test_heal_skips_defect_with_pending_proposal_but_not_attributed_ones(broken_repo, tmp_path):
     root, sha = broken_repo
-    ledger = str(tmp_path / "l.jsonl")
+    ledger = new_ledger(tmp_path)
     defect = mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                    {"exit": 1, "sha256": None, "args": ["--verify"]})
     key = "|".join(OL.state_key(defect))
@@ -214,7 +227,7 @@ def test_heal_skips_defect_with_pending_proposal_but_not_attributed_ones(broken_
 
 def test_heal_retries_after_gate_rejection_until_cap(broken_repo, tmp_path):
     root, sha = broken_repo
-    ledger = str(tmp_path / "l.jsonl")
+    ledger = new_ledger(tmp_path)
     defect = mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                    {"exit": 1, "sha256": None, "args": ["--verify"]})
     key = "|".join(OL.state_key(defect))
@@ -238,7 +251,7 @@ def test_heal_retries_after_gate_rejection_until_cap(broken_repo, tmp_path):
 
 def test_heal_exception_path_cleans_worktree_and_records(broken_repo, tmp_path):
     root, sha = broken_repo
-    ledger = str(tmp_path / "l.jsonl")
+    ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
                                   {"exit": 1, "sha256": None, "args": ["--verify"]})])
     rows = LH.run(ledger, root=str(root), agent_cmd="/nonexistent/agent --x", gate_cmd=OK_GATE, push=False,
@@ -269,7 +282,7 @@ def test_default_agent_command_has_no_raw_bash_or_git_write():
 
 
 def test_heal_noop_without_open_defects(tmp_path):
-    ledger = str(tmp_path / "l.jsonl")
+    ledger = new_ledger(tmp_path)
     OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "PASS", "abc1234", "linux",
                                   {"exit": 0, "sha256": "a" * 64, "args": ["--verify"]})])
     assert LH.run(ledger, root=REPO, out=open(os.devnull, "w")) == []
@@ -282,3 +295,113 @@ def test_brief_carries_guardrails_and_check():
     assert "Never edit A0" in b and "append, never rewrite" in b and "Owner-reserved" in b
     assert ".venv/bin/python src/pcso_weekly_update.py --verify" in b
     assert "HEAL_NOTES.md" in b
+
+
+# ------------------------------------------------------ R2 proposer ----
+
+def defect_row(sha):
+    return mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
+                 {"exit": 1, "sha256": None, "args": ["--verify"]})
+
+
+def test_heal_refuses_when_proposer_eval_not_green(broken_repo, tmp_path, capsys):
+    root, sha = broken_repo
+    agent = fake_agent(tmp_path, "open('results/data.txt','w').write('ok\\n')\nopen('HEAL_NOTES.md','w').write('x\\n')\n")
+    # (a) no eval rows at all
+    bare = str(tmp_path / "bare.jsonl")
+    OL.append_rows(bare, [defect_row(sha)])
+    assert LH.run(bare, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False) == []
+    assert "no eval pass, no dispatch" in capsys.readouterr().out
+    assert not [r for r in OL.read_rows(bare) if r["source"] == "heal"]          # no attempt spent
+    # (b) one eval FAIL
+    failed = str(tmp_path / "failed.jsonl")
+    rows = proposer_green_rows()
+    rows[0] = OL.make_row("agent_eval", LH.PROPOSER_DEF, "agent", "FAIL", "P-1: FAIL", {"subject": "P-1"},
+                          "2026-09-06T09:00:00Z", "abc1234", "tester")
+    OL.append_rows(failed, rows + [defect_row(sha)])
+    assert LH.run(failed, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False) == []
+    assert "P-1: latest eval row is FAIL" in capsys.readouterr().out
+    # (c) green evals but the definition drifted from its record (open STALE_EVAL slot)
+    stale = str(tmp_path / "stale.jsonl")
+    OL.append_rows(stale, proposer_green_rows() + [
+        OL.make_row("agent_eval", LH.PROPOSER_DEF, "agent", "STALE_EVAL", "P-2 stale", {"subject": "P-2:staleness"},
+                    "2026-09-06T09:30:00Z", "abc1234", "tester"), defect_row(sha)])
+    assert LH.run(stale, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False) == []
+    assert "P-2: definition is STALE_EVAL" in capsys.readouterr().out
+    # (d) the stale slot closed again (latest state PASS) -> dispatchable
+    OL.append_rows(stale, [OL.make_row("agent_eval", LH.PROPOSER_DEF, "agent", "PASS", "P-2 in sync",
+                                       {"subject": "P-2:staleness"}, "2026-09-06T09:40:00Z", "abc1234", "tester")])
+    assert LH.proposer_eval_block(OL.read_rows(stale)) == []
+
+
+def test_heal_dispatches_registered_proposer_with_record(broken_repo, tmp_path):
+    root, sha = broken_repo
+    ledger = new_ledger(tmp_path)
+    OL.append_rows(ledger, [defect_row(sha)])
+    meta, body, digest = LH.load_proposer()
+    assert meta["name"] == "lab-proposer" and meta["model"] in ("haiku", "sonnet") and "---" not in body[:3]
+    # the agent sees the definition body first, then the brief; the record already exists on disk
+    agent = fake_agent(tmp_path, "import os\n"
+                                 "assert brief.startswith('You are the lab\\'s repair proposer')\n"
+                                 "assert '# Repair brief' in brief and 'src/inst.py' in brief\n"
+                                 "rec = [d for d in os.listdir('results/agent_runs') if d.startswith('propose-')][0]\n"
+                                 "assert open('results/agent_runs/' + rec + '/prompt.md').read() == brief\n"
+                                 "assert 'definition sha256' in open('results/agent_runs/' + rec + '/agent.txt').read()\n"
+                                 "open('results/data.txt','w').write('ok\\n')\n"
+                                 "open('HEAL_NOTES.md','w').write('root cause: drift\\n')\n")
+    rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
+    assert rows[0]["signal"] == "PROPOSED", rows[0]
+    d = rows[0]["detail"]
+    assert d["agent"] == "lab-proposer" and d["model"] == meta["model"] and d["agent_sha256"] == digest
+    assert d["record"].startswith("results/agent_runs/propose-src-inst-py-fail-")
+    assert d["class_scope"] == list(LH.CLASS_SCOPE["instrument"])
+    assert sorted(d["files_changed"]) == ["HEAL_NOTES.md", "results/data.txt"]     # the record is not the agent's change
+    committed = git(root, "show", "--name-only", "--format=", d["branch"]).splitlines()
+    assert "HEAL_NOTES.md" not in committed                                         # moved into the record
+    for name in ("prompt.md", "agent.txt", "report.md", "gate.txt"):
+        assert f"{d['record']}/{name}" in committed
+    assert git(root, "show", f"{d['branch']}:{d['record']}/report.md") == "root cause: drift"
+    assert git(root, "show", f"{d['branch']}:{d['record']}/gate.txt").startswith("ok")
+    # an explicit tier override is recorded as such
+    rows2 = LH.run(ledger, root=str(root), defect_key=d["defect_key"], model="haiku", agent_cmd=agent,
+                   gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
+    assert rows2[0]["detail"]["model"] == "haiku"
+    body_txt = LH.pr_body(d["defect_key"], d, "instrument", "root cause: drift", "gate ok")
+    assert d["record"] in body_txt and "lab-proposer" in body_txt and "root cause: drift" in body_txt
+    assert digest[:16] in body_txt and "instrument" in body_txt
+
+
+def test_heal_rejects_out_of_scope_changes_before_gate(broken_repo, tmp_path):
+    root, sha = broken_repo
+    ledger = new_ledger(tmp_path)
+    OL.append_rows(ledger, [defect_row(sha)])
+    marker = tmp_path / "gate-ran"
+    gate_cmd = f'{sys.executable} -c "open({str(marker)!r},\'w\').write(\'ran\')"'
+    agent = fake_agent(tmp_path, "open('results/data.txt','w').write('ok\\n')\n"
+                                 "open('config.toml','w').write('x\\n')\n"          # outside instrument scope
+                                 "open('HEAL_NOTES.md','w').write('n\\n')\n")
+    rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=gate_cmd, push=False, out=open(os.devnull, "w"))
+    assert rows[0]["signal"] == "REJECTED" and rows[0]["detail"]["stage"] == "scope"
+    assert rows[0]["detail"]["out_of_scope"] == ["config.toml"] and "config.toml" in rows[0]["evidence"]
+    assert not marker.exists()                                                      # gate never ran
+    assert "lab-heal-" not in git(root, "worktree", "list")
+    # a class the table does not know allows nothing
+    assert LH.out_of_scope(["src/x.py"], "ledger", "results/agent_runs/propose-x") == ["src/x.py"]
+
+
+def test_heal_records_owner_reserved_stop_without_running_the_gate(broken_repo, tmp_path):
+    root, sha = broken_repo
+    ledger = new_ledger(tmp_path)
+    OL.append_rows(ledger, [defect_row(sha)])
+    marker = tmp_path / "gate-ran"
+    gate_cmd = f'{sys.executable} -c "open({str(marker)!r},\'w\').write(\'ran\')"'
+    agent = fake_agent(tmp_path, "open('HEAL_NOTES.md','w').write('OWNER-RESERVED: the fix needs a constitution edit.\\n')\n")
+    rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=gate_cmd, push=False, out=open(os.devnull, "w"))
+    d = rows[0]["detail"]
+    assert rows[0]["signal"] == "REJECTED" and d["stage"] == "owner-reserved"
+    assert "OWNER-RESERVED" in d["notes"] and d["files_changed"] == ["HEAL_NOTES.md"]
+    assert "OWNER-RESERVED" in rows[0]["evidence"] and not marker.exists()
+    # the attempt counts toward the cap, so the R3 gate routes the occurrence to the owner at the cap
+    assert sum(1 for r in OL.read_rows(ledger) if r["source"] == "heal") == 1
+    assert LH.out_of_scope(["HEAL_NOTES.md", "results/agent_runs/propose-x/prompt.md", "docs/kb/c.md"],
+                           "theorem_card", "results/agent_runs/propose-x") == []

@@ -136,6 +136,29 @@ def test_stale_eval_detected_when_definition_changes(seeded_ledger, monkeypatch)
     assert os.path.exists(target) and b"altered by test" not in real(target)
 
 
+def test_stale_slot_closes_when_definition_matches_again(seeded_ledger, monkeypatch):
+    """R2: after a re-dispatch (or a revert) the definition matches a record
+    again; the open STALE_EVAL slot must close with a PASS row, else the
+    proposer's eval gate would stay shut forever."""
+    ledger = seeded_ledger
+    target = os.path.join(REPO, "agents", "data-reader.md")
+    real = OC.read_agent_bytes
+    monkeypatch.setattr(OC, "read_agent_bytes",
+                        lambda p: real(p) + b"x" if os.path.abspath(p) == target else real(p))
+    OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
+    stale = [r for r in OL.read_rows(ledger) if r["signal"] == "STALE_EVAL"]
+    assert stale
+    monkeypatch.setattr(OC, "read_agent_bytes", real)                 # back in sync
+    appended, nd = OC.run(["agent_eval"], ledger, gate=True, out=open(os.devnull, "w"))
+    assert nd == []
+    closing = [r for r in appended if r["detail"]["subject"].endswith(":staleness")]
+    assert closing and all(r["signal"] == "PASS" and r["artifact"] == "agents/data-reader.md" for r in closing)
+    assert {r["detail"]["subject"] for r in closing} == {r["detail"]["subject"] for r in stale}
+    # a third run in sync is silent again
+    appended, _ = OC.run(["agent_eval"], ledger, out=open(os.devnull, "w"))
+    assert not [r for r in appended if r["detail"]["subject"].endswith(":staleness")]
+
+
 def test_altered_agent_definition_turns_gate_red(seeded_ledger, monkeypatch):
     ledger = seeded_ledger
     # baseline: clean run, gate green

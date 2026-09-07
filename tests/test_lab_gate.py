@@ -421,11 +421,12 @@ def test_loop_script_steps_and_lock(tmp_path):
     assert r.returncode == 0, r.stdout + r.stderr
     steps = [l for l in r.stdout.splitlines() if l.startswith("step ")]
     names = " ".join(steps)
-    for s in ("outcome_collect.py --all --gate", "outcome_attribute.py --new", "lab_heal.py --new --push",
-              "lab_gate.py --new", "lab_learn.py --derive", "ledger commit"):
+    for s in ("outcome_collect.py --all --gate", "agent_eval_dispatch.py --stale", "outcome_attribute.py --new",
+              "lab_heal.py --new --push", "lab_gate.py --new", "lab_learn.py --derive", "ledger commit"):
         assert s in names, names
-    assert names.index("outcome_collect") < names.index("outcome_attribute") < names.index("lab_heal") \
-        < names.index("lab_gate") < names.index("lab_learn") < names.index("ledger commit")
+    assert names.index("outcome_collect") < names.index("agent_eval_dispatch") < names.index("outcome_attribute") \
+        < names.index("lab_heal") < names.index("lab_gate") < names.index("lab_learn") < names.index("ledger commit")
+    assert "results/agent_runs" in names                   # new records are committed with the rows
     assert not lock.exists()                              # released
     lock.mkdir()
     r = subprocess.run(["bash", os.path.join(REPO, "tools", "lab_loop.sh"), "--dry-run"],
