@@ -233,7 +233,7 @@ def poisson_draw(rng, lam):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--seed", type=int, default=20260906)
+    ap.add_argument("--seed", type=int, default=20260907)
     ap.add_argument("--run-date", default="2026-09-06")
     ap.add_argument("--null-trials", type=int, default=500)
     ap.add_argument("--perms", type=int, default=19999)
