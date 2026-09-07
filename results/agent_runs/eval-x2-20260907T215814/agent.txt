@@ -1,0 +1,1 @@
+agent: lab-orchestrator | model: fable | definition sha256: 435907e08ee6a9d1e13d8b67b87548e9c74f73055a072543e54a7461fe2d96bb | eval: X-2 | 2026-09-07T215814 | dispatched by src/agent_eval_dispatch.py

@@ -1,0 +1,2 @@
+REJECTED
+gate green but the defect's check still exits 1: FAIL constitution articles without a ratification date: A8

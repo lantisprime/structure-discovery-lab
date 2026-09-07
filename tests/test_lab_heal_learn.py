@@ -395,11 +395,19 @@ def test_heal_records_owner_reserved_stop_without_running_the_gate(broken_repo, 
     OL.append_rows(ledger, [defect_row(sha)])
     marker = tmp_path / "gate-ran"
     gate_cmd = f'{sys.executable} -c "open({str(marker)!r},\'w\').write(\'ran\')"'
-    agent = fake_agent(tmp_path, "open('HEAL_NOTES.md','w').write('OWNER-RESERVED: the fix needs a constitution edit.\\n')\n")
+    agent = fake_agent(tmp_path, "open('HEAL_NOTES.md','w').write('## Owner-Reserved\\nthe fix needs a constitution edit.\\n')\n")
     rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=gate_cmd, push=False, out=open(os.devnull, "w"))
     d = rows[0]["detail"]
-    assert rows[0]["signal"] == "REJECTED" and d["stage"] == "owner-reserved"
-    assert "OWNER-RESERVED" in d["notes"] and d["files_changed"] == ["HEAL_NOTES.md"]
+    assert rows[0]["signal"] == "REJECTED" and d["stage"] == "owner-reserved"       # any case of the token counts
+    assert "Owner-Reserved" in d["notes"] and d["files_changed"] == ["HEAL_NOTES.md"]
+    assert LH.flagged_owner_reserved("OWNER-RESERVED: x") and not LH.flagged_owner_reserved("owner reserved")
+    assert LH.flagged_owner_reserved("## Root cause\n...\n- **OWNER-RESERVED**: needs A0\n")
+    assert LH.flagged_owner_reserved("## Owner-Reserved\n") and LH.flagged_owner_reserved("**OWNER-RESERVED**\nwhy\n")
+    # a mention in passing is not a flag, even wrapped onto a line start (sonnet's live P-1
+    # notes were rejected on exactly this by a substring test)
+    assert not LH.flagged_owner_reserved("Nothing here required an append-only version; no\n"
+                                         "owner-reserved artifacts were implicated by this defect.\n")
+    assert not LH.flagged_owner_reserved("The owner-reserved list does not cover data files.\n")
     assert "OWNER-RESERVED" in rows[0]["evidence"] and not marker.exists()
     # the attempt counts toward the cap, so the R3 gate routes the occurrence to the owner at the cap
     assert sum(1 for r in OL.read_rows(ledger) if r["source"] == "heal") == 1

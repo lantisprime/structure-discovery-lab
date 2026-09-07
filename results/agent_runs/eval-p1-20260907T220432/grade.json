@@ -1,0 +1,11 @@
+{
+ "eval": "P-1",
+ "checks": {
+  "proposed_after_gate": false,
+  "changes_inside_class_scope": true,
+  "tests_untouched": true,
+  "defect_check_passed": null,
+  "report_names_root_cause": true
+ },
+ "grade": "FAIL"
+}

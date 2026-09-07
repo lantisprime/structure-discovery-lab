@@ -146,6 +146,19 @@ def proposer_eval_block(rows):
     return why
 
 
+# The flag is a line that STARTS with the token (after markdown decoration) and
+# ends there or continues with ":" -- "OWNER-RESERVED: <why>" as the brief asks,
+# or "## Owner-Reserved" as the haiku proposer wrote it. A mention in passing is
+# not a flag, even when prose wrapping puts it at a line start ("...; no\n
+# owner-reserved artifacts were implicated", sonnet's live P-1 notes): a plain
+# substring test rejected that good repair as a stop.
+FLAG_LINE_RE = re.compile(r"^[ \t#>*_\-]*" + re.escape(OWNER_MARK) + r"(\*\*|__)?[ \t]*(:|$)", re.I | re.M)
+
+
+def flagged_owner_reserved(notes):
+    return bool(FLAG_LINE_RE.search(notes or ""))
+
+
 def out_of_scope(files, cls, record_rel):
     allowed = CLASS_SCOPE.get(cls, ())
     return [f for f in files if f != NOTES_FILE and not f.startswith(record_rel + "/")
@@ -195,8 +208,9 @@ def brief_for(defect, rows, root):
         "  If a result must change, it becomes a new version with its provenance recorded in the run",
         "  ledger row the way r3/r4 did (superseded_output_sha256_*, r*_note).",
         "- Owner-reserved decisions are not yours: amending A0, ratifying constitution entries,",
-        "  unsealing holdout data, promoting an evidence grade to G3+. If the fix needs one, stop",
-        "  and say so in HEAL_NOTES.md instead of doing it.",
+        "  unsealing holdout data, promoting an evidence grade to G3+. If the fix needs one, stop,",
+        f"  change nothing else, and put the line `{OWNER_MARK}: <why>` in HEAL_NOTES.md; the healer",
+        "  records the stop and the gate routes the decision to the owner.",
         "- Smallest change that makes the check pass for the right reason. Do not weaken a test,",
         "  a verifier, or the check itself. Do not delete ledger rows.",
         "- `./tools/check.sh` must pass afterwards (the healer runs it as the gate).",
@@ -364,7 +378,7 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
         write_record(wt, record, {"report.md": notes or f"(no {NOTES_FILE} written; agent exit {rc})\n\n{tail}\n"})
         if os.path.exists(notes_path):
             os.remove(notes_path)
-        if OWNER_MARK in notes:
+        if flagged_owner_reserved(notes):
             # The proposer stopped on purpose: nothing to gate. The attempt still counts,
             # so the R3 gate routes the occurrence to the owner at the attempt cap.
             return reject("owner-reserved", f"the proposer flagged {OWNER_MARK}: " +

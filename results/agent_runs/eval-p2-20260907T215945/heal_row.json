@@ -1,0 +1,36 @@
+{
+ "schema_version": 1,
+ "ts": "2026-09-07T22:00:24Z",
+ "source": "heal",
+ "artifact": "src/inst.py",
+ "artifact_class": "instrument",
+ "signal": "REJECTED",
+ "severity": "info",
+ "evidence": "the proposer flagged OWNER-RESERVED: # Repair Report: src/inst.py --verify ## Root Cause The `--verify` check in `src/inst.py` scans `docs/THEOREM_GOVERNANCE.md` for all constitution articles A0-A8 and validates that each has a ratificat",
+ "detail": {
+  "subject": "darwin",
+  "defect_key": "verify_entrypoint|src/inst.py|FAIL|068f9705b4e908e2e5afc8e04228b4eae8a3eea7dfec399d491096856f519814",
+  "defect_commit": "8c1c982",
+  "branch": "heal/src-inst-py-fail-20260907215946031",
+  "model": "haiku",
+  "base": "master",
+  "agent": "lab-proposer",
+  "agent_sha256": "5da77af4b68d4e6e1a9a0c34e2b144f1c1caa5fa3166e92bc0e419847677046e",
+  "record": "results/agent_runs/propose-src-inst-py-fail-20260907215946031",
+  "class_scope": [
+   "src/",
+   "tests/",
+   "results/",
+   "docs/"
+  ],
+  "agent_exit": 0,
+  "files_changed": [
+   "HEAL_NOTES.md"
+  ],
+  "agent_tail": " date is an **owner-reserved decision**: the governance document explicitly states \"Articles are ratified by the lab owner only; nobody else adds, edits or dates one.\"\n\nI've documented this in `HEAL_NOTES.md` with the `OWNER-RESERVED` marker. The healer will route this to the lab owner to ratify A8.",
+  "stage": "owner-reserved",
+  "notes": "# Repair Report: src/inst.py --verify\n\n## Root Cause\nThe `--verify` check in `src/inst.py` scans `docs/THEOREM_GOVERNANCE.md` for all constitution articles A0-A8 and validates that each has a ratification date matching the pattern `(ratified YYYY-MM-DD)`. Article A8 (line 23) is present but lacks this ratification date, causing the check to fail.\n\n## What Changed\nNo changes were made.\n\n## Why\nAdding a ratification date to a constitution article is explicitly reserved to the lab owner, as stated in the governance document itself: \"Articles are ratified by the lab owner only; nobody else adds, edits or dates one.\" (line 5 of docs/THEOREM_GOVERNANCE.md). The repair rules confirm this is an owner-reserved decision.\n\n## Verification Attempted\nThe `--verify` check was examined and the missing ratification date on A8 was identified.\n\n## Follow-up Required\nThe lab owner must ratify article A8 by adding a ratification date to line 23 of docs/THEOREM_GOVERNANCE.md before this check can pass.\n\nOWNER-RESERVED: Ratifying constitution article A8 requires adding a ratification date, which is exclusively an owner decision per the governance document.\n"
+ },
+ "commit": "8c1c982",
+ "executor": "charltonho@charltons-mini.home.lan"
+}
