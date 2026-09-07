@@ -49,6 +49,7 @@ DEFAULT_AGENT_CMD = (
     "--output-format text")
 DEFAULT_GATE_CMD = "./tools/check.sh"
 AGENT_TIMEOUT = 3600
+HEAL_ATTEMPT_CAP = 3   # heal rows per occurrence; beyond it the R3 gate routes the defect to the owner
 # Credentials never reach the agent's environment except the one it needs to
 # talk to its own model provider (ANTHROPIC_API_KEY, when the CLI relies on it).
 CREDENTIAL_ENV_RE = re.compile(r"(TOKEN|SECRET|PASSWORD|PASSWD|PRIVATE_KEY|_KEY$|^AWS_|^GH_|^GITHUB_)", re.I)
@@ -149,6 +150,12 @@ class HealWorktree:
         rc, out, err = sh(["git", "worktree", "add", "--quiet", "-b", self.branch, self.path, self.base], self.root)
         if rc != 0:
             raise RuntimeError(f"worktree add failed: {err.strip()}")
+        # The lab's interpreter lives in the main checkout's .venv (ignored by git);
+        # link it so the brief's check command and ./tools/check.sh run with the
+        # right dependencies instead of the agent hunting for one (live run 2026-09-07).
+        venv = os.path.join(self.root, ".venv")
+        if os.path.isdir(venv) and not os.path.lexists(os.path.join(self.path, ".venv")):
+            os.symlink(venv, os.path.join(self.path, ".venv"))
         return self.path
 
     def __exit__(self, *exc):
@@ -193,7 +200,7 @@ def gate(wt, defect, gate_cmd=None):
 
 
 def commit_all(wt, message):
-    sh(["git", "add", "-A"], wt)
+    sh(["git", "add", "-A", "--", ".", ":(exclude).venv"], wt)
     rc, out, err = sh(["git", "-c", "user.name=lab-healer", "-c", "user.email=healer@structure-discovery.local",
                        "commit", "-q", "-m", message], wt)
     if rc != 0:
@@ -203,15 +210,15 @@ def commit_all(wt, message):
 
 
 def changed_files(wt):
-    rc, out, err = sh(["git", "status", "--porcelain"], wt)
+    rc, out, err = sh(["git", "status", "--porcelain", "--", ".", ":(exclude).venv"], wt)
     return [l[3:] for l in out.splitlines() if l.strip()]
 
 
-def open_pr(wt, branch, title, body):
+def open_pr(wt, branch, title, body, base="master"):
     rc, out, err = sh(["git", "push", "-q", "-u", "origin", branch], wt, timeout=300)
     if rc != 0:
         return None, f"push failed: {err.strip()[-300:]}"
-    rc, out, err = sh(["gh", "pr", "create", "--base", "master", "--head", branch, "--title", title,
+    rc, out, err = sh(["gh", "pr", "create", "--base", base, "--head", branch, "--title", title,
                        "--body", body], wt, timeout=300)
     return (out.strip() if rc == 0 else None), (err.strip()[-300:] if rc != 0 else "")
 
@@ -219,13 +226,13 @@ def open_pr(wt, branch, title, body):
 # --------------------------------------------------------------- driver ----
 
 def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=False,
-             agent_cmd=None, gate_cmd=None, keep_worktree=False, out=sys.stdout):
+             agent_cmd=None, gate_cmd=None, keep_worktree=False, base="master", out=sys.stdout):
     brief = brief_for(defect, rows, root)
     branch = slug(defect)
     ctx = OC.Ctx(root, rows)
     key = "|".join(OL.state_key(defect))
     base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key,
-                   "defect_commit": defect["commit"], "branch": branch, "model": model}
+                   "defect_commit": defect["commit"], "branch": branch, "model": model, "base": base}
 
     def reject(stage, why, extra=None, keep=False):
         row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "REJECTED",
@@ -245,9 +252,13 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
         files = [f for f in changed_files(wt) if f not in ("HEAL_BRIEF.md",)]
         notes_path = os.path.join(wt, "HEAL_NOTES.md")
         notes = redact(open(notes_path, encoding="utf-8").read()) if os.path.exists(notes_path) else ""
-        base_detail.update({"agent_exit": rc, "files_changed": files})
-        if rc != 0 or not files:
-            why = f"agent exit {rc}, {len(files)} file(s) changed" + (f": {aerr.strip()[-200:]}" if aerr.strip() else "")
+        # A non-zero exit (e.g. "Reached max turns") with files changed is still a
+        # candidate: the gate decides, not the exit code (live run 2026-09-07: the
+        # agent had made the exact fix and written its notes before the turn cap).
+        base_detail.update({"agent_exit": rc, "files_changed": files,
+                            "agent_tail": redact((aout.strip() or aerr.strip())[-300:])})
+        if not files:
+            why = f"agent exit {rc}, no file changed" + (f": {(aout.strip() or aerr.strip())[-200:]}" if (aout + aerr).strip() else "")
             return reject("agent", why)
         os.remove(os.path.join(wt, "HEAL_BRIEF.md"))
         ok, summary = gate(wt, defect, gate_cmd)
@@ -264,8 +275,10 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
         if push:
             body = (f"Autonomous repair proposed by `src/lab_heal.py` (Milestone R4, constitution A0) for the "
                     f"outcome-ledger defect `{key}`.\n\n## Agent notes\n\n{notes or '(no HEAL_NOTES.md written)'}\n\n"
-                    f"## Gate\n\n```\n{summary}\n```\n\nMerging is R3 (not automated yet): review and merge, or close.")
-            pr_url, pr_err = open_pr(wt, branch, title, body)
+                    f"## Gate\n\n```\n{summary}\n```\n\nMerging is R3: `src/lab_gate.py` merges this when the required "
+                    "CI checks are green, the defect's check passes at this head, the scope is clean and an "
+                    "independent verifier of a different model family agrees; otherwise it closes or routes it.")
+            pr_url, pr_err = open_pr(wt, branch, title, body, base=base)
         ev = f"PROPOSED {pr_url or branch} commit {sha}; gate green" + (f"; {redact(pr_err)}" if pr_err else "")
         row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "PROPOSED", ev[:OL.EVIDENCE_MAX],
                       {**base_detail, "stage": "proposed", "commit": sha, "pr": pr_url, "notes": notes[:2000],
@@ -285,11 +298,22 @@ def heal_one(defect, rows, root, ledger, model="sonnet", max_turns=40, push=Fals
 
 def run(ledger, root=ROOT, defect_key=None, **kw):
     rows = OL.read_rows(ledger)
-    # open defects without a pending proposal for this same occurrence
-    proposed = {(r["detail"].get("defect_key"), r["detail"].get("defect_commit"))
-                for r in rows if r["source"] == "heal" and r["signal"] == "PROPOSED"}
+    # Open defects without a pending proposal for this same occurrence. A proposal is
+    # pending until the R3 gate has decided it (a `gate` row for the same branch);
+    # a rejected one is retried, up to HEAL_ATTEMPT_CAP attempts per occurrence.
+    gated = {(r["detail"].get("defect_key"), r["detail"].get("defect_commit"), r["detail"].get("branch"))
+             for r in rows if r["source"] == "gate"}
+    pending = {(r["detail"].get("defect_key"), r["detail"].get("defect_commit"))
+               for r in rows if r["source"] == "heal" and r["signal"] == "PROPOSED"
+               and (r["detail"].get("defect_key"), r["detail"].get("defect_commit"), r["detail"].get("branch")) not in gated}
+    attempts = {}
+    for r in rows:
+        if r["source"] == "heal":
+            k = (r["detail"].get("defect_key"), r["detail"].get("defect_commit"))
+            attempts[k] = attempts.get(k, 0) + 1
     todo = [d for d in OA.open_defects(rows)
-            if ("|".join(OL.state_key(d)), d["commit"]) not in proposed]
+            if ("|".join(OL.state_key(d)), d["commit"]) not in pending
+            and attempts.get(("|".join(OL.state_key(d)), d["commit"]), 0) < HEAL_ATTEMPT_CAP]
     if defect_key:
         todo = [r for r in rows if "|".join(OL.state_key(r)) == defect_key and r["severity"] == "defect"][-1:]
     if not todo:
@@ -308,13 +332,14 @@ def main(argv):
     ap.add_argument("--max-turns", type=int, default=40)
     ap.add_argument("--ledger", default=None)
     ap.add_argument("--keep-worktree", action="store_true")
+    ap.add_argument("--base", default="master", help="PR base branch (default master)")
     a = ap.parse_args(argv)
     ledger = OL.ledger_path(a.ledger)
     if OL.verify_ledger(ledger):
         print("refusing to work from an invalid ledger")
         return 2
     rows = run(ledger, defect_key=a.defect_key, model=a.model, max_turns=a.max_turns, push=a.push,
-               keep_worktree=a.keep_worktree)
+               keep_worktree=a.keep_worktree, base=a.base)
     return 0 if all(r["signal"] == "PROPOSED" for r in rows) else 1
 
 

@@ -142,6 +142,29 @@ def test_heal_proposes_when_agent_fixes_and_gate_passes(broken_repo, tmp_path, m
             git(root, "worktree", "remove", "--force", line.split(" ", 1)[1])
 
 
+def test_heal_links_venv_and_proceeds_when_agent_exits_nonzero_after_changing_files(broken_repo, tmp_path):
+    root, sha = broken_repo
+    (root / ".venv" / "bin").mkdir(parents=True)          # the lab's interpreter dir, not tracked
+    (root / ".gitignore").write_text(".venv\n")
+    git(root, "add", "-A"), git(root, "commit", "-qm", "ignore venv")
+    sha = git(root, "rev-parse", "--short", "HEAD")
+    ledger = str(tmp_path / "l.jsonl")
+    OL.append_rows(ledger, [mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
+                                  {"exit": 1, "sha256": None, "args": ["--verify"]})])
+    agent = fake_agent(tmp_path, "import os\nassert os.path.islink('.venv') and os.path.isdir('.venv/bin')\n"
+                                 "open('data.txt','w').write('ok\\n')\n"
+                                 "open('HEAL_NOTES.md','w').write('fixed\\n')\n"
+                                 "print('Error: Reached max turns (30)')\nsys.exit(1)\n")
+    rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
+    assert rows[0]["signal"] == "PROPOSED" and rows[0]["detail"]["agent_exit"] == 1
+    assert "max turns" in rows[0]["detail"]["agent_tail"]
+    assert sorted(rows[0]["detail"]["files_changed"]) == ["HEAL_NOTES.md", "data.txt"]
+    assert ".venv" not in git(root, "show", "--name-only", "--format=", rows[0]["detail"]["branch"])
+    for line in git(root, "worktree", "list", "--porcelain").splitlines():
+        if line.startswith("worktree ") and "lab-heal-" in line:
+            git(root, "worktree", "remove", "--force", line.split(" ", 1)[1])
+
+
 def test_heal_rejects_when_agent_changes_nothing(broken_repo, tmp_path):
     root, sha = broken_repo
     ledger = str(tmp_path / "l.jsonl")
@@ -187,6 +210,30 @@ def test_heal_skips_defect_with_pending_proposal_but_not_attributed_ones(broken_
                                         {"subject": "linux", "defect_key": key, "defect_commit": sha, "branch": "heal/x"},
                                         "2026-09-06T10:20:00Z", sha, "tester")])
     assert LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w")) == []
+
+
+def test_heal_retries_after_gate_rejection_until_cap(broken_repo, tmp_path):
+    root, sha = broken_repo
+    ledger = str(tmp_path / "l.jsonl")
+    defect = mkrow("verify_entrypoint", "src/inst.py", "instrument", "FAIL", sha, "linux",
+                   {"exit": 1, "sha256": None, "args": ["--verify"]})
+    key = "|".join(OL.state_key(defect))
+    heal = lambda branch, ts: OL.make_row("heal", "src/inst.py", "instrument", "PROPOSED", f"PROPOSED {branch}",
+                                          {"subject": "linux", "defect_key": key, "defect_commit": sha, "branch": branch,
+                                           "pr": "https://x/pull/1"}, ts, sha, "tester")
+    gate = lambda branch, ts: OL.make_row("gate", "src/inst.py", "instrument", "REJECTED", f"REJECTED {branch}",
+                                          {"subject": "linux", "defect_key": key, "defect_commit": sha, "branch": branch},
+                                          ts, sha, "tester")
+    OL.append_rows(ledger, [defect, heal("heal/a", "2026-09-06T10:10:00Z")])
+    agent = fake_agent(tmp_path, "pass\n")
+    quiet = open(os.devnull, "w")
+    assert LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=quiet) == []  # pending
+    OL.append_rows(ledger, [gate("heal/a", "2026-09-06T10:20:00Z")])
+    rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=quiet)      # retried
+    assert len(rows) == 1 and rows[0]["signal"] == "REJECTED"
+    OL.append_rows(ledger, [heal("heal/c", "2026-09-06T10:40:00Z"), gate("heal/c", "2026-09-06T10:50:00Z")])
+    assert sum(1 for r in OL.read_rows(ledger) if r["source"] == "heal") == LH.HEAL_ATTEMPT_CAP
+    assert LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=quiet) == []  # at cap
 
 
 def test_heal_exception_path_cleans_worktree_and_records(broken_repo, tmp_path):

@@ -210,11 +210,22 @@ diff, ledger rows it addresses, and the checks it expects to flip.
 
 **R3 -- Gate and merge.** Mechanical acceptance replaces human review for
 non-reserved changes.
-- [ ] Gate = `./tools/check.sh` + CI + re-graded eval set + calibration
-  fixtures for any touched instrument (M3) + an A1--A8 invariant check + an
-  independent verifier of a different model family (M4, `C7`, `C8`).
-- [ ] Auto-merge on green; auto-close with a ledger row on red; owner-reserved
-  decisions (constraint 6) are routed to the owner with the evidence attached.
+- [x] *Minimal (2026-09-07, `docs/plans/LAB_RSI_R3_IMPLEMENTATION_PLAN.md`):*
+  `src/lab_gate.py` decides every heal PR: merge iff the required CI checks
+  (the full `check.sh` battery on two platforms) are green, the defect's own
+  check passes at the PR head in a fresh worktree, the scope is clean (ledger
+  files append-only, no test deletions, constitution byte-identical) and a
+  read-only verifier of a **different model family** (pi/LiteLLM open-weights
+  or codex; the family inequality is enforced in code, `C7`) answers AGREE.
+  Still open: re-graded eval set and calibration fixtures (M3) and a semantic
+  A1--A8 checker (M5) as gate inputs.
+- [x] Auto-merge on green (`Merge PR #N: …`, branch deleted); auto-close with
+  the reasons and a `gate` ledger row on red; owner-reserved decisions
+  (constraint 6: constitution, registrations, G3+ grades, the gate's own
+  machinery, an agent's `OWNER-RESERVED` flag, or an exhausted heal attempt
+  cap) are routed as one labelled GitHub issue per occurrence with the
+  evidence attached. `tools/lab_loop.sh` runs observe → attribute → heal →
+  gate → learn on a schedule (launchd / cron) and commits the appended rows.
 - Gate R3: a loop-authored PR that breaks a calibration fixture is rejected
   with no human action; one that fixes an attributed FAIL merges with no human
   action.
@@ -450,7 +461,7 @@ Use small, reviewable changes in this order:
 | 4 | **R1** artifact registry and attribution bisection | R1 | IN PROGRESS (2026-09-07) |
 | 5 | **R4 + R5, minimal closed loop**: healer that takes an open ledger defect, dispatches a repair agent in a worktree, gates it with the full check battery and opens the PR; lessons ledger written on every closed defect and read by the healer | R4, R5 | NEXT -- lab owner directive 2026-09-07: RSI stages first |
 | 6 | **R2** proposer generalized (artifact-class-restricted proposer with its own evals; the healer's dispatch becomes the proposer) | R2 | after 5 |
-| 7 | **R3** mechanical gate and auto-merge, owner-reserved routing | R3 | after 6 |
+| 7 | **R3** mechanical gate and auto-merge, owner-reserved routing, loop scheduler | R3 | COMPLETE (minimal) -- 2026-09-07, pulled ahead of 6 because heal PRs were waiting for a human |
 | 8 | **R4 + R5, full**: source-drift and replay triggers; model re-tiering; hypothesis-to-registration | R4, R5 | after 7 |
 | 9 | Complete dependency declaration, lockfile, clean CI | M1 | LAST TIER -- only when an R stage needs deterministic replay |
 | 10 | Schemas, registration source of truth, atomic artifact writes | M2 | LAST TIER -- only when the proposer needs machine-readable contracts |
@@ -531,6 +542,7 @@ A1--A8 invariant violated along the way (acceptance gate R).
 | 1.2 | 2026-07-10 | Recorded the merged PR #18 planning checkpoint and added explicit delivery status to every change set. |
 | 1.3 | 2026-09-06 | Re-ordered the program under constitution article A0 (PR #21): A0 becomes the primary objective; added baseline finding B9, control C11, constraints 6-7 (owner-reserved decisions, A1-A8 preserved), Milestone R (closed-loop self-improvement, stages R0-R5) as the organizing milestone, a "serves A0 as" note on M1-M5, the interleaved 13-step delivery sequence, loop metrics, and the A0 completion condition. Recorded PR #20's ahead-of-sequence M4 evidence. M0-M5 checklists unchanged. |
 | 1.4 | 2026-09-07 | Lab owner directive: the goal is RSI and anything with little impact on it is last. Delivery sequence re-ordered: R1, then a minimal R4+R5 closed loop (healer + lessons ledger), then R2, R3, full R4+R5; M1-M5 moved to the last tier, pulled forward only when an R stage needs them. R0 recorded COMPLETE (PR #24, defects closed by PR #25, #27). |
+| 1.5 | 2026-09-07 | R3 delivered ahead of R2 (change set 7 before 6): heal PRs were waiting for a human, which constraint 6 counts as a loop defect. Recorded the minimal R3 gate (mechanical checks + different-family verifier + owner routing + scheduler) and what stays open in it (M3 fixtures, M5 semantic invariants). |
 
 ## 11. Method references
 
