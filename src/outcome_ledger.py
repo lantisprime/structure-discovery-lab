@@ -30,6 +30,7 @@ DEFAULT_LEDGER = os.path.join("results", "outcome_ledger.jsonl")
 SCHEMA_VERSION = 1
 SOURCES = ("agent_eval", "design_verifier", "ledger_integrity",
            "verify_entrypoint", "pytest", "collector",
+           "replay",                 # R4 full: a declared derived artefact regenerated and byte-compared
            "attribution",            # R1: who/what introduced a defect
            "heal",                   # R4: a repair was proposed (PR) or rejected by the healer's own gate
            "gate")                   # R3: a proposal was merged, rejected, or routed to the owner

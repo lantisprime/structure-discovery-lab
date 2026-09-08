@@ -9,8 +9,14 @@ contract.
     python3 src/outcome_collect.py --sources agent_eval,design_verifier
 
 Sources: agent_eval, design_verifier, ledger_integrity, verify_entrypoint,
-pytest. Alias `fast` = the first three (seconds); `verify_entrypoint` and
-`pytest` take minutes.
+pytest, replay. Alias `fast` = the first three (seconds); `verify_entrypoint`,
+`pytest` and `replay` take minutes.
+
+replay (R4 full): every derived artefact declared in REPLAY_TARGETS is
+regenerated in a temporary detached worktree at HEAD and byte-compared with
+the committed version (PASS identical / FAIL drifted / ERROR script failed).
+The working tree is never modified; src/replay_check.py is the same check for
+one artefact in any checkout (bisection, healer gate, R3 gate).
 
 --gate: exit 1 iff a NEW defect row was appended (its state key was absent
 from the ledger before this run). Known open defects stay visible and do not
@@ -28,6 +34,7 @@ import re
 import socket
 import subprocess
 import sys
+import tempfile
 import traceback
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -57,7 +64,21 @@ PYTEST_SUITES = [
     ("riemann-zero-lab/tests", ["riemann-zero-lab/tests"]),
 ]
 
+# Regenerable derived artefacts: (script, args, outputs). The single declaration
+# behind the `replay` source (what to regenerate), the attributor's check
+# command and the healer's / R3 gate's scope exemption (what a repair may
+# overwrite under results/). Everything else under results/ stays immutable.
+REPLAY_TARGETS = [
+    ("src/meta_uniformity.py", [], ["results/meta_uniformity.json"]),
+]
+REPLAY_CHECK = "src/replay_check.py"
+
 SUBPROCESS_TIMEOUT = 900
+
+
+def replay_outputs(artifact):
+    """Declared regenerable outputs of an artefact ([] when it declares none)."""
+    return [o for script, _args, outs in REPLAY_TARGETS if script == artifact for o in outs]
 
 
 # ---------------------------------------------------------------- context --
@@ -352,11 +373,52 @@ def source_pytest(ctx):
     return rows
 
 
+class DetachedWorktree:
+    """Temporary detached git worktree at a commit; removed on exit."""
+
+    def __init__(self, root, commit="HEAD"):
+        self.root, self.commit = root, commit
+        self.path = tempfile.mkdtemp(prefix="lab-replay-")
+
+    def __enter__(self):
+        os.rmdir(self.path)
+        p = subprocess.run(["git", "worktree", "add", "--detach", "--quiet", self.path, self.commit],
+                           cwd=self.root, capture_output=True, text=True, timeout=300)
+        if p.returncode != 0:
+            raise RuntimeError(f"worktree add failed: {p.stderr.strip()[-200:]}")
+        return self.path
+
+    def __exit__(self, *exc):
+        git(self.root, "worktree", "remove", "--force", self.path)
+        git(self.root, "worktree", "prune")
+
+
+def source_replay(ctx):
+    """One row per declared script: regenerate in a detached worktree at HEAD
+    (the committed bytes are what the worktree holds before the run) and
+    compare every declared output with what the script wrote."""
+    import replay_check as RC
+    rows = []
+    for script, args, outputs in REPLAY_TARGETS:
+        detail = {"subject": sys.platform, "args": list(args)}
+        try:
+            with DetachedWorktree(ctx.root) as wt:
+                res = RC.replay(wt, script, args, outputs, timeout=SUBPROCESS_TIMEOUT)
+        except Exception as e:  # one broken target must not hide the others
+            rows.append(ctx.row("replay", script, "instrument", "ERROR",
+                                f"{type(e).__name__}: {e}"[:OL.EVIDENCE_MAX], detail))
+            continue
+        detail.update({"exit": res["exit"], "outputs": res["outputs"]})
+        rows.append(ctx.row("replay", script, "instrument", res["signal"], res["evidence"][:OL.EVIDENCE_MAX], detail))
+    return rows
+
+
 SOURCES = {"agent_eval": source_agent_eval,
            "design_verifier": source_design_verifier,
            "ledger_integrity": source_ledger_integrity,
            "verify_entrypoint": source_verify_entrypoint,
-           "pytest": source_pytest}
+           "pytest": source_pytest,
+           "replay": source_replay}
 FAST = ("agent_eval", "design_verifier", "ledger_integrity")
 
 

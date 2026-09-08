@@ -206,6 +206,75 @@ def test_new_is_noop_on_committed_ledger():
     assert "no unattributed defects" in r.stdout or "attributed" in r.stdout
 
 
+# R4 full REQ-2: replay check ------------------------------------------------------
+
+GEN = ("import json\nopen('results/side.txt', 'w').write('side\\n')\n"
+       "json.dump({'n': open('data.txt').read().strip()}, open('results/out.json', 'w'))\n")
+
+
+@pytest.fixture
+def drift_repo(tmp_path):
+    """c0: generator + fresh artefact; c1: data changed, artefact not regenerated (the drift);
+    c2: unrelated commit. The replay checker exists at none of them."""
+    root = tmp_path / "repo"
+    (root / "src").mkdir(parents=True), (root / "results").mkdir()
+    (root / "src" / "gen.py").write_text(GEN)
+    (root / "data.txt").write_text("7\n")
+    (root / "results" / "out.json").write_text('{"n": "7"}')
+    (root / "results" / "side.txt").write_text("old\n")
+    git(root, "init", "-q", "-b", "main")
+    git(root, "config", "user.email", "t@t"), git(root, "config", "user.name", "t")
+    git(root, "add", "-A"), git(root, "commit", "-qm", "c0 fresh")
+    shas = [git(root, "rev-parse", "HEAD")]
+    (root / "data.txt").write_text("16\n")
+    git(root, "add", "-A"), git(root, "commit", "-qm", "c1 data changed, artefact stale")
+    shas.append(git(root, "rev-parse", "HEAD"))
+    (root / "readme.txt").write_text("x")
+    git(root, "add", "-A"), git(root, "commit", "-qm", "c2 unrelated")
+    shas.append(git(root, "rev-parse", "HEAD"))
+    return root, shas
+
+
+def test_replay_check_cli(drift_repo):
+    root, shas = drift_repo
+    cli = [sys.executable, os.path.join(REPO, "src", "replay_check.py"), "src/gen.py", "--outputs", "results/out.json"]
+    r = subprocess.run(cli, cwd=root, capture_output=True, text=True)
+    assert r.returncode == 1 and r.stdout.strip().splitlines()[-1].startswith("FAIL results/out.json drifted"), r.stdout + r.stderr
+    assert "committed" in r.stdout and "regenerated" in r.stdout
+    # every byte restored: the declared output and the side-effect file; nothing new left behind
+    assert git(root, "status", "--porcelain") == ""
+    assert (root / "results" / "out.json").read_text() == '{"n": "7"}' and (root / "results" / "side.txt").read_text() == "old\n"
+    # an uncommitted regeneration (the healer's worktree) is judged as the candidate, not HEAD
+    (root / "results" / "out.json").write_text('{"n": "16"}')
+    r = subprocess.run(cli, cwd=root, capture_output=True, text=True)
+    assert r.returncode == 0 and r.stdout.startswith("PASS sha256="), r.stdout + r.stderr
+    assert (root / "results" / "out.json").read_text() == '{"n": "16"}'
+    git(root, "checkout", "--", "results/out.json")
+    # a generator that fails is ERROR (exit 2), and the output is still restored
+    (root / "src" / "gen.py").write_text("import sys\nopen('results/out.json','w').write('half')\nsys.exit(3)\n")
+    r = subprocess.run(cli, cwd=root, capture_output=True, text=True)
+    assert r.returncode == 2 and "ERROR" in r.stdout and (root / "results" / "out.json").read_text() == '{"n": "7"}'
+
+
+def test_check_command_replay_and_bisect_attributes_the_stale_input_commit(drift_repo, tmp_path):
+    root, shas = drift_repo
+    row = mkrow("replay", "src/gen.py", "instrument", "FAIL", shas[2][:7], "linux",
+                {"args": [], "exit": 0, "outputs": {"results/out.json": {"committed": "a", "regenerated": "b", "same": False}}})
+    argv = OA.check_command(row)
+    assert argv == [sys.executable, os.path.join(REPO, "src", "replay_check.py"), "src/gen.py",
+                    "--outputs", "results/out.json", "--args"]
+    assert OA.check_command(mkrow("replay", "src/nothing.py", "instrument", "FAIL", "abc1234", "linux", {})) is None
+    # the lab's checker runs in the probe worktree against the probe commit's artefact
+    assert OA.run_check_at(root, shas[0], argv) == "PASS"
+    assert OA.run_check_at(root, shas[2], argv) == "FAIL"
+    assert git(root, "status", "--porcelain") == "" and "lab-probe-" not in git(root, "worktree", "list")
+    ledger = str(tmp_path / "l.jsonl")
+    OL.append_rows(ledger, [row])
+    appended = OA.run(ledger, root=root, out=open(os.devnull, "w"))
+    d = appended[0]["detail"]
+    assert d["method"] == "bisect" and d["introduced_by"] == shas[1][:7] and d["last_good"] == shas[0][:7]
+
+
 # REQ-8 (slow, opt-in) ----------------------------------------------------------
 
 @pytest.mark.skipif(not os.environ.get("LAB_SLOW_TESTS"), reason="real-history bisection (~1-2 min); LAB_SLOW_TESTS=1")

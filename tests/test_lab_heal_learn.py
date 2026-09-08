@@ -416,6 +416,43 @@ def test_heal_rejects_out_of_scope_changes_before_gate(broken_repo, tmp_path):
     assert LH.out_of_scope(["src/x.py"], "ledger", "results/agent_runs/propose-x") == ["src/x.py"]
 
 
+def test_heal_allows_declared_regeneration_only(broken_repo, tmp_path, monkeypatch):
+    """R4 full REQ-3: a tracked results/ file may be rewritten iff the defect's
+    artefact declares it as its regenerable output; any other one stays frozen."""
+    root, sha = broken_repo
+    (root / "results" / "other.txt").write_text("frozen\n")
+    git(root, "add", "-A"), git(root, "commit", "-qm", "another frozen result")
+    sha = git(root, "rev-parse", "--short", "HEAD")
+    monkeypatch.setattr(LH.OC, "REPLAY_TARGETS", [("src/inst.py", [], ["results/data.txt"])])
+    ledger = new_ledger(tmp_path)
+    defect = mkrow("replay", "src/inst.py", "instrument", "FAIL", sha, "linux",
+                   {"args": [], "exit": 0, "outputs": {"results/data.txt": {"committed": "a", "regenerated": "b", "same": False}}})
+    OL.append_rows(ledger, [defect])
+    key = "|".join(OL.state_key(defect))
+    regen = fake_agent(tmp_path, "assert 'Regenerable outputs' in brief and 'results/data.txt' in brief\n"
+                                 "open('results/data.txt','w').write('okay\\n')\nopen('HEAL_NOTES.md','w').write('regenerated\\n')\n",
+                       name="regen.py")
+    rows = LH.run(ledger, root=str(root), defect_key=key, agent_cmd=regen, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
+    assert rows[0]["signal"] == "PROPOSED", (rows[0]["detail"].get("stage"), rows[0]["evidence"])
+    assert rows[0]["detail"]["regenerable"] == ["results/data.txt"]
+    assert sorted(rows[0]["detail"]["files_changed"]) == ["HEAL_NOTES.md", "results/data.txt"]
+    # the same rewrite of a results/ file the artefact does not declare is still frozen
+    other = fake_agent(tmp_path, "open('results/other.txt','w').write('x\\n')\nopen('HEAL_NOTES.md','w').write('n\\n')\n",
+                       name="other.py")
+    rows = LH.run(ledger, root=str(root), defect_key=key, agent_cmd=other, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
+    assert rows[0]["detail"]["stage"] == "scope" and rows[0]["detail"]["frozen_results"] == ["results/other.txt"]
+    # deleting the declared output is a rewrite, not a regeneration
+    deleter = fake_agent(tmp_path, "import os\nos.remove('results/data.txt')\nopen('HEAL_NOTES.md','w').write('n\\n')\n",
+                         name="deleter.py")
+    rows = LH.run(ledger, root=str(root), defect_key=key, agent_cmd=deleter, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
+    assert rows[0]["detail"]["stage"] == "scope" and rows[0]["detail"]["frozen_results"] == ["results/data.txt"]
+    assert LH.scope_violations(["results/a.json"], ["results/a.json"], "instrument", "r", ["results/a.json"]) == {}
+    assert LH.scope_violations(["results/a.json"], ["results/a.json"], "instrument", "r", []) == {"frozen_results": ["results/a.json"]}
+    for line in git(root, "worktree", "list", "--porcelain").splitlines():
+        if line.startswith("worktree ") and "lab-heal-" in line:
+            git(root, "worktree", "remove", "--force", line.split(" ", 1)[1])
+
+
 def test_heal_records_owner_reserved_stop_without_running_the_gate(broken_repo, tmp_path):
     root, sha = broken_repo
     ledger = new_ledger(tmp_path)

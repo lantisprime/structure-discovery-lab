@@ -68,7 +68,9 @@ PROPOSER_EVALS = ("P-1", "P-2")
 # Under results/ only NEW files are ever allowed (a frozen result or a
 # historical dispatch record is never rewritten; a new version carries its own
 # provenance), and no other dispatch record may be touched at all -- both
-# enforced by scope_violations(), not by this table (review finding 1).
+# enforced by scope_violations(), not by this table (review finding 1). The one
+# exception: the outputs the defect's artefact declares in
+# outcome_collect.REPLAY_TARGETS may be regenerated (R4 full).
 CLASS_SCOPE = {
     "agent": ("agents/",),
     "instrument": ("src/", "tests/", "results/", "docs/"),
@@ -169,15 +171,17 @@ def out_of_scope(files, cls, record_rel):
             and not f.startswith(allowed)]
 
 
-def scope_violations(files, tracked, cls, record_rel):
+def scope_violations(files, tracked, cls, record_rel, regenerable=()):
     """Mechanical scope verdict: {} when clean, else the offending paths by kind.
     `files` = every changed path, `tracked` = the subset that existed at the base
-    (modified or deleted, i.e. not new)."""
+    (modified or deleted, i.e. not new). `regenerable` = the tracked results/
+    files the defect's artefact declares as its own outputs (REPLAY_TARGETS):
+    regenerating those is the honest fix for a replay drift, nothing else is."""
     v = {}
     outside = out_of_scope(files, cls, record_rel)
     if outside:
         v["out_of_scope"] = outside
-    frozen = [p for p in tracked if p.startswith("results/")]
+    frozen = [p for p in tracked if p.startswith("results/") and p not in regenerable]
     if frozen:
         v["frozen_results"] = frozen            # a tracked file under results/ was rewritten or deleted
     audit = [p for p in files if p.startswith(RECORD_DIR + "/") and not p.startswith(record_rel + "/")]
@@ -214,10 +218,20 @@ def brief_for(defect, rows, root):
     ]
     if check:
         lines += ["", "## The check that must pass when you are done", "```",
-                  " ".join(shlex.quote(c) for c in check).replace(shlex.quote(sys.executable), ".venv/bin/python"),
+                  " ".join(shlex.quote(c) for c in check).replace(shlex.quote(sys.executable), ".venv/bin/python")
+                  .replace(shlex.quote(os.path.join(OC.ROOT, OC.REPLAY_CHECK)), OC.REPLAY_CHECK),
                   "```"]
     if attr:
         lines += ["", "## Attribution (R1)", "```json", json.dumps(attr["detail"], indent=1), "```"]
+    regen = OC.replay_outputs(defect["artifact"])
+    if regen:
+        lines += ["", "## Regenerable outputs (declared in outcome_collect.REPLAY_TARGETS)",
+                  "This artifact OWNS the derived files below. They are the one declared exception to the",
+                  "rule against rewriting a tracked file under results/: overwriting them by running the",
+                  "script is the expected fix for a replay drift and is inside scope (the healer and the",
+                  "gate exempt exactly these paths). Every other tracked file under results/ stays frozen.",
+                  "Do not hand-edit them; regenerate them and let the check above confirm the bytes."]
+        lines += [f"- `{o}`" for o in regen]
     if lessons:
         lines += ["", "## Lessons already learned about this artifact or class"]
         lines += [f"- {l['lesson']}" for l in lessons[:8]]
@@ -363,10 +377,11 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
     key = "|".join(OL.state_key(defect))
     cls = (AR.classify(defect["artifact"], AR.build_registry(root)) or {"class": defect["artifact_class"]})["class"]
     record = f"{RECORD_DIR}/propose-{branch.split('/', 1)[-1]}"
+    regenerable = OC.replay_outputs(defect["artifact"])
     base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key,
                    "defect_commit": defect["commit"], "branch": branch, "model": model, "base": base,
                    "agent": meta.get("name", "lab-proposer"), "agent_sha256": agent_sha, "record": record,
-                   "class_scope": list(CLASS_SCOPE.get(cls, ()))}
+                   "class_scope": list(CLASS_SCOPE.get(cls, ())), "regenerable": regenerable}
 
     def reject(stage, why, extra=None, keep=False):
         row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "REJECTED",
@@ -399,7 +414,8 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
         if not files:
             why = f"agent exit {rc}, no file changed" + (f": {(aout.strip() or aerr.strip())[-200:]}" if (aout + aerr).strip() else "")
             return reject("agent", why)
-        bad = scope_violations(files, [f for f in tracked_changes(wt) if not f.startswith(record + "/")], cls, record)
+        bad = scope_violations(files, [f for f in tracked_changes(wt) if not f.startswith(record + "/")], cls, record,
+                               [o for o in regenerable if os.path.exists(os.path.join(wt, o))])   # deleted = rewritten
         if bad:
             why = "; ".join({"out_of_scope": f"changed outside the {cls} class scope",
                              "frozen_results": "rewrote or deleted a tracked file under results/ (frozen)",

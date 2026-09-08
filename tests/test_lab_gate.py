@@ -293,6 +293,26 @@ def test_gate_rejects_rewritten_frozen_result_without_calling_verifier(tmp_path)
     assert called == [] and all(c[0] != "merge" for c in gh.calls)
 
 
+def test_gate_scope_exempts_declared_outputs_only(tmp_path, monkeypatch):
+    """R4 full REQ-3: the gate applies the healer's exemption and no other."""
+    monkeypatch.setattr(LG.OC, "REPLAY_TARGETS", [("src/inst.py", [], ["results/panel.json"])])
+    d = defect_row()
+    ledger = ledger_with(tmp_path, [d, heal_row(d)])
+    gh = FakeGH(diff={"paths": ["results/panel.json"], "deleted": [], "ledger_deletions": {},
+                      "results_modified": ["results/panel.json"], "kb_added_lines": [], "text": "x"})
+    rows = run(ledger, gh)
+    assert rows[0]["signal"] == "MERGED" and rows[0]["detail"]["checks"]["scope"]["regenerable"] == ["results/panel.json"]
+    d2 = defect_row(commit="bbb2222", ts="2026-09-06T12:00:00Z")
+    ledger = ledger_with(tmp_path / "2", [d2, heal_row(d2, ts="2026-09-06T12:20:00Z")])
+    gh = FakeGH(diff={"paths": ["results/panel.json", "results/frozen.json"], "deleted": [], "ledger_deletions": {},
+                      "results_modified": ["results/panel.json", "results/frozen.json"], "kb_added_lines": [], "text": "x"})
+    rows = run(ledger, gh)
+    assert rows[0]["signal"] == "REJECTED" and "results/frozen.json" in rows[0]["evidence"] and "panel.json" not in rows[0]["evidence"]
+    assert LG.scope_reasons({"results_modified": ["results/panel.json"], "deleted": ["results/panel.json"]},
+                            ["results/panel.json"])                                   # deleted = rewritten
+    assert LG.scope_reasons({"results_modified": ["results/panel.json"]}, ["results/panel.json"]) == []
+
+
 def test_gate_rejects_same_family_verifier(tmp_path):
     d = defect_row()
     ledger = ledger_with(tmp_path, [d, heal_row(d)])

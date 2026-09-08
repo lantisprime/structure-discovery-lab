@@ -192,11 +192,15 @@ def reserved_reasons(diff, notes, attempts):
     return why
 
 
-def scope_reasons(diff):
+def scope_reasons(diff, regenerable=()):
+    """`regenerable` = the tracked results/ files the defect's artefact declares
+    as its outputs (outcome_collect.REPLAY_TARGETS); the same exemption the
+    healer applies, and the only one. A deleted declared output is still a rewrite."""
     why = [f"ledger file lost {n} line(s) (append-only): {p}" for p, n in diff.get("ledger_deletions", {}).items()]
     why += [f"test file deleted: {p}" for p in diff.get("deleted", [])
             if p.startswith("tests/") or os.path.basename(p).startswith("test_")]
-    why += [f"frozen result or historical record rewritten: {p}" for p in diff.get("results_modified", [])]
+    why += [f"frozen result or historical record rewritten: {p}" for p in diff.get("results_modified", [])
+            if p not in regenerable or p in diff.get("deleted", [])]
     return why
 
 
@@ -411,13 +415,14 @@ class Gate:
                              base_detail, checks, [f"pr state {pr.get('state')}"])
         diff = self.gh.diff(pr["baseRefName"], pr["headRefName"])
         attempts = heal_attempts(rows, key, dcommit)
+        regenerable = OC.replay_outputs(defect["artifact"])
         checks["scope"] = {"paths": diff["paths"][:50], "deleted": diff.get("deleted", []),
                            "ledger_deletions": diff.get("ledger_deletions", {}),
-                           "results_modified": diff.get("results_modified", [])}
+                           "results_modified": diff.get("results_modified", []), "regenerable": regenerable}
         routed = reserved_reasons(diff, d.get("notes"), attempts)
         if routed:
             return self._route(proposal, defect, attr, base_detail, checks, routed)
-        reasons += scope_reasons(diff)
+        reasons += scope_reasons(diff, regenerable)
         if diff.get("truncated"):   # the verifier must see the whole change (review finding 5)
             reasons.append(f"diff too large to verify in full ({diff.get('text_chars')} chars > {DIFF_MAX})")
         checks["ci"] = check_ci(self.gh.checks(num))
