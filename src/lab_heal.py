@@ -18,9 +18,11 @@ R2 (proposer): the repair agent is the registered `agents/lab-proposer.md`
 its sha256 is on every row); it is dispatched only while its own eval rows
 (P-1, P-2) are PASS in the ledger; a change outside the attributed artifact
 class is REJECTED at stage `scope` before the gate runs; every dispatch
-leaves a record under results/agent_runs/propose-<slug>-<ts>/ (prompt.md and
-agent.txt written before the agent starts, report.md = its HEAL_NOTES.md,
-gate.txt) that is committed with the fix and quoted in the PR body.
+leaves a record under results/agent_runs/propose-<slug>-<ts>/ (prompt.md,
+agent.txt and lessons.txt written before the agent starts, report.md = its
+HEAL_NOTES.md, gate.txt) that is committed with the fix and quoted in the PR
+body. R5 full: the lessons injected into the brief are on the row and in
+agent.txt as `lessons_sha256` (lessons.txt holds them verbatim).
 
 Guardrails given to the agent, verbatim in the brief: preserve A1-A8; never
 edit frozen results or existing ledger rows (append only); never touch
@@ -197,12 +199,32 @@ def write_record(wt, rel, files):
             fh.write(text)
 
 
-def brief_for(defect, rows, root):
+LESSONS_MAX = 8   # lessons injected into a brief, most relevant first
+
+
+def lessons_for(defect, root):
+    """The lessons a brief for this defect injects (same artifact first, then
+    same class), capped; hash-linked on the heal row (R5 full)."""
+    reg = AR.classify(defect["artifact"], AR.build_registry(root)) or {"class": defect["artifact_class"]}
+    return LL.relevant(LL.read_lessons(LL.lessons_path()), defect["artifact"], reg["class"])[:LESSONS_MAX]
+
+
+def lessons_text(lessons):
+    return "".join(json.dumps(l, sort_keys=True, ensure_ascii=True) + "\n" for l in lessons)
+
+
+def lessons_sha256(lessons):
+    """sha256 of the injected lessons verbatim (their JSON lines, in order):
+    a row carrying it names exactly what shaped the repair."""
+    return OC.sha256_bytes(lessons_text(lessons).encode("utf-8"))
+
+
+def brief_for(defect, rows, root, lessons=None):
     key = "|".join(OL.state_key(defect))
     attr = next((r for r in reversed(rows) if r["source"] == "attribution"
                  and r["detail"].get("defect_key") == key), None)
     reg = AR.classify(defect["artifact"], AR.build_registry(root)) or {"class": defect["artifact_class"]}
-    lessons = LL.relevant(LL.read_lessons(LL.lessons_path()), defect["artifact"], reg["class"])
+    lessons = lessons_for(defect, root) if lessons is None else lessons
     check = OA.check_command(defect)
     lines = [
         "# Repair brief (autonomous healer, constitution A0 / Milestone R4)",
@@ -234,7 +256,7 @@ def brief_for(defect, rows, root):
         lines += [f"- `{o}`" for o in regen]
     if lessons:
         lines += ["", "## Lessons already learned about this artifact or class"]
-        lines += [f"- {l['lesson']}" for l in lessons[:8]]
+        lines += [f"- {l['lesson']}" for l in lessons]
     lines += [
         "",
         "## Guardrails (non-negotiable)",
@@ -370,7 +392,9 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
              agent_cmd=None, gate_cmd=None, keep_worktree=False, base="master", out=sys.stdout):
     meta, body, agent_sha = load_proposer()
     model = model or meta.get("model") or "sonnet"
-    brief = brief_for(defect, rows, root)
+    lessons = lessons_for(defect, root)
+    lessons_sha = lessons_sha256(lessons)
+    brief = brief_for(defect, rows, root, lessons)
     prompt = body.rstrip("\n") + "\n\n---\n\n" + brief
     branch = slug(defect)
     ctx = OC.Ctx(root, rows)
@@ -381,7 +405,8 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
     base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key,
                    "defect_commit": defect["commit"], "branch": branch, "model": model, "base": base,
                    "agent": meta.get("name", "lab-proposer"), "agent_sha256": agent_sha, "record": record,
-                   "class_scope": list(CLASS_SCOPE.get(cls, ())), "regenerable": regenerable}
+                   "class_scope": list(CLASS_SCOPE.get(cls, ())), "regenerable": regenerable,
+                   "lessons_sha256": lessons_sha, "lessons_n": len(lessons)}
 
     def reject(stage, why, extra=None, keep=False):
         row = ctx.row("heal", defect["artifact"], defect["artifact_class"], "REJECTED",
@@ -401,7 +426,9 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
         write_record(wt, record, {
             "prompt.md": prompt,
             "agent.txt": f"agent: {base_detail['agent']} | model: {model} | definition sha256: {agent_sha} | "
-                         f"defect: {key} @ {defect['commit']} | class: {cls} | {now_ts()}\n"})
+                         f"defect: {key} @ {defect['commit']} | class: {cls} | "
+                         f"lessons sha256: {lessons_sha} ({len(lessons)}) | {now_ts()}\n",
+            "lessons.txt": lessons_text(lessons)})
         rc, aout, aerr = dispatch_agent(wt, prompt, model, max_turns, agent_cmd)
         files = [f for f in changed_files(wt) if not f.startswith(record + "/")]
         notes_path = os.path.join(wt, NOTES_FILE)
@@ -433,8 +460,8 @@ def heal_one(defect, rows, root, ledger, model=None, max_turns=40, push=False,
             else:
                 os.remove(notes_path)
         if flagged_owner_reserved(notes):
-            # The proposer stopped on purpose: nothing to gate. The attempt still counts,
-            # so the R3 gate routes the occurrence to the owner at the attempt cap.
+            # The proposer stopped on purpose: nothing to gate. The R3 gate routes the
+            # occurrence to the owner at once (route_unhealable), notes attached.
             return reject("owner-reserved", f"the proposer flagged {OWNER_MARK}: " +
                           " ".join(notes.split())[:200], {"notes": notes[:2000]})
         ok, summary = gate(wt, defect, gate_cmd)
@@ -486,6 +513,9 @@ def run(ledger, root=ROOT, defect_key=None, **kw):
     pending = {(r["detail"].get("defect_key"), r["detail"].get("defect_commit"))
                for r in rows if r["source"] == "heal" and r["signal"] == "PROPOSED"
                and (r["detail"].get("defect_key"), r["detail"].get("defect_commit"), r["detail"].get("branch")) not in gated}
+    # An occurrence the gate routed to the owner is the owner's now: no more rolls on it.
+    pending |= {(r["detail"].get("defect_key"), r["detail"].get("defect_commit"))
+                for r in rows if r["source"] == "gate" and r["signal"] == "ROUTED"}
     attempts = {}
     for r in rows:
         if r["source"] == "heal":

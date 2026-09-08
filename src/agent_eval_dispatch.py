@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Headless eval dispatch with a replayable record (R2).
 
-    python3 src/agent_eval_dispatch.py --eval V-2 [--model haiku] [--date YYYYMMDD]
+    python3 src/agent_eval_dispatch.py --eval V-2 [--model haiku] [--date YYYYMMDD] [--rolls N]
     python3 src/agent_eval_dispatch.py --stale [--ledger PATH]
 
 One eval, one NEW record under results/agent_runs/eval-<slug>-<date>/:
@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
@@ -355,13 +356,33 @@ def main(argv):
     g.add_argument("--stale", action="store_true")
     ap.add_argument("--model", default=None, help="override the tier in the agent's frontmatter (recorded)")
     ap.add_argument("--date", default=None, help="record date YYYYMMDD (default today, UTC)")
+    ap.add_argument("--rolls", type=int, default=1, help="with --eval: dispatch N records (one roll is not an eval)")
     ap.add_argument("--ledger", default=None)
     a = ap.parse_args(argv)
     if a.stale:
         res = run_stale(ROOT, OL.ledger_path(a.ledger), model=a.model, date=a.date)
     else:
-        res = [dispatch(a.eval, ROOT, model=a.model, date=a.date)]
+        res = roll(a.eval, ROOT, a.rolls, model=a.model, date=a.date)
     return 0 if all(r["grade"] == "PASS" for r in res) else 1
+
+
+def roll(eval_id, root, n, model=None, agent_cmd=None, date=None, out=sys.stdout):
+    """N dispatches of one eval, each its own dated record (the stamp has second
+    resolution, so consecutive rolls wait for a fresh one). An explicit --date
+    serves only a single roll. src/lab_tier.py --recommend reads them all."""
+    if n > 1 and date:
+        raise SystemExit("--rolls needs fresh record stamps; drop --date")
+    results, last = [], None
+    for _ in range(max(1, n)):
+        stamp = date
+        if stamp is None:
+            stamp = today()
+            while stamp == last:
+                time.sleep(0.2)
+                stamp = today()
+            last = stamp
+        results.append(dispatch(eval_id, root, model=model, agent_cmd=agent_cmd, date=stamp, out=out))
+    return results
 
 
 if __name__ == "__main__":

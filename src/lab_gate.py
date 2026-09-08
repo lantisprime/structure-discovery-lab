@@ -12,7 +12,9 @@ for the same (defect_key, defect_commit, branch), the gate decides ONE of:
             gate machinery; the agent's notes say OWNER-RESERVED; or the
             occurrence has used its heal attempts. One GitHub issue per
             occurrence (label owner-decision) carries the evidence; the PR
-            stays open; nothing is merged.
+            stays open; nothing is merged. An occurrence without a PR is routed
+            too (route_unhealable): as soon as the proposer stops with
+            OWNER-RESERVED (its notes travel with the issue), or at the attempt cap.
   REJECTED  a mechanical check failed (required CI checks not green; the
             defect's own check fails at the PR head in a fresh worktree; a
             ledger file lost lines; a test file was deleted) or the
@@ -185,7 +187,7 @@ def reserved_reasons(diff, notes, attempts):
             why.append(f"gate machinery changed (the gate may not approve changes to itself): {p}")
     if any(KB_GRADE_RE.search(l) for l in diff.get("kb_added_lines", [])):
         why.append("a G3+ evidence grade line was added under docs/kb/ (promotion is owner-reserved)")
-    if OWNER_MARK in (notes or ""):
+    if LH.flagged_owner_reserved(notes):      # a line that is the flag, not a mention in passing
         why.append(f"the repair agent flagged {OWNER_MARK} in its notes")
     if attempts >= HEAL_ATTEMPT_CAP:
         why.append(f"heal attempt cap reached ({attempts} >= {HEAL_ATTEMPT_CAP}); the loop cannot fix this alone")
@@ -478,28 +480,38 @@ class Gate:
         print(row["evidence"], file=self.out)
         return row
 
-    def route_exhausted(self, rows):
-        """Open occurrences that used every heal attempt without a proposal
-        reaching the gate: route them so no defect waits in silence."""
+    def route_unhealable(self, rows):
+        """Open occurrences the loop cannot fix alone, routed without a PR so no
+        defect waits in silence: the proposer stopped on purpose (its latest heal
+        row is REJECTED at stage owner-reserved; the notes travel with the issue)
+        or every heal attempt is spent. One issue per occurrence, reused."""
         out = []
-        done = gated_triples(rows)
         for defect in OA.open_defects(rows):
             key = "|".join(OL.state_key(defect))
-            n = heal_attempts(rows, key, defect["commit"])
-            if n < HEAL_ATTEMPT_CAP or (key, defect["commit"], None) in done:
+            heals = [r for r in rows if r["source"] == "heal" and r["detail"].get("defect_key") == key
+                     and r["detail"].get("defect_commit") == defect["commit"]]
+            n = len(heals)
+            last = heals[-1] if heals else None
+            stopped = last is not None and last["signal"] == "REJECTED" and last["detail"].get("stage") == "owner-reserved"
+            if not stopped and n < HEAL_ATTEMPT_CAP:
                 continue
             if any(r["source"] == "gate" and r["signal"] == "ROUTED" and r["detail"].get("defect_key") == key
                    and r["detail"].get("defect_commit") == defect["commit"] for r in rows):
                 continue
+            notes = (last or {}).get("detail", {}).get("notes", "") if stopped else ""
+            reasons = ([f"the proposer stopped: {OWNER_MARK} flagged in its notes (attempt {n} of {HEAL_ATTEMPT_CAP})"]
+                       if stopped else []) + \
+                      ([f"heal attempt cap reached ({n} >= {HEAL_ATTEMPT_CAP}) with no mergeable proposal"]
+                       if n >= HEAL_ATTEMPT_CAP else [])
             pseudo = {"artifact": defect["artifact"], "artifact_class": defect["artifact_class"],
                       "detail": {"subject": defect["detail"].get("subject", ""), "defect_key": key,
-                                 "defect_commit": defect["commit"], "branch": None, "pr": None, "notes": ""}}
+                                 "defect_commit": defect["commit"], "branch": None, "pr": None, "notes": notes}}
             base_detail = {"subject": defect["detail"].get("subject", ""), "defect_key": key,
                            "defect_commit": defect["commit"], "branch": None, "pr": None, "pr_number": None,
                            "head": None, "base": None}
             attr = find_attribution(rows, key, defect["commit"])
-            out.append(self._route(pseudo, defect, attr, base_detail, {"heal_attempts": n},
-                                   [f"heal attempt cap reached ({n} >= {HEAL_ATTEMPT_CAP}) with no mergeable proposal"]))
+            out.append(self._route(pseudo, defect, attr, base_detail,
+                                   {"heal_attempts": n, "owner_reserved_stop": stopped}, reasons))
         return out
 
 
@@ -519,7 +531,7 @@ def run(ledger, root=ROOT, pr=None, **kw):
         except Exception as e:      # never lose the signal; the proposal stays pending for the next run
             print(f"gate: error on {p['detail'].get('pr')}: {type(e).__name__}: {LH.redact(str(e))}", file=gate.out)
     if pr is None:
-        new += gate.route_exhausted(rows + new)
+        new += gate.route_unhealable(rows + new)
     if not new:
         print("gate: nothing pending", file=gate.out)
     if new and not gate.dry_run:

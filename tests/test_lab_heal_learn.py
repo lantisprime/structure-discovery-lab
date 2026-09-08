@@ -416,6 +416,40 @@ def test_heal_rejects_out_of_scope_changes_before_gate(broken_repo, tmp_path):
     assert LH.out_of_scope(["src/x.py"], "ledger", "results/agent_runs/propose-x") == ["src/x.py"]
 
 
+def test_heal_records_injected_lessons(broken_repo, tmp_path, monkeypatch):
+    """R5 full REQ-5: the lessons a brief injected are hash-linked on the heal
+    row and in agent.txt, and kept verbatim in the record's lessons.txt."""
+    root, sha = broken_repo
+    lessons_file = str(tmp_path / "lessons.jsonl")
+    monkeypatch.setenv("LAB_LESSONS", lessons_file)
+    injected = [{"schema_version": 1, "ts": "2026-09-06T00:00:00Z", "kind": "manual", "artifact": "src/inst.py",
+                 "artifact_class": "instrument", "defect_key": None, "lesson": "inst.py must expect the token ok"},
+                {"schema_version": 1, "ts": "2026-09-06T00:00:01Z", "kind": "manual", "artifact": "src/other.py",
+                 "artifact_class": "instrument", "defect_key": None, "lesson": "class-wide: pin inputs"}]
+    LL.append_lessons(lessons_file, injected + [{"schema_version": 1, "ts": "2026-09-06T00:00:02Z", "kind": "manual",
+                                                  "artifact": "agents/x.md", "artifact_class": "agent", "defect_key": None,
+                                                  "lesson": "not relevant"}])
+    ledger = new_ledger(tmp_path)
+    OL.append_rows(ledger, [defect_row(sha)])
+    agent = fake_agent(tmp_path, "assert 'pin inputs' in brief and 'not relevant' not in brief\n" + FIX +
+                                 "open('HEAL_NOTES.md','w').write('root cause: token typo\\n')\n")
+    rows = LH.run(ledger, root=str(root), agent_cmd=agent, gate_cmd=OK_GATE, push=False, out=open(os.devnull, "w"))
+    d = rows[0]["detail"]
+    assert rows[0]["signal"] == "PROPOSED" and d["lessons_n"] == 2
+    assert d["lessons_sha256"] == LH.lessons_sha256(LH.lessons_for(defect_row(sha), str(root)))
+    assert d["lessons_sha256"] == LH.lessons_sha256(injected) != LH.lessons_sha256([])
+    assert f"lessons sha256: {d['lessons_sha256']} (2)" in git(root, "show", f"{d['branch']}:{d['record']}/agent.txt")
+    assert git(root, "show", f"{d['branch']}:{d['record']}/lessons.txt") == LH.lessons_text(injected).rstrip("\n")
+    # no lessons: the hash of nothing is still on the row (a row without it predates R5 full)
+    monkeypatch.setenv("LAB_LESSONS", str(tmp_path / "none.jsonl"))
+    rows = LH.run(ledger, root=str(root), defect_key=d["defect_key"], agent_cmd=agent, gate_cmd=OK_GATE, push=False,
+                  out=open(os.devnull, "w"))
+    assert rows[0]["detail"]["lessons_n"] == 0 and rows[0]["detail"]["lessons_sha256"] == LH.lessons_sha256([])
+    for line in git(root, "worktree", "list", "--porcelain").splitlines():
+        if line.startswith("worktree ") and "lab-heal-" in line:
+            git(root, "worktree", "remove", "--force", line.split(" ", 1)[1])
+
+
 def test_heal_allows_declared_regeneration_only(broken_repo, tmp_path, monkeypatch):
     """R4 full REQ-3: a tracked results/ file may be rewritten iff the defect's
     artefact declares it as its regenerable output; any other one stays frozen."""

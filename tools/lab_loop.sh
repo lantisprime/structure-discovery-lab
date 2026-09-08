@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The closed loop in one scheduled command (constitution A0, Milestone R):
-#   observe (R0) -> attribute (R1) -> heal + PR (R4) -> gate + merge (R3) -> learn (R5)
+#   observe incl. replay (R0/R4) -> attribute (R1) -> heal + PR (R4) -> gate + merge (R3) -> learn + re-tier (R5)
 # then commit the appended ledger/lessons rows to master (append-only, verified).
 #
 #   ./tools/lab_loop.sh                  run one cycle now
@@ -94,6 +94,7 @@ step "$PY" src/outcome_attribute.py --new
 step "$PY" src/lab_heal.py --new --push
 step "$PY" src/lab_gate.py --new
 step "$PY" src/lab_learn.py --derive
+step "$PY" src/lab_tier.py --recommend
 
 echo; echo "step ledger commit: append-only diff of $LEDGERS + new dispatch records under results/agent_runs -> commit + push origin master"
 [ "$MODE" = "--dry-run" ] && exit 0

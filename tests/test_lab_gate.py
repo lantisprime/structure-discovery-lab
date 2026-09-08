@@ -345,7 +345,7 @@ def test_gate_rejects_when_verifier_disagrees_or_is_silent(tmp_path):
     ({"paths": ["tools/check.sh", "src/inst.py"]}, "", "gate machinery"),
     ({"paths": ["src/lab_gate.py"]}, "", "gate machinery"),
     ({"paths": ["docs/kb/x.md"], "kb_added_lines": ["grade: G3 (confirmed)"]}, "", "G3+"),
-    ({"paths": ["src/inst.py"]}, "root cause needs A0 change: OWNER-RESERVED", "OWNER-RESERVED"),
+    ({"paths": ["src/inst.py"]}, "root cause needs an A0 change.\n\nOWNER-RESERVED: A0 is the owner's", "OWNER-RESERVED"),
 ])
 def test_gate_routes_owner_reserved_changes(tmp_path, diff_patch, notes, needle):
     d = defect_row()
@@ -386,6 +386,35 @@ def test_gate_routes_at_attempt_cap(tmp_path):
     # below the cap nothing is routed
     ledger2 = ledger_with(tmp_path / "2", [d, *rejected[:-1]])
     assert run(ledger2, FakeGH()) == []
+
+
+def test_gate_routes_owner_reserved_stop_on_first_attempt(tmp_path):
+    """R4 full REQ-4: a proposer that stopped with OWNER-RESERVED reaches the
+    owner at once, notes attached, not at the attempt cap; a mention of the
+    token in passing is not a stop."""
+    d = defect_row()
+    notes = "## Root cause\nA8 lacks a ratification date.\n\nOWNER-RESERVED: ratifying constitution entries is the owner's.\n"
+    stop = heal_row(d, "REJECTED", branch="heal/try0", pr=None, notes=notes)
+    stop["detail"]["stage"] = "owner-reserved"
+    ledger = ledger_with(tmp_path, [d, stop])
+    gh = FakeGH()
+    rows = run(ledger, gh)
+    assert len(rows) == 1 and rows[0]["signal"] == "ROUTED" and "the proposer stopped" in rows[0]["evidence"]
+    assert rows[0]["detail"]["checks"] == {"heal_attempts": 1, "owner_reserved_stop": True}
+    issue_body = next(c[2] for c in gh.calls if c[0] == "issue")
+    assert "ratifying constitution entries" in issue_body                 # the notes travel with the issue
+    assert run(ledger, gh) == []                                          # idempotent
+    # the healer leaves a routed occurrence alone (no more rolls on the owner's decision)
+    assert LH.run(ledger, root=REPO, out=open(os.devnull, "w")) == []
+    # a REJECTED row at another stage below the cap routes nothing
+    d2 = defect_row(commit="bbb2222", ts="2026-09-06T12:00:00Z")
+    gate_rej = heal_row(d2, "REJECTED", branch="heal/g", pr=None, notes="Owner-reserved artifacts were not implicated.",
+                        ts="2026-09-06T12:20:00Z")
+    assert run(ledger_with(tmp_path / "2", [d2, gate_rej]), FakeGH()) == []
+    # the gate's own reserved check reads a flag line, not a substring
+    assert not LG.reserved_reasons({"paths": ["src/inst.py"], "kb_added_lines": []},
+                                   "no\nowner-reserved artifacts were implicated", 0)
+    assert LG.reserved_reasons({"paths": ["src/inst.py"], "kb_added_lines": []}, "**OWNER-RESERVED**: A0", 0)
 
 
 def test_gate_dry_run_touches_nothing(tmp_path):
@@ -473,10 +502,13 @@ def test_loop_script_steps_and_lock(tmp_path):
     steps = [l for l in r.stdout.splitlines() if l.startswith("step ")]
     names = " ".join(steps)
     for s in ("outcome_collect.py --all --gate", "agent_eval_dispatch.py --stale", "outcome_attribute.py --new",
-              "lab_heal.py --new --push", "lab_gate.py --new", "lab_learn.py --derive", "ledger commit"):
+              "lab_heal.py --new --push", "lab_gate.py --new", "lab_learn.py --derive", "lab_tier.py --recommend",
+              "ledger commit"):
         assert s in names, names
     assert names.index("outcome_collect") < names.index("agent_eval_dispatch") < names.index("outcome_attribute") \
-        < names.index("lab_heal") < names.index("lab_gate") < names.index("lab_learn") < names.index("ledger commit")
+        < names.index("lab_heal") < names.index("lab_gate") < names.index("lab_learn") < names.index("lab_tier") \
+        < names.index("ledger commit")
+    assert "replay" in LG.OC.SOURCES                       # --all observes replay drift inside collect
     assert "results/agent_runs" in names                   # new records are committed with the rows
     assert not lock.exists()                              # released
     lock.mkdir()
