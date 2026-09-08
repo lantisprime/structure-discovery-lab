@@ -233,7 +233,7 @@ chk('meta frac05 above band (concentrates in #45 family)',
 chk('meta sensitivity: flag robust across compositions',
     all(v['frac_le_05'] >= 0.088 for v in U['composition_sensitivity'].values()),
     True)
-chk('meta exploratory stratum reported', U['exploratory_stratum']['n'], 7)
+chk('meta exploratory stratum reported', U['exploratory_stratum']['n'], 16)
 IV = json.load(open('results/independent_verification.json'))
 blind_key = json.load(open('results/blind/_key.json'))
 conc = 0
@@ -252,9 +252,9 @@ T = [r for r in L if r.get('row_type', 'test') == 'test']
 LIVE = [r for r in T if 'superseded_by' not in r and not r.get('exploratory')]
 # 2026-09-06 PCSO refresh appended 9 EXPLORATORY rows (run pcso_refresh_2026_09_06:
 # payout-sharing x2, strategy-backtest x7); live rows and global_m unchanged at 195.
-# The meta panel (results/meta_uniformity.json) predates them and still reports the
-# 7-row exploratory stratum of its own run — rerun the panel to refresh that count.
 # r2 (same day, after the codex review): the 9 rows were superseded by 9 corrected rows.
+# The meta panel (results/meta_uniformity.json) has been rerun to include the r2
+# rows: exploratory stratum is now 7 (original) + 9 (r2) = 16.
 chk('ledger rows', len(L), 289)
 chk('ledger test rows', len(T), 285)
 chk('ledger live test rows', len(LIVE), 195)
