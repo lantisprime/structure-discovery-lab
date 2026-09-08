@@ -4,6 +4,7 @@
     agents/<name>.md                      -> agent (model tier from frontmatter)
     */results/agent_runs/<record>         -> agent (eval record standing in for a definition)
     src/<script>.py exposing --verify     -> instrument
+    src/<script>.py in REPLAY_TARGETS     -> instrument (regenerates its declared outputs)
     docs/kb/<card>.md (not INDEX.md)      -> theorem_card
     datasets/<set>/provenance/<m>.json    -> adapter_manifest
     results/multiplicity_ledger.jsonl     -> design
@@ -66,6 +67,8 @@ def build_registry(root=ROOT):
         import outcome_collect as OC
         for name, _paths in OC.PYTEST_SUITES:
             reg[name] = {"class": "suite"}
+        for script, _args, outputs in OC.REPLAY_TARGETS:      # a regenerable artefact's script
+            reg.setdefault(script, {"class": "instrument"})["regenerates"] = list(outputs)
     except Exception:  # registry must still build without the collector
         pass
     return reg

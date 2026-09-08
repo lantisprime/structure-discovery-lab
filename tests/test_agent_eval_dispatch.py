@@ -165,6 +165,20 @@ def test_proposer_evals_run_the_real_healer_on_a_fixture(tmp_path):
     assert not [d for d in os.listdir(tmp_path) if d.startswith("lab-eval-p-")]      # fixtures cleaned up
 
 
+def test_rolls_dispatch_n_distinct_records(tmp_path):
+    """R5 full REQ-6: --rolls N is N records with their own stamps in one call."""
+    root = tmp_path / "records"
+    root.mkdir()
+    stopper = fake_agent(tmp_path, "open('HEAL_NOTES.md', 'w').write('OWNER-RESERVED: the owner ratifies.\\n')\n",
+                         name="stopper.py")
+    res = AED.roll("P-2", str(root), 2, agent_cmd=stopper, out=open(os.devnull, "w"))
+    assert [r["grade"] for r in res] == ["PASS", "PASS"]
+    recs = sorted(os.listdir(root / "results" / "agent_runs"))
+    assert len(recs) == 2 and all(r.startswith("eval-p2-") for r in recs) and recs[0] != recs[1]
+    with pytest.raises(SystemExit):
+        AED.roll("P-2", str(root), 2, agent_cmd=stopper, date="19990101")
+
+
 def test_stale_targets_and_once_per_definition(tmp_path):
     art = "agents/independent-verifier.md"
     mk = lambda subject, signal, ts: OL.make_row("agent_eval", art, "agent", signal, f"{subject} {signal}",

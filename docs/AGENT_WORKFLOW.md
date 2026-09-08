@@ -209,7 +209,17 @@ all stdlib, all read-only except where noted:
   **new** defect. Changing a file under `agents/` without a fresh eval record
   turns it red (the "no eval pass, no dispatch" rule, made mechanical).
   `--sources fast` runs the seconds-long sources only; `--dry-run` prints rows
-  without appending.
+  without appending. Source `replay` *(R4 full, 2026-09-08)* regenerates every
+  derived artefact declared in `outcome_collect.REPLAY_TARGETS` in a temporary
+  detached worktree at HEAD and byte-compares the declared outputs with the
+  committed bytes (`FAIL … drifted: committed <sha> regenerated <sha>`);
+  `python3 src/replay_check.py <script> --outputs …` is the same check for one
+  artefact in any checkout; it restores the declared outputs and the clean
+  tracked files the run dirtied, and removes untracked files it created
+  (a file that was already dirty is out of its reach). Declaring a
+  target is also what lets a repair regenerate it: those outputs are the only
+  tracked files under `results/` the healer and the gate allow a proposal to
+  overwrite.
 - `python3 src/outcome_attribute.py --new` *(R1, 2026-09-07)* — for every new
   defect, bisects the check in a temporary worktree (or walks the definition's
   history for a stale eval) and appends an `attribution` row naming
@@ -229,13 +239,22 @@ all stdlib, all read-only except where noted:
   opens the PR. Every dispatch leaves a record under
   `results/agent_runs/propose-<slug>/` (prompt and agent line before the run,
   the agent's `HEAL_NOTES.md` as `report.md`, the gate tail) that is committed
-  with the fix and quoted in the PR body.
-- `python3 src/agent_eval_dispatch.py --eval <ID> | --stale` *(R2,
+  with the fix and quoted in the PR body. *(R5 full, 2026-09-08)* the lessons
+  the brief injected are hash-linked: `lessons_sha256` on the heal row and in
+  `agent.txt`, the lessons verbatim in the record's `lessons.txt`.
+- `python3 src/agent_eval_dispatch.py --eval <ID> [--rolls N] | --stale` *(R2,
   2026-09-08)* — re-dispatches an agent eval headlessly into a new dated
   record (prompts under `agents/evals/prompts/`; P-1/P-2 run the proposer on a
-  planted fixture); `--stale` re-runs whatever the ledger reports as
+  planted fixture); `--rolls N` makes N records in one call (one roll is not
+  an eval); `--stale` re-runs whatever the ledger reports as
   `STALE_EVAL` / `INCOMPLETE_RECORD`, once per definition hash, as a step of
   the loop. See `agents/evals/EVAL_SET.md` "Re-dispatch without a human".
+- `python3 src/lab_tier.py --recommend | --report` *(R5 full, 2026-09-08)* —
+  reads every dated eval record of an agent, counts the latest ≤ 5 rolls per
+  (eval, tier) and recommends a cheaper tier only when it is proven on every
+  eval (≥ 3 rolls, all PASS), or a proven higher tier when the current one
+  fails; fewer than 3 rolls is "insufficient rolls". A recommendation is a
+  `tier` lesson in `results/lessons.jsonl`; the frontmatter edit stays a PR.
 - `python3 src/lab_gate.py --new [--verifier pi|codex] [--dry-run]` *(R3,
   2026-09-07)* — decides every heal PR with no human: **MERGED** when the
   required CI checks are green, the defect's own check passes at the PR head
@@ -245,10 +264,14 @@ all stdlib, all read-only except where noted:
   (PR closed with the reasons) otherwise; **ROUTED** to the owner as a
   labelled issue with the evidence when the change is owner-reserved
   (constitution, registrations, G3+ grades, the gate's own machinery, an
-  `OWNER-RESERVED` flag in the notes, or the heal attempt cap). Every decision
-  is a `gate` ledger row. `./tools/lab_loop.sh` runs the whole cycle
-  (collect → attribute → heal → gate → learn, then commits the appended rows)
-  and `--install-launchd` schedules it every 6 h on the lab machine.
+  `OWNER-RESERVED` flag line in the notes, or the heal attempt cap). An
+  occurrence without a PR is routed too, at once when the proposer stopped
+  with `OWNER-RESERVED` (its notes travel with the issue) or at the attempt
+  cap; the healer leaves a routed occurrence alone. Every decision is a
+  `gate` ledger row. `./tools/lab_loop.sh` runs the whole cycle (collect incl.
+  replay → stale evals → attribute → heal → gate → learn → re-tier, then
+  commits the appended rows) and `--install-launchd` schedules it every 6 h
+  on the lab machine.
 
 These gates are additive to, not a substitute for, the handoff contract and
 cross-executor verification above.

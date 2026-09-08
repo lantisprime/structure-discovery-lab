@@ -10,7 +10,10 @@ Methods:
     path_history         STALE_EVAL: first commit after the eval record's commit that changed the definition
     bisect               instrument / suite / design / ledger defects: re-run the check in a temporary git
                          worktree at probe commits between last_good and the defect's commit (binary search,
-                         first-parent); a merge commit is refined into the merged branch's introducing commit
+                         first-parent); a merge commit is refined into the merged branch's introducing commit.
+                         A `replay` drift is probed with the lab's src/replay_check.py (absolute path) against
+                         the probe commit's artefact, so the answer is the commit that changed an input
+                         without regenerating, even before the checker existed
     not_reproducible_here  the check passes at the defect's commit on this platform (e.g. a Linux-only failure
                          attributed from macOS) -- the platform is named, no commit is guessed
     commit_unavailable   the defect's commit (e.g. a CI merge ref) is not in this clone
@@ -101,13 +104,24 @@ def check_command(row):
         return [PY, "src/design_verifier.py"]
     if src == "ledger_integrity":
         return [PY, "src/verify_ledger_integrity.py", "--quiet"]
+    if src == "replay":
+        outputs = detail.get("outputs") or OC.replay_outputs(artifact)
+        outputs = list(outputs.keys()) if isinstance(outputs, dict) else list(outputs)
+        if not outputs:
+            return None
+        # The checker is the lab's own, by absolute path: the check runs in any
+        # checkout (a probe worktree at a commit before the checker existed, the
+        # healer's worktree, the R3 gate's), always against that checkout's artefact.
+        return [PY, os.path.join(OC.ROOT, OC.REPLAY_CHECK), artifact, "--outputs", *outputs,
+                "--args", *detail.get("args", [])]
     return None
 
 
 def run_check_at(root, commit, argv):
     """'PASS' | 'FAIL' | 'ERROR' for argv run inside a worktree at commit."""
     with Worktree(root, commit) as wt:
-        if not os.path.exists(os.path.join(wt, argv[1])) and not argv[1].startswith("-"):
+        artifact = argv[2] if argv[1].endswith(OC.REPLAY_CHECK) else argv[1]
+        if not os.path.exists(os.path.join(wt, artifact)) and not artifact.startswith("-"):
             return "ERROR"  # the artifact does not exist at this commit
         try:
             p = subprocess.run(argv, cwd=wt, capture_output=True, text=True, timeout=PROBE_TIMEOUT)

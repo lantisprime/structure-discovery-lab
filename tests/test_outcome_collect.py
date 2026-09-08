@@ -106,6 +106,73 @@ def test_pytest_summary_parser_drops_timing():
     assert s["failed"] == 1 and s["passed"] == 2
 
 
+# R4 full REQ-1: replay source ---------------------------------------------
+
+GEN = ("import json, os\n"
+       "os.makedirs('results/figures', exist_ok=True)\n"
+       "open('results/figures/side.txt', 'w').write('side effect\\n')\n"
+       "json.dump({'n': open('data.txt').read().strip()}, open('results/out.json', 'w'))\n")
+
+
+@pytest.fixture
+def replay_repo(tmp_path):
+    """A repo whose derived results/out.json is stale against data.txt."""
+    root = tmp_path / "repo"
+    (root / "src").mkdir(parents=True), (root / "results" / "figures").mkdir(parents=True)
+    (root / "src" / "gen.py").write_text(GEN)
+    (root / "data.txt").write_text("16\n")
+    (root / "results" / "out.json").write_text('{"n": "7"}')
+    (root / "results" / "figures" / "side.txt").write_text("old figure\n")
+    for a in (["init", "-q", "-b", "main"], ["config", "user.email", "t@t"], ["config", "user.name", "t"],
+              ["add", "-A"], ["commit", "-qm", "stale derived artefact"]):
+        subprocess.run(["git", *a], cwd=root, check=True, capture_output=True)
+    return root
+
+
+def test_replay_source_detects_drift_and_leaves_tree_clean(replay_repo, tmp_path, monkeypatch):
+    root = replay_repo
+    monkeypatch.setattr(OC, "REPLAY_TARGETS", [("src/gen.py", [], ["results/out.json"])])
+    ledger = str(tmp_path / "l.jsonl")
+    assert "replay" in OC.SOURCES and OC.replay_outputs("src/gen.py") == ["results/out.json"]
+    assert OC.replay_outputs("src/other.py") == []
+    _, nd = OC.run(["replay"], ledger, root=str(root), gate=True, out=open(os.devnull, "w"))
+    assert len(nd) == 1 and nd[0]["source"] == "replay" and nd[0]["signal"] == "FAIL"
+    r = nd[0]
+    assert r["artifact"] == "src/gen.py" and r["artifact_class"] == "instrument"
+    assert r["detail"]["subject"] == sys.platform and r["detail"]["args"] == []
+    o = r["detail"]["outputs"]["results/out.json"]
+    assert o["same"] is False and o["committed"][:8] in r["evidence"] and o["regenerated"][:8] in r["evidence"]
+    # the working tree and its worktree list are untouched
+    assert subprocess.run(["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True).stdout == ""
+    assert "lab-replay-" not in subprocess.run(["git", "worktree", "list"], cwd=root, capture_output=True, text=True).stdout
+    assert (root / "results" / "out.json").read_text() == '{"n": "7"}'
+    # same state on re-run: nothing appended; the healed (regenerated) artefact closes the slot with PASS
+    _, nd = OC.run(["replay"], ledger, root=str(root), gate=True, out=open(os.devnull, "w"))
+    assert nd == [] and len(OL.read_rows(ledger)) == 1
+    (root / "results" / "out.json").write_text('{"n": "16"}')
+    subprocess.run(["git", "commit", "-qam", "regenerated"], cwd=root, check=True, capture_output=True)
+    appended, nd = OC.run(["replay"], ledger, root=str(root), gate=True, out=open(os.devnull, "w"))
+    assert nd == [] and [r["signal"] for r in appended] == ["PASS"] and appended[0]["evidence"].startswith("PASS sha256=")
+    # a script that fails is an ERROR row, not silence
+    (root / "src" / "gen.py").write_text("import sys\nsys.exit(3)\n")
+    subprocess.run(["git", "commit", "-qam", "broken generator"], cwd=root, check=True, capture_output=True)
+    appended, nd = OC.run(["replay"], ledger, root=str(root), gate=True, out=open(os.devnull, "w"))
+    assert nd and nd[0]["signal"] == "ERROR" and "exit 3" in nd[0]["evidence"]
+
+
+def test_replay_targets_are_registered_and_all_includes_replay():
+    AR = load("artifact_registry")
+    reg = AR.build_registry(REPO)
+    for script, _args, outputs in OC.REPLAY_TARGETS:
+        assert os.path.exists(os.path.join(REPO, script))
+        assert reg[script]["class"] == "instrument" and reg[script]["regenerates"] == outputs
+        for o in outputs:
+            assert subprocess.run(["git", "ls-files", "--error-unmatch", o], cwd=REPO, capture_output=True).returncode == 0
+    r = subprocess.run([sys.executable, os.path.join(REPO, "src", "outcome_collect.py"), "--help"],
+                       capture_output=True, text=True, cwd=REPO)
+    assert "replay" in r.stdout
+
+
 # REQ-5 -------------------------------------------------------------------
 
 def test_no_stale_row_when_hashes_match(seeded_ledger):
