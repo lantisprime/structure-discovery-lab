@@ -75,7 +75,25 @@ one issue per occurrence, reused.
 | S2 | owner-reserved-stop routing; lessons hash-link; rolls + `lab_tier.py`; loop step | `src/lab_gate.py`, `src/lab_heal.py`, `src/agent_eval_dispatch.py`, `src/lab_tier.py`, `tools/lab_loop.sh`, tests |
 | S3 | live proof (stale panel healed by the loop), review, docs, closeout | ledger rows, this plan, `docs/LAB_IMPROVEMENT_PLAN.md` v1.7, `docs/AGENT_WORKFLOW.md` |
 
-## §15 Verification Ledger (filled at closeout)
+## §15 Verification Ledger (2026-09-08)
+
+Commits on `feature/rsi-r45-full`: 28e822f (S1), 539a467 (S2), b51fd4b (observed +
+attributed rows, AGENT_WORKFLOW), 8c3c334 (heal + gate rows).
+
+| REQ | Evidence |
+|---|---|
+| REQ-1 | `tests/test_outcome_collect.py::test_replay_source_detects_drift_and_leaves_tree_clean` (FAIL with both sha prefixes, clean tree, PASS after regeneration, ERROR on a failing script); `::test_replay_targets_are_registered_and_all_includes_replay`. Live: `outcome_collect --all --gate` observed `FAIL replay src/meta_uniformity.py results/meta_uniformity.json drifted: committed 021c37dd… regenerated 3d696051…` (subject darwin); two regenerations in a scratch worktree gave the same bytes. |
+| REQ-2 | `tests/test_outcome_attribute.py::test_replay_check_cli` (exit 1 on drift, every byte restored incl. a side-effect file, PASS against an uncommitted regeneration, exit 2 on a failing generator); `::test_check_command_replay_and_bisect_attributes_the_stale_input_commit` (bisection lands on the commit that changed the input without regenerating). Live: R1 attributed the drift in 9 steps to 9488a9a. Deviation from §4: the check compares with the checkout's own copy, not `git show HEAD:` (the healer's worktree holds the proposer's uncommitted regeneration as the candidate), and the checker is invoked by absolute path from the lab root (a probe worktree at a commit before it existed can run it). |
+| REQ-3 | `tests/test_lab_heal_learn.py::test_heal_allows_declared_regeneration_only` (declared output PROPOSED; another tracked results/ file still frozen; a deleted declared output is a rewrite); `tests/test_lab_gate.py::test_gate_scope_exempts_declared_outputs_only`. Live: the healer's scope check let the proposer overwrite `results/meta_uniformity.json` (heal row `regenerable`), `files_changed = [HEAL_NOTES.md, results/meta_uniformity.json, src/verify_relational_docs.py]`. |
+| REQ-4 | `tests/test_lab_gate.py::test_gate_routes_owner_reserved_stop_on_first_attempt` (routed on attempt 1 with the notes in the issue, idempotent, healer skips a routed occurrence, a passing mention is not a flag). Not exercised live this cycle (the proposer did not stop). |
+| REQ-5 | `tests/test_lab_heal_learn.py::test_heal_records_injected_lessons`. Live: heal row for PR #34 carries `lessons_sha256 = 20673e96…` over 5 injected lessons; the record has `lessons.txt`; `agent.txt` names the hash. |
+| REQ-6 | `tests/test_agent_eval_dispatch.py::test_rolls_dispatch_n_distinct_records`; `tests/test_lab_tier.py::test_tier_recommendation_rules` (insufficient rolls, keep, cheaper proven, 5-roll window, higher proven, dedup, dry-run) and `::test_tier_cli_on_the_lab`. Live report on the real records: sonnet 2/3 on P-1, 3/3 on P-2; haiku 2/2 on P-1, 1/3 on P-2 → no recommendation ("sonnet fails on P-1 and no higher tier is proven"). |
+| REQ-7 | `tests/test_lab_gate.py::test_loop_script_steps_and_lock` (replay inside collect; `lab_tier.py --recommend` after learn). |
+| REQ-8 | `./tools/check.sh` green before (master 9ea5be5) and after (all suites PASS; the one red step was the R0 gate on the NEW replay defect, by design); every ledger change is an append (`git diff --numstat` shows 0 deletions). 182 tests pass (171 on master). |
+| REQ-9 | **Partially met, honestly.** observed → attributed → healed by the proposer (regeneration inside the declared scope, heal PR #34, healer's gate green, CI: see §18) → R3 gate **ROUTED** to the owner as issue #35, not MERGED: the proposer also updated the pinned expected value in `src/verify_relational_docs.py` (exploratory stratum n 7 → 16, which that file's own comment had asked for), and `src/verify_` is gate machinery the loop may not self-approve (constraint 6). The defect stays open and the closing lesson is written by the loop once the owner merges #34 or amends the verifier rule. What this proves: the declared-scope exemption works and the self-approval bar holds; what it exposes: a regeneration whose expected value is pinned in a verifier is owner-reserved under today's prefix rule. |
+
+Live cycle rows (ledger order): replay FAIL @539a467 → attribution (bisect, introduced_by 9488a9a)
+→ heal PROPOSED PR #34 (sonnet, `lessons_sha256` 20673e96…) → gate ROUTED issue #35.
 
 ## §18 Done Criteria
 
@@ -83,4 +101,32 @@ REQ-1–REQ-9 green with artefacts in §15; check.sh green before and after; CI
 green on the PR; review disposition in §19; LAB_IMPROVEMENT_PLAN row 8
 COMPLETE (minimal) with what stays open.
 
+## §18 CI record
+
+Heal PR #34 (head d4b29ab, base `feature/rsi-r45-full`): run 34190637723 — ubuntu-latest PASS,
+macos-latest PASS, browser e2e PASS, windows informational FAIL (heal tests, as on every run).
+Both required platforms regenerate the panel to the same bytes (no new `replay` defect on
+linux against the regenerated file). Change-set PR to master: see the closeout commit.
+
 ## §19 Review Consensus
+
+Round 1, 2026-09-08, reviewer kimi-k3 via pi/LiteLLM (different family; the Codex channel is
+still gated by the missing bundle components). Brief: `docs/plans/reviews/R45_REVIEW_BRIEF.md`;
+full text: `docs/plans/reviews/R45_ROUND1_kimi-k3_2026-09-08.md`. Verdict:
+APPROVE-WITH-CHANGES (merge after 1 and 4, decide 3).
+
+| # | Finding | Sev | Disposition | Where it landed |
+|---|---|---|---|---|
+| 1 | `restore()` crashes when the script removed the output's directory | SHOULD | ACCEPT | `replay_check.restore`: makedirs, per-file try, failures reported as ERROR; test: destructive generator |
+| 2 | three restore gaps contradict "every byte" | SHOULD | ACCEPT-WITH-MOD | the claim is narrowed in the docstring and AGENT_WORKFLOW (declared outputs + clean tracked side effects + new untracked files); a pre-dirty file and a deleted untracked file are documented as out of reach |
+| 3 | a tier can be proven by rolls against a stale definition | SHOULD | ACCEPT | `lab_tier.rolls` counts only records whose `agent.txt` names the current definition sha256; test (7) |
+| 4 | deleted declared output may escape `scope_reasons` if the real diff lists it only under `deleted` | SHOULD | REJECT with evidence | `GitHub.diff` builds `results_modified` with `--diff-filter=MD`, so a deletion is in it; the real-git test now deletes `results/gone.json` and asserts both the list and the reason |
+| 5 | porcelain parsing mangles renames / quoted paths | NIT | ACCEPT | `git status --porcelain -z`, rename source skipped |
+| 6 | cheaper-first tie-break undocumented | NIT | ACCEPT | documented in `recommend()`: a proven cheaper tier wins |
+| 7 | dedup compares only the latest tier lesson | NIT | DEFER | append-only; oscillating evidence re-appends, which is the record |
+| 8 | DetachedWorktree leaks a temp dir / masks exceptions | NIT | ACCEPT | dir created in `__enter__`, removal wrapped |
+| 9 | `outputs` shape assumed a dict | NIT | ACCEPT | normalised (dict keys or list) |
+| 10 | attempt count reimplemented inline | NIT | ACCEPT | `route_unhealable` reuses `heal_attempts` |
+
+Q2 (no guardrail weakened), Q3 (both deviations sound), Q5 (first-attempt routing right) answered
+in the affirmative by the reviewer; Q4's stale-roll case is finding 3.

@@ -214,7 +214,9 @@ all stdlib, all read-only except where noted:
   detached worktree at HEAD and byte-compares the declared outputs with the
   committed bytes (`FAIL … drifted: committed <sha> regenerated <sha>`);
   `python3 src/replay_check.py <script> --outputs …` is the same check for one
-  artefact in any checkout and restores every byte it touches. Declaring a
+  artefact in any checkout; it restores the declared outputs and the clean
+  tracked files the run dirtied, and removes untracked files it created
+  (a file that was already dirty is out of its reach). Declaring a
   target is also what lets a repair regenerate it: those outputs are the only
   tracked files under `results/` the healer and the gate allow a proposal to
   overwrite.

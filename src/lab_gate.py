@@ -488,10 +488,9 @@ class Gate:
         out = []
         for defect in OA.open_defects(rows):
             key = "|".join(OL.state_key(defect))
-            heals = [r for r in rows if r["source"] == "heal" and r["detail"].get("defect_key") == key
-                     and r["detail"].get("defect_commit") == defect["commit"]]
-            n = len(heals)
-            last = heals[-1] if heals else None
+            n = heal_attempts(rows, key, defect["commit"])
+            last = next((r for r in reversed(rows) if r["source"] == "heal" and r["detail"].get("defect_key") == key
+                         and r["detail"].get("defect_commit") == defect["commit"]), None)
             stopped = last is not None and last["signal"] == "REJECTED" and last["detail"].get("stage") == "owner-reserved"
             if not stopped and n < HEAL_ATTEMPT_CAP:
                 continue

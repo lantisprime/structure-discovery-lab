@@ -254,6 +254,13 @@ def test_replay_check_cli(drift_repo):
     (root / "src" / "gen.py").write_text("import sys\nopen('results/out.json','w').write('half')\nsys.exit(3)\n")
     r = subprocess.run(cli, cwd=root, capture_output=True, text=True)
     assert r.returncode == 2 and "ERROR" in r.stdout and (root / "results" / "out.json").read_text() == '{"n": "7"}'
+    # a destructive generator (removes the output's directory) is restored too (review finding 1)
+    (root / "src" / "gen.py").write_text("import shutil, sys\nshutil.rmtree('results')\nsys.exit(1)\n")
+    r = subprocess.run(cli, cwd=root, capture_output=True, text=True)
+    assert r.returncode == 2 and (root / "results" / "out.json").read_text() == '{"n": "7"}'
+    assert (root / "results" / "side.txt").read_text() == "old\n"
+    git(root, "checkout", "--", "src/gen.py")
+    assert git(root, "status", "--porcelain") == ""
 
 
 def test_check_command_replay_and_bisect_attributes_the_stale_input_commit(drift_repo, tmp_path):

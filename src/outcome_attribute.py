@@ -105,7 +105,8 @@ def check_command(row):
     if src == "ledger_integrity":
         return [PY, "src/verify_ledger_integrity.py", "--quiet"]
     if src == "replay":
-        outputs = list(detail.get("outputs") or OC.replay_outputs(artifact))
+        outputs = detail.get("outputs") or OC.replay_outputs(artifact)
+        outputs = list(outputs.keys()) if isinstance(outputs, dict) else list(outputs)
         if not outputs:
             return None
         # The checker is the lab's own, by absolute path: the check runs in any

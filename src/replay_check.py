@@ -5,10 +5,12 @@ artefact byte for byte?
     python3 src/replay_check.py src/meta_uniformity.py --outputs results/meta_uniformity.json [--args ...]
 
 Runs the script in this checkout, compares each declared output with the
-bytes the checkout held before the run, then puts every byte back: the
-declared outputs are restored from memory and any other file the script
-touched (a figure written as a side effect) is restored with git. The
-checkout is left as it was found. Exit 0 and `PASS sha256=<output sha>` when
+bytes the checkout held before the run, then puts the bytes back: the
+declared outputs are restored from memory, a tracked file the script
+dirtied (a figure written as a side effect) is restored with git, an
+untracked file it created is removed. Not covered: a file already dirty
+before the run that the script also rewrote, and an untracked file the
+script deleted. Exit 0 and `PASS sha256=<output sha>` when
 every output is reproduced; exit 1 and `FAIL <output> committed <sha> regenerated
 <sha>` on drift; exit 2 and `ERROR ...` when the script fails.
 
@@ -42,23 +44,44 @@ def read_bytes(path):
 
 
 def git_status(root):
-    p = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"], cwd=root,
-                       capture_output=True, text=True, timeout=60)
-    return {l[3:] for l in p.stdout.splitlines() if l.strip()} if p.returncode == 0 else None
+    p = subprocess.run(["git", "status", "--porcelain", "-z", "--untracked-files=all"], cwd=root,
+                       capture_output=True, timeout=60)
+    if p.returncode != 0:
+        return None
+    # -z: NUL-separated, paths unquoted; a rename entry is followed by its source path
+    entries, out = p.stdout.decode("utf-8", "surrogateescape").split("\0"), set()
+    i = 0
+    while i < len(entries):
+        e = entries[i]
+        if e:
+            out.add(e[3:])
+            if e[0] in "RC":
+                i += 1                         # skip the rename source entry
+        i += 1
+    return out
 
 
 def restore(root, outputs, before, dirty_before, dirty_after):
-    """Declared outputs back from memory; other files the run touched back via git."""
+    """Declared outputs back from memory (their directory recreated if the run
+    removed it); tracked files the run dirtied restored with git; untracked files
+    it created removed. Out of reach, by design: a file that was already dirty
+    before the run and that the script also rewrote keeps the post-run bytes,
+    and an untracked file the script deleted is not brought back."""
+    failed = []
     for rel, b in before.items():
         path = os.path.join(root, rel)
-        if b is None:
-            if os.path.exists(path):
-                os.remove(path)
-        else:
-            with open(path, "wb") as fh:
-                fh.write(b)
+        try:
+            if b is None:
+                if os.path.exists(path):
+                    os.remove(path)
+            else:
+                os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+                with open(path, "wb") as fh:
+                    fh.write(b)
+        except OSError as e:
+            failed.append(f"{rel}: {e}")
     if dirty_before is None or dirty_after is None:
-        return
+        return failed
     for rel in sorted(dirty_after - dirty_before - set(outputs)):
         path = os.path.join(root, rel)
         tracked = subprocess.run(["git", "ls-files", "--error-unmatch", "--", rel], cwd=root,
@@ -67,6 +90,7 @@ def restore(root, outputs, before, dirty_before, dirty_after):
             subprocess.run(["git", "checkout", "--", rel], cwd=root, capture_output=True, timeout=60)
         elif os.path.isfile(path):
             os.remove(path)
+    return failed
 
 
 def replay(root, script, args, outputs, timeout=900):
@@ -80,7 +104,9 @@ def replay(root, script, args, outputs, timeout=900):
     except subprocess.TimeoutExpired:
         rc, err = 124, "timed out"
     after = {rel: read_bytes(os.path.join(root, rel)) for rel in outputs}
-    restore(root, outputs, before, dirty_before, git_status(root))
+    failed = restore(root, outputs, before, dirty_before, git_status(root))
+    if failed:
+        return {"signal": "ERROR", "evidence": "restore failed: " + "; ".join(failed), "exit": rc, "outputs": {}}
     outs = {}
     for rel in outputs:
         b, a = before[rel], after[rel]

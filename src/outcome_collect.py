@@ -377,10 +377,10 @@ class DetachedWorktree:
     """Temporary detached git worktree at a commit; removed on exit."""
 
     def __init__(self, root, commit="HEAD"):
-        self.root, self.commit = root, commit
-        self.path = tempfile.mkdtemp(prefix="lab-replay-")
+        self.root, self.commit, self.path = root, commit, None
 
     def __enter__(self):
+        self.path = tempfile.mkdtemp(prefix="lab-replay-")
         os.rmdir(self.path)
         p = subprocess.run(["git", "worktree", "add", "--detach", "--quiet", self.path, self.commit],
                            cwd=self.root, capture_output=True, text=True, timeout=300)
@@ -389,8 +389,12 @@ class DetachedWorktree:
         return self.path
 
     def __exit__(self, *exc):
-        git(self.root, "worktree", "remove", "--force", self.path)
-        git(self.root, "worktree", "prune")
+        try:                                     # never mask the body's exception (review finding 8)
+            git(self.root, "worktree", "remove", "--force", self.path)
+            git(self.root, "worktree", "prune")
+        except Exception:
+            pass
+        return False
 
 
 def source_replay(ctx):

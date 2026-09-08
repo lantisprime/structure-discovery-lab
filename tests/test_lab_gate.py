@@ -252,6 +252,7 @@ def test_real_git_diff_sees_renames_ledger_rewrites_and_reserved_paths(tmp_path)
     (root / "tests" / "test_x.py").write_text("def test_x(): pass\n")
     (root / "results" / "l.jsonl").write_text('{"a":1}\n{"a":2}\n')
     (root / "results" / "frozen.json").write_text('{"v": 1}\n')
+    (root / "results" / "gone.json").write_text('{"v": 1}\n')
     (root / "results" / "agent_runs" / "eval-old").mkdir(parents=True)
     (root / "results" / "agent_runs" / "eval-old" / "grade.json").write_text('{"grade": "FAIL"}\n')
     (root / "src" / "lab_gate.py").write_text("gate = 1\n")
@@ -265,12 +266,15 @@ def test_real_git_diff_sees_renames_ledger_rewrites_and_reserved_paths(tmp_path)
     (root / "results" / "frozen.json").write_text('{"v": 2}\n')                # rewrote a frozen result
     (root / "results" / "agent_runs" / "eval-old" / "grade.json").write_text('{"grade": "PASS"}\n')  # rewrote history
     (root / "results" / "new_version.json").write_text('{"v": 2}\n')           # a NEW file is fine
+    (root / "results" / "gone.json").unlink()                                   # a deleted result is a rewrite
     (root / "docs" / "THEOREM_GOVERNANCE.md").write_text("A0 changed\n")
     git(root, "add", "-A"), git(root, "commit", "-qm", "bad heal"), git(root, "push", "-q", "-u", "origin", "heal/x")
     diff = LG.GitHub(str(root)).diff("main", "heal/x")
     assert "tests/test_x.py" in diff["deleted"] and "src/lab_gate.py" in diff["deleted"]
     assert diff["ledger_deletions"] == {"results/l.jsonl": 1}
-    assert sorted(diff["results_modified"]) == ["results/agent_runs/eval-old/grade.json", "results/frozen.json"]
+    assert sorted(diff["results_modified"]) == ["results/agent_runs/eval-old/grade.json", "results/frozen.json",
+                                                "results/gone.json"]
+    assert LG.scope_reasons(diff, ["results/gone.json"])                         # exempt or not, deleted = rewritten
     assert diff["truncated"] is False and diff["text_chars"] > 0
     reasons = LG.scope_reasons(diff)
     assert any("test file deleted: tests/test_x.py" in r for r in reasons)

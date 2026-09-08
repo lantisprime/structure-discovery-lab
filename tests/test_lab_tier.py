@@ -24,10 +24,11 @@ LT = load("lab_tier")
 LL = LT.LL
 
 
-def plant(root, eval_id, stamp, tier, grade):
+def plant(root, eval_id, stamp, tier, grade, digest=None):
     d = root / "results" / "agent_runs" / f"eval-{LT.G.record_slug(eval_id)}-{stamp}"
     d.mkdir(parents=True)
-    (d / "agent.txt").write_text(f"agent: lab-proposer | model: {tier} | definition sha256: {'ab' * 32} | eval: {eval_id}\n")
+    digest = digest or LT.definition_sha(str(root), "lab-proposer")
+    (d / "agent.txt").write_text(f"agent: lab-proposer | model: {tier} | definition sha256: {digest} | eval: {eval_id}\n")
     (d / "grade.json").write_text(json.dumps({"eval": eval_id, "grade": grade}))
 
 
@@ -89,6 +90,15 @@ def test_tier_recommendation_rules(tmp_path):
     bad = root2 / "results" / "agent_runs" / "eval-p1-20260907T020000"
     bad.mkdir(), (bad / "agent.txt").write_text("agent: lab-proposer | eval: P-1\n")
     assert LT.report(str(root2), "lab-proposer")["recommendation"] == "sonnet"
+    # (7) rolls against an older definition are not evidence about the current one (review finding 3):
+    #     three opus passes stamped with a stale sha prove nothing; after the definition changes, none count
+    for i in range(3):
+        plant(root2, "P-1", f"20260907T03000{i}", "opus", "PASS", digest="ab" * 32)
+        plant(root2, "P-2", f"20260907T03000{i}", "opus", "PASS", digest="ab" * 32)
+    assert "opus" not in LT.report(str(root2), "lab-proposer")["tally"]["P-1"]
+    (root2 / "agents" / "lab-proposer.md").write_text("---\nname: lab-proposer\nmodel: haiku\n---\nnew body\n")
+    r = LT.report(str(root2), "lab-proposer")
+    assert r["tally"] == {"P-1": {}, "P-2": {}} and "insufficient rolls" in r["reason"]
 
 
 def test_tier_cli_on_the_lab():

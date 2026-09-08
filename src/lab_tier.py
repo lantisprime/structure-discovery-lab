@@ -5,7 +5,9 @@
     python3 src/lab_tier.py --report   [--agent NAME]
 
 For each agent, every dated eval record under results/agent_runs/ (all rolls,
-not only the latest) is read: agent.txt names the tier, grade.json the grade.
+not only the latest) is read: agent.txt names the tier and the definition
+sha256 (only rolls against the agent's current definition count), grade.json
+the grade.
 Per (eval, tier) the latest <= 5 rolls count. A tier is *proven* for an agent
 when every one of its evals has >= 3 rolls at that tier and all of them PASS.
 The recommendation (R2 review F19 guard: one roll is not an eval):
@@ -46,8 +48,19 @@ def evals_of(agent):
     return [e for e in G.RECORDS if e.split("-")[0] == prefix] if prefix else []
 
 
-def rolls(root, eval_id):
-    """[(stamp, tier, grade)] for every dated record of an eval, oldest first."""
+def definition_sha(root, agent):
+    path = os.path.join(root, "agents", f"{agent}.md")
+    if not os.path.exists(path):
+        return None
+    with open(path, "rb") as fh:
+        return OC.sha256_bytes(fh.read())
+
+
+def rolls(root, eval_id, digest=None):
+    """[(stamp, tier, grade)] for every dated record of an eval, oldest first.
+    With `digest`, only records whose agent.txt names that definition sha256
+    count: a roll against an older definition is not evidence about this one
+    (review finding 3)."""
     out = []
     for d in sorted(glob.glob(os.path.join(root, "results", "agent_runs", f"eval-{G.record_slug(eval_id)}-*"))):
         m = G.DATED_RE.search(d)
@@ -55,22 +68,25 @@ def rolls(root, eval_id):
             continue
         try:
             with open(os.path.join(d, "agent.txt"), encoding="utf-8") as fh:
-                tier = MODEL_RE.search(fh.read())
+                line = fh.read()
             with open(os.path.join(d, "grade.json"), encoding="utf-8") as fh:
                 grade = json.load(fh).get("grade")
         except (OSError, json.JSONDecodeError, AttributeError):
             continue
-        if tier and grade:
+        tier = MODEL_RE.search(line)
+        if tier and grade and (digest is None or digest in line):
             out.append((m.group(1) + (m.group(2) or ""), tier.group(1), grade))
     return out
 
 
 def tally(root, agent):
-    """{eval: {tier: {"n": rolls counted, "pass": passes}}} over the latest <= ROLLS_WINDOW per (eval, tier)."""
+    """{eval: {tier: {"n": rolls counted, "pass": passes}}} over the latest <= ROLLS_WINDOW
+    per (eval, tier), counting only rolls made against the agent's current definition."""
     t = {}
+    digest = definition_sha(root, agent)
     for ev in evals_of(agent):
         per_tier = {}
-        for stamp, tier, grade in rolls(root, ev):
+        for stamp, tier, grade in rolls(root, ev, digest):
             per_tier.setdefault(tier, []).append(grade)
         t[ev] = {tier: {"n": len(g[-ROLLS_WINDOW:]), "pass": sum(1 for x in g[-ROLLS_WINDOW:] if x == "PASS")}
                  for tier, g in per_tier.items()}
@@ -83,7 +99,9 @@ def proven(t, tier):
 
 
 def recommend(t, current):
-    """(recommendation tier or None, reason)."""
+    """(recommendation tier or None, reason). A proven cheaper tier wins even
+    when the current tier fails: proven is proven, and cost is the point
+    (review finding 6, a deliberate tie-break)."""
     rank = {tier: i for i, tier in enumerate(TIERS)}
     if current not in rank:
         return None, f"current tier {current!r} is not a known tier {TIERS}"
