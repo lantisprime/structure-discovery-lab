@@ -42,15 +42,24 @@
     "gate_based": true
   },
   "exploratory_stratum": {
-    "n": 7,
+    "n": 16,
     "p_values": [
+      0.0001,
+      0.0001,
+      0.0078,
+      0.0106,
+      0.0134,
       0.148,
       0.28,
       0.345,
       0.355,
+      0.4621,
+      0.6625,
       0.715,
       0.725,
-      0.93
+      0.7561,
+      0.93,
+      0.9561
     ],
     "note": "unregistered shadow-run p's; reported so the panel is not blind to the exploratory class; not pooled"
   },

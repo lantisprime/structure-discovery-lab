@@ -1,0 +1,1 @@
+agent: lab-proposer | model: sonnet | definition sha256: 8dec586f1ce59c1ad9327338fa0dc16c1b46acc98870e1a88362aa99e8eebeef | defect: replay|src/meta_uniformity.py|FAIL|e17df526462cabe0ca6718ec8d13ee35988c5f69d265e3d2ee07540886a3e96c @ 539a467 | class: instrument | lessons sha256: 20673e96334b578cdb810491174494ccaf69ca7679b857a2471ffc5b099fff31 (5) | 2026-09-08T05:12:21Z
