@@ -219,6 +219,17 @@ chk('sens 655 all corr', sens['Grand Lotto 6/55']['all']['corr'], 0.251)
 chk('sens 655 ex corr', sens['Grand Lotto 6/55']['ex_suspicious']['corr'], 0.154)
 chk('sens 655 lmax ex-suspicious p', round(sens['lambda_max_655_ex_suspicious']['p'], 4), 0.0025, 5e-5)
 U = json.load(open('results/meta_uniformity.json'))
+# Option C (owner decision #35): the expected exploratory-stratum size is DERIVED
+# from the ledger (the single source of truth), not pinned to a literal. A stale
+# panel now FAILS this check instead of being certified by it: the literal 7 that
+# used to stand here matched a panel the ledger had already outgrown (16 live
+# exploratory rows), which is exactly the replay defect routed as issue #35.
+# Predicate kept identical to the ledger accounting further down this file.
+_LED = [json.loads(l) for l in open('results/multiplicity_ledger.jsonl')]
+LEDGER_LIVE_EXPLORATORY = sum(
+    1 for r in _LED
+    if r.get('row_type', 'test') == 'test' and r.get('exploratory')
+    and 'superseded_by' not in r)
 # panel v2.1 (audit M-5/M-6 + adversarial review M5, 2026-07-02):
 # ledger-driven; median-based, superseded, exploratory (separate stratum),
 # eq, and miscalibrated-null rows excluded; alias-normalized dedup;
@@ -233,7 +244,8 @@ chk('meta frac05 above band (concentrates in #45 family)',
 chk('meta sensitivity: flag robust across compositions',
     all(v['frac_le_05'] >= 0.088 for v in U['composition_sensitivity'].values()),
     True)
-chk('meta exploratory stratum reported', U['exploratory_stratum']['n'], 7)
+chk('meta exploratory stratum reported',
+    U['exploratory_stratum']['n'], LEDGER_LIVE_EXPLORATORY)
 IV = json.load(open('results/independent_verification.json'))
 blind_key = json.load(open('results/blind/_key.json'))
 conc = 0
@@ -247,14 +259,15 @@ chk('indep replication corr ex', round(IV['task2']['excluding_suspicious']['corr
 print("REMEDIATION VERIFIED" if ok else "REMEDIATION FAILURES FOUND")
 
 # ---- External-review adoptions (ledger schema v2, audit C-1 2026-07-02) ----
-L = [json.loads(l) for l in open('results/multiplicity_ledger.jsonl')]
+L = _LED                                  # same read; one ledger pass per run
 T = [r for r in L if r.get('row_type', 'test') == 'test']
 LIVE = [r for r in T if 'superseded_by' not in r and not r.get('exploratory')]
 # 2026-09-06 PCSO refresh appended 9 EXPLORATORY rows (run pcso_refresh_2026_09_06:
 # payout-sharing x2, strategy-backtest x7); live rows and global_m unchanged at 195.
-# The meta panel (results/meta_uniformity.json) predates them and still reports the
-# 7-row exploratory stratum of its own run — rerun the panel to refresh that count.
-# r2 (same day, after the codex review): the 9 rows were superseded by 9 corrected rows.
+# r2 (same day, after the codex review): the 9 rows were superseded by 9 corrected rows,
+# so 25 exploratory rows total, 9 superseded, 16 live. The panel has since been rerun to
+# include the r2 rows, and the exploratory-stratum check above now derives its expected
+# size from this ledger instead of a literal (owner decision #35, option C).
 chk('ledger rows', len(L), 289)
 chk('ledger test rows', len(T), 285)
 chk('ledger live test rows', len(LIVE), 195)
