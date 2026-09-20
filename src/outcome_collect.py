@@ -56,6 +56,11 @@ VERIFY_ENTRYPOINTS = [
     ("src/pcso_strategy_backtest.py", ["--verify"]),
     ("src/pcso_next_draw_posterior.py", ["--verify"]),
     ("src/pcso_weekly_update.py", ["--verify"]),
+    # R4 remaining: source-drift fixtures (M4 substrate). Catches upstream
+    # pcso.gov.ph HTML / GFZ Kp JSON structure changes at the adapter layer
+    # so the FAIL row attributes to the parser/adapter, not a downstream
+    # instrument. See .plans/R4DRIFT/spec.md@baa6b771 and tests/test_source_drift.py.
+    ("src/source_drift_check.py", ["--verify"]),
 ]
 
 PYTEST_SUITES = [

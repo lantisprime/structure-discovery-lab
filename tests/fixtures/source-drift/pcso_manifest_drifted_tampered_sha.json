@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "fixture_role": "SIMULATED DRIFT: PCSO manifest's capture_b.html.gz sha256_uncompressed has been tampered to a wrong value. The adapter must fail closed and name the offending capture file.",
+  "fetched_at": "2025-06-11T00:00:00+0800",
+  "raw_source_capture": {
+    "available": true,
+    "files": [
+      {"file": "capture_a.html.gz", "sha256_uncompressed": "PLACEHOLDER_A", "bytes": 0},
+      {"file": "capture_b.html.gz", "sha256_uncompressed": "DEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF", "bytes": 0}
+    ]
+  }
+}
