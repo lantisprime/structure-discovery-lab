@@ -27,7 +27,7 @@
       "datasets/pcso-lotto/data_draws_1yr_audited.csv": "1473b192dde12a846e5d3f364e6d7e596fe4b1fedbbb43a36cb5a59c9179d5f2",
       "datasets/pcso-lotto/data_astro_geomagnetic.csv": "2712359a584eaf2d9703bd4a69abd5ab493ea3fce355e2ef16f6b4d261802545",
       "PCSO_Lotto_Analysis_Mar-Jun_2026.xlsx": "5400f8a227f2f23a2a3770019082bf6d5a6cc6566a72d315fd413f628b524fe1",
-      "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-06.json": "78ae7c13763a0143fbda0d7d731794c4ed5e260ab05bf9954521b7fd6385c1d7"
+      "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-06.json": "f706e4d5cae14f9d88bcf155d14ac85a457774293164ee3a3a6d4bebda13087e"
     },
     "exploration_prefix_sha256": {
       "data_draws.csv": "8f38c1d2fc1f3778552f015b4dc690c603be4a0d8c3659d692691d2ceb5f5087",
@@ -67,112 +67,112 @@
       "files": [
         {
           "file": "provenance/raw_2026-09-06/official_13_2025-06-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "11e26ddaa54ee1792d309516430bf801f72c89c0a30c3d00c58d180b38251a5e",
+          "sha256_uncompressed": "bcb91ed8e2c40ecb646614f76b68f31758342961c9d9ba831fa9e333a79c8a59",
           "bytes": 118734
         },
         {
           "file": "provenance/raw_2026-09-06/official_13_2026-07-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "523b66f71201f35852e8ffd131fe538b758b49ae28a18c0ee18ec807534461d5",
+          "sha256_uncompressed": "52ca43ad5f5e94a3a160f6427e7415bbe799918b743af13307c3f38b16aca1f9",
           "bytes": 52518
         },
         {
           "file": "provenance/raw_2026-09-06/official_17_2025-06-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "80d2ba61c09f6d5e585b406b99f65e57d870a360a2d044d962802225af6bee45",
+          "sha256_uncompressed": "12d840110186869893a0f3bc3a0768135b67e286fb7edfc36d8ff498c85b11fc",
           "bytes": 122099
         },
         {
           "file": "provenance/raw_2026-09-06/official_17_2026-07-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "17cca7a39a8514076d4e91712fadd1ca95739b85f8d7b3ff904708c6ee0fb469",
+          "sha256_uncompressed": "23fdbe3e89ecca24d2f83749a2d888de70f310073515ec14aa61eaa2fe8a08c7",
           "bytes": 52966
         },
         {
           "file": "provenance/raw_2026-09-06/official_18_2025-06-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "c6c1e63d83b7ce7b5882f88bdf0a788611490deb7cd6f7a68a8befbead60b239",
+          "sha256_uncompressed": "d4310d009d0d76aa9451d86a213f5f73a5a9d1803753fb8415e05746607d0ee1",
           "bytes": 122176
         },
         {
           "file": "provenance/raw_2026-09-06/official_18_2026-07-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "44c5d7dcfbff865b0be333893c27c26004363e30784979ce143c363cf1be9d22",
+          "sha256_uncompressed": "09cc5037a8fcfe617d489f23b3adb72f582d9e771ed24b09377fa267a036230a",
           "bytes": 52607
         },
         {
           "file": "provenance/raw_2026-09-06/official_1_2025-06-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "b3127c96edd688bd4e07610407068c8e8ffbf784e66d4956c466aea9006c5475",
+          "sha256_uncompressed": "cbfca6ce29c50d031f2968a53e672f2fb42a874a49d9756db3076f1a7818ba37",
           "bytes": 121542
         },
         {
           "file": "provenance/raw_2026-09-06/official_1_2026-07-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "8320dc374f5760160fb7884e322e18e5cdde97e452ac3b69d8171b686a9bb383",
+          "sha256_uncompressed": "ad6ab6942b88b8784b5ea54289c4c89051912123aeb3724a39f4e66d8f4ec1a0",
           "bytes": 52466
         },
         {
           "file": "provenance/raw_2026-09-06/official_2_2025-06-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "995718baa001c86d491e19c23e042c4eb36509ddaa9a9db73770fc368051ecf7",
+          "sha256_uncompressed": "93674d699c86b9671161f1703e17b47b76e9787ba16c91571b1cb2ab0eabbae5",
           "bytes": 120952
         },
         {
           "file": "provenance/raw_2026-09-06/official_2_2026-07-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "d98c7852dec298d41cabb8296d23b62b076dcef17c74b297bef4db8806ad1f12",
+          "sha256_uncompressed": "175b7b3c9957a2318c33aa95cf2a58255bb29a19a295c2259cfabd30a016ced4",
           "bytes": 52808
         },
         {
           "file": "provenance/raw_2026-09-06/official_get_2025-06-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "5d674a649e9efb8305abcf03cbbabbbe9b947ab74752277b5ba64a472b7f9d00",
+          "sha256_uncompressed": "dc740ba7b1b14d05428abd1e651bcdbfb780213660fec41e47a0cdab5ec68fcb",
           "bytes": 51647
         },
         {
           "file": "provenance/raw_2026-09-06/official_get_2026-07-01_2026-09-06.html.gz",
-          "sha256_uncompressed": "7df43d4161b6c2e36099c0b6dcb09905a360208e61a57f12325b70d848f1aa93",
+          "sha256_uncompressed": "59a3a0f1b201a4b067df843c9ae35013b7dce672c1af5971349be5b8798f02a6",
           "bytes": 51647
         },
         {
           "file": "provenance/raw_2026-09-06/lottopcso_642.html.gz",
-          "sha256_uncompressed": "390b9d1b181ca735b632f98635d65a11188260260606010a6d67de1ed8edb334",
+          "sha256_uncompressed": "13cb50e6882c19141d0f79eb933ffc91689f2a2696f91467642dfecd1ee34e09",
           "bytes": 121749
         },
         {
           "file": "provenance/raw_2026-09-06/lottopcso_645.html.gz",
-          "sha256_uncompressed": "32dacfcc4903009813d5b4cec904a7c5f8058bafe22a8e1528e772589c118d4d",
+          "sha256_uncompressed": "d8a7993a4bcb9d22f9473d87f9a10940e3715b451cd6c5ade6f2f781bd995880",
           "bytes": 138922
         },
         {
           "file": "provenance/raw_2026-09-06/lottopcso_649.html.gz",
-          "sha256_uncompressed": "10caf9a7380737e3a438e8328725d1017a1fbc203890dcc045c04801013018fa",
+          "sha256_uncompressed": "53b472ccfb68dd23f286ce7eddd90a3ffda7f2a4f284780aef3ffe4215430aea",
           "bytes": 156652
         },
         {
           "file": "provenance/raw_2026-09-06/lottopcso_655.html.gz",
-          "sha256_uncompressed": "c207a484b7f7650a3413784015f6c79f3ed36f377620e3f2e746b6c5541db1d5",
+          "sha256_uncompressed": "f8ed6c2939229ff7737a1408abcc04f0372bb2178b91c0cc3f4b3eaefbe9b322",
           "bytes": 162287
         },
         {
           "file": "provenance/raw_2026-09-06/lottopcso_658.html.gz",
-          "sha256_uncompressed": "f812d6cfef555af7ac2fd6cd82c09eec9e29f5568e1e5ccebe58c8d7e707dc28",
+          "sha256_uncompressed": "06e4252aa5e85996d7a3fe3d0155d26c9f4e2ba3eb1558ba4b4764ce0081f55e",
           "bytes": 102542
         },
         {
           "file": "provenance/raw_2026-09-06/pcsodraw_642.html.gz",
-          "sha256_uncompressed": "094354d5833da440c8667f461907b1ee4b2e7c9575e36a5e4a5b359704804849",
+          "sha256_uncompressed": "6003bade6be4356a43c443158135b4be521e7e41ad869bc0c712b56b08af43de",
           "bytes": 24724
         },
         {
           "file": "provenance/raw_2026-09-06/pcsodraw_645.html.gz",
-          "sha256_uncompressed": "118b49c103d997e826074bd66e86b60ccd51142591123685993fb21cbb8a6c24",
+          "sha256_uncompressed": "08b5b019b9f27cef751d9c3ce19a764ac830a32321655e315630029cb77021cd",
           "bytes": 24953
         },
         {
           "file": "provenance/raw_2026-09-06/pcsodraw_649.html.gz",
-          "sha256_uncompressed": "997354e66979b41a1a842ec883ffede631f065b40722da02e3022dd0c3985d6a",
+          "sha256_uncompressed": "7b2021b8ac90bbaac20fcac1d307e2f61923c132792463a6c98c7506faddb1df",
           "bytes": 24951
         },
         {
           "file": "provenance/raw_2026-09-06/pcsodraw_655.html.gz",
-          "sha256_uncompressed": "1692bbf808101c3d29b34f28160669ce43d665792843c7d30e2531f4eb52f393",
+          "sha256_uncompressed": "8b1b649812e220f2d985ecff315cbc3103ceb26dc3e730ead000bd0716e2207a",
           "bytes": 25160
         },
         {
           "file": "provenance/raw_2026-09-06/pcsodraw_658.html.gz",
-          "sha256_uncompressed": "7ddb73b2cc34c784420a3e44ea99d58c5404b1a5d40faa4be1c5681cc3a345ed",
+          "sha256_uncompressed": "1b02f94f75ccc9bb7451387e80977bc7d16b2d12060f01dffb002171f0951ff3",
           "bytes": 25195
         }
       ]

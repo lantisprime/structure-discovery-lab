@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "fixture_role": "known-good PCSO manifest fixture for src/source_drift_check.py unit tests. Real captures in datasets/pcso-lotto/provenance/raw_2026-09-06/ are not referenced here; the test synthesises two small HTML captures in tmp_path and patches the manifest's `files` paths to point at them.",
+  "fetched_at": "2025-06-11T00:00:00+0800",
+  "raw_source_capture": {
+    "available": true,
+    "files": [
+      {"file": "capture_a.html.gz", "sha256_uncompressed": "PLACEHOLDER_A", "bytes": 0},
+      {"file": "capture_b.html.gz", "sha256_uncompressed": "PLACEHOLDER_B", "bytes": 0}
+    ]
+  }
+}
