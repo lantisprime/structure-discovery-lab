@@ -77,6 +77,10 @@ def ok_check(head, defect):
     return True, "exit 0"
 
 
+def ok_local_check(head):
+    return True, "exit 0: ALL CHECKS PASSED"
+
+
 def defect_row(commit=DEFECT_COMMIT, ts="2026-09-06T10:00:00Z"):
     return OL.make_row("verify_entrypoint", "src/inst.py", "instrument", "FAIL", "FAIL src/inst.py",
                        {"subject": "linux", "exit": 1, "sha256": None, "args": ["--verify"]}, ts, commit, "tester")
@@ -96,8 +100,9 @@ def ledger_with(tmp_path, rows):
     return path
 
 
-def run(ledger, gh, verifier=agree, check=ok_check, **kw):
-    return LG.run(ledger, root=REPO, gh=gh, verifier=verifier, defect_check=check, out=open(os.devnull, "w"), **kw)
+def run(ledger, gh, verifier=agree, check=ok_check, local_check=ok_local_check, **kw):
+    return LG.run(ledger, root=REPO, gh=gh, verifier=verifier, defect_check=check,
+                  local_check=local_check, out=open(os.devnull, "w"), **kw)
 
 
 # ---------------------------------------------------------------- merge ----
@@ -145,14 +150,13 @@ def test_gate_rejects_red_ci_without_calling_verifier(tmp_path):
     ledger = ledger_with(tmp_path, [d, heal_row(d)])
     checks = [{"name": n, "bucket": "pass"} for n in LG.REQUIRED_CHECKS]
     checks[0] = {"name": LG.REQUIRED_CHECKS[0], "bucket": "fail"}
-    checks.append({"name": "install + verify (windows, informational)", "bucket": "fail"})
     gh = FakeGH(checks=checks)
     called = []
     rows = run(ledger, gh, verifier=lambda b, c: called.append(1) or agree(b, c))
     assert rows[0]["signal"] == "REJECTED" and not called
     assert rows[0]["detail"]["checks"]["ci"]["required"][LG.REQUIRED_CHECKS[0]] == "fail"
     assert gh.calls[0][0] == "close" and "not all green" in gh.calls[0][2]
-    # windows informational alone never blocks
+    # a non-required failing check (e.g. an informational job) never blocks
     ok = [{"name": n, "bucket": "pass"} for n in LG.REQUIRED_CHECKS] + [{"name": "install + verify (windows, informational)", "bucket": "fail"}]
     assert LG.check_ci(ok)["ok"]
     assert not LG.check_ci([{"name": LG.REQUIRED_CHECKS[0], "bucket": "pending"}])["ok"]   # missing/pending = not green
@@ -162,9 +166,27 @@ def test_gate_rejects_failed_defect_check(tmp_path):
     d = defect_row()
     ledger = ledger_with(tmp_path, [d, heal_row(d)])
     gh = FakeGH()
-    rows = run(ledger, gh, check=lambda head, defect: (False, "exit 1: still broken"))
+    rows = run(ledger, gh, check=lambda head, defect: (False, "exit 1: still broken"),
+               local_check=lambda head: (True, "exit 0: ALL CHECKS PASSED"))
     assert rows[0]["signal"] == "REJECTED" and "still fails" in rows[0]["evidence"]
     assert rows[0]["detail"]["checks"]["defect_check"]["summary"].startswith("exit 1")
+    assert gh.calls[0][0] == "close"
+
+
+def test_gate_rejects_failed_local_check_sh(tmp_path):
+    """2026-09-20: the full tools/check.sh battery runs locally in a fresh
+    worktree at the PR head (replacing the CI verify job removed the same day);
+    a failing battery rejects the PR before the verifier is called."""
+    d = defect_row()
+    ledger = ledger_with(tmp_path, [d, heal_row(d)])
+    gh = FakeGH()
+    called = []
+    rows = run(ledger, gh, check=lambda head, defect: (True, "exit 0: ok"),
+               local_check=lambda head: (False, "exit 1: LEDGER INTEGRITY: FAIL"),
+               verifier=lambda b, c: called.append(1) or agree(b, c))
+    assert rows[0]["signal"] == "REJECTED" and not called
+    assert rows[0]["detail"]["checks"]["local_check_sh"]["summary"].startswith("exit 1")
+    assert "local tools/check.sh battery fails" in rows[0]["evidence"]
     assert gh.calls[0][0] == "close"
 
 

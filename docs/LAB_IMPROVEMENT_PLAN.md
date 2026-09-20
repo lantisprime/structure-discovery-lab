@@ -227,9 +227,13 @@ diff, ledger rows it addresses, and the checks it expects to flip.
 non-reserved changes.
 - [x] *Minimal (2026-09-07, `docs/plans/LAB_RSI_R3_IMPLEMENTATION_PLAN.md`):*
   `src/lab_gate.py` decides every heal PR: merge iff the required CI checks
-  (the full `check.sh` battery on two platforms) are green, the defect's own
-  check passes at the PR head in a fresh worktree, the scope is clean (ledger
-  files append-only, no test deletions, constitution byte-identical) and a
+  are green, the defect's own check passes at the PR head in a fresh worktree,
+  the full `check.sh` battery passes at the PR head (locally since
+  2026-09-20, when the OS-matrix verify job and the informational windows
+  job were removed from CI per owner directive — CI is now e2e-only; the
+  gate runs the battery itself in a fresh detached worktree at the PR head,
+  so no PR-body claim is trusted), the scope is clean (ledger files
+  append-only, no test deletions, constitution byte-identical) and a
   read-only verifier of a **different model family** (pi/LiteLLM open-weights
   or codex; the family inequality is enforced in code, `C7`) answers AGREE.
   Still open: re-graded eval set and calibration fixtures (M3) and a semantic
