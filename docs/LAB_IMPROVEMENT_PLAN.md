@@ -236,6 +236,11 @@ non-reserved changes.
   append-only, no test deletions, constitution byte-identical) and a
   read-only verifier of a **different model family** (pi/LiteLLM open-weights
   or codex; the family inequality is enforced in code, `C7`) answers AGREE.
+  The CI rollup is polled until every required check is terminal or a 15-min
+  deadline (adaptive interval 10s→30s, fail/skipping short-circuit; cycle-1
+  finding 2026-09-20: a one-shot query seconds after the healer pushed read
+  the still-running e2e job as missing and would reject healthy PRs on
+  timing), then decides once on the final snapshot — fail-closed unchanged.
   Still open: re-graded eval set and calibration fixtures (M3) and a semantic
   A1--A8 checker (M5) as gate inputs.
 - [x] Auto-merge on green (`Merge PR #N: …`, branch deleted); auto-close with
