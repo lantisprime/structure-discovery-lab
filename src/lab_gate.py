@@ -16,10 +16,11 @@ for the same (defect_key, defect_commit, branch), the gate decides ONE of:
             too (route_unhealable): as soon as the proposer stops with
             OWNER-RESERVED (its notes travel with the issue), or at the attempt cap.
   REJECTED  a mechanical check failed (required CI checks not green; the
-            defect's own check fails at the PR head in a fresh worktree; a
-            ledger file lost lines; a test file was deleted) or the
-            independent verifier disagreed / was of the healer's own model
-            family (C7) / did not answer. The PR is closed with the reasons.
+            defect's own check fails at the PR head in a fresh worktree; the
+            local tools/check.sh battery fails at the PR head; a ledger file
+            lost lines; a test file was deleted) or the independent verifier
+            disagreed / was of the healer's own model family (C7) / did not
+            answer. The PR is closed with the reasons.
   MERGED    every mechanical check passed AND a read-only verifier of a
             different model family answered AGREE. Merge commit
             `Merge PR #N: <title>`, branch deleted.
@@ -27,7 +28,14 @@ for the same (defect_key, defect_commit, branch), the gate decides ONE of:
 Each decision appends exactly one `gate` row. The defect row itself closes
 only when the collector observes PASS (R0 semantics). LAB_VERIFY_CMD /
 LAB_VERIFY_FAMILY / LAB_VERIFY_MODEL override the verifier preset; tests
-inject fakes for GitHub, the verifier and the defect check.
+inject fakes for GitHub, the verifier, the defect check and the local
+check.sh battery.
+
+2026-09-20: the OS-matrix verify job and the informational windows job
+were removed from CI (owner directive; CI is now e2e-only). The gate's
+CI input is `browser e2e (ubuntu)` alone; the full tools/check.sh battery
+runs locally via `run_local_check` in a fresh detached worktree at the PR
+head. No PR-body claim is trusted — the gate runs the check itself.
 """
 
 import argparse
@@ -46,8 +54,7 @@ import outcome_collect as OC  # noqa: E402
 import outcome_attribute as OA  # noqa: E402
 import lab_heal as LH  # noqa: E402
 
-REQUIRED_CHECKS = ("install + verify (ubuntu-latest)", "install + verify (macos-latest)",
-                   "browser e2e (ubuntu)")          # the Windows job is informational by contract
+REQUIRED_CHECKS = ("browser e2e (ubuntu)",)           # the only CI check left (2026-09-20: the OS-matrix verify job and the informational windows job were removed; the full check.sh battery now runs locally via run_local_check)
 CONSTITUTION = "docs/THEOREM_GOVERNANCE.md"
 RESERVED_PREFIXES = (CONSTITUTION, "docs/REGISTRATION_")
 # The gate may not merge changes to itself or to the checks it relies on
@@ -63,6 +70,13 @@ HEALER_FAMILY = "anthropic"                        # lab_heal dispatches `claude
 ISSUE_LABEL = "owner-decision"
 VERIFIER_TIMEOUT = 900
 DIFF_MAX = 60000
+
+# Local verification battery (replaces the CI verify job removed 2026-09-20):
+# the gate runs tools/check.sh in a fresh detached worktree at the PR head
+# before merging. Equivalent to what the CI verify suite did, but local —
+# no PR-body claim is trusted, the gate verifies the change itself.
+LOCAL_CHECK_CMD = ["bash", "tools/check.sh"]
+LOCAL_CHECK_TIMEOUT = 1800
 
 # Read-only verifier presets. The brief is passed as the last argument (and on
 # stdin); the verifier must not edit, commit or reach the network on our behalf.
@@ -225,6 +239,29 @@ def run_defect_check(root, head_sha, defect):
         sh(["git", "worktree", "prune"], root)
 
 
+def run_local_check(root, head_sha):
+    """(ok, summary): the full tools/check.sh battery in a fresh detached
+    worktree at the PR head. Replaces the CI verify job's role (removed
+    2026-09-20): the gate verifies the change locally rather than trusting a
+    PR-body claim. Reuses the lab's .venv via the PY env var (check.sh
+    honours it), so we do not reinstall in the worktree."""
+    if not LOCAL_CHECK_CMD:
+        return True, "no local check command"
+    path = tempfile.mkdtemp(prefix="lab-gate-check-")
+    os.rmdir(path)
+    rc, out, err = sh(["git", "worktree", "add", "--quiet", "--detach", path, head_sha], root, timeout=300)
+    if rc != 0:
+        return False, f"worktree add failed: {err.strip()[-200:]}"
+    try:
+        env = dict(os.environ, PY=os.path.join(root, ".venv", "bin", "python"))
+        rc, out, err = sh(LOCAL_CHECK_CMD, path, timeout=LOCAL_CHECK_TIMEOUT, env=env)
+        tail = "\n".join((out + err).strip().splitlines()[-5:])
+        return rc == 0, f"exit {rc}: {tail}"
+    finally:
+        sh(["git", "worktree", "remove", "--force", path], root)
+        sh(["git", "worktree", "prune"], root)
+
+
 # ------------------------------------------------------------- verifier ----
 
 def family_of(cmd):
@@ -379,7 +416,7 @@ def issue_body(defect, attr, proposal, reasons, checks):
 
 
 class Gate:
-    def __init__(self, root=ROOT, gh=None, verifier=None, defect_check=None, verifier_preset=None,
+    def __init__(self, root=ROOT, gh=None, verifier=None, defect_check=None, local_check=None, verifier_preset=None,
                  dry_run=False, base="master", out=sys.stdout):
         self.root = root
         self.base = base
@@ -387,6 +424,7 @@ class Gate:
         self.spec = verifier_spec(verifier_preset)
         self.verifier = verifier or (lambda brief, cwd: run_verifier(brief, cwd, self.spec))
         self.defect_check = defect_check or (lambda head, defect: run_defect_check(root, head, defect))
+        self.local_check = local_check or (lambda head: run_local_check(root, head))
         self.dry_run = dry_run
         self.out = out
 
@@ -435,6 +473,11 @@ class Gate:
             checks["defect_check"] = {"ok": ok, "summary": LH.redact(summary)[:400]}
             if not ok:
                 reasons.append("the defect's own check still fails at the PR head")
+        if not reasons:
+            ok, summary = self.local_check(pr["headRefOid"])
+            checks["local_check_sh"] = {"ok": ok, "summary": LH.redact(summary)[:400]}
+            if not ok:
+                reasons.append("local tools/check.sh battery fails at the PR head")
         if reasons:
             return self._reject(proposal, num, base_detail, checks, reasons)
         v = self.verifier(verify_brief(defect, attr, d.get("notes"), diff, checks), self.root)
