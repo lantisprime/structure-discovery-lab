@@ -15,7 +15,9 @@ for the same (defect_key, defect_commit, branch), the gate decides ONE of:
             stays open; nothing is merged. An occurrence without a PR is routed
             too (route_unhealable): as soon as the proposer stops with
             OWNER-RESERVED (its notes travel with the issue), or at the attempt cap.
-  REJECTED  a mechanical check failed (required CI checks not green; the
+  REJECTED  a mechanical check failed (required CI checks not green — the
+            rollup is polled until checks are terminal or a 15-min deadline,
+            so a just-pushed PR is not rejected for still-running checks; the
             defect's own check fails at the PR head in a fresh worktree; the
             local tools/check.sh battery fails at the PR head; a ledger file
             lost lines; a test file was deleted) or the independent verifier
@@ -46,6 +48,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
@@ -70,6 +73,24 @@ HEALER_FAMILY = "anthropic"                        # lab_heal dispatches `claude
 ISSUE_LABEL = "owner-decision"
 VERIFIER_TIMEOUT = 900
 DIFF_MAX = 60000
+
+# CI rollup polling (2026-09-20, cycle-1 finding): the gate used to query the
+# check rollup once, seconds after the healer pushed — the e2e job was still
+# IN_PROGRESS/unregistered, so the single required check read as missing and a
+# healthy PR was REJECTED on timing. Now the gate polls until every required
+# check is in a terminal state (or the deadline), then decides once on the
+# final snapshot. Fail-closed semantics are unchanged: after the deadline a
+# missing/pending check still maps to not-green. The deadline is 15 min
+# (e2e historically ~1-2 min; runner queue spikes covered) — 0.4% of the 6h
+# launchd cycle. The interval grows 10s -> 30s to bound API calls; a
+# definitive fail/skipping short-circuits. clock/sleep are injectable so
+# tests never sleep in real time.
+CI_POLL_DEADLINE = 900
+CI_POLL_INTERVAL0 = 10.0
+CI_POLL_INTERVAL_MAX = 30.0
+# gh pr checks bucket/state values that mean "not decided yet"; everything
+# else (pass, fail, skipping, ...) is terminal. A missing name (None) polls.
+CI_POLL_NONTERMINAL = (None, "", "pending", "in_progress", "queued", "waiting")
 
 # Local verification battery (replaces the CI verify job removed 2026-09-20):
 # the gate runs tools/check.sh in a fresh detached worktree at the PR head
@@ -190,6 +211,34 @@ def check_ci(checks):
     seen = {c.get("name"): (c.get("bucket") or c.get("state", "")).lower() for c in checks}
     required = {n: seen.get(n) for n in REQUIRED_CHECKS}
     return {"ok": all(v == "pass" for v in required.values()), "required": required}
+
+
+def poll_ci(fetch, deadline_s=CI_POLL_DEADLINE, interval0=CI_POLL_INTERVAL0, interval_max=CI_POLL_INTERVAL_MAX,
+            sleep=time.sleep, clock=time.monotonic):
+    """Poll the check rollup until every required check is terminal, then return
+    the final snapshot for check_ci. All-pass returns immediately; a definitive
+    fail/skipping short-circuits (no point waiting for the rest); anything
+    non-terminal keeps polling on a growing interval (10s -> 30s) until the
+    deadline, after which the last snapshot is returned and check_ci maps any
+    missing/pending check to not-green exactly as the old one-shot did.
+    `fetch` is a zero-arg callable (the GH rollup query); `clock` and `sleep`
+    are injectable so tests never sleep in real time."""
+    start = clock()
+    interval = interval0
+    checks = fetch()
+    while True:
+        ci = check_ci(checks)
+        if ci["ok"]:
+            return checks
+        if any(v in ("fail", "skipping") for v in ci["required"].values()):
+            return checks                     # definitive not-green; waiting cannot help
+        if not any(v in CI_POLL_NONTERMINAL for v in ci["required"].values()):
+            return checks                     # all terminal, none pass: decided
+        if clock() - start >= deadline_s:
+            return checks                     # fail closed on the last snapshot
+        sleep(interval)
+        interval = min(interval * 1.5, interval_max)
+        checks = fetch()
 
 
 def reserved_reasons(diff, notes, attempts):
@@ -465,7 +514,7 @@ class Gate:
         reasons += scope_reasons(diff, regenerable)
         if diff.get("truncated"):   # the verifier must see the whole change (review finding 5)
             reasons.append(f"diff too large to verify in full ({diff.get('text_chars')} chars > {DIFF_MAX})")
-        checks["ci"] = check_ci(self.gh.checks(num))
+        checks["ci"] = check_ci(poll_ci(lambda: self.gh.checks(num)))
         if not checks["ci"]["ok"]:
             reasons.append("required CI checks not all green: " + json.dumps(checks["ci"]["required"]))
         if not reasons:

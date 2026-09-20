@@ -23,6 +23,7 @@ def load(name):
 
 
 LG = load("lab_gate")
+_orig_poll = LG.poll_ci          # captured before any test monkeypatches LG.poll_ci
 LH = LG.LH
 OL = LG.OL
 
@@ -188,6 +189,127 @@ def test_gate_rejects_failed_local_check_sh(tmp_path):
     assert rows[0]["detail"]["checks"]["local_check_sh"]["summary"].startswith("exit 1")
     assert "local tools/check.sh battery fails" in rows[0]["evidence"]
     assert gh.calls[0][0] == "close"
+
+
+# ------------------------------------------------------- CI rollup poll ----
+# 2026-09-20, cycle-1 finding: the gate queried the rollup once, seconds after
+# the healer pushed; e2e was still IN_PROGRESS so the single required check
+# read as missing and a healthy PR would be rejected on timing. poll_ci polls
+# until terminal-or-deadline. clock/sleep are injectable: no test sleeps.
+
+class FakeClock:
+    def __init__(self, step=0.0):
+        self.t = 0.0
+        self.step = step          # if >0, every sleep advances the clock
+        self.sleeps = []
+
+    def __call__(self):
+        return self.t
+
+    def sleep(self, s):
+        self.sleeps.append(s)
+        self.t += self.step if self.step else s
+
+
+def rollup(state):
+    """state: dict name -> bucket string; omitted names are absent from the rollup."""
+    return [{"name": n, "bucket": b, "state": "COMPLETED" if b in ("pass", "fail", "skipping") else "IN_PROGRESS"}
+            for n, b in state.items()]
+
+
+def test_poll_ci_immediate_pass_single_fetch():
+    fetches = []
+    def fetch():
+        fetches.append(1)
+        return rollup({LG.REQUIRED_CHECKS[0]: "pass"})
+    out = LG.poll_ci(fetch, sleep=FakeClock().sleep)
+    assert len(fetches) == 1 and LG.check_ci(out)["ok"]
+
+
+def test_poll_ci_pending_then_pass_second_fetch():
+    seq = [rollup({LG.REQUIRED_CHECKS[0]: "pending"}), rollup({LG.REQUIRED_CHECKS[0]: "pass"})]
+    fetches = []
+    def fetch():
+        fetches.append(1)
+        return seq[min(len(fetches) - 1, len(seq) - 1)]
+    ck = FakeClock(step=10.0)
+    out = LG.poll_ci(fetch, sleep=ck.sleep, clock=ck)
+    assert len(fetches) == 2 and LG.check_ci(out)["ok"]
+    assert ck.sleeps == [10.0]          # first interval, then all-green
+
+
+def test_poll_ci_fail_short_circuits():
+    fetches = []
+    def fetch():
+        fetches.append(1)
+        return rollup({LG.REQUIRED_CHECKS[0]: "fail"})
+    out = LG.poll_ci(fetch, sleep=FakeClock().sleep)
+    assert len(fetches) == 1 and not LG.check_ci(out)["ok"]
+
+
+def test_poll_ci_skipping_short_circuits():
+    out = LG.poll_ci(lambda: rollup({LG.REQUIRED_CHECKS[0]: "skipping"}), sleep=FakeClock().sleep)
+    assert not LG.check_ci(out)["ok"]
+
+
+def test_poll_ci_pending_forever_fails_closed_at_deadline():
+    """A check that never completes exhausts the deadline; the last snapshot
+    still maps to not-green (fail-closed, same as the old one-shot query)."""
+    fetches = []
+    def fetch():
+        fetches.append(1)
+        return rollup({LG.REQUIRED_CHECKS[0]: "pending"})
+    ck = FakeClock(step=10.0)
+    out = LG.poll_ci(fetch, deadline_s=900.0, interval0=10.0, interval_max=30.0, sleep=ck.sleep, clock=ck)
+    assert LG.check_ci(out)["required"][LG.REQUIRED_CHECKS[0]] == "pending"
+    assert not LG.check_ci(out)["ok"]
+    assert ck.t >= 900.0                       # waited out the deadline
+    assert max(ck.sleeps) <= 30.0              # interval capped
+    assert ck.sleeps[0] == 10.0 and ck.sleeps[1] == 15.0   # 1.5x growth
+
+
+def test_poll_ci_name_never_registered_fails_closed():
+    """The workflow never triggers: the required name is absent from every
+    rollup. Same fail-closed outcome as the old one-shot, after the deadline."""
+    ck = FakeClock(step=10.0)
+    out = LG.poll_ci(lambda: [], deadline_s=60.0, interval0=10.0, interval_max=30.0, sleep=ck.sleep, clock=ck)
+    assert LG.check_ci(out)["required"][LG.REQUIRED_CHECKS[0]] is None
+    assert not LG.check_ci(out)["ok"]
+    assert ck.t >= 60.0
+
+
+def test_gate_merges_when_e2e_pending_then_passes(tmp_path, monkeypatch):
+    """End to end through decide(): the healer pushes, e2e is pending on the
+    first query and passes on the second — the gate polls, then merges."""
+    d = defect_row()
+    ledger = ledger_with(tmp_path, [d, heal_row(d)])
+    seq = [rollup({LG.REQUIRED_CHECKS[0]: "pending"}), rollup({LG.REQUIRED_CHECKS[0]: "pass"})]
+    calls = []
+    class PickyGH(FakeGH):
+        def checks(self, number):
+            calls.append(1)
+            return seq[min(len(calls) - 1, len(seq) - 1)]
+    monkeypatch.setattr(LG, "poll_ci", lambda fetch, **kw: _orig_poll(fetch, deadline_s=5.0, interval0=0.01,
+                                                                       interval_max=0.02, **kw))
+    rows = run(ledger, PickyGH())
+    assert rows[0]["signal"] == "MERGED" and len(calls) == 2
+
+
+def test_gate_rejects_when_e2e_never_completes(tmp_path, monkeypatch):
+    """End to end: e2e pending forever -> the deadline passes -> REJECTED with
+    the same reason string as before, and the verifier is never called."""
+    d = defect_row()
+    ledger = ledger_with(tmp_path, [d, heal_row(d)])
+    called = []
+    class StuckGH(FakeGH):
+        def checks(self, number):
+            return rollup({LG.REQUIRED_CHECKS[0]: "pending"})
+    monkeypatch.setattr(LG, "poll_ci", lambda fetch, **kw: _orig_poll(fetch, deadline_s=0.05, interval0=0.01,
+                                                                       interval_max=0.02, **kw))
+    rows = run(ledger, StuckGH(), verifier=lambda b, c: called.append(1) or agree(b, c))
+    assert rows[0]["signal"] == "REJECTED" and not called
+    assert "required CI checks not all green" in rows[0]["evidence"]
+    assert rows[0]["detail"]["checks"]["ci"]["required"][LG.REQUIRED_CHECKS[0]] == "pending"
 
 
 def test_gate_rejects_ledger_rewrites_and_deleted_tests(tmp_path):
