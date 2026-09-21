@@ -47,6 +47,27 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 DRAWS = ROOT / "datasets" / "pcso-lotto" / "data_draws_1yr.csv"
+# Registered-artifact state (commit 9488a9a, PCSO refresh 2026-09-06): the last
+# commit that set the canonical CSV before it grew again. With --verify the
+# input is read from this snapshot so append-only growth cannot break the
+# byte-exact --verify of the committed 2026-09-06 artifacts (same pattern as
+# pcso_weekly_update.INPUT_SNAPSHOT_COMMIT, bea5121). Live runs (no --verify)
+# always read the working tree.
+INPUT_SNAPSHOT_COMMIT = "9488a9a18cbdd0a2b1bdd7580a41e78192fbd91b"
+VERIFY_SNAPSHOT = False
+
+
+def _draws_bytes() -> bytes:
+    if not VERIFY_SNAPSHOT:
+        return DRAWS.read_bytes()
+    import subprocess
+    rel = DRAWS.resolve().relative_to(ROOT).as_posix()
+    run = subprocess.run(["git", "show", f"{INPUT_SNAPSHOT_COMMIT}:{rel}"],
+                         cwd=ROOT, capture_output=True, check=False)
+    if run.returncode != 0:
+        raise ValueError(f"{rel}: cannot read input snapshot {INPUT_SNAPSHOT_COMMIT[:7]}: "
+                         f"{run.stderr.decode('utf-8', 'replace').strip()}")
+    return run.stdout
 POOL = {"Lotto 6/42": 42, "Mega Lotto 6/45": 45, "Super Lotto 6/49": 49,
         "Grand Lotto 6/55": 55, "Ultra Lotto 6/58": 58}
 K = 6
@@ -67,10 +88,9 @@ def esp6(w: np.ndarray) -> np.ndarray:
 
 
 def load_draws() -> dict[str, list[tuple[str, frozenset[int]]]]:
-    import csv
+    import csv, io
     games: dict[str, list[tuple[str, frozenset[int]]]] = {g: [] for g in POOL}
-    with open(DRAWS, newline="", encoding="utf-8") as fh:
-        for row in csv.DictReader(fh):
+    for row in csv.DictReader(io.StringIO(_draws_bytes().decode("utf-8"))):
             g = row["Game"]
             if g not in POOL:
                 continue
@@ -118,6 +138,8 @@ def main() -> None:
     ap.add_argument("--samples", type=int, default=4000)
     ap.add_argument("--verify", action="store_true")
     args = ap.parse_args()
+    global VERIFY_SNAPSHOT
+    VERIFY_SNAPSHOT = args.verify  # verify target is always the registered Sep-6 artifact
 
     rng = np.random.default_rng(args.seed)
     games = load_draws()
@@ -137,7 +159,7 @@ def main() -> None:
             "ville_threshold_1_over_alpha": round(1.0 / ALPHA_FAMILY, 1),
             "alpha_family": ALPHA_FAMILY,
             "freeze": FREEZE,
-            "input_sha256": hashlib.sha256(DRAWS.read_bytes()).hexdigest(),
+            "input_sha256": hashlib.sha256(_draws_bytes()).hexdigest(),
         },
         "games": {},
         "combined": {},
