@@ -32,6 +32,26 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 DRAWS = ROOT / "datasets" / "pcso-lotto" / "data_draws_1yr.csv"
+# Sep-6 registered-artifact state: the last commit that set every input before
+# the dataset grew again (2026-09-21 refresh). With --verify the input is read
+# from this snapshot so append-only growth cannot break the byte-exact --verify
+# of the committed artifacts (pcso_weekly_update.INPUT_SNAPSHOT_COMMIT pattern).
+# Live runs (no --verify) always read the working tree.
+INPUT_SNAPSHOT_COMMIT = "9488a9a18cbdd0a2b1bdd7580a41e78192fbd91b"
+VERIFY_SNAPSHOT = False
+
+
+def _draws_bytes():
+    if not VERIFY_SNAPSHOT:
+        return DRAWS.read_bytes()
+    import subprocess
+    rel = DRAWS.resolve().relative_to(ROOT).as_posix()
+    run = subprocess.run(["git", "show", f"{INPUT_SNAPSHOT_COMMIT}:{rel}"],
+                         cwd=ROOT, capture_output=True, check=False)
+    if run.returncode != 0:
+        raise ValueError(f"{rel}: cannot read input snapshot {INPUT_SNAPSHOT_COMMIT[:7]}: "
+                         f"{run.stderr.decode('utf-8', 'replace').strip()}")
+    return run.stdout
 POOL = {"Lotto 6/42": 42, "Mega Lotto 6/45": 45, "Super Lotto 6/49": 49, "Grand Lotto 6/55": 55, "Ultra Lotto 6/58": 58}
 K = 6
 
@@ -99,9 +119,11 @@ def main():
     args = ap.parse_args()
     rng = np.random.default_rng(args.seed)
     by = defaultdict(list)
-    with open(DRAWS, newline="", encoding="utf-8-sig") as f:
-        for r in csv.DictReader(f):
-            by[r["Game"]].append((r["Date"], [int(r[f"N{i}"]) for i in range(1, 7)]))
+    global VERIFY_SNAPSHOT
+    VERIFY_SNAPSHOT = args.verify and args.run_date == "2026-09-06"
+    import io as _io
+    for r in csv.DictReader(_io.StringIO(_draws_bytes().decode("utf-8-sig"))):
+        by[r["Game"]].append((r["Date"], [int(r[f"N{i}"]) for i in range(1, 7)]))
     out = {}
     for g in sorted(by):
         P = POOL[g]
@@ -172,7 +194,7 @@ def main():
     result = {"_meta": {"schema_version": 1, "script": "src/pcso_next_draw_posterior.py", "run_date": args.run_date, "seed": args.seed,
                         "model": "product-weight (conditional Poisson) 6-without-replacement; Dirichlet(a) prior with a fixed a priori; importance sampling from Dirichlet(a+c) with weights z(w)^-T",
                         "registration": "docs/RESULTS_PCSO_REFRESH_2026-09-06.md §8 (G0 exploratory; codex review results/codex_review_2026-09-06.md §1-3)",
-                        "input_sha256": {str(DRAWS.relative_to(ROOT)): hashlib.sha256(DRAWS.read_bytes()).hexdigest()},
+                        "input_sha256": {str(DRAWS.relative_to(ROOT)): hashlib.sha256(_draws_bytes()).hexdigest()},
                         "note": "Under the uniform model every history-based rule has R=1 exactly; R_model_averaged folds in BF_01 at equal prior model odds",
                         "float_precision": "predictive_probability rounded to 12 significant digits (r4, 2026-09-06): byte identity across platforms; all other reported floats were already rounded"},
               "games": out}

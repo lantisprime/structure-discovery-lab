@@ -185,3 +185,77 @@ reverses at a=10 — the evidence is weak and prior-sensitive, not a verdict for
 prediction this repository supports; the evidence for unequal weights is weak and prior-sensitive,
 and neither tested serial-dependence statistic rejects after Bonferroni (other transition
 alternatives were not exhausted). G0 exploratory.**
+
+## 9. Addendum r4 — anytime-valid e-process monitor (2026-09-06, exploratory G-labeled)
+
+Motivation: §2's registered m=9 family controls error within a single look; the page itself
+recorded that "weekly cumulative looks are exploratory monitoring without a sequential
+alpha-spending rule". The stochastic-prediction literature survey (operator-directed; see
+`docs/kb/arxiv-stochastic-prediction-survey.md`) identified the standard fix in Ramdas, Grünwald,
+Vovk, Shafer, *Game-Theoretic Statistics and Safe Anytime-Valid Inference* (arXiv:2210.01948).
+
+Construction (their §1.2/§2.2/§3.2.2–3.2.3, applied to our simple null M₀), in statistical terms: for each
+draw, form the prequential (one-step-ahead, past-only) posterior-predictive density
+q_t(S) = E_{w∼Dir(100+counts_{<t})}[f_w(S)] and take the predictive likelihood ratio
+Λ_t = q_t/p₀ with p₀(S) = 1/C(P,6). The evidence process M_t = ∏Λ_s is a nonnegative martingale
+with unit expectation under M₀, so Ville's inequality gives P(sup_t M_t ≥ 1/α) ≤ α at every
+monitoring instant — a sequential test with anytime-valid type-I error control. The predictive
+prior Dirichlet(100) is the same fixed a-priori prior as §8 (their §6.4: the analysis plan must be
+fixed before the data; never selected after seeing outcomes). This tests uniformity (simple null),
+not full exchangeability (their §5.5: the latter admits no nontrivial evidence martingale in the
+data filtration). Functionally, this layer is the self-correction feedback of the prediction
+pipeline: the earliest statistically valid detection of a departure from uniformity is exactly the
+moment the model-averaged predictor is justified in shifting weight toward M₁.
+
+Results (`src/pcso_eprocess_monitor.py --verify` → `results/pcso_eprocess_monitor_2026-09-06.json`,
+seed 20260906, 4,000 Dirichlet samples per draw, byte-deterministic):
+
+| Process | 6/42 | 6/45 | 6/49 | 6/55 | 6/58 | product |
+|---|---|---|---|---|---|---|
+| full-history e (final / running max) | 1.19 / 1.32 | 1.70 / 5.48 | 1.29 / 1.58 | 4.61 / 7.63 | 2.02 / 3.56 | 24.4 |
+| confirmation-set e (final / running max) | 1.37 / 1.55 | 0.39 / 1.23 | 2.50 / 2.97 | 0.70 / 1.16 | 1.11 / 1.23 | 1.04 |
+
+Coherence check: the full-history evidence value is a Bayes-factor process, and 6/55 gives 4.61 vs
+BF₁₀(100) = 1/0.221 = 4.52 — agreement to within Monte Carlo error, cross-validating §8.
+Ville threshold at the family level α = 0.05/9 = 0.0056 is 1/α ≈ 178.6: **no game and no product
+crosses it — the uniform-draw null is not rejected at any monitoring instant** (anytime p ≥ 0.131 per
+game; 0.041 on the full-history product, which is exploratory and not multiplicity-corrected
+across the two processes). This monitor is G-labeled exploratory, sits outside the frozen m=9
+family, and is the inference/self-correction layer of the prediction pipeline rather than a change
+to the ticket generator; it closes the sequential-validity gap for future weekly looks. The picker
+page's monitoring paragraph cites it.
+
+### 9.1 Addendum r5 — v2: mixture-prior evidence process and e-detector (2026-09-06, exploratory G-labeled)
+
+v2 (`src/pcso_eprocess_monitor_v2.py` → `results/pcso_eprocess_monitor_v2_2026-09-06.json`, seed
+20260906, 4,000 samples per draw for the evidence process, 600 for the e-detector,
+byte-deterministic, `--verify` PASS) upgrades the sequential inference layer on two points from
+the surveyed literature:
+
+1. **Mixture-prior prequential evidence process** (arXiv:2210.01948 §3.2.2–3.2.4 mixture method /
+   REGROW robustness): the predictive prior is R = uniform over Dir(a), a ∈ {10, 30, 100, 300,
+   1000}, fixed a priori. This removes by construction the single-concentration prior-sensitivity
+   documented in §8 (BF₀₁ direction reverses between a=10 and a=100): the evidence grows whenever
+   any component alternative fits, and no concentration is selected post hoc (§6.4).
+2. **e-Detector for draw-mechanism drift** (§5.7, Shin–Ramdas–Rinaldo): the running sum of
+   mixture evidence processes restarted every 13 draws over the confirmation set. Under a
+   stationary null the expected run length to a false alarm at threshold 1/α is ≥ 1/α.
+
+| Layer | 6/42 | 6/45 | 6/49 | 6/55 | 6/58 | product |
+|---|---|---|---|---|---|---|
+| mixture e, full history (final / max) | 0.50 / 1.29 | 2.18 / 13.23 | 1.22 / 1.84 | 11.56 / 32.55 | 3.17 / 8.66 | 48.4 |
+| mixture e, confirmation (final / max) | 1.36 / 1.72 | 0.22 / 1.31 | 3.77 / 5.26 | 0.45 / 1.03 | 1.11 / 1.33 | 0.55 |
+| e-detector max (confirmation) | 3.98 | 2.35 | 6.80 | 3.26 | 6.44 | — |
+
+Readings: (i) the mixture is strictly more informative than the fixed a=100 process of §9
+(6/55: 11.56 vs 4.61 full-history; product 48.4 vs 24.4) because it accumulates evidence at
+whichever concentration fits, as the robustness theory predicts; (ii) 6/42 now leans toward the
+uniform model (e = 0.50), which the single-a process could not express; (iii) **no game, no
+product, and no detector crosses the Ville threshold 1/0.0056 ≈ 178.6** — the uniform-draw null
+is not rejected at any monitoring instant, and no draw-mechanism changepoint is detected
+(detector maxima 2.4–6.8 vs 178.6); (iv) strongest single-game evidence remains 6/55 at anytime
+p = 1/32.5 ≈ 0.031, below the registered level. Implementation note: an initial detector run over
+the full history with pre-freeze counts double-counted the pre-freeze draws (they appeared both in
+the conditioning counts and as new evidence), inflating D_max to ~10⁶; the detector must run on
+the confirmation set only — verified against a synthetic uniform null (D_max ≈ 128, below
+threshold, at both sample budgets). G-labeled exploratory; outside the frozen m=9 family.

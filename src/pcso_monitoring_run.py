@@ -121,6 +121,14 @@ def main() -> None:
     args = ap.parse_args()
     manifest_path = args.manifest.resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if args.verify and manifest["run_date"] == "2026-09-06":
+        # Registered-artifact verification: reproduce the committed Sep-6
+        # confirmation result from its own data state. 9488a9a (PCSO refresh
+        # 2026-09-06) is the last commit that set every input that manifest
+        # describes; later appends to the CSVs must not break its byte-exact
+        # --verify (same pattern as pcso_weekly_update.INPUT_SNAPSHOT_COMMIT,
+        # bea5121). Verifying any other manifest reads the working tree.
+        base.ACTIVE_SNAPSHOT = "9488a9a18cbdd0a2b1bdd7580a41e78192fbd91b"
     out = (args.out or (base.ROOT / "results" / f"pcso_confirmation_{manifest['run_date']}.json")).resolve()
     status_before = base.git_status_bytes() if args.verify else None
     records = validate_manifest(manifest)

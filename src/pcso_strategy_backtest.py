@@ -126,6 +126,10 @@ def main():
     ap.add_argument("--perms", type=int, default=9999)
     ap.add_argument("--verify", action="store_true")
     args = ap.parse_args()
+    import csi_popularity
+    # --verify of the registered Sep-6 artifact reproduces it from its data-state
+    # snapshot; --verify of any other run-date checks against the working tree.
+    csi_popularity.VERIFY_SNAPSHOT = args.verify and args.run_date == "2026-09-06"
     rng = random.Random(args.seed)
     by_game = load_official()
     games = sorted(by_game)

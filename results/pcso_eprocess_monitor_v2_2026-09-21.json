@@ -1,0 +1,365 @@
+{
+  "_meta": {
+    "alpha_family": 0.005555555555555556,
+    "alternative": "product-weight f_w(S)=prod w_i / e6(w), predictive prior R = uniform over Dir(a), a in [10.0, 30.0, 100.0, 300.0, 1000.0], fixed a priori",
+    "detector_samples_per_draw": 600,
+    "freeze": "2026-06-10",
+    "input_sha256": "3216feda0150b9a82321a48934c1d01b0727c5d457509afbe096f289cc2153f2",
+    "motivation": "lab BF prior-sensitivity (docs/RESULTS_PCSO_REFRESH_2026-09-06.md sec 8): mixture removes single-concentration sensitivity by construction",
+    "null": "M0 simple uniform: p0(S) = 1/C(P,6) per draw, independent draws",
+    "registration": "exploratory addendum (r5) to docs/RESULTS_PCSO_REFRESH_2026-09-06.md; NOT part of the frozen m=9 family; grid and weights fixed a priori",
+    "run_date": "2026-09-06",
+    "samples_per_draw": 4000,
+    "schema_version": 2,
+    "script": "src/pcso_eprocess_monitor_v2.py",
+    "seed": 20260906,
+    "theory": "arXiv:2210.01948: mixture-prior prequential evidence process (sec 3.2.2-3.2.4 mixture method / REGROW robustness) + Shin-Ramdas-Rinaldo e-detector (sec 5.7); Ville anytime-valid type-I control"
+  },
+  "combined": {
+    "confirmation": {
+      "anytime_p": 1.0,
+      "product_e_value": 0.665525
+    },
+    "full": {
+      "anytime_p": 0.01771392,
+      "product_e_value": 56.452772
+    }
+  },
+  "games": {
+    "Grand Lotto 6/55": {
+      "confirmation_set": {
+        "anytime_p": 0.94294219,
+        "draws": 43,
+        "mixture_final": 0.293127,
+        "mixture_max": 1.06051,
+        "per_concentration": {
+          "10": {
+            "final": 0.007897,
+            "max": 1.0
+          },
+          "100": {
+            "final": 0.540838,
+            "max": 1.142408
+          },
+          "1000": {
+            "final": 0.938579,
+            "max": 1.02561
+          },
+          "30": {
+            "final": 0.117823,
+            "max": 1.0
+          },
+          "300": {
+            "final": 0.822264,
+            "max": 1.076229
+          }
+        }
+      },
+      "e_detector": {
+        "detector_final": 1.515448,
+        "detector_max": 3.263629,
+        "expected_false_alarm_run_draws": 180.0,
+        "restarts": 4,
+        "stop_at_family_alpha": null,
+        "threshold_1_over_alpha": 180.0
+      },
+      "full_history": {
+        "anytime_p": 0.03040194,
+        "draws": 199,
+        "mixture_final": 7.541,
+        "mixture_max": 32.892634,
+        "per_concentration": {
+          "10": {
+            "final": 0.018779,
+            "max": 75.077118
+          },
+          "100": {
+            "final": 3.168067,
+            "max": 7.05741
+          },
+          "1000": {
+            "final": 1.24327,
+            "max": 1.357148
+          },
+          "30": {
+            "final": 2.826121,
+            "max": 33.741548
+          },
+          "300": {
+            "final": 1.897818,
+            "max": 2.506039
+          }
+        }
+      },
+      "pool": 55
+    },
+    "Lotto 6/42": {
+      "confirmation_set": {
+        "anytime_p": 0.59528972,
+        "draws": 44,
+        "mixture_final": 1.005569,
+        "mixture_max": 1.679854,
+        "per_concentration": {
+          "10": {
+            "final": 0.325859,
+            "max": 1.959406
+          },
+          "100": {
+            "final": 1.116737,
+            "max": 1.542002
+          },
+          "1000": {
+            "final": 1.025136,
+            "max": 1.062142
+          },
+          "30": {
+            "final": 0.768626,
+            "max": 2.01591
+          },
+          "300": {
+            "final": 1.071085,
+            "max": 1.193637
+          }
+        }
+      },
+      "e_detector": {
+        "detector_final": 3.277953,
+        "detector_max": 5.157391,
+        "expected_false_alarm_run_draws": 180.0,
+        "restarts": 4,
+        "stop_at_family_alpha": null,
+        "threshold_1_over_alpha": 180.0
+      },
+      "full_history": {
+        "anytime_p": 0.77702204,
+        "draws": 198,
+        "mixture_final": 0.379927,
+        "mixture_max": 1.286965,
+        "per_concentration": {
+          "10": {
+            "final": 0.000189,
+            "max": 2.063843
+          },
+          "100": {
+            "final": 0.956218,
+            "max": 1.2877
+          },
+          "1000": {
+            "final": 1.045532,
+            "max": 1.0787
+          },
+          "30": {
+            "final": 0.119098,
+            "max": 1.343805
+          },
+          "300": {
+            "final": 1.088146,
+            "max": 1.20534
+          }
+        }
+      },
+      "pool": 42
+    },
+    "Mega Lotto 6/45": {
+      "confirmation_set": {
+        "anytime_p": 0.77180658,
+        "draws": 43,
+        "mixture_final": 0.304073,
+        "mixture_max": 1.295661,
+        "per_concentration": {
+          "10": {
+            "final": 0.008291,
+            "max": 1.482669
+          },
+          "100": {
+            "final": 0.486735,
+            "max": 1.234172
+          },
+          "1000": {
+            "final": 0.938353,
+            "max": 1.030623
+          },
+          "30": {
+            "final": 0.106701,
+            "max": 1.467918
+          },
+          "300": {
+            "final": 0.814891,
+            "max": 1.101911
+          }
+        }
+      },
+      "e_detector": {
+        "detector_final": 3.478474,
+        "detector_max": 3.478474,
+        "expected_false_alarm_run_draws": 180.0,
+        "restarts": 4,
+        "stop_at_family_alpha": null,
+        "threshold_1_over_alpha": 180.0
+      },
+      "full_history": {
+        "anytime_p": 0.07839247,
+        "draws": 199,
+        "mixture_final": 2.992033,
+        "mixture_max": 12.756327,
+        "per_concentration": {
+          "10": {
+            "final": 0.005612,
+            "max": 4.996522
+          },
+          "100": {
+            "final": 2.17399,
+            "max": 5.387765
+          },
+          "1000": {
+            "final": 1.149522,
+            "max": 1.253962
+          },
+          "30": {
+            "final": 0.980303,
+            "max": 13.748442
+          },
+          "300": {
+            "final": 1.518977,
+            "max": 2.071199
+          }
+        }
+      },
+      "pool": 45
+    },
+    "Super Lotto 6/49": {
+      "confirmation_set": {
+        "anytime_p": 0.19139707,
+        "draws": 44,
+        "mixture_final": 5.22474,
+        "mixture_max": 5.22474,
+        "per_concentration": {
+          "10": {
+            "final": 10.678908,
+            "max": 20.112108
+          },
+          "100": {
+            "final": 3.139691,
+            "max": 3.139691
+          },
+          "1000": {
+            "final": 1.16918,
+            "max": 1.16918
+          },
+          "30": {
+            "final": 8.494749,
+            "max": 9.187699
+          },
+          "300": {
+            "final": 1.605603,
+            "max": 1.605603
+          }
+        }
+      },
+      "e_detector": {
+        "detector_final": 8.257033,
+        "detector_max": 8.39412,
+        "expected_false_alarm_run_draws": 180.0,
+        "restarts": 4,
+        "stop_at_family_alpha": null,
+        "threshold_1_over_alpha": 180.0
+      },
+      "full_history": {
+        "anytime_p": 0.55196092,
+        "draws": 199,
+        "mixture_final": 1.690939,
+        "mixture_max": 1.811722,
+        "per_concentration": {
+          "10": {
+            "final": 0.001283,
+            "max": 2.389095
+          },
+          "100": {
+            "final": 1.920956,
+            "max": 1.920956
+          },
+          "1000": {
+            "final": 1.10008,
+            "max": 1.10008
+          },
+          "30": {
+            "final": 0.661375,
+            "max": 2.230048
+          },
+          "300": {
+            "final": 1.446153,
+            "max": 1.446153
+          }
+        }
+      },
+      "pool": 49
+    },
+    "Ultra Lotto 6/58": {
+      "confirmation_set": {
+        "anytime_p": 0.70363273,
+        "draws": 44,
+        "mixture_final": 1.421196,
+        "mixture_max": 1.421196,
+        "per_concentration": {
+          "10": {
+            "final": 0.286771,
+            "max": 1.0
+          },
+          "100": {
+            "final": 1.268268,
+            "max": 1.268268
+          },
+          "1000": {
+            "final": 1.054465,
+            "max": 1.054465
+          },
+          "30": {
+            "final": 0.966676,
+            "max": 1.0
+          },
+          "300": {
+            "final": 1.15397,
+            "max": 1.15397
+          }
+        }
+      },
+      "e_detector": {
+        "detector_final": 8.974695,
+        "detector_max": 8.974695,
+        "expected_false_alarm_run_draws": 180.0,
+        "restarts": 4,
+        "stop_at_family_alpha": null,
+        "threshold_1_over_alpha": 180.0
+      },
+      "full_history": {
+        "anytime_p": 0.11914001,
+        "draws": 199,
+        "mixture_final": 3.894591,
+        "mixture_max": 8.393486,
+        "per_concentration": {
+          "10": {
+            "final": 0.006378,
+            "max": 54.727888
+          },
+          "100": {
+            "final": 2.573062,
+            "max": 3.701243
+          },
+          "1000": {
+            "final": 1.168437,
+            "max": 1.195362
+          },
+          "30": {
+            "final": 1.728275,
+            "max": 11.072096
+          },
+          "300": {
+            "final": 1.526032,
+            "max": 1.628454
+          }
+        }
+      },
+      "pool": 58
+    }
+  }
+}
