@@ -86,6 +86,46 @@ GLM also confirmed from Fienberg–Rinaldo that CP-NEST's null Fisher informatio
 correct precision update, and that shared-θ pooling enlarges the relative interior of the pooled
 convex support (Minkowski sum) — the geometric reason pooling is robust.
 
+## 3c. Research round 2 (2026-09-23) — sparse ball-specific deviations: dispositions
+
+Problem: a deviation confined to k ≪ P specific balls of one game. CP-NEST captures only ≈ d/(P−1) of such a
+signal (13.6% at P = 45, d = 6) and the per-ball Dirichlet pays ((P−1)/2)·log T = 116.6 nats (P = 45, T = 200).
+Intake: `tools/research_intake.py` (targeted arXiv scan, Jev relevance 0.92–1.17; lead re-routing so every seat
+reads; 8 full texts). Readers: GLM 5.3, Kimi K3, GPT Astra 6 (reports in the session scratchpad). Lead checks were
+exact computations (below). Owner approved the model and this disposition 2026-09-23.
+
+| Proposal | Source (peer-reviewed) | Disposition | Evidence / reason |
+|---|---|---|---|
+| Exact sparse conditional-Poisson experts + uniform atom + summable switching (`cp_sparse_switch`) | Koolen & de Rooij, IEEE Trans. Inf. Theory 59(11) 2013, Lemma 1, Thm 11 (eq. 14) | ACCEPT-WITH-MOD (k ≤ 2 exact; k = 3 deferred) | normalized predictable law ⇒ valid evidence process; −log E_T ≤ log 2 + Σ_t τ(t) ≤ 1.693 nats on every sequence; k = 3 is 7.3M experts per game, k ≤ 2 about 223k in total |
+| Support prior with mass ≈ 1/2 on "no deviation" and explicit support cost log C(P,k) | Castillo & van der Vaart, Ann. Statist. 40(4) 2012, Ex. 2.2, Thms 2.1/2.5 | ACCEPT-WITH-MOD (prior design; the theorems are for the Gaussian sequence model) | learning cost k·log P + (k/2)·log T: 7.2 / 13.6 nats (k = 1/2, P = 45, T = 200) |
+| Heavy-tailed, not Gaussian, prior on log-weights | same, Thm 2.8 | ACCEPT (finite two-sided grid, equal mass per value) | Gaussian slabs shrink large deviations |
+| Finite-sample impossibility bound for weak sparse deviations (exact 6-subset second moment) | Balakrishnan & Wasserman, Ann. Statist., Lemma 3 | ACCEPT-WITH-MOD (registered sanity bound) | lead-verified: P = 45, k = 1, w = 1.1, 200 draws ⇒ power ≤ 2.24% for any level-1% test, sequential tests included |
+| Grid value \|θ\| = 0.1 | same | REJECT for the dictionary | undetectable at our sizes; saves prior mass |
+| Exact-null-calibrated higher criticism; exact quadratic statistic A_n = Σ(C_i − np)² − nP·p(1−p) | Donoho & Jin, Ann. Statist. 32(3) 2004; Balakrishnan & Wasserman §3.1 | ACCEPT-WITH-MOD as diagnostics only | calibrated by uniform 6-subset simulation and alpha spending over looks; never part of the evidence product |
+| Weighted empirical supremum | Stepanova & Pavlenko, Theory Probab. Appl. | DEFER | no established finite-sample gain over calibrated HC |
+| Window-limited mixture scans; detectability-score rule | Xie & Siegmund, Ann. Statist. 41(2) 2013; Chan, Ann. Statist. | ACCEPT-WITH-MOD as design guidance | our sizes are in the Lorden domain, D ≈ 2·log γ / (k·(6/P)(1−6/P)·θ²); tracking comes from the switching model |
+| Product-form per-ball evidence Π_i(1 − p₀ + p₀·e_i) | Kimi's adaptation of Chan / Xie–Siegmund | REJECT | lead check: with mixed-direction weights E₀ = 1.0001 (P = 45) and 1.0020 (P = 9, brute force) > 1; with equal weights it is constant (exactly six inclusions). e₆-normalized likelihood ratios are exact |
+| GLR mixture score used as an e-variable | Xie & Siegmund eq. 7 | REJECT | E₀ exp((U⁺)²/2) = ∞ |
+| Donoho–Ingster–Jin asymptotic constants ρ(β, ζ) | Donoho & Jin Thm 1.2; Chan Thms 1–2 | NULL (boundary result recorded) | for k ≤ 3 and log γ = 4.6–6.9 we are in the polynomial (Lorden) domain at P ≤ 58 |
+| Sign, tail-run, longest-run, CUSUM-sign, Smirnov, signed-rank tests | Arias-Castro & Wang, TEST | NULL (dominated) | distribution-freeness is unneeded (the null is known); weakest at small n (their §4.2); no guarantee for mixed signs (§5.2) |
+| Particle spike-and-slab with a continuous Laplace prior (k ≤ 3) | GLM synthesis on Castillo & van der Vaart | DEFER (k = 3 / continuous extension) | valid by normalization but loses the exact pathwise bound |
+| Single-support model with an online Laplace parameter | Kimi synthesis | NULL (subsumed by the exact grid at k = 1) | the grid carries the exact finite-sample guarantee |
+| Pooling a ball-specific parameter across games | — | REJECT | no shared mechanism for ball identity (L4) |
+
+**`cp_sparse_switch` (approved for build).** Experts: uniform for all games, and for one game g a support A with
+|A| ∈ {1, 2} and log-weights θ_i ∈ {−1, −0.5, −0.25, 0.25, 0.5, 1} (other games uniform). Expert law on game g:
+f(S) = exp(Σ_{i∈S∩A} θ_i) / Z, Z = Σ_{B⊆A} C(P−|A|, 6−|B|)·exp(Σ_{i∈B} θ_i) (exact, ≤ 4 terms). Prior: w₀ = 1/2; the
+other half split 1/5 per game, Pr(k = 1) = 2/3, Pr(k = 2) = 1/3, uniform over supports and grid values. Switching
+(Koolen & de Rooij eq. 14): τ(t) = 1/log(t + e − 1) − 1/log(t + e), ρ_t = 1 − e^{−τ(t)} on the pooled clock;
+v_t = (1 − ρ_t)·Bayes(v_{t−1}, f(S_t)) + ρ_t·w. Exact lower bound (lead-verified): a planted θ = 1 deviation on one
+ball at P = 45 crosses 1/α = 100 within 200 draws of that game with probability ≥ 70.2%.
+
+Registration `pcso.sparse.seq1` (to be fixed before any scored draw): S1 null error control; S2 the 1.693-nat
+bound on real and null streams; S3 planted θ = 1, k ∈ {1, 2}, P ∈ {45, 58}: crossing fractions ≥ the exact bounds
+and above CP-NEST and Dirichlet(100) on the same streams (θ = 0.25/0.5 and mixed signs reported without a power
+claim); S4 weak-signal power respects the Balakrishnan–Wasserman bounds; S5 appearance/disappearance paths obey
+the Lemma 1 path bound. Scored window: draws dated after its own registration date.
+
 ## 4. Falsifiable claims to test
 
 C1 CP-NEST's evidence process keeps error control under uniform draws (null crossing ≤ α).
