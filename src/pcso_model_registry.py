@@ -47,6 +47,12 @@ REGISTERED_AFTER = "2026-09-23"
 # conditioning history (same pattern as src/pcso_next_draw_posterior.py _draws_bytes). Later rows
 # always come from the working tree.
 INPUT_SNAPSHOT_COMMIT = "bcf39ca"
+# Registered C3 fixed-share loss bound (amendment v2, A4), conservative form: -log E_T must stay
+# <= intercept + slope*T on every null stream and on the real draws. The slope is the registered
+# conservative value for -log(1 - rho); the form dominates the amendment's general bound at all
+# horizons (docs/ERRATUM_2026-09-23_C3_NULL_SIGN.md).
+C3_LOSS_BOUND_INTERCEPT = 0.685304
+C3_LOSS_BOUND_SLOPE = 0.0010005
 
 
 # ------------------------------------------------------------------ conditional-Poisson algebra
@@ -566,7 +572,8 @@ def synthetic(rng, schedule, theta1=0.0):
 def _null_rep(job):
     """One simulated uniform stream (C1, C3); seeded per replicate, so results do not depend on scheduling.
     M = 32: validity does not depend on M (design review, Kimi K3, item 6); production M = 128 is
-    used in C2. Also returns the final log-evidence for the C3 fixed-share loss-bound check."""
+    used in C2. Also returns the final log-evidence +log E_T for the C3 fixed-share loss-bound
+    check; the harness negates it, since the registered bound is on -log E_T."""
     seed, s, schedule = job
     syn = synthetic(np.random.default_rng([seed, 100, s]), schedule)
     cp = CPNest(seed=seed + 1000 + s, M=32)
@@ -590,6 +597,16 @@ def _power_rep(job):
                 break
         hits[m.name] = hit
     return hits
+
+
+def c3_null_fraction(log_e_null, T):
+    """Fraction of null streams satisfying the registered C3 fixed-share loss bound
+    -log E_T <= 0.685304 + 0.0010005*T (conservative form, valid at all horizons).
+    log_e_null holds +log E_T per stream (exactly as returned by _null_rep); the negation to
+    -log E_T is applied here, inside the tested unit, so callers cannot get the sign wrong."""
+    if len(log_e_null) == 0:
+        raise ValueError("c3_null_fraction: empty null-stream list")
+    return float(np.mean(-np.array(log_e_null) <= C3_LOSS_BOUND_INTERCEPT + C3_LOSS_BOUND_SLOPE * T))
 
 
 def main():
@@ -659,13 +676,13 @@ def main():
     from concurrent.futures import ProcessPoolExecutor
     workers = max(1, (os.cpu_count() or 2) - 1)
     # C1 (implementation regression test of Ville control) and C3 (collapse to d = 0 under M0).
-    sups, srs, v0, neg_loge_null = [], [], [], []
+    sups, srs, v0, log_e_null = [], [], [], []
     with ProcessPoolExecutor(workers) as ex:
         for i, (a, b, c, d) in enumerate(ex.map(_null_rep, [(args.seed, s, schedule) for s in range(args.null_sims)]), 1):
             sups.append(a)
             srs.append(b)
             v0.append(c)
-            neg_loge_null.append(d)
+            log_e_null.append(d)   # +log E_T exactly as returned by _null_rep; c3_null_fraction negates
             if i % 50 == 0:
                 print(f"[null] {i}/{args.null_sims} crossing so far {np.mean(np.array(sups) >= math.log(1 / ALPHA)):.4f}", flush=True)
         # C2: CP-NEST vs the exact d = 1 grid process on the same direction (phi_1), planted theta_1.
@@ -704,11 +721,11 @@ def main():
            "c3_collapse_v1_registered": {"criterion": "v1 (unchanged from registration): under uniform draws, median of the final level-0 weight v_T(0) >= 0.9",
                                          "fraction_v_T0_ge_0p9": round(float(np.mean(np.array(v0) >= 0.9)), 4),
                                          "median_v_T0": round(float(np.median(v0)), 4)},
-           "c3_loss_bound_check": {"bound": "-log E_T <= 0.685304 + 0.0010005*T (fixed-share bound for CP-NEST against the uniform comparator level; conservative form, valid at all horizons)",
+           "c3_loss_bound_check": {"bound": f"-log E_T <= {C3_LOSS_BOUND_INTERCEPT} + {C3_LOSS_BOUND_SLOPE}*T (fixed-share bound for CP-NEST against the uniform comparator level; conservative form, valid at all horizons)",
                                    "real_draws": {"T": len(rows), "neg_log_E_T": round(-res["cp_nest"]["log_e_full"], 6),
-                                                  "satisfied": bool(-res["cp_nest"]["log_e_full"] <= 0.685304 + 0.0010005 * len(rows))},
+                                                  "satisfied": bool(-res["cp_nest"]["log_e_full"] <= C3_LOSS_BOUND_INTERCEPT + C3_LOSS_BOUND_SLOPE * len(rows))},
                                    "null_streams": {"n": args.null_sims, "T": len(schedule),
-                                                    "fraction_satisfied": round(float(np.mean(np.array(neg_loge_null) <= 0.685304 + 0.0010005 * len(schedule))), 4),
+                                                    "fraction_satisfied": round(c3_null_fraction(log_e_null, len(schedule)), 4),
                                                     "must_be": 1.0}},
            "power_planted_tilt_phi1": {"replicates": args.power_sims, "horizon_pooled_draws": len(long_schedule),
                                        "comparator": "exact one-parameter grid process on phi_1 (tilt_linear)", **power}}

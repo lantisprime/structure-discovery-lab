@@ -6,6 +6,7 @@ import importlib.util
 import itertools
 import math
 import os
+import pytest
 import sys
 
 import numpy as np
@@ -180,3 +181,42 @@ def test_tilt_high31_nondegenerate_and_deterministic_at_42():
         assert np.ptp(la.inclusion()) > 1e-8                # nondegenerate: inclusion not uniform
         a.update(42, S)
         b.update(42, S)
+
+
+def test_c3_null_fraction_compares_negated_log_evidence():
+    """Erratum 2026-09-23 regression (C3 null-stream sign): c3_null_fraction, the exact helper the
+    harness feeds c3_loss_bound_check.null_streams.fraction_satisfied from, receives +log E_T per
+    null stream exactly as _null_rep returns it and negates to -log E_T itself before comparing
+    against 0.685304 + 0.0010005*T. A null stream whose evidence GROWS (+log E_T above the bound,
+    as for stream s=169: +2.4607 vs bound 1.6798 at T = 994) counts as satisfying it; a stream
+    with +log E_T = -1.7 (so -log E_T = 1.7 above the bound) must not; an empty stream list is a
+    hard error, not a silent NaN."""
+    T = 994                                                 # registered run: len(schedule)
+    bound = 0.685304 + 0.0010005 * T
+    assert abs(bound - 1.679801) < 1e-6                     # registered conservative bound at T = 994
+    grew = 2.4607                                           # +log E_T of stream s=169, above the bound
+    broke = -1.7                                            # +log E_T whose -log E_T = 1.7 > bound
+    assert R.c3_null_fraction([grew], T) == 1.0
+    assert R.c3_null_fraction([broke], T) == 0.0
+    assert R.c3_null_fraction([grew, broke], T) == 0.5
+    with pytest.raises(ValueError):
+        R.c3_null_fraction([], T)
+
+
+def test_null_rep_fourth_return_is_inline_sum_of_log_q_over_p0():
+    """Producer contract (erratum 2026-09-23, C3 null-sign fix): the 4th value _null_rep returns is
+    +log E_T, the running sum of the exact increments log(q(S_t)/p0(S_t)) with p0(S) = 1/C(P,6) —
+    exactly what c3_null_fraction receives and negates before comparing with the registered bound.
+    Checked against an independent inline accumulation over the identical synthetic stream, built
+    with _null_rep's own seeds and construction: synthetic(np.random.default_rng([seed, 100, s]),
+    schedule), CPNest(seed = seed + 1000 + s, M = 32)."""
+    seed, s, P, T = 20260923, 3, 42, 12
+    schedule = [(f"sim-{k:05d}", P) for k in range(T)]
+    *_, log_e_full = R._null_rep((seed, s, schedule))
+    syn = R.synthetic(np.random.default_rng([seed, 100, s]), schedule)
+    cp = R.CPNest(seed=seed + 1000 + s, M=32)
+    inline = 0.0
+    for _, Pt, S in syn:
+        inline += cp.predict(Pt).logq(S) + math.log(math.comb(Pt, 6))   # log(q(S)/p0(S))
+        cp.update(Pt, S)
+    assert log_e_full == pytest.approx(inline, abs=1e-9)
