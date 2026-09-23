@@ -10,9 +10,10 @@ stored as log-weights `logw` (M x P) and mixture weights `a` (M). Every q is nor
 from past draws only, so prod_t q_t(S_t)/p0(S_t) is an evidence process against uniform draws
 (Ville), whatever approximation the model uses.
 
-Reads  datasets/pcso-lotto/data_draws_1yr.csv (with --verify, conditioning rows dated <=
-       REGISTERED_AFTER come from the frozen input snapshot INPUT_SNAPSHOT_COMMIT)
+Reads  datasets/pcso-lotto/data_draws_1yr.csv (conditioning rows must match INPUT_SNAPSHOT_COMMIT)
 Writes results/pcso_model_leaderboard_<run_date>.json  (byte-deterministic for a given seed)
+       and its replay provenance in results/pcso_model_leaderboard_provenance.json.
+With --verify, replays the recorded harness and input in a temporary git archive.
 Registered window: draws dated <= REGISTERED_AFTER only condition the models; draws dated after it
 get fresh evidence (E = 1) and fresh Shiryaev-Roberts accounting (M = 0, t from the first registered
 draw) — see run_registered and docs/REGISTRATION_PCSO_MODEL_REGISTRY.md.
@@ -28,11 +29,16 @@ import json
 import math
 import os
 from pathlib import Path
+import subprocess
+import sys
+import tarfile
+import tempfile
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 DRAWS = ROOT / "datasets" / "pcso-lotto" / "data_draws_1yr.csv"
+PROVENANCE = ROOT / "results" / "pcso_model_leaderboard_provenance.json"
 POOL = {"Lotto 6/42": 42, "Mega Lotto 6/45": 45, "Super Lotto 6/49": 49,
         "Grand Lotto 6/55": 55, "Ultra Lotto 6/58": 58}
 K = 6
@@ -42,10 +48,8 @@ ALPHA = 0.01
 # REGISTERED_AFTER only condition the models; registered evidence E and the change statistic M
 # start fresh (E = 1, M = 0) at the first draw dated after it.
 REGISTERED_AFTER = "2026-09-23"
-# Frozen input snapshot (the registration commit): with --verify, conditioning rows dated
-# <= REGISTERED_AFTER are read from this snapshot so append-only dataset growth cannot change the
-# conditioning history (same pattern as src/pcso_next_draw_posterior.py _draws_bytes). Later rows
-# always come from the working tree.
+# Conditioning snapshot: live rows dated <= REGISTERED_AFTER must match this pin before scoring.
+# Update the pin to include every conditioning draw before scoring a refreshed dataset.
 INPUT_SNAPSHOT_COMMIT = "bcf39ca"
 # Registered C3 fixed-share loss bound (amendment v2, A4), conservative form: -log E_T must stay
 # <= intercept + slope*T on every null stream and on the real draws. The slope is the registered
@@ -448,10 +452,7 @@ def run(models, rows, warmup=30, track_sup=False):
 
 
 def _snapshot_bytes() -> bytes:
-    """Frozen input snapshot INPUT_SNAPSHOT_COMMIT (registration commit); used with --verify so that
-    append-only dataset growth cannot change the rows that condition the models (pattern of
-    src/pcso_lowdim_eprocess.py / src/pcso_next_draw_posterior.py _draws_bytes)."""
-    import subprocess
+    """Read the single pinned conditioning snapshot for live scoring."""
     rel = DRAWS.relative_to(ROOT).as_posix()
     run = subprocess.run(["git", "show", f"{INPUT_SNAPSHOT_COMMIT}:{rel}"],
                          cwd=ROOT, capture_output=True, check=False)
@@ -469,18 +470,88 @@ def _parse_rows(text: str):
     return out
 
 
-def load(verify: bool = False):
-    """[(date, P, S)] in date order. With --verify, rows dated <= REGISTERED_AFTER (the conditioning
-    history of the registered window) are read from the frozen input snapshot; later rows come from
-    the working tree, so the registered window always scores the freshest validated draws."""
+def load():
+    """Pinned conditioning rows plus live registered rows, rejecting conditioning drift."""
     live = _parse_rows(DRAWS.read_bytes().decode("utf-8-sig"))
-    if verify:
-        snap = _parse_rows(_snapshot_bytes().decode("utf-8-sig"))
-        rows = [r for r in snap if r[0] <= REGISTERED_AFTER] + [r for r in live if r[0] > REGISTERED_AFTER]
-    else:
-        rows = live
+    snap = _parse_rows(_snapshot_bytes().decode("utf-8-sig"))
+    conditioning = sorted(r for r in snap if r[0] <= REGISTERED_AFTER)
+    if sorted(r for r in live if r[0] <= REGISTERED_AFTER) != conditioning:
+        raise ValueError("live conditioning rows differ from INPUT_SNAPSHOT_COMMIT; "
+                         "update the conditioning pin before scoring")
+    rows = conditioning + [r for r in live if r[0] > REGISTERED_AFTER]
     rows.sort()
     return [(d, P, S) for d, _, P, S in rows]
+
+
+def _git(*args):
+    result = subprocess.run(["git", *args], cwd=ROOT, capture_output=True)
+    if result.returncode:
+        raise ValueError(result.stderr.decode("utf-8", "replace").strip())
+    return result.stdout
+
+
+def _verify(dst):
+    """Replay recorded code and input without modifying this checkout or its Git directory."""
+    rel = dst.relative_to(ROOT).as_posix()
+    try:
+        entries = json.loads(PROVENANCE.read_text())
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"cannot read provenance manifest: {exc}") from exc
+    if rel not in entries:
+        raise ValueError(f"{rel}: absent from provenance manifest")
+    entry = entries[rel]
+    expected = dst.read_bytes()
+    if hashlib.sha256(expected).hexdigest() != entry["artifact_sha256"]:
+        raise ValueError(f"VERIFY MISMATCH: {rel}")
+    commit = entry["harness_commit"]
+    try:
+        if _git("cat-file", "-t", commit).strip() != b"commit":
+            raise ValueError("object is not a commit")
+    except ValueError as exc:
+        raise ValueError(f"recorded harness commit {commit} unavailable: {exc}") from exc
+    try:
+        data = _git("cat-file", "blob", entry["input_blob"])
+    except ValueError as exc:
+        raise ValueError(f"recorded input blob {entry['input_blob']} unavailable: {exc}") from exc
+    if hashlib.sha256(data).hexdigest() != entry["input_sha256"]:
+        raise ValueError("recorded input sha256 mismatch")
+    common = Path(_git("rev-parse", "--git-common-dir").decode().strip())
+    # The archive has no .git: the replayed harness reads objects through GIT_DIR, and
+    # _write_provenance binds its check to the recorded commit via _PCSO_REGISTRY_REPLAY_COMMIT
+    # (not an argv flag, so the recorded argv stays exactly as recorded).
+    env = dict(os.environ, GIT_DIR=str((ROOT / common).resolve()),
+               _PCSO_REGISTRY_REPLAY_COMMIT=commit)
+    with tempfile.TemporaryDirectory(prefix="pcso-registry-replay-") as td:
+        replay = Path(td)
+        with tarfile.open(fileobj=io.BytesIO(_git("archive", commit))) as archive:
+            archive.extractall(replay, filter="data")
+        (replay / DRAWS.relative_to(ROOT)).write_bytes(data)
+        # Require a freshly produced artifact, even if this revision already tracked it.
+        (replay / rel).parent.mkdir(parents=True, exist_ok=True)
+        (replay / rel).unlink(missing_ok=True)
+        result = subprocess.run([sys.executable, *entry["argv"]], cwd=replay, env=env)
+        if result.returncode:
+            raise ValueError(f"recorded harness replay failed (exit {result.returncode})")
+        payload = (replay / rel).read_bytes()
+        if payload != expected or hashlib.sha256(payload).hexdigest() != entry["artifact_sha256"]:
+            raise ValueError(f"VERIFY MISMATCH: {rel}")
+    print(f"PASS sha256={hashlib.sha256(payload).hexdigest()}; wrote=none")
+
+
+def _write_provenance(args):
+    """Bind a live write to HEAD; an archived replay validates against its recorded commit."""
+    revision = "HEAD" if (ROOT / ".git").exists() else os.environ.get("_PCSO_REGISTRY_REPLAY_COMMIT", "HEAD")
+    commit = _git("rev-parse", revision).decode().strip()
+    for path in (Path(__file__).resolve(), DRAWS):
+        rel = path.relative_to(ROOT).as_posix()
+        if path.read_bytes() != _git("show", f"{commit}:{rel}"):
+            raise ValueError(f"{rel} differs from {revision}; commit inputs before scoring")
+    return {"harness_commit": commit,
+            "input_blob": _git("rev-parse", f"{commit}:{DRAWS.relative_to(ROOT).as_posix()}").decode().strip(),
+            "input_sha256": hashlib.sha256(DRAWS.read_bytes()).hexdigest(),
+            "argv": ["src/pcso_model_registry.py", "--seed", str(args.seed),
+                     "--run-date", args.run_date, "--null-sims", str(args.null_sims),
+                     "--power-sims", str(args.power_sims)]}
 
 
 def _exp_capped(x: float) -> float:
@@ -617,7 +688,13 @@ def main():
     ap.add_argument("--power-sims", type=int, default=50)
     ap.add_argument("--verify", action="store_true")
     args = ap.parse_args()
-    rows = load(args.verify)
+    dst = ROOT / "results" / f"pcso_model_leaderboard_{args.run_date}.json"
+    if args.verify:
+        _verify(dst)
+        return
+    provenance = _write_provenance(args)
+    entries = json.loads(PROVENANCE.read_text()) if PROVENANCE.exists() else {}
+    rows = load()
     base, ens = roster(args.seed)
     res = run(base + [ens], rows)
     board = {}
@@ -730,17 +807,19 @@ def main():
            "power_planted_tilt_phi1": {"replicates": args.power_sims, "horizon_pooled_draws": len(long_schedule),
                                        "comparator": "exact one-parameter grid process on phi_1 (tilt_linear)", **power}}
     payload = (json.dumps(out, indent=2, ensure_ascii=True) + "\n").encode("utf-8")
-    dst = ROOT / "results" / f"pcso_model_leaderboard_{args.run_date}.json"
-    if args.verify:
-        if dst.read_bytes() != payload:
-            raise SystemExit(f"VERIFY MISMATCH: {dst}")
-        print(f"PASS sha256={hashlib.sha256(payload).hexdigest()}; wrote=none")
-        return
+    if _write_provenance(args) != provenance:
+        raise ValueError("inputs changed during scoring; refusing to write")
+    entries[dst.relative_to(ROOT).as_posix()] = {
+        "artifact_sha256": hashlib.sha256(payload).hexdigest(), **provenance}
     dst.write_bytes(payload)
+    PROVENANCE.write_text(json.dumps(entries, indent=2) + "\n")
     print(f"wrote {dst.relative_to(ROOT)} sha256={hashlib.sha256(payload).hexdigest()}")
     print(json.dumps({k: out[k] for k in ("leaderboard", "registered_window", "cp_nest_null_check",
                                           "c3_collapse_v1_registered", "c3_loss_bound_check", "power_planted_tilt_phi1")}, indent=1))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (OSError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc

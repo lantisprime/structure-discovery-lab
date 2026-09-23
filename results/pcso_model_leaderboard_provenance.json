@@ -1,0 +1,36 @@
+{
+  "results/pcso_model_leaderboard_2026-09-21.json": {
+    "artifact_sha256": "c5615c91cbac43359f4850bacb9c539134efdc386556fdf48c9426fc870bfd75",
+    "harness_commit": "bcf39cad433b57d22312ceb4c7bb6bb17ec6d82a",
+    "input_blob": "e3e67ddea4bc862c992b6b3bceec1a40f7402c25",
+    "input_sha256": "3216feda0150b9a82321a48934c1d01b0727c5d457509afbe096f289cc2153f2",
+    "argv": [
+      "src/pcso_model_registry.py",
+      "--seed",
+      "20260923",
+      "--run-date",
+      "2026-09-21",
+      "--null-sims",
+      "400",
+      "--power-sims",
+      "50"
+    ]
+  },
+  "results/pcso_model_leaderboard_2026-09-23.json": {
+    "artifact_sha256": "cb8bdc93e53efbb31cf7e5153fd12fb53b159083dca9f0474fa8ccd0e8ed3a40",
+    "harness_commit": "322c889f84429add16b80c0d544e9282a6c86550",
+    "input_blob": "e3e67ddea4bc862c992b6b3bceec1a40f7402c25",
+    "input_sha256": "3216feda0150b9a82321a48934c1d01b0727c5d457509afbe096f289cc2153f2",
+    "argv": [
+      "src/pcso_model_registry.py",
+      "--seed",
+      "20260923",
+      "--run-date",
+      "2026-09-23",
+      "--null-sims",
+      "400",
+      "--power-sims",
+      "50"
+    ]
+  }
+}
