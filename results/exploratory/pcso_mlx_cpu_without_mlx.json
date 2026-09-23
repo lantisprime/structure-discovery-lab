@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "status": "exploratory, not registered",
+    "device": "unavailable",
+    "device_info": null,
+    "dtype": "float64",
+    "mlx_version": null,
+    "seed": 20260923,
+    "git_sha": "86ba523408ca246266fdeb8a09d64f712711a7ca",
+    "M": 32,
+    "chunk": 500,
+    "schedule_draws": 4,
+    "schedule_sha256": "eee0496c9907e42f87483e0717465d0108c3ad95419be8ed16381341412fceb4",
+    "schedule_pool_counts": {
+      "42": 1,
+      "45": 1,
+      "49": 1,
+      "55": 1
+    },
+    "initialization": "prior (not conditioned registered-window power)",
+    "host_float64": "draw sampler, schedule constants, evidence/SR accumulation",
+    "source_sha256": {
+      "src/pcso_mlx_sim.py": "d3d38e5d16f78647ec75803bfaa709556f9b6546f29092ba826457aa8694535e",
+      "src/pcso_model_registry.py": "8bab01838bbe18667cb5de387e23fff3d22192150b761166c92bd7d4d2d785ea"
+    },
+    "backend": "cpu",
+    "execution_device": "CPU"
+  },
+  "script_sha256": "0d1f9ac01d517dcbce3a14cbb0d9ae5954184a0c0115071d4810b305500ec765",
+  "model": "cp_nest",
+  "n_streams": 2,
+  "workers": 1,
+  "wall_s": 1.1574454170186073,
+  "sup": [
+    0.008280850171566101,
+    0.0
+  ],
+  "log_sr_max": [
+    -0.23373478158934324,
+    -0.2305797708973691
+  ],
+  "implementation": "cpu"
+}

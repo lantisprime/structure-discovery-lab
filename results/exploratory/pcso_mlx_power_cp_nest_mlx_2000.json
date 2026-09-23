@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "status": "exploratory, not registered",
+    "device": "DeviceType.gpu",
+    "device_info": {
+      "device_name": "Apple M5 Max",
+      "max_recommended_working_set_size": 130566586368,
+      "memory_size": 137438953472,
+      "architecture": "applegpu_g17s",
+      "max_buffer_length": 86586540032,
+      "resource_limit": 499000
+    },
+    "dtype": "float32",
+    "mlx_version": "0.32.2",
+    "seed": 20260928,
+    "git_sha": "86ba523408ca246266fdeb8a09d64f712711a7ca",
+    "M": 128,
+    "chunk": 500,
+    "schedule_draws": 994,
+    "schedule_sha256": "7ca585656595199a76a78c4834eed7aa1a0defa536df73c3f78351bd159db9cb",
+    "schedule_pool_counts": {
+      "42": 198,
+      "45": 199,
+      "49": 199,
+      "55": 199,
+      "58": 199
+    },
+    "initialization": "prior (not conditioned registered-window power)",
+    "host_float64": "draw sampler, schedule constants, evidence/SR accumulation",
+    "source_sha256": {
+      "src/pcso_mlx_sim.py": "d3d38e5d16f78647ec75803bfaa709556f9b6546f29092ba826457aa8694535e",
+      "src/pcso_model_registry.py": "8bab01838bbe18667cb5de387e23fff3d22192150b761166c92bd7d4d2d785ea"
+    }
+  },
+  "cpu_only": {
+    "dirichlet_cp_a100": "adaptive Gamma importance sampler not ported",
+    "ensemble": "requires the unported Dirichlet component and its own random inputs"
+  },
+  "simulation": "power",
+  "theta1": 0.05,
+  "draw_generation_s": 1.0623438749898924,
+  "models": {
+    "cp_nest": {
+      "evaluation_s": 42.58937195800536,
+      "implementation": "MLX",
+      "n_streams": 2000,
+      "n_crossed": 1060,
+      "fraction_crossed": 0.53,
+      "crossing_ci_95": [
+        0.5078459465475682,
+        0.5520659789262361
+      ],
+      "evidence_alpha": 0.01,
+      "sup_log_e_quantiles": {
+        "0.5": 4.853199541765207,
+        "0.9": 10.198335523682546,
+        "0.99": 15.496518503128526
+      },
+      "sr_n_crossed": 1058,
+      "sr_crossing_ci_95": [
+        0.5068448275245909,
+        0.55107003391535
+      ],
+      "horizon": 994,
+      "median_draws_to_cross_censored": 952
+    }
+  }
+}

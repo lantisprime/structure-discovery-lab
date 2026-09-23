@@ -1,0 +1,4 @@
+{
+  "matching_processes": [],
+  "supervision": "<=300 seconds; process group killed on every exit"
+}
