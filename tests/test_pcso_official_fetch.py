@@ -4,7 +4,7 @@
 Parity gate: for every committed official capture in
 datasets/pcso-lotto/provenance/raw_2026-09-21/, parse_results must reproduce
 EXACTLY the rows of the canonical data_official_draws_jackpots.csv for that
-game within the capture window 2026-09-01..2026-09-21 (numbers in the
+game within the capture window 2026-09-01..2026-09-20 (numbers in the
 official published order, jackpot to 2 decimals, winners).
 
 Run: python3 -m pytest tests/test_pcso_official_fetch.py -q
@@ -27,7 +27,9 @@ CANONICAL_CSV = os.path.join(
     REPO, "datasets", "pcso-lotto", "data_official_draws_jackpots.csv")
 
 WINDOW_START = datetime.date(2026, 9, 1)
-WINDOW_END = datetime.date(2026, 9, 21)
+# The captures were fetched 2026-09-21T19:55+08:00, before that evening's
+# 21:00 draws, so they cannot contain draws dated 2026-09-21.
+WINDOW_END = datetime.date(2026, 9, 20)
 
 
 def load(name, path):
