@@ -1,0 +1,313 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/pcso_picker_calibration.py",
+    "run_date": "2026-09-21",
+    "seed": 20260923,
+    "nsim": 1000,
+    "samples": 20000,
+    "prior_concentration": 100.0,
+    "rule": "EVALUATION_PROTOCOL.md H5 (estimator-bias subtraction) + prequential model weight",
+    "pi1_definition": "e/(1+e), e = post-freeze prequential evidence of the exact a=100 product-weight posterior (equal model odds at the 2026-06-10 freeze)",
+    "R_eff_definition": "pi0 + pi1 * R_selection_corrected; P(win) = R_eff / C(P,6)",
+    "R_c_convention": "log-space: R_obs divided by the geometric mean of R under M0",
+    "input_sha256": {
+      "results/pcso_next_draw_posterior_2026-09-21.json": "62b82b7c789115651afa66f0c88fa495c98276aea2ec46274a5bcedc81824418",
+      "results/pcso_eprocess_monitor_v2_2026-09-21.json": "a0e6b57606df005923dc723ae816a4552033c68ef081d8f17abac0aa88ed04c8",
+      "draw_rows_used": "10bba6eb995116cd8d8726e735794edd0ce63c543dec428846c51c6c8e0e0abf"
+    },
+    "grade": "G0 exploratory"
+  },
+  "games": {
+    "Grand Lotto 6/55": {
+      "pool": 55,
+      "draws": 199,
+      "heldout_draws": 43,
+      "heldout_evidence_e_exact_a100": 0.5179,
+      "heldout_evidence_e_v2_mixture_for_comparison": 0.293127,
+      "pi1_tilted_model": 0.3412,
+      "ticket_A": {
+        "set": [
+          5,
+          42,
+          44,
+          45,
+          48,
+          50
+        ],
+        "R_reported": 1.6392,
+        "null_mean_log_R": 0.37196,
+        "null_mean_log_R_mc_se": 0.00155,
+        "null_R_5_95": [
+          1.346,
+          1.5794
+        ],
+        "log_R_minus_null_mean": 0.12225,
+        "log_R_minus_null_mean_95_mc": [
+          0.11922,
+          0.12529
+        ],
+        "R_selection_corrected": 1.13,
+        "null_tail_p_R_ge_observed": 0.012,
+        "R_eff": 1.0444
+      },
+      "ticket_B": {
+        "set": [
+          2,
+          9,
+          20,
+          24,
+          41,
+          54
+        ],
+        "R_reported": 1.2365,
+        "null_mean_log_R": 0.21395,
+        "null_mean_log_R_mc_se": 0.00096,
+        "null_R_5_95": [
+          1.1797,
+          1.3066
+        ],
+        "log_R_minus_null_mean": -0.00166,
+        "log_R_minus_null_mean_95_mc": [
+          -0.00355,
+          0.00022
+        ],
+        "R_selection_corrected": 0.9983,
+        "null_tail_p_R_ge_observed": 0.4945,
+        "R_eff": 0.9994
+      }
+    },
+    "Lotto 6/42": {
+      "pool": 42,
+      "draws": 198,
+      "heldout_draws": 44,
+      "heldout_evidence_e_exact_a100": 1.1079,
+      "heldout_evidence_e_v2_mixture_for_comparison": 1.005569,
+      "pi1_tilted_model": 0.5256,
+      "ticket_A": {
+        "set": [
+          3,
+          6,
+          12,
+          36,
+          39,
+          41
+        ],
+        "R_reported": 1.477,
+        "null_mean_log_R": 0.36708,
+        "null_mean_log_R_mc_se": 0.00165,
+        "null_R_5_95": [
+          1.3287,
+          1.5806
+        ],
+        "log_R_minus_null_mean": 0.02293,
+        "log_R_minus_null_mean_95_mc": [
+          0.01969,
+          0.02616
+        ],
+        "R_selection_corrected": 1.0232,
+        "null_tail_p_R_ge_observed": 0.3227,
+        "R_eff": 1.0122
+      },
+      "ticket_B": {
+        "set": [
+          1,
+          18,
+          23,
+          24,
+          27,
+          35
+        ],
+        "R_reported": 1.2216,
+        "null_mean_log_R": 0.18655,
+        "null_mean_log_R_mc_se": 0.00103,
+        "null_R_5_95": [
+          1.1457,
+          1.2701
+        ],
+        "log_R_minus_null_mean": 0.01361,
+        "log_R_minus_null_mean_95_mc": [
+          0.0116,
+          0.01562
+        ],
+        "R_selection_corrected": 1.0137,
+        "null_tail_p_R_ge_observed": 0.3257,
+        "R_eff": 1.0072
+      }
+    },
+    "Mega Lotto 6/45": {
+      "pool": 45,
+      "draws": 199,
+      "heldout_draws": 43,
+      "heldout_evidence_e_exact_a100": 0.4932,
+      "heldout_evidence_e_v2_mixture_for_comparison": 0.304073,
+      "pi1_tilted_model": 0.3303,
+      "ticket_A": {
+        "set": [
+          4,
+          5,
+          8,
+          24,
+          27,
+          43
+        ],
+        "R_reported": 1.5225,
+        "null_mean_log_R": 0.36849,
+        "null_mean_log_R_mc_se": 0.00161,
+        "null_R_5_95": [
+          1.3371,
+          1.5808
+        ],
+        "log_R_minus_null_mean": 0.05186,
+        "log_R_minus_null_mean_95_mc": [
+          0.0487,
+          0.05502
+        ],
+        "R_selection_corrected": 1.0532,
+        "null_tail_p_R_ge_observed": 0.1489,
+        "R_eff": 1.0176
+      },
+      "ticket_B": {
+        "set": [
+          3,
+          10,
+          17,
+          25,
+          41,
+          42
+        ],
+        "R_reported": 1.2564,
+        "null_mean_log_R": 0.19499,
+        "null_mean_log_R_mc_se": 0.001,
+        "null_R_5_95": [
+          1.154,
+          1.2784
+        ],
+        "log_R_minus_null_mean": 0.03326,
+        "log_R_minus_null_mean_95_mc": [
+          0.0313,
+          0.03521
+        ],
+        "R_selection_corrected": 1.0338,
+        "null_tail_p_R_ge_observed": 0.1538,
+        "R_eff": 1.0112
+      }
+    },
+    "Super Lotto 6/49": {
+      "pool": 49,
+      "draws": 199,
+      "heldout_draws": 44,
+      "heldout_evidence_e_exact_a100": 3.2022,
+      "heldout_evidence_e_v2_mixture_for_comparison": 5.22474,
+      "pi1_tilted_model": 0.762,
+      "ticket_A": {
+        "set": [
+          8,
+          15,
+          16,
+          26,
+          36,
+          44
+        ],
+        "R_reported": 1.578,
+        "null_mean_log_R": 0.37102,
+        "null_mean_log_R_mc_se": 0.00153,
+        "null_R_5_95": [
+          1.3403,
+          1.5717
+        ],
+        "log_R_minus_null_mean": 0.08514,
+        "log_R_minus_null_mean_95_mc": [
+          0.08214,
+          0.08814
+        ],
+        "R_selection_corrected": 1.0889,
+        "null_tail_p_R_ge_observed": 0.044,
+        "R_eff": 1.0677
+      },
+      "ticket_B": {
+        "set": [
+          5,
+          6,
+          10,
+          14,
+          23,
+          25
+        ],
+        "R_reported": 1.2604,
+        "null_mean_log_R": 0.20336,
+        "null_mean_log_R_mc_se": 0.00098,
+        "null_R_5_95": [
+          1.1662,
+          1.2924
+        ],
+        "log_R_minus_null_mean": 0.02807,
+        "log_R_minus_null_mean_95_mc": [
+          0.02616,
+          0.02998
+        ],
+        "R_selection_corrected": 1.0285,
+        "null_tail_p_R_ge_observed": 0.1958,
+        "R_eff": 1.0217
+      }
+    },
+    "Ultra Lotto 6/58": {
+      "pool": 58,
+      "draws": 199,
+      "heldout_draws": 44,
+      "heldout_evidence_e_exact_a100": 1.2912,
+      "heldout_evidence_e_v2_mixture_for_comparison": 1.421196,
+      "pi1_tilted_model": 0.5635,
+      "ticket_A": {
+        "set": [
+          12,
+          15,
+          17,
+          43,
+          50,
+          57
+        ],
+        "R_reported": 1.4969,
+        "null_mean_log_R": 0.37389,
+        "null_mean_log_R_mc_se": 0.00145,
+        "null_R_5_95": [
+          1.351,
+          1.5786
+        ],
+        "log_R_minus_null_mean": 0.0295,
+        "log_R_minus_null_mean_95_mc": [
+          0.02666,
+          0.03235
+        ],
+        "R_selection_corrected": 1.0299,
+        "null_tail_p_R_ge_observed": 0.2378,
+        "R_eff": 1.0169
+      },
+      "ticket_B": {
+        "set": [
+          20,
+          23,
+          28,
+          30,
+          34,
+          41
+        ],
+        "R_reported": 1.2746,
+        "null_mean_log_R": 0.2188,
+        "null_mean_log_R_mc_se": 0.00095,
+        "null_R_5_95": [
+          1.1863,
+          1.3084
+        ],
+        "log_R_minus_null_mean": 0.02383,
+        "log_R_minus_null_mean_95_mc": [
+          0.02196,
+          0.0257
+        ],
+        "R_selection_corrected": 1.0241,
+        "null_tail_p_R_ge_observed": 0.2038,
+        "R_eff": 1.0136
+      }
+    }
+  }
+}

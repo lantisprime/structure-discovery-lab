@@ -1,0 +1,108 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/pcso_lowdim_eprocess.py",
+    "run_date": "2026-09-21",
+    "seed": 20260923,
+    "registration": "docs/REGISTRATION_PCSO_LOWDIM_TILT.md",
+    "registered_after": "2026-09-23",
+    "freeze": "2026-06-10",
+    "alpha": 0.01,
+    "threshold_1_over_alpha": 100.0,
+    "theta_grid": [
+      -0.4,
+      0.4,
+      161
+    ],
+    "prior": "N(0, 0.1^2) on the grid, shared across games",
+    "alternatives": {
+      "high31": "g ~ 1[i > 31], standardised",
+      "index": "g ~ i, standardised"
+    },
+    "input_sha256": {
+      "datasets/pcso-lotto/data_draws_1yr.csv": "3216feda0150b9a82321a48934c1d01b0727c5d457509afbe096f289cc2153f2"
+    }
+  },
+  "registered_test": {
+    "high31": {
+      "final_e": 1.0,
+      "max_e": 1.0,
+      "theta_posterior_mean": 0.01824,
+      "theta_posterior_sd": 0.0135
+    },
+    "index": {
+      "final_e": 1.0,
+      "max_e": 1.0,
+      "theta_posterior_mean": 0.01089,
+      "theta_posterior_sd": 0.01355
+    },
+    "registered_statistic_average": {
+      "draws": 0,
+      "final_e": 1.0,
+      "max_e": 1.0,
+      "crossed_1_over_alpha": false
+    }
+  },
+  "exploratory": {
+    "full_history_from_prior": {
+      "high31": {
+        "final_e": 0.336593,
+        "max_e": 4.700125,
+        "theta_posterior_mean": 0.01824,
+        "theta_posterior_sd": 0.0135
+      },
+      "index": {
+        "final_e": 0.187159,
+        "max_e": 2.695322,
+        "theta_posterior_mean": 0.01089,
+        "theta_posterior_sd": 0.01355
+      },
+      "registered_statistic_average": {
+        "draws": 994,
+        "final_e": 0.261876,
+        "max_e": 3.493779,
+        "crossed_1_over_alpha": false
+      }
+    },
+    "post_freeze_given_pre_freeze": {
+      "high31": {
+        "final_e": 1.038421,
+        "max_e": 1.734993,
+        "theta_posterior_mean": 0.01824,
+        "theta_posterior_sd": 0.0135
+      },
+      "index": {
+        "final_e": 0.892212,
+        "max_e": 1.463538,
+        "theta_posterior_mean": 0.01089,
+        "theta_posterior_sd": 0.01355
+      },
+      "registered_statistic_average": {
+        "draws": 218,
+        "final_e": 0.965316,
+        "max_e": 1.523719,
+        "crossed_1_over_alpha": false
+      }
+    },
+    "note": "high31 was motivated by these draws (RESULTS \u00a73): exploratory values here cannot confirm"
+  },
+  "null_check_uniform_draws": {
+    "replicates": 4000,
+    "pooled_draws": 2400,
+    "fraction_sup_ge_1_over_alpha": 0.0095,
+    "ville_bound": 0.01,
+    "median_sup": 1.6948
+  },
+  "power_high31_tilt": {
+    "replicates": 100,
+    "pooled_draws_horizon": 2400,
+    "theta_0.05": {
+      "fraction_crossed_by_horizon": 0.98,
+      "median_pooled_draws_to_cross": 921
+    },
+    "theta_0.10": {
+      "fraction_crossed_by_horizon": 1.0,
+      "median_pooled_draws_to_cross": 222
+    }
+  }
+}

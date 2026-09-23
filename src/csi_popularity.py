@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import io
 import json
 import math
 import os
@@ -28,6 +29,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OFFICIAL = ROOT / "datasets" / "pcso-lotto" / "data_official_draws_jackpots.csv"
+# Sep-6 registered-artifact state: the last commit that set every input before
+# the dataset grew again (2026-09-21 refresh). With --verify, inputs are read
+# from this snapshot so appending rows to the append-only CSVs cannot break the
+# byte-exact --verify of the committed artifacts (same pattern as
+# pcso_weekly_update.INPUT_SNAPSHOT_COMMIT, commit bea5121). Live runs (no
+# --verify) always read the working tree.
+INPUT_SNAPSHOT_COMMIT = "9488a9a18cbdd0a2b1bdd7580a41e78192fbd91b"
+VERIFY_SNAPSHOT = False
 POOL = {"Lotto 6/42": 42, "Mega Lotto 6/45": 45, "Super Lotto 6/49": 49,
         "Grand Lotto 6/55": 55, "Ultra Lotto 6/58": 58}
 
@@ -88,16 +97,32 @@ PARITY_VECTORS = [
 ]
 
 
+def input_bytes(path):
+    """Bytes of an input: from INPUT_SNAPSHOT_COMMIT when VERIFY_SNAPSHOT is set
+    (--verify reproduces the committed artifacts from their data state), else
+    from the working tree (live runs on the growing dataset)."""
+    if not VERIFY_SNAPSHOT:
+        return Path(path).read_bytes()
+    import subprocess
+    rel = Path(path).resolve().relative_to(ROOT).as_posix()
+    run = subprocess.run(["git", "show", f"{INPUT_SNAPSHOT_COMMIT}:{rel}"],
+                         cwd=ROOT, capture_output=True, check=False)
+    if run.returncode != 0:
+        raise ValueError(f"{rel}: cannot read input snapshot {INPUT_SNAPSHOT_COMMIT[:7]} "
+                         f"(clone must contain that commit): "
+                         f"{run.stderr.decode('utf-8', 'replace').strip()}")
+    return run.stdout
+
+
 def sha256(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    return hashlib.sha256(input_bytes(path)).hexdigest()
 
 
 def load_official():
     by_game = defaultdict(list)
-    with open(OFFICIAL, newline="", encoding="utf-8") as f:
-        for r in csv.DictReader(f):
-            by_game[r["Game"]].append((r["Date"], [int(r[f"N{i}"]) for i in range(1, 7)],
-                                       float(r["Jackpot"]), int(r["Winners"])))
+    for r in csv.DictReader(io.StringIO(input_bytes(OFFICIAL).decode("utf-8"))):
+        by_game[r["Game"]].append((r["Date"], [int(r[f"N{i}"]) for i in range(1, 7)],
+                                   float(r["Jackpot"]), int(r["Winners"])))
     for g in by_game:
         by_game[g].sort()
     return by_game
@@ -240,6 +265,8 @@ def main():
     ap.add_argument("--power-trials", type=int, default=500)
     ap.add_argument("--verify", action="store_true", help="recompute and byte-compare, write nothing")
     args = ap.parse_args()
+    global VERIFY_SNAPSHOT
+    VERIFY_SNAPSHOT = args.verify and args.run_date == "2026-09-06"
     rng = random.Random(args.seed)
     by_game = load_official()
     games = sorted(by_game)
