@@ -26,6 +26,6 @@ The real-draws line (709) negates correctly. So the null-stream check tested log
 
 ## Disposition
 - **Record kept:** the leaderboard above is preserved byte-for-byte as produced, as the record, in commit `4c68593`.
-- **Fix:** the harness is corrected in the following commit, with a regression test. The leaderboard is regenerated under the same seed and run date. Only `c3_loss_bound_check.null_streams.fraction_satisfied` may change (0.9975 → 1.0); every other field must be byte-identical.
+- **Fix:** the harness is corrected in commit `322c889`, with a regression test. The leaderboard is regenerated under the same seed and run date. Only `c3_loss_bound_check.null_streams.fraction_satisfied` may change (0.9975 → 1.0); every other field must be byte-identical.
 - **Corrected outcome:** C3 loss bound satisfied on the real draws and on 400/400 null streams. C1, C2 and C4 are unaffected.
 - **Not an error:** the slope constant 0.0010005 ≈ −log(1−ρ) is the conservative form that A4 registers. It is not a mismatch with 6ρ/7.
