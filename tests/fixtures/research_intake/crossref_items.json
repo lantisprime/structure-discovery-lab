@@ -1,0 +1,11 @@
+{"status": "ok",
+ "message": {"items": [
+   {"title": ["E-Detectors for Low-Dimensional Deviations"],
+    "type": "journal-article", "DOI": "10.9999/edet",
+    "container-title": ["Sequential Analysis"],
+    "issued": {"date-parts": [[2024, 6]]}},
+   {"title": ["E-Detectors for Low-Dimensional Deviations (preprint)"],
+    "type": "posted-content", "DOI": "10.5555/preprint",
+    "container-title": ["arXiv"],
+    "issued": {"date-parts": [[2025, 1]]}}
+]}}

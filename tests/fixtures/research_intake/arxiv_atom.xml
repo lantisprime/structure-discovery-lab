@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:x="http://arxiv.org/schemas/atom">
+  <entry>
+    <id>http://arxiv.org/abs/2004.00001v2</id>
+    <title>Already Carded Evidence-Process Paper</title>
+    <published>2020-04-01T00:00:00Z</published>
+    <summary>  An e-process paper that is already in the survey card.  </summary>
+    <author><name>D. Duplicate</name></author>
+    <x:journal_ref>Annals of Statistics</x:journal_ref>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2501.01001v1</id>
+    <title>Anytime-Valid Testing for Exponential Families</title>
+    <published>2025-01-10T00:00:00Z</published>
+    <summary> We construct an e-process for exponential family nulls with anytime-valid error control. </summary>
+    <author><name>A. Author</name></author>
+    <x:journal_ref>Biometrika</x:journal_ref>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2501.01002v1</id>
+    <title>Sequential Change Detection with Predictive Likelihood</title>
+    <published>2025-01-11T00:00:00Z</published>
+    <summary> Predictive likelihood ratios give a sequential change detection procedure. </summary>
+    <author><name>B. Builder</name></author>
+    <x:doi>10.1234/demo.2025</x:doi>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2501.09999v1</id>
+    <title>Inline-Cited Survey Duplicate Paper</title>
+    <published>2025-01-09T00:00:00Z</published>
+    <summary> Cited inline in the survey as arXiv:2501.09999. </summary>
+    <author><name>E. Extra</name></author>
+    <x:journal_ref>Bernoulli</x:journal_ref>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/math/0608100v1</id>
+    <title>Game-Theoretic Probability and Finitely Additive Measures</title>
+    <published>2006-08-01T00:00:00Z</published>
+    <summary> Old-style arXiv identifier with a subject prefix. </summary>
+    <author><name>G. Game</name></author>
+    <x:journal_ref>Annals of Probability</x:journal_ref>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2501.01003v1</id>
+    <title>E-Detectors for Low-Dimensional Deviations</title>
+    <published>2025-01-12T00:00:00Z</published>
+    <summary> Nonparametric evidence processes detect low-dimensional deviations from uniformity. </summary>
+    <author><name>C. Checker</name></author>
+  </entry>
+</feed>
