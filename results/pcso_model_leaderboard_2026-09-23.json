@@ -458,7 +458,7 @@
     "null_streams": {
       "n": 400,
       "T": 994,
-      "fraction_satisfied": 0.9975,
+      "fraction_satisfied": 1.0,
       "must_be": 1.0
     }
   },
