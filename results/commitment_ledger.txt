@@ -1313,3 +1313,42 @@ d479861b80e5e07f  ./.pi/context-telemetry.jsonl
 d1e49a69fe46e03d  ./src/pcso_mixture_mode.py
 1e06d219937c4b70  ./src/pcso_model_registry.py
 d59a4e442707c1e9  ./tests/test_pcso_mixture_mode.py
+# Snapshot 2026-09-23T03:00:52+00:00 — Amendment v2 (pcso.registry.seq1-v2, pcso.lowdim-tilt.seq1-v2, pcso.popularity-share.confirm1-v2) approved by lab owner 2026-09-23 + registry harness v2 (registered-window accounting); hashed before the first registered draw
+# chain-prev: 8f6e3402ed1635b662d45956cc2dca488ab514cccecea17249cd9d60043e7fab
+# (36 changed of 800 tracked files; hashed BEFORE any run script executes)
+92a224606b45f47e  ./.checkpoints/.last-user-prompt.3e37ef02-c0ee-47fa-9c68-924c3cff3d62.json
+e3b0c44298fc1c14  ./.checkpoints/.post-checkpoint-required.3e37ef02-c0ee-47fa-9c68-924c3cff3d62
+96c780ccb79bca55  ./.checkpoints/.preflight-done.3e37ef02-c0ee-47fa-9c68-924c3cff3d62
+96b0b50c8f858fd0  ./.checkpoints/classify/0a7af633432bda278c52257fce50f1c3da363c721c9c8597f9ba7f21ea5528f1.json
+b4ad82b6ce429798  ./.checkpoints/classify/0b647c1fc6a458df73ef15d6e94d2b5c9b889853101923cc6c1eda817136e5ab.json
+680cf88cc8023e2e  ./.checkpoints/classify/17bdfdd2878d08e65019c620ed2d69c9410ea6dd2ab2977ba7e23d9bcfeac2e5.json
+8896f5761658347d  ./.checkpoints/classify/3cae6eb876d82522274bb9a0f45ed6e352885205167220bf122bd51a2eb4433d.json
+0bea1bc369ea526a  ./.checkpoints/classify/408def7ea79329f324d1260c8dcd963ba9b5538f531ad253c9dd75dd46b9a22a.json
+802d76e93dd587e3  ./.checkpoints/classify/4203378b9a56d8fa55964c4d20e581ca57671c06cc9eefdf7dcea4bc295a9636.json
+55c617b9431354f2  ./.checkpoints/classify/43dd384b93a75f260de501f9fc48541a08c9daae8f8b4c1a9f261a01d5a0c7f2.json
+cb60f8bac313488c  ./.checkpoints/classify/5efea65ef3f521e307dea443ab667a1f244b8d6ba5dde457cbd60a12e1317a70.json
+8d3b526356207064  ./.checkpoints/classify/65d4606cc463f0cd249063c61303edebf9a29a70e9ddf4d783db45a014ab55fb.json
+e8a8a1308637f16e  ./.checkpoints/classify/6ba8d258b77464e07b4f94fede89646ddfc2fea87f8891c088d9592452297050.json
+4a4d24f7381974c1  ./.checkpoints/classify/7354a8d54f4421676a114f171f8d6c7d87a7b86a5b2d2535be1f4aa6890233f0.json
+e7981c3c73b3979b  ./.checkpoints/classify/8233fd4c6048441e71181a81bdd07e0fc959d2d49d6c15c395f1b36eaa997715.json
+f350c5e6f5672c60  ./.checkpoints/classify/a05ba9b3b1a6321d5d62c7795319b5fa381c5117fac380407d631867a4ffbcbc.json
+6c739d5584a6e5c9  ./.checkpoints/classify/a5debb7d3c757c4aee56b26fdd316814cb024030ae5b2956939d08026ef47794.json
+de1e04ec32156d5f  ./.checkpoints/classify/aa4ea4a3ac34f44a07c8938484e59ec727dde37a287265bd8ca5a6673e7a7674.json
+1e9ad69128f2c7b3  ./.checkpoints/classify/b23836e2729697ab87e4429083bf64d1edea257145e40ba92279c81b88eaa015.json
+29eb8a00554ebe22  ./.checkpoints/classify/ba47b320a73d700eaff5f2823e158f4f871ae2a538ee9dabffc04ed7f71356f7.json
+7bfaff4f3274b33d  ./.checkpoints/classify/c192b2b2af88d8305a02793f30794d7b2e0b27decd06305b1bcd6f57246fe4e5.json
+f40754e5343d7b71  ./.checkpoints/classify/c6a01131e423c0b212893a50300f85a3d82f339fc1c88ea677e20ebb762f4037.json
+b50c9dedfd63e5b9  ./.checkpoints/classify/da95eaafea711d82d91bd3be86e665a28bf019740b69fe067cab70bc6165dac9.json
+967368cafdc5cb92  ./.checkpoints/classify/da97374007a45368f94481ebb3e7aa290254aa9f8329a0a8320dee5fe64259db.json
+4c948331fa85d93b  ./.checkpoints/classify/e3f418d0e9bbcbd6d8c2914826539a07633802a69cab2528d1b925f823216d0d.json
+c9ef4c5c86264f05  ./.checkpoints/classify/e98e41e43fe261d4fbb589767b2431a60e1a17d6fb80022958d63d0dabd22ad8.json
+d0f011c62b765955  ./.checkpoints/classify/fd9191e6bb35077a777027f304f9ab536f4a921e054cc0f823c683c15dbda221.json
+172503da7e734426  ./.checkpoints/gate-log.jsonl
+a430619b73277147  ./.pi/context-telemetry.jsonl
+f5993d107844913e  ./docs/REGISTRATION_AMENDMENT_2026-09-23_V2.md
+b43a48bcdb93b538  ./docs/RESULTS_PCSO_PICKER_THEOREM_2026-09-23.md
+1d7294b31d6eddd1  ./lotto_picker.html
+8bab01838bbe1866  ./src/pcso_model_registry.py
+b456a1d57346f1f8  ./tests/test_pcso_model_registry.py
+3c9ace532c21ae41  ./tests/test_pcso_official_fetch.py
+eb3f71beab870547  ./tools/pcso_official_fetch.py

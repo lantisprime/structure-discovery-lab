@@ -13,9 +13,9 @@ refereed by two independent mathematician seats (GLM 5.3, Kimi K3; §7).
 | E2 | Order statistics; EVALUATION_PROTOCOL H5 | R_null ≈ exp(σ_c s₆/(a + c̄)); R_c = exp(log R_obs − E₀[log R]) | the reported R of the count-selected ticket is mostly selection inflation |
 | E3 | Finite-population variance; Bayes-mixture learning cost (Rissanen; Clarke–Barron) | KL = 3(P−6)ε²/(P−1); E[log M_T] = T·KL − (d/2) log T + O(1) | d = 1 horizons are confirmed by simulation (§3); the d = P−1 horizons (~7,400–9,900 draws at ε = 10%) are illustrative only, because the Dirichlet(100) prior's ~5,000 pseudo-counts put them outside the asymptotic regime (referee panel, §7) |
 | E4 | same | typical tilt: R* ≈ exp(ε s₆ − ½Σ_top6 δ²); worst case over RMS-ε tilts: exp(ε√(6(P−6))) (first order) | a known 1% tilt gives R ≈ 1.10 typical, 1.19 worst case; 10% gives ≈ 2.4–2.5 typical |
-| E5 | prequential predictive likelihood (arXiv:2210.01948) | e = ∏ q_t(S_t)/p₀(S_t) on held-out draws | held-out evidence ≈ 1: approximate mixture monitor 0.67, exact a = 100 model 1.17 (product over five games) — no out-of-sample support either way |
+| E5 | prequential predictive likelihood (arXiv:2210.01948) | e = ∏ q_t(S_t)/p₀(S_t) on held-out draws | held-out evidence ≈ 1: approximate mixture monitor 0.67, a = 100 importance-sampled model 1.17 (product over five games) — no out-of-sample support either way |
 | E6 | Stern–Cover, Poisson sharing (`conscious-selection-popularity.md`) | E[share] = (1 − e^{−λ})/λ, λ = λ̄ e^{βz} | popularity changes payout, never P(win); percentages illustrative (λ̄ implied by winner counts, counts overdispersed); gated until confirmed (§5) |
-| E7 | Bayesian model averaging | R_eff = π₀ + π₁ R_c, π₁ = e/(1 + e), e = exact a = 100 held-out evidence | the picker's multiplier, replacing equal-odds R_mix; V(S) = (J/C)·R_eff·E[share] is the jackpot-tier term only, not the full expected value |
+| E7 | Bayesian model averaging | normalised law q_mix = (1−π₁)p₀ + π₁q₁, R_mix = 1 + π₁(R − 1), π₁ = e/(1+e), e = held-out evidence of the a = 100 model (importance-sampled, approximate) | the picker's predictive multiplier; R_c and R_eff = π₀ + π₁R_c are null-centred diagnostics, not probabilities (amendment v2 §D, referee Codex); V(S) = (J/C)·R_eff·E[share] is the jackpot-tier term only, not the full expected value |
 
 s₆ = E[sum of the top 6 of P iid N(0,1)] = 9.21 (P=42) … 10.18 (P=58); c̄ = 6T/P;
 σ_c² = T(6/P)(1 − 6/P)·P/(P − 1).
@@ -38,7 +38,7 @@ The null tail p values are per game (MC SE ≤ 0.007 at 1,000 histories); Holm o
 of 0.06 — nothing survives. The analytic first-order estimate is within 0.02 of Monte Carlo in every
 game. π₁ uses the held-out evidence of the same exact a = 100 model as R_c (referee GLM, §7); the v2
 mixture monitor's pseudo-posterior value is shown for comparison only. With 200 histories the 6/55
-tail p moved between 0.025 and 0.005 across seeds; 1,000 histories settle it at 0.012.
+tail p moved between 0.025 and 0.005 across seeds; 1,000 histories give 0.012 (MC SE ≈ 0.003); none survives Holm.
 
 ## 3. One-parameter tilts (`src/pcso_lowdim_eprocess.py`, registration draft)
 
@@ -64,16 +64,37 @@ overlap is Hypergeom(P, 6, 6), so the total has an exact null law (convolution).
 |---|---|---|---|---|---|---|
 | A | six largest past counts (picker) | 0.787 | 0.041 | 0.284 | 20 / 16.2 | 0 |
 | B | ranks 7–12 | 0.763 | 0.256 | 0.655 | 18 / 16.2 | 0 |
-| L | one-parameter argmax (six largest numbers) | 0.760 | 0.318 | 0.153 | 21 / 16.2 | 0 |
+| L | adaptive: six largest numbers if the pooled posterior mean θ > 0, else six smallest (always-largest: 653 matches, p = 0.123) | 0.760 | 0.318 | 0.153 | 21 / 16.2 | 0 |
 
 Holm over the six looks: minimum 0.25. No rule reproduces the data better than uniform, and no
 ticket matched a full draw (expected 7.5 × 10⁻⁵ over 844 draws).
+
+## 4b. Model registry v1 leaderboard (`results/pcso_model_leaderboard_2026-09-21.json`, sha256 c5615c91…)
+
+Exploratory real-data scores (pre-registration draws): evidence vs uniform over the full year / post-freeze —
+uniform 1 / 1; dirichlet_cp_a100 30.5 / 1.34; tilt_high31 0.34 / 1.04; tilt_linear 0.19 / 0.89;
+pair_parity 0.50 / 0.83; cp_nest 0.51 / 0.98; ensemble 5.53 / 1.19 (ensemble weight 0.92 on Dirichlet).
+No model reaches 100; the Dirichlet evidence accrues pre-freeze and no low-dimensional structured
+direction captures it (ball-specific heterogeneity or early-sample chance). MLE-existence gate: incidence
+rank = P in all five games.
+
+Registered v1 simulation criteria, scored exactly as registered:
+
+| Claim | Criterion | Result | Verdict |
+|---|---|---|---|
+| C1 | ≤ 0.02 of 400 null streams cross 100 | evidence 0/400, SR 0/400 | PASS |
+| C2 | CP-NEST median ≤ tilt_linear + 450 at θ = 0.05; ≥ 90% crossing at θ = 0.10 | 927 vs 1,161; 100% (all streams crossed, so conditional = censored median); M = 32 was not authorised for C2 by v1 (disclosed) | PASS |
+| C3 bound | real-data CP-NEST evidence ≥ e^{−1.7T/1000} | 0.515 ≥ 0.185 | PASS |
+| C3 collapse | median final v(0) ≥ 0.9 | 0.515; 0/400 ≥ 0.9 | **FAIL** (criterion ill-posed per referee Codex; withdrawn in amendment v2; this record stands) |
+
+Cross-machine replay: the M5 Max (Apple M5 Max, identical Python 3.14.6 / numpy 2.5.2 / scipy 1.18.1)
+regenerated the artifact byte-identically (sha256 c5615c91cbac4335…).
 
 ## 5. Decision layer
 
 Jev check of the lab record (A4 = 0.22): the popularity slope β = 0.519 is exploratory and may not
 enter the decision value before a fresh-draw confirmation (H6/H7, card Step 8). It is registered as
-`pcso.popularity-share.confirm1`. Until then the picker shows R_eff and keeps the sharing term
+`pcso.popularity-share.confirm1`. Until then the picker shows R_mix (with R_c as a diagnostic) and keeps the sharing term
 descriptive.
 
 ## 6. Jev validation log
@@ -94,4 +115,13 @@ descriptive.
 
 ## 7. Mathematician referee panel
 
-(pending)
+Seats: GLM 5.3 and Kimi K3 (pi via the homelab gateway), Codex gpt-6-astra at xhigh (Codex CLI in a private
+herdr session, read-only sandbox; run outside the codex-review preflight channel under a one-off lab-owner
+authorisation, 2026-09-23, because 5 of 7 bundle components were missing; the bundle was then restored);
+builder GLM 5.3 flash; local Qwen3.8-27B via oMLX on the M5 Max. Round 1 (GLM, Kimi) verified E1–E9 and
+corrected E4 (typical vs worst-case oracle) and E7 (model mismatch). Round 2 (Codex) overruled parts of the
+first design review (batch-MAP rate, curvature bound, level-0 collapse, posterior reset) and found that
+R_c/R_eff were being used as probabilities, that the harness lacked the registered window, and that the
+popularity confirmation had an outcome-dependent stopping time. All accepted findings are implemented or
+recorded in `docs/REGISTRATION_AMENDMENT_2026-09-23_V2.md`. Research round 1 (seven peer-reviewed papers
+read in full) is recorded in `docs/plans/PCSO_MODEL_REGISTRY_PLAN.md` §3b.
