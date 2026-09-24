@@ -1,0 +1,160 @@
+{
+ "schema_version": 1,
+ "run_date": "2026-09-24",
+ "confirmation_cutoff": "2026-06-10",
+ "previous_latest_draw_date": "2026-09-22",
+ "latest_draw_date": "2026-09-23",
+ "expected_new_draws": 2,
+ "registered_family_m": 9,
+ "seed": 20260924,
+ "mc_trials": 10000,
+ "permutation_trials": 20000,
+ "expected_row_counts": {
+  "data_draws.csv": 419,
+  "data_draws_1yr.csv": 1001,
+  "data_draws_1yr_audited.csv": 1001,
+  "data_astro_geomagnetic.csv": 419
+ },
+ "provenance_status": "contemporaneous: official pcso.gov.ph page read as markdown via the searxng gateway (raw HTML not retained; direct fetch HTTP 403), official capture archived as markdown; lottopcso/pcsodraw archives fetched live and retained as gzipped raw HTML",
+ "sources": [
+  {
+   "id": "pcso.gov.ph",
+   "base_url": "https://www.pcso.gov.ph/SearchLottoResult.aspx",
+   "role": "PRIMARY official draw results (combination, jackpot, winners)"
+  },
+  {
+   "id": "lottopcso.com",
+   "base_url": "https://www.lottopcso.com/",
+   "role": "independent archive cross-check (numbers + jackpot, both draws)"
+  },
+  {
+   "id": "pcsodraw.com",
+   "base_url": "https://www.pcsodraw.com/",
+   "role": "independent archive cross-check + draw-number continuity (latest 20 per game, 6/45 and 6/55)"
+  }
+ ],
+ "raw_source_capture": {
+  "available": true,
+  "fetched_at": "2026-09-24T09:27:07+0800",
+  "per_source_fetch_times": {
+   "pcso.gov.ph": {
+    "fetched_at": "2026-09-24T09:26:00+0800",
+    "method": "searxng gateway markdown read (web_url_read) with a cache-busting no-op query string; raw HTML not retained (direct fetch HTTP 403)"
+   },
+   "lottopcso.com": {
+    "fetched_at": "2026-09-24T09:27:07+0800",
+    "method": "curl with Safari UA, raw HTML retained gzipped"
+   },
+   "pcsodraw.com": {
+    "fetched_at": "2026-09-24T09:27:07+0800",
+    "method": "curl with Safari UA, raw HTML retained gzipped"
+   }
+  },
+  "fetch_client": "archives: curl with Safari UA (HTTP 200); official pcso.gov.ph: searxng MCP web_url_read via homelab LiteLLM gateway (direct urllib/curl returns HTTP 403)",
+  "official_query": {
+   "url": "https://www.pcso.gov.ph/SearchLottoResult.aspx?r=20260924",
+   "form": "default latest-results view read as markdown via the searxng gateway (no date-range POST this run; 2026-09-23 rows taken from the returned table). The plain URL returned a stale cached copy ending 2026-09-22; the no-op query string bypassed the gateway cache.",
+   "ranges": []
+  },
+  "files": [
+   {
+    "file": "provenance/raw_2026-09-24/lottopcso_645.html.gz",
+    "sha256_uncompressed": "9121b87ad22406ef55e68eebfa69f7ffa6df7ae0d19688ef0afb06b96ace5608",
+    "bytes": 140649
+   },
+   {
+    "file": "provenance/raw_2026-09-24/lottopcso_655.html.gz",
+    "sha256_uncompressed": "94640aa2688bf24af74157fe36dd4f57fbfa87ddb5e9f3242317cf51089a5802",
+    "bytes": 164653
+   },
+   {
+    "file": "provenance/raw_2026-09-24/official_searxng_2026-09-24.md",
+    "sha256_uncompressed": "7aaab55b74fa70e7476cb3672d91f47c8f7855acb8cadf32a1260cdb45727055",
+    "bytes": 1329,
+    "note": "official PCSO page capture: markdown conversion returned by the searxng gateway (raw HTML not available through this path)"
+   },
+   {
+    "file": "provenance/raw_2026-09-24/pcsodraw_645.html.gz",
+    "sha256_uncompressed": "a9731eb8a92bdf6812d8e7437a1ed88a2b0f223af3ab7dfdf21daa1be1665a7c",
+    "bytes": 24958
+   },
+   {
+    "file": "provenance/raw_2026-09-24/pcsodraw_655.html.gz",
+    "sha256_uncompressed": "8fba3cbc0fabd3412db3df0a3f05ce12dcb88739f12785845523856447a179f4",
+    "bytes": 25165
+   }
+  ]
+ },
+ "cross_check_summary": {
+  "official_rows_in_window": 7,
+  "overlap_rows_vs_prior_files": {
+   "ok": 5,
+   "bad": 0
+  },
+  "overlap_rows_vs_jackpots_file": {
+   "ok": 5,
+   "bad": 0
+  },
+  "new_draws": 2,
+  "pcsodraw_match_with_draw_numbers": 2,
+  "lottopcso_match_numbers_and_jackpot": 2,
+  "anomalies": [],
+  "continuity": {
+   "Mega Lotto 6/45": {
+    "pcsodraw_first": 2981,
+    "pcsodraw_last": 3000,
+    "pcsodraw_last_date": "2026-09-23"
+   },
+   "Grand Lotto 6/55": {
+    "pcsodraw_first": 2472,
+    "pcsodraw_last": 2491,
+    "pcsodraw_last_date": "2026-09-23"
+   }
+  }
+ },
+ "jackpot_hits_in_batch": [],
+ "draws": [
+  {
+   "date": "2026-09-23",
+   "game": "Mega Lotto 6/45",
+   "draw_number": 3000,
+   "numbers": [
+    44,
+    5,
+    4,
+    40,
+    45,
+    7
+   ],
+   "source_ids": [
+    "pcso.gov.ph",
+    "pcsodraw.com",
+    "lottopcso.com"
+   ],
+   "status": "official_verified",
+   "jackpot_php": 71193623.6,
+   "jackpot_winners": 0
+  },
+  {
+   "date": "2026-09-23",
+   "game": "Grand Lotto 6/55",
+   "draw_number": 2491,
+   "numbers": [
+    29,
+    47,
+    22,
+    32,
+    50,
+    46
+   ],
+   "source_ids": [
+    "pcso.gov.ph",
+    "pcsodraw.com",
+    "lottopcso.com"
+   ],
+   "status": "official_verified",
+   "jackpot_php": 219836261.65,
+   "jackpot_winners": 0
+  }
+ ]
+}
