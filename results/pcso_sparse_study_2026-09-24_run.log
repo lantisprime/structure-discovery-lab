@@ -1,0 +1,7 @@
+{"claim": "S1", "wall_seconds": 66.62570137498551, "stream_seconds": 1109.8645024881407, "streams_evaluated": 400, "projected_full_seconds_18_workers": 61.659139027118925}
+{"claim": "S2", "wall_seconds": 17.60735099998419, "stream_seconds": 19.627749834005954, "streams_evaluated": 2, "projected_full_seconds_18_workers": 17.606640542013338}
+{"claim": "S3", "wall_seconds": 398.0361104999902, "stream_seconds": 6663.112360206869, "streams_evaluated": 400, "projected_full_seconds_18_workers": 370.17290890038163}
+{"claim": "S3b", "wall_seconds": 1711.676415083988, "stream_seconds": 28993.214554954553, "streams_evaluated": 1600, "projected_full_seconds_18_workers": 1610.7341419419197}
+{"claim": "S4", "wall_seconds": 366.347910499986, "stream_seconds": 6204.367416513414, "streams_evaluated": 1600, "projected_full_seconds_18_workers": 344.6870786951897}
+{"claim": "S5", "wall_seconds": 22.987868458003504, "stream_seconds": 382.6239811668929, "streams_evaluated": 100, "projected_full_seconds_18_workers": 21.256887842605163}
+wrote /Users/charltondho/sdl-runs/sparse-study-2026-09-24/pcso_sparse_study_2026-09-24.json sha256=9901548b2b6ea12f37aaa7039c0fce113a3e1f8b0b54def84c3df54b6d239cfd

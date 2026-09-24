@@ -1424,3 +1424,8 @@ adb63eaa1bf43678  ./tools/snapshot_commitment.py
 # (2 changed of 492 tracked files; hashed BEFORE any run script executes)
 d0d074ee5bf9819a  ./src/pcso_sparse_registered.py
 85c35303e1e881ef  ./tests/test_pcso_sparse_registered.py
+# Snapshot 2026-09-24T06:12:44+00:00 — pcso.sparse.seq1 S1-S5 study script with owner resolutions 2026-09-24 (before any section-5 simulation is run)
+# chain-prev: 77be9b4c24aa974dc406e10a9243191e12092584de1f033b4dfc981349a2eca2
+# (2 changed of 494 tracked files; hashed BEFORE any run script executes)
+17a0959843de200b  ./src/pcso_sparse_study.py
+c203a0a8b5499faf  ./tests/test_pcso_sparse_study.py
