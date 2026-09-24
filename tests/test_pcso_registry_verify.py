@@ -203,7 +203,12 @@ def current_payload(repo):
 
 @pytest.mark.parametrize("existing_manifest", [True, False])
 def test_write_preserves_payload_and_records_replayable_provenance(repo, existing_manifest):
+    historical = json.loads((repo / ARTIFACT).read_bytes())
     before = current_payload(repo)
+    current = json.loads(before)
+    del historical["_meta"]["input_snapshot_note"]
+    del current["_meta"]["input_snapshot_note"]
+    assert current == historical
     harness = git(repo, "rev-parse", "HEAD")
     if not existing_manifest:
         (repo / MANIFEST).unlink()

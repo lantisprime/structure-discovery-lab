@@ -78,8 +78,11 @@ continuity per game (6/42 1833→1834 · 6/45 2998→2999 · 6/49 1872→1873 ·
 min p=0.018.
 **Sep 24, 2026 refresh (`provenance/pcso_refresh_2026-09-24.json`):** 2 further rows
 (6/45 and 6/55, 2026-09-23) appended from the official pcso.gov.ph results page read as
-markdown via the searxng gateway; the plain URL returned a stale cached copy ending
-2026-09-22, so the page was re-read with a no-op query string (`?r=20260924`). Status
+markdown via the searxng gateway. The operator observed a stale cached copy ending
+2026-09-22 at the plain URL and HTTP 403 on direct fetch; neither observation was
+retained as a capture. The page was re-read with a no-op query string (`?r=20260924`);
+the draw data are backed by retained official markdown and archive HTML captures in
+`provenance/raw_2026-09-24/`. Status
 `official_verified`; the 2026-09-21..22 rows visible in the official view matched the prior
 files 5/5 (draws and jackpots); cross-checked 2/2 on lottopcso.com (numbers + jackpot) and
 2/2 on pcsodraw.com with exact draw-number continuity (6/45 2999→3000 · 6/55 2490→2491,
