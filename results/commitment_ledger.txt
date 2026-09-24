@@ -1419,3 +1419,8 @@ ee77815805786464  ./docs/ADDENDUM_2026-09-24_CONDITIONING_PIN.md
 6d6982a2124e2c11  ./tests/test_pcso_registry_pin.py
 b54b8551f7bdba27  ./tests/test_pcso_registry_verify.py
 adb63eaa1bf43678  ./tools/snapshot_commitment.py
+# Snapshot 2026-09-24T05:46:39+00:00 — pcso.sparse.seq1 registered-window scoring runner (before any draw dated after 2026-09-23 is scored)
+# chain-prev: a1d6b90c602a53dbf55630a2a59d6cb17f0429f06ad67ec3817470a22eceae34
+# (2 changed of 492 tracked files; hashed BEFORE any run script executes)
+d0d074ee5bf9819a  ./src/pcso_sparse_registered.py
+85c35303e1e881ef  ./tests/test_pcso_sparse_registered.py
