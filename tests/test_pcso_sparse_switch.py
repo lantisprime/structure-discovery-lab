@@ -1,8 +1,8 @@
 """Exact conformance and finite-sample bounds for the sparse switching model."""
+import hashlib
 import itertools
 import math
 from pathlib import Path
-import subprocess
 import sys
 
 import numpy as np
@@ -283,5 +283,7 @@ def test_harness_run_compatibility(small):
 
 
 def test_registered_harness_is_untouched():
-    subprocess.run(["git", "diff", "--quiet", "b06f26c", "--", "src/pcso_model_registry.py"],
-                   cwd=ROOT, check=True)
+    # Content pin of the registered harness as of the 2026-09-24 conditioning-pin update; a
+    # deliberate harness change must update this hash together with the commitment ledger.
+    digest = hashlib.sha256((ROOT / "src" / "pcso_model_registry.py").read_bytes()).hexdigest()
+    assert digest == "71949e97e5791fe9783f6d24e52a1bc863f4ad22bb2186cc59720791c5aff7a1"

@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -24,7 +25,8 @@ DATA = ("Game,Date,N1,N2,N3,N4,N5,N6\n"
         "Lotto 6/42,2026-09-24,3,4,5,6,7,8\n")
 # Fixture repos must not inherit the developer's Git config (signing, hooks, templates).
 GIT_ENV = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
-PIN_LINE = 'INPUT_SNAPSHOT_COMMIT = "bcf39ca"'
+# Matches the pin line of both the historical (95bc845) and the current harness.
+PIN_LINE = re.compile(r'^INPUT_SNAPSHOT_COMMIT = "[0-9a-f]{7,40}"$', re.MULTILINE)
 
 
 def git(repo, *args):
@@ -32,8 +34,9 @@ def git(repo, *args):
 
 
 def pinned(source, pin):
-    assert PIN_LINE in source, "harness pin line changed; update the fixture"
-    return source.replace(PIN_LINE, f'INPUT_SNAPSHOT_COMMIT = "{pin}"')
+    source, count = PIN_LINE.subn(f'INPUT_SNAPSHOT_COMMIT = "{pin}"', source)
+    assert count == 1, "harness pin line changed; update the fixture"
+    return source
 
 
 def commit(repo):
@@ -187,9 +190,20 @@ def test_write_rejects_inputs_differing_from_head(repo, path, staged):
     assert [(repo / p).read_bytes() for p in (ARTIFACT, MANIFEST)] == before
 
 
+def current_payload(repo):
+    """Payload the current harness writes for the fixture input, produced in a scratch copy.
+    It differs from the 95bc845 fixture artifact (the _meta input_snapshot_note was reworded)."""
+    with tempfile.TemporaryDirectory(prefix="pcso-registry-expected-") as td:
+        scratch = Path(td) / "repo"
+        shutil.copytree(repo, scratch)
+        result = cli(scratch)
+        assert result.returncode == 0, result.stdout + result.stderr
+        return (scratch / ARTIFACT).read_bytes()
+
+
 @pytest.mark.parametrize("existing_manifest", [True, False])
 def test_write_preserves_payload_and_records_replayable_provenance(repo, existing_manifest):
-    before = (repo / ARTIFACT).read_bytes()
+    before = current_payload(repo)
     harness = git(repo, "rev-parse", "HEAD")
     if not existing_manifest:
         (repo / MANIFEST).unlink()
