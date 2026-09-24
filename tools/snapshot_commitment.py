@@ -31,7 +31,8 @@ LEDGER = os.path.join(ROOT, "results", "commitment_ledger.txt")
 SKIP_DIRS = {".git", ".venv", "archive", "__pycache__", ".pytest_cache",
              ".episodic-memory", "results", "joblogs", "node_modules",
              ".checkpoints", ".pi"}  # machine-local gate cache + agent telemetry
-SKIP_FILES = {".keysalt", "config.local.json", ".DS_Store"}
+SKIP_FILES = {".keysalt", "config.local.json", ".DS_Store",
+              ".git"}  # in a git worktree .git is a file pointing at the main repo
 
 
 def tree_hashes():
