@@ -4,7 +4,8 @@
 The lead must commitment-hash this script before the full study. --streams changes
 replication counts only, never horizons or criteria. Timings go to stderr; the
 JSON artifact is byte-deterministic for fixed inputs, claims, counts and run date,
-including across worker counts. No registered model or harness is modified.
+including across worker counts within the recorded environment.
+No registered model or harness is modified.
 """
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ import math
 import multiprocessing
 import os
 from pathlib import Path
+import platform
 import sys
 import time
 
@@ -27,6 +29,7 @@ for _variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
     os.environ[_variable] = "1"
 
 import numpy as np
+import scipy
 
 import pcso_model_registry as registry
 import pcso_sparse_switch as sparse
@@ -39,10 +42,44 @@ HORIZON = 1000
 THRESHOLD = 100.0
 TOLERANCE = 1e-9
 DEFAULT_STREAMS = {"S1": 400, "S2": 400, "S3": 100, "S3b": 100, "S4": 400, "S5": 100}
+COMPARATOR_ROLES = {"cp_nest": 1, "dirichlet_cp_a100": 2}
+
+OWNER_RESOLUTIONS_2026_09_24 = {
+    "O1": "All study streams (simulated and the real S2 stream) start from a fresh model. "
+          "S2's log 2 + sum tau bound is a fresh-start result and does not cover the "
+          "conditioned operational model of the registered runner.",
+    "O2": "Ratified: per-cell zero-based stream index (same seeds reused across cells = "
+          "common random numbers), long S2 stream s=400, real schedule cycled for 10,000 draws.",
+    "O3": "Literal endpoint: for S3/S3b/S4 count a crossing only at pooled draws up to and "
+          "including the affected game's 200th draw (P=45 -> pooled 997 under the balanced "
+          "schedule; P=58 -> 1000), identically for all models; pass that endpoint as "
+          "pooled_T to crossing_lower_bound. Simulating further is fine only if it cannot "
+          "affect the criteria.",
+    "O4": "Independent comparator randomness: keep the draw generator seeded "
+          "default_rng(20260923 + 5000 + s) exactly; derive CPNest and DirichletCP seeds "
+          "deterministically and distinctly from s via numpy SeedSequence with role "
+          "identifiers; record the derivation; test that initial states differ from the "
+          "draw stream and from each other, data are identical across models, and results "
+          "are reproducible across worker counts.",
+    "O5": "Ratified: SE = sqrt(p_hat(1-p_hat)/N).",
+    "O6": "Ratified: the 16 S3b cells as currently defined (reported only).",
+    "O7": "Ratified: S5 on the balanced 1,000-draw schedule, uniformly random support, "
+          "deviation active for pooled draws 200 <= t < 700.",
+    "O8": "S5 reports BOTH delays: E-based and M-based (first t >= 200 with the statistic "
+          ">= 100; delay t - 200; no reset; non-detection censored; censored median). Neither "
+          "has a pass criterion. Delay is zero only if the statistic at t = 200 is >= 100.",
+    "O9": "Ratified: 1e-9-nat absolute tolerance on the S2/S5 bound checks.",
+    "O10": "S4 runs 400 streams PER CELL (1,600 total).",
+    "O11": "A 4-stream smoke run (S1-S5) was executed and its results seen on 2026-09-24 "
+           "before these resolutions: S1, S2, S4, S5 passed; S3 failed the strict comparison "
+           "with a tie of 3/4 vs 3/4 at k=2, P=45.",
+}
 
 INTERPRETATIONS = [
     "Section 5 is a fresh-start study: every simulated stream and the real-draw S2 stream "
-    "start with a new CPSparseSwitch, E=1, M=0 and pooled t=1, without Section 3 warmup.",
+    "start with a new CPSparseSwitch, E=1, M=0 and pooled t=1, without Section 3 warmup. "
+    "S2's log 2 + sum tau bound is a fresh-start result and does not cover the conditioned "
+    "operational model of the registered runner.",
     "The real schedule is exactly the ordered (date, P) projection of registry.load() rows "
     "dated <= REGISTERED_AFTER; the same conditioning rows form the real-draw S2 stream.",
     "Stream index s is zero-based and restarts at 0 in each claim/cell (common random "
@@ -54,15 +91,17 @@ INTERPRETATIONS = [
     "it never shortens a horizon or removes the one long or one real S2 stream. "
     "An overridden run is marked as an override, not a registered full study.",
     "Balanced means round-robin (42,45,49,55,58), beginning with 42, for 1,000 pooled "
-    "draws. S3, S3b and S4 monitor every pooled prefix through draw 1,000 (200 draws "
-    "of each game), including the final round's draws after an affected game's 200th draw.",
+    "draws. S3, S3b and S4 stop all models at the affected game's 200th draw: pooled "
+    "997 for P=45 and 1,000 for P=58, inclusive. The same endpoint is passed as pooled_T "
+    "to crossing_lower_bound.",
     "Each planted stream selects one uniform support without replacement before any "
     "draw. The sampled coordinate order assigns the theta vector; that support stays "
     "fixed. Other games and inactive periods are uniform. Planted draws call "
     "registry.sample_cp with zero log-weights off the support.",
-    "S3 and S3b use fresh registry.CPNest(seed=SEED_BASE+s, M=128) and "
-    "registry.DirichletCP(a=100.0, samples=2000, seed=SEED_BASE+s). Each comparator "
-    "has its own RNG, separate from the draw RNG, and scores the identical draw sequence.",
+    "S3 and S3b use fresh registry.CPNest(M=128) and registry.DirichletCP(a=100.0, "
+    "samples=2000), seeded by numpy.random.SeedSequence([SEED_BASE, s, role_id]), "
+    "with role_id=1 for CPNest and 2 for DirichletCP. These distinct RNG streams are "
+    "separate from default_rng(SEED_BASE+s); all models score the identical draw sequence.",
     "In S3 and S4, SE is the empirical binomial standard error sqrt(p_hat*(1-p_hat)/N) "
     "of the sparse model's crossing fraction. No clipping, continuity correction, "
     "paired-difference SE or multiple-cell adjustment changes the registered criteria.",
@@ -70,30 +109,34 @@ INTERPRETATIONS = [
     "at each k in {1,2}; k=2 mixed signs (0.25,-0.25) and (0.5,-0.5); and k=2 "
     "unequal magnitudes (0.5,0.25) and (0.5,-0.25). Each cell has 100 streams by "
     "default, the S3 horizon and both comparators; it has no pass criterion.",
-    "S4 uses the S3 balanced horizon and a uniform fixed support in each stream. "
+    "S4 uses 400 streams per cell (1,600 total), the S3 affected-game endpoint and "
+    "a uniform fixed support in each stream. "
     "bw_second_moment returns E0[W^2], not power; the BW power bound is "
     "min(1, 0.01 + 0.5*sqrt(max(0, E0[W^2]-1))), matching the plan's 2.24% example.",
-    "S5 uses the same balanced 1,000-draw schedule because no separate horizon or "
-    "schedule is specified. Draws are one-based: deviation is active for 200 <= t < 700, "
+    "S5 uses the ratified balanced 1,000-draw schedule. Draws are one-based: "
+    "deviation is active for 200 <= t < 700, "
     "on one uniformly chosen coordinate of P=45 with theta=1; all other draws are uniform.",
     "S5 uses Lemma 1's exact expert-sequence probability: initial prior 1/2; "
     "transition after t is (1-rho_t)*I[same expert]+rho_t*prior(next expert), "
     "rho_t=1-exp(-tau(t)). Thus switches precede draws 200 and 700 (rho_199 and "
     "rho_699); same-expert transitions include resampling the same expert. At every "
     "T, log(E_comparator_T)-log(E_T) <= -log(path_prior_T) is checked.",
-    "S5 detection is the first t >= 200 with E_t >= 100, with delay t-200 in pooled "
-    "draws (zero if already above threshold at onset); E is not reset. Detection "
-    "remains observable after offset through t=1,000. Non-detections are encoded -1 "
-    "and passed to registry.censored_median with delay horizon 800.",
+    "S5 reports separate E-based and M-based detection delays: the first t >= 200 "
+    "with the statistic >= 100, with delay t-200 in pooled draws. Delay is zero only "
+    "if the statistic at t=200 is >= 100. Neither statistic is reset. Detection remains "
+    "observable after offset through t=1,000. Non-detections are encoded -1 and passed "
+    "to registry.censored_median with delay horizon 800. Neither delay has a pass criterion.",
     "S2 and S5 check every nonempty prefix with absolute tolerance 1e-9 nats. "
     "Slack means RHS-LHS; both maximum and minimum slack and maximum excess "
     "(LHS-RHS, positive means violation before tolerance) are reported.",
     "Crossing uses >=100, including the initial E_0=1 in its supremum. All models "
-    "continue through the full horizon. Scientific criteria are reported unchanged "
+    "continue through their claim/cell endpoint. Scientific criteria are reported unchanged "
     "even for smoke counts; failed criteria do not make the CLI execution fail.",
     "Worker count and observed wall times are excluded from deterministic JSON. "
     "Timings and ideal 18-worker full-count projections are printed to stderr; "
-    "S1 owns shared null-stream time when selected together with S2.",
+    "S1 owns shared null-stream time when selected together with S2. Byte reproducibility "
+    "across worker counts is verified within the recorded environment.",
+    OWNER_RESOLUTIONS_2026_09_24["O11"],
 ]
 
 
@@ -101,9 +144,17 @@ def stream_rng(s):
     return np.random.default_rng(SEED_BASE + s)
 
 
+def comparator_seed(s, model):
+    return np.random.SeedSequence([SEED_BASE, s, COMPARATOR_ROLES[model]])
+
+
 def balanced_schedule():
     return tuple((f"pooled-{t:04d}", BALANCED_POOLS[(t - 1) % 5])
                  for t in range(1, HORIZON + 1))
+
+
+def power_endpoint(P):
+    return (200 - 1) * len(BALANCED_POOLS) + BALANCED_POOLS.index(P) + 1
 
 
 def conditioning_rows():
@@ -219,13 +270,15 @@ def evaluate_stream(task):
                tuple(int(i) + 1 for i in rng.choice(task.P, len(task.theta), replace=False)))
     models = [sparse.CPSparseSwitch()]
     if task.comparators:
-        models.extend((registry.CPNest(seed=SEED_BASE + task.s, M=128),
-                       registry.DirichletCP(a=100.0, samples=2000, seed=SEED_BASE + task.s)))
+        models.extend((registry.CPNest(seed=comparator_seed(task.s, "cp_nest"), M=128),
+                       registry.DirichletCP(a=100.0, samples=2000,
+                                            seed=comparator_seed(task.s, "dirichlet_cp_a100"))))
     evidence = {m.name: Evidence() for m in models}
     horizon = len(task.schedule)
     uniform_bounds, uniform_check = uniform_loss_bounds(horizon), BoundCheck()
     path_bounds = path_loss_bounds(horizon, task.P, len(task.theta)) if task.tracking else None
-    path_check, comparator_log_e, delay = BoundCheck(), 0.0, -1
+    path_check, comparator_log_e = BoundCheck(), 0.0
+    delays = {"E": -1, "M": -1}
     # Exact partition of the fixed comparator, independent of the sparse mixture.
     if task.tracking:
         logw = np.zeros((1, task.P), dtype=np.float64)
@@ -250,15 +303,18 @@ def evaluate_stream(task):
             if active:
                 comparator_log_e += comparator.logq(S) + log_comb[P]
             path_check.observe(comparator_log_e - log_e, float(path_bounds[t - 1]), t)
-            if t >= 200 and delay < 0 and log_e >= math.log(THRESHOLD):
-                delay = t - 200
+            state = evidence[sparse.CPSparseSwitch.name]
+            for statistic, value in (("E", state.log_e), ("M", state.log_m)):
+                if t >= 200 and delays[statistic] < 0 and value >= math.log(THRESHOLD):
+                    delays[statistic] = t - 200
     result = {"s": None if task.real_rows is not None else task.s,
               "seed": None if task.real_rows is not None else SEED_BASE + task.s,
               "draws": horizon, "draws_sha256": draw_hash.hexdigest(),
               "support": list(support), "models": {k: v.result() for k, v in evidence.items()},
               "uniform_bound": uniform_check.result()}
     if task.tracking:
-        result.update(path_bound=path_check.result(), detection_delay=delay,
+        result.update(path_bound=path_check.result(), detection_delay_E=delays["E"],
+                      detection_delay_M=delays["M"],
                       comparator_log_E_final=comparator_log_e,
                       path_bound_final_nats=float(path_bounds[-1]))
     return result
@@ -302,12 +358,13 @@ def cells_for(claim):
 
 def power_cell(claim, P, theta, records):
     summaries = {name: fraction_summary(records, name) for name in records[0]["models"]}
-    result = {"P": P, "k": len(theta), "theta": list(theta), "pooled_draws": HORIZON,
+    endpoint = power_endpoint(P)
+    result = {"P": P, "k": len(theta), "theta": list(theta), "pooled_draws": endpoint,
               "affected_game_draws": 200, "models": summaries, "stream_results": records}
     estimate = summaries[sparse.CPSparseSwitch.name]
     p, se = estimate["fraction"], estimate["SE"]
     if claim == "S3":
-        bound = sparse.crossing_lower_bound(P, len(theta), 1.0, 200, pooled_T=HORIZON)
+        bound = sparse.crossing_lower_bound(P, len(theta), 1.0, 200, pooled_T=endpoint)
         criteria = {"fraction_ge_lower_bound_minus_2SE": p >= bound - 2 * se,
                     "strictly_above_cp_nest": p > summaries["cp_nest"]["fraction"],
                     "strictly_above_dirichlet_cp_a100": p > summaries["dirichlet_cp_a100"]["fraction"]}
@@ -333,13 +390,19 @@ def run_study(rows, claims, streams, workers, run_date):
     balanced = balanced_schedule()
     counts = {c: streams if streams is not None else DEFAULT_STREAMS[c] for c in CLAIMS}
     files = (Path(__file__), Path(sparse.__file__), Path(registry.__file__))
-    hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+    hashes = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
     output = {"_meta": {
         "registration": "pcso.sparse.seq1", "registered_after": registry.REGISTERED_AFTER,
         "run_date": run_date, "claims": list(claims), "streams_override": streams,
         "run_kind": "stream_count_override" if streams is not None else "registered_counts",
         "backend": "CPU", "dtype": "float64", "numeric_threads_per_worker": 1,
+        "environment": {"python": platform.python_version(), "numpy": np.__version__,
+                        "scipy": scipy.__version__, "machine": platform.machine(),
+                        "platform": platform.platform(),
+                        "verification_scope": "within the recorded environment"},
         "seeds": {"formula": "20260923 + 5000 + s", "base": SEED_BASE,
+                  "comparator_formula": "numpy.random.SeedSequence([SEED_BASE, s, role_id])",
+                  "comparator_role_ids": COMPARATOR_ROLES,
                   "replicated_s": {c: [0, counts[c] - 1] for c in claims},
                   "S2_null_dependency_s": [0, counts["S1"] - 1] if "S2" in claims else None,
                   "S2_long_s": 400 if "S2" in claims else None},
@@ -348,6 +411,7 @@ def run_study(rows, claims, streams, workers, run_date):
         "input_snapshot_commit": registry.INPUT_SNAPSHOT_COMMIT,
         "sha256": hashes, "threshold": THRESHOLD, "bound_tolerance_nats": TOLERANCE,
         "interpretations": INTERPRETATIONS,
+        "owner_resolutions_2026_09_24": OWNER_RESOLUTIONS_2026_09_24,
     }}
     timings = {}
     with ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn")) as executor:
@@ -392,7 +456,8 @@ def run_study(rows, claims, streams, workers, run_date):
             elif claim in ("S3", "S3b", "S4"):
                 cells = cells_for(claim)
                 n = counts[claim]
-                tasks = [StreamTask(s, balanced, P=P, theta=theta, comparators=claim != "S4")
+                tasks = [StreamTask(s, balanced[:power_endpoint(P)], P=P, theta=theta,
+                                    comparators=claim != "S4")
                          for P, theta in cells for s in range(n)]
                 records, timing = batch(tasks, DEFAULT_STREAMS[claim] * len(cells))
                 results = [power_cell(claim, P, theta, records[i * n:(i + 1) * n])
@@ -406,16 +471,22 @@ def run_study(rows, claims, streams, workers, run_date):
                 records, timing = batch([StreamTask(s, balanced, P=45, theta=(1.0,), tracking=True)
                                          for s in range(counts[claim])], 100)
                 check = bound_summary(records, "path_bound")
-                delays = [r["detection_delay"] for r in records]
+                delay_summaries = {}
+                for statistic in ("E", "M"):
+                    delays = [r[f"detection_delay_{statistic}"] for r in records]
+                    delay_summaries[statistic] = {
+                        "median_detection_delay_pooled_draws": registry.censored_median(delays, 800),
+                        "detected_streams": sum(d >= 0 for d in delays),
+                        "censored_streams": sum(d < 0 for d in delays),
+                    }
                 output[claim] = {"P": 45, "k": 1, "theta": [1.0], "onset": 200, "offset": 700,
                                  "pooled_draws": HORIZON, "path_bound": check,
                                  "criteria": {"Lemma_1_at_every_prefix": check["pass"]}, "pass": check["pass"],
-                                 "median_detection_delay_pooled_draws": registry.censored_median(delays, 800),
-                                 "detected_streams": sum(d >= 0 for d in delays),
-                                 "censored_streams": sum(d < 0 for d in delays), "stream_results": records}
+                                 "detection_delays": delay_summaries, "stream_results": records}
             timings[claim] = timing
             print(json.dumps({"claim": claim, **timing}), file=sys.stderr, flush=True)
-    if any(hashlib.sha256(p.read_bytes()).hexdigest() != hashes[p.name] for p in files):
+    if any(hashlib.sha256(p.read_bytes()).hexdigest() != hashes[p.relative_to(ROOT).as_posix()]
+           for p in files):
         raise ValueError("source files changed during study; refusing to write")
     return output, timings
 
@@ -434,20 +505,32 @@ def parse_claims(value):
     return tuple(c for c in CLAIMS if c in chosen)
 
 
+def _run_date(value):
+    try:
+        if date.fromisoformat(value).isoformat() == value:
+            return value
+    except ValueError:
+        pass
+    raise argparse.ArgumentTypeError("expected a valid date in YYYY-MM-DD format")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--claims", type=parse_claims, default=CLAIMS)
     parser.add_argument("--streams", type=positive_int, help="replicates per cell; horizons stay registered")
     parser.add_argument("--workers", type=positive_int, default=min(18, os.cpu_count() or 1))
     parser.add_argument("--out", type=Path)
-    parser.add_argument("--run-date", type=date.fromisoformat, default=date.today())
+    parser.add_argument("--run-date", type=_run_date, required=True)
     args = parser.parse_args(argv)
+    dst = args.out or ROOT / "results" / f"pcso_sparse_study_{args.run_date}.json"
+    if dst.exists():
+        raise FileExistsError(f"refusing to overwrite existing output: {dst}")
     rows = conditioning_rows()
-    result, _ = run_study(rows, args.claims, args.streams, args.workers, args.run_date.isoformat())
-    dst = args.out or ROOT / "results" / f"pcso_sparse_study_{args.run_date.isoformat()}.json"
+    result, _ = run_study(rows, args.claims, args.streams, args.workers, args.run_date)
     dst.parent.mkdir(parents=True, exist_ok=True)
     payload = json_bytes(result)
-    dst.write_bytes(payload)
+    with dst.open("xb") as handle:
+        handle.write(payload)
     print(f"wrote {dst} sha256={hashlib.sha256(payload).hexdigest()}")
 
 
