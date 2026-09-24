@@ -9,10 +9,17 @@ recomputes the record from current code and input and compares bytes without wri
 from __future__ import annotations
 
 import argparse
+import csv
 from datetime import date
 import hashlib
+import io
 import json
+import math
 from pathlib import Path
+import platform
+
+import numpy as np
+import scipy
 
 import pcso_model_registry as R
 from pcso_sparse_switch import CPSparseSwitch
@@ -60,6 +67,8 @@ def score(rows) -> dict:
             "registration_date": REGISTRATION_DATE,
             "n_conditioning": n_conditioning,
             "last_conditioning_date": last_conditioning_date,
+            "first_registered_date": min((d for d, _, _ in registered_rows), default=None),
+            "last_registered_date": max((d for d, _, _ in registered_rows), default=None),
             "alpha": 0.01,
             "thresholds": {"E": 100, "M": 100},
             "combined_alpha": {"E": 0.005, "M": 0.005},
@@ -75,6 +84,62 @@ def score(rows) -> dict:
             "combined": registered["E_max"] >= 200 or registered["M_max"] >= 200,
         },
     }
+
+
+def _qualify_registered(csv_bytes: bytes) -> list[dict]:
+    """Qualify every registered CSV row before the frozen loader can filter it."""
+    try:
+        registered = {}
+        reader = csv.DictReader(io.StringIO(csv_bytes.decode("utf-8-sig")), strict=True)
+        required = {"Date", "Game", *(f"N{i}" for i in range(1, 7))}
+        if not required.issubset(reader.fieldnames or []):
+            raise ValueError("CSV must contain Date, Game and N1..N6")
+        for row in reader:
+            draw_date, game = row["Date"], row["Game"]
+            if date.fromisoformat(draw_date).isoformat() != draw_date:
+                raise ValueError(f"invalid ISO draw date: {draw_date!r}")
+            if draw_date <= REGISTRATION_DATE:
+                continue
+            key = draw_date, game
+            if game not in R.POOL:
+                raise ValueError(f"unknown game or pool {key}; a new registration is required")
+            if key in registered:
+                raise ValueError(f"duplicate registered (date, game): {key}")
+            P = R.POOL[game]
+            number_error = f"{key} must contain 6 distinct integers in 1..{P}"
+            try:
+                numbers = tuple(sorted(int(row[f"N{i}"]) for i in range(1, 7)))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(number_error) from exc
+            if len(set(numbers)) != 6 or not all(1 <= n <= P for n in numbers):
+                raise ValueError(number_error)
+            registered[key] = numbers
+
+        qualified = {}
+        if registered:
+            for path in sorted((ROOT / "datasets/pcso-lotto/provenance").glob("pcso_refresh_*.json")):
+                manifest = json.loads(path.read_bytes())
+                for draw in manifest["draws"]:
+                    key = draw["date"], draw["game"]
+                    if key not in registered or key in qualified:
+                        continue
+                    numbers = draw.get("numbers")
+                    sources = draw.get("source_ids")
+                    if (draw.get("status") in ("official_verified", "two_source_verified")
+                            and isinstance(numbers, list) and len(numbers) == 6
+                            and all(type(n) is int for n in numbers)
+                            and tuple(sorted(numbers)) == registered[key]
+                            and isinstance(sources, list)
+                            and all(isinstance(s, str) and s.strip() for s in sources)
+                            and len(set(sources)) >= 2):
+                        qualified[key] = path.relative_to(ROOT).as_posix()
+        missing = registered.keys() - qualified.keys()
+        if missing:
+            raise ValueError(f"no qualifying manifest for registered draw {min(missing)}")
+        return [{"date": d, "game": game, "manifest": qualified[d, game]}
+                for d, game in sorted(registered)]
+    except (OSError, ValueError, TypeError, KeyError, csv.Error) as exc:
+        raise ValueError(f"{REGISTRATION} §3: {exc}") from exc
 
 
 def _run_date(value: str) -> str:
@@ -98,23 +163,57 @@ def main(argv=None) -> None:
         _check_registration_date()
         if not args.verify and dst.exists():
             raise ValueError(f"refusing to overwrite existing output: {dst}")
+        input_path = R.DRAWS.relative_to(ROOT).as_posix()
+        snapshot = {path: (ROOT / path).read_bytes() for path in (
+            input_path, "src/pcso_sparse_switch.py", "src/pcso_model_registry.py", SCRIPT)}
+        hashes = {path: hashlib.sha256(data).hexdigest() for path, data in snapshot.items()}
+        input_hashes = {input_path: hashes[input_path]}
+        code_hashes = {path: digest for path, digest in hashes.items() if path != input_path}
+        if args.verify:
+            expected = dst.read_bytes()
+            recorded = json.loads(expected)["_meta"]
+            if recorded.get("input_sha256") != input_hashes:
+                recorded_sha = recorded.get("input_sha256", {}).get(input_path)
+                raise ValueError("input has advanced since this record "
+                                 f"(recorded {recorded_sha} vs live {hashes[input_path]}); "
+                                 "byte verification needs the recorded input")
+            if recorded.get("code_sha256") != code_hashes:
+                raise ValueError("code drift since this record "
+                                 f"(recorded {recorded.get('code_sha256')} vs live {code_hashes}); "
+                                 "byte verification needs the recorded code")
+        provenance = _qualify_registered(snapshot[input_path])
         rows = R.load()
         result = score(rows)
+        try:
+            after = {path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in snapshot}
+        except OSError as exc:
+            raise ValueError("input or code changed during scoring") from exc
+        if after != hashes:
+            raise ValueError("input or code changed during scoring")
         result["_meta"].update({
             "run_date": args.run_date,
             "input_snapshot_commit": R.INPUT_SNAPSHOT_COMMIT,
-            "input_sha256": {
-                R.DRAWS.relative_to(ROOT).as_posix(): hashlib.sha256(R.DRAWS.read_bytes()).hexdigest(),
+            "input_sha256": input_hashes,
+            "code_sha256": code_hashes,
+            "registered_provenance": provenance,
+            "environment": {
+                "python": platform.python_version(),
+                "numpy": np.__version__,
+                "scipy": scipy.__version__,
+                "machine": platform.machine(),
+                "platform": platform.platform(),
             },
-            "code_sha256": {
-                path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
-                for path in ("src/pcso_sparse_switch.py", "src/pcso_model_registry.py", SCRIPT)
-            },
+            "verify_scope": "byte verification is defined within the recorded environment",
         })
-        payload = (json.dumps(result, sort_keys=True, indent=1) + "\n").encode("utf-8")
+        # score() has already computed decisions from the unmodified statistics.
+        result["registered"] = {
+            key: "overflow" if key in ("E_final", "E_max", "M_max") and not math.isfinite(value)
+            else value for key, value in result["registered"].items()
+        }
+        payload = (json.dumps(result, sort_keys=True, indent=1, allow_nan=False) + "\n").encode("utf-8")
         digest = hashlib.sha256(payload).hexdigest()
         if args.verify:
-            if dst.read_bytes() != payload:
+            if expected != payload:
                 raise ValueError(f"VERIFY FAIL: byte mismatch: {dst}")
             print(f"PASS sha256={digest}")
             return

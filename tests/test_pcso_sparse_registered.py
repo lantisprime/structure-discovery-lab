@@ -1,13 +1,17 @@
 """Synthetic registered-window accounting and deterministic CLI verification."""
 from datetime import date, timedelta
+import csv
 import hashlib
+import io
 import math
 from pathlib import Path
 import json
+import platform
 import sys
 
 import numpy as np
 import pytest
+import scipy
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -87,6 +91,8 @@ def test_boundary_date_is_conditioning_only(rows):
     result = runner.score(rows)
     assert result["_meta"]["n_conditioning"] == 4
     assert result["_meta"]["last_conditioning_date"] == "2026-09-23"
+    assert result["_meta"]["first_registered_date"] == "2026-09-24"
+    assert result["_meta"]["last_registered_date"] == "2026-09-27"
     assert result["registered"]["n"] == len(rows) - 4
     assert [P for P, _ in result["registered"]["overlaps"]] == [P for _, P, _ in rows[4:]]
 
@@ -122,6 +128,8 @@ def test_no_registered_rows(rows, n_conditioning):
     assert result["_meta"]["n_conditioning"] == n_conditioning
     assert result["_meta"]["last_conditioning_date"] == (
         "2026-09-23" if n_conditioning else None)
+    assert result["_meta"]["first_registered_date"] is None
+    assert result["_meta"]["last_registered_date"] is None
     assert result["registered"] == {
         "n": 0, "E_final": 1.0, "E_max": 1.0, "M_max": 0.0,
         "log_E_final": 0.0, "log_E_max": 0.0, "log_M_max": None, "overlaps": [],
@@ -154,9 +162,38 @@ def test_decision_thresholds_use_running_maxima(monkeypatch, E_max, M_max, decis
 
 @pytest.fixture
 def cli(monkeypatch, tmp_path, rows):
-    monkeypatch.setattr(runner, "OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr(R, "load", lambda: rows)
-    return ["--run-date", "2026-09-24"], tmp_path / "pcso_sparse_registered_2026-09-24.json"
+    root = tmp_path / "checkout"
+    output = tmp_path / "output"
+    output.mkdir()
+    for name in ("src/pcso_sparse_switch.py", "src/pcso_model_registry.py", runner.SCRIPT):
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes((ROOT / name).read_bytes())
+    # Exercise the frozen loader against small pools and an in-memory conditioning
+    # snapshot, without invoking its Git snapshot reader.
+    pools = dict(zip(sorted(R.POOL), (11, 8, 9, 10, 12)))
+    games = {P: game for game, P in pools.items()}
+    data = root / "datasets/pcso-lotto/data_draws_1yr.csv"
+    data.parent.mkdir(parents=True)
+    text = io.StringIO()
+    writer = csv.writer(text)
+    writer.writerow(["Game", "Date", *(f"N{i}" for i in range(1, 7))])
+    writer.writerows((games[P], d, *S) for d, P, S in rows)
+    snapshot = text.getvalue().encode("utf-8")
+    data.write_bytes(snapshot)
+    manifest = data.parent / "provenance/pcso_refresh_2026-09-28.json"
+    manifest.parent.mkdir()
+    manifest.write_text(json.dumps({"draws": [
+        {"date": d, "game": games[P], "numbers": list(reversed(S)),
+         "status": "official_verified", "source_ids": ["official", "archive"]}
+        for d, P, S in rows if d > runner.REGISTRATION_DATE
+    ]}), encoding="utf-8")
+    monkeypatch.setattr(runner, "ROOT", root)
+    monkeypatch.setattr(runner, "OUTPUT_DIR", output)
+    monkeypatch.setattr(R, "POOL", pools)
+    monkeypatch.setattr(R, "DRAWS", data)
+    monkeypatch.setattr(R, "_snapshot_bytes", lambda: snapshot)
+    return ["--run-date", "2026-09-24"], output / "pcso_sparse_registered_2026-09-24.json"
 
 
 def test_cli_payload_provenance_and_verify_detects_one_byte_change(cli, capsys):
@@ -193,7 +230,7 @@ def test_cli_payload_provenance_and_verify_detects_one_byte_change(cli, capsys):
     changed = before[:-1] + b" "
     dst.write_bytes(changed)
     stat = dst.stat()
-    with pytest.raises(SystemExit, match="VERIFY FAIL"):
+    with pytest.raises(SystemExit, match="VERIFY FAIL: byte mismatch"):
         runner.main(argv + ["--verify"])
     assert dst.read_bytes() == changed
     assert dst.stat().st_mtime_ns == stat.st_mtime_ns
@@ -245,3 +282,219 @@ def test_cli_requires_iso_calendar_date(cli, monkeypatch, argv):
         runner.main(argv)
     assert exc.value.code == 2
     assert not cli[1].exists()
+
+
+def _edit_csv(edit):
+    rows = list(csv.DictReader(io.StringIO(R.DRAWS.read_text(encoding="utf-8"))))
+    edit(rows)
+    with R.DRAWS.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _manifest_path():
+    return R.DRAWS.parent / "provenance/pcso_refresh_2026-09-28.json"
+
+
+def _must_fail_before_load(monkeypatch):
+    monkeypatch.setattr(R, "load", lambda: pytest.fail("must fail before loading or scoring"))
+
+
+def test_duplicate_registered_row_fails(cli, monkeypatch):
+    _edit_csv(lambda rows: rows.append(rows[4].copy()))
+    _must_fail_before_load(monkeypatch)
+    with pytest.raises(SystemExit, match="§3.*duplicate"):
+        runner.main(cli[0])
+    assert not cli[1].exists()
+
+
+@pytest.mark.parametrize("game", ["New Game 6/60", "Lotto 6/43"])
+def test_unknown_registered_game_fails(cli, monkeypatch, game):
+    _edit_csv(lambda rows: rows[4].update(Game=game))
+    _must_fail_before_load(monkeypatch)
+    with pytest.raises(SystemExit, match="§3.*(game|pool)"):
+        runner.main(cli[0])
+    assert not cli[1].exists()
+
+
+@pytest.mark.parametrize("number", ["1", "0", "12", "1.5", "", "not-an-integer"])
+def test_invalid_registered_numbers_fail(cli, monkeypatch, number):
+    # The first registered game has pool 11; fixing N1 also makes N2=1 a duplicate.
+    _edit_csv(lambda rows: rows[4].update(N1="1", N2=number))
+    _must_fail_before_load(monkeypatch)
+    with pytest.raises(SystemExit, match="§3.*6 distinct integers"):
+        runner.main(cli[0])
+    assert not cli[1].exists()
+
+
+def test_registered_row_missing_from_manifests_fails(cli, monkeypatch):
+    path = _manifest_path()
+    manifest = json.loads(path.read_bytes())
+    manifest["draws"].pop(0)
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    _must_fail_before_load(monkeypatch)
+    with pytest.raises(SystemExit, match="§3.*qualifying manifest"):
+        runner.main(cli[0])
+    assert not cli[1].exists()
+
+
+@pytest.mark.parametrize("change", [
+    {"numbers": [1, 2, 3, 4, 5, 6]},
+    {"status": "single_source_only"},
+    {"source_ids": ["official"]},
+    {"source_ids": ["official", "official"]},
+    {"source_ids": "official,archive"},
+])
+def test_manifest_must_qualify_numbers_status_and_sources(cli, monkeypatch, change):
+    path = _manifest_path()
+    manifest = json.loads(path.read_bytes())
+    assert manifest["draws"][0]["numbers"] != [1, 2, 3, 4, 5, 6]
+    manifest["draws"][0].update(change)
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    _must_fail_before_load(monkeypatch)
+    with pytest.raises(SystemExit, match="§3.*qualifying manifest"):
+        runner.main(cli[0])
+    assert not cli[1].exists()
+
+
+@pytest.mark.parametrize("status", ["official_verified", "two_source_verified"])
+def test_qualifying_manifest_recorded_for_every_registered_draw(cli, status):
+    path = _manifest_path()
+    manifest = json.loads(path.read_bytes())
+    for draw in manifest["draws"]:
+        draw["status"] = status
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    # An earlier nonqualifying match must not hide a later qualifying entry.
+    earlier = json.loads(path.read_bytes())
+    earlier["draws"][0]["status"] = "single_source_only"
+    for draw in earlier["draws"][1:]:
+        draw["source_ids"] = []
+    path.with_name("pcso_refresh_2026-09-27.json").write_text(
+        json.dumps(earlier), encoding="utf-8")
+    runner.main(cli[0])
+    result = json.loads(cli[1].read_bytes())
+    assert result["_meta"]["registered_provenance"] == [
+        {"date": d["date"], "game": d["game"],
+         "manifest": path.relative_to(runner.ROOT).as_posix()}
+        for d in sorted(manifest["draws"], key=lambda d: (d["date"], d["game"]))
+    ]
+    assert len(result["_meta"]["registered_provenance"]) == result["registered"]["n"]
+
+
+def test_snapshots_read_once_before_load_and_rechecked_after_score(cli, monkeypatch):
+    paths = [R.DRAWS, *(runner.ROOT / name for name in (
+        "src/pcso_sparse_switch.py", "src/pcso_model_registry.py", runner.SCRIPT))]
+    read_bytes, load, score = Path.read_bytes, R.load, runner.score
+    before = {path: read_bytes(path) for path in paths}
+    counts = dict.fromkeys(paths, 0)
+    scoring_finished = False
+
+    def tracked_read(path):
+        if path in counts:
+            counts[path] += 1
+            if counts[path] > (2 if path == R.DRAWS else 1):
+                assert scoring_finished
+        return read_bytes(path)
+
+    def checked_load():
+        assert all(n == 1 for n in counts.values())
+        return load()
+
+    def checked_score(rows):
+        nonlocal scoring_finished
+        result = score(rows)
+        scoring_finished = True
+        return result
+
+    monkeypatch.setattr(Path, "read_bytes", tracked_read)
+    monkeypatch.setattr(R, "load", checked_load)
+    monkeypatch.setattr(runner, "score", checked_score)
+    runner.main(cli[0])
+    assert counts == {path: 3 if path == R.DRAWS else 2 for path in paths}
+    meta = json.loads(cli[1].read_bytes())["_meta"]
+    assert meta["input_sha256"] | meta["code_sha256"] == {
+        path.relative_to(runner.ROOT).as_posix(): hashlib.sha256(data).hexdigest()
+        for path, data in before.items()
+    }
+
+
+@pytest.mark.parametrize("changed", ["input", "src/pcso_sparse_switch.py",
+                                     "src/pcso_model_registry.py", runner.SCRIPT])
+def test_input_or_code_changed_mid_scoring_fails(cli, monkeypatch, changed):
+    score = runner.score
+
+    def changing_score(rows):
+        result = score(rows)
+        path = R.DRAWS if changed == "input" else runner.ROOT / changed
+        path.write_bytes(path.read_bytes() + b"\n")
+        return result
+
+    monkeypatch.setattr(runner, "score", changing_score)
+    with pytest.raises(SystemExit, match="input or code changed during scoring"):
+        runner.main(cli[0])
+    assert list(cli[1].parent.iterdir()) == []
+
+
+def test_verify_input_advanced_fails_before_recomputing(cli, monkeypatch):
+    runner.main(cli[0])
+    recorded = cli[1].read_bytes()
+    recorded_sha = hashlib.sha256(R.DRAWS.read_bytes()).hexdigest()
+    R.DRAWS.write_bytes(R.DRAWS.read_bytes() + b"\n")
+    live_sha = hashlib.sha256(R.DRAWS.read_bytes()).hexdigest()
+    _must_fail_before_load(monkeypatch)
+    with pytest.raises(SystemExit) as exc:
+        runner.main(cli[0] + ["--verify"])
+    assert str(exc.value) == (
+        f"ERROR: input has advanced since this record (recorded {recorded_sha} vs live {live_sha}); "
+        "byte verification needs the recorded input")
+    assert cli[1].read_bytes() == recorded
+
+
+@pytest.mark.parametrize("name", ["src/pcso_sparse_switch.py",
+                                 "src/pcso_model_registry.py", runner.SCRIPT])
+def test_verify_code_drift_fails_before_recomputing(cli, monkeypatch, name):
+    runner.main(cli[0])
+    recorded = cli[1].read_bytes()
+    path = runner.ROOT / name
+    path.write_bytes(path.read_bytes() + b"\n")
+    _must_fail_before_load(monkeypatch)
+    with pytest.raises(SystemExit, match="code drift") as exc:
+        runner.main(cli[0] + ["--verify"])
+    assert name in str(exc.value)
+    assert "input has advanced" not in str(exc.value)
+    assert cli[1].read_bytes() == recorded
+
+
+@pytest.mark.parametrize("value", [math.inf, -math.inf, math.nan])
+def test_overflow_serializes_strict_json_after_decisions(cli, monkeypatch, value):
+    entry = {"n": 12, "E_final": value, "E_max": value, "M_max": value,
+             "log_E_final": 800.0, "log_E_max": 801.0, "log_M_max": 799.0, "overlaps": []}
+    monkeypatch.setattr(R, "run_registered", lambda models, rows: {models[0].name: entry})
+    runner.main(cli[0])
+    result = json.loads(cli[1].read_bytes(), parse_constant=lambda value: pytest.fail(value))
+    assert result["registered"] == {
+        **entry, "E_final": "overflow", "E_max": "overflow", "M_max": "overflow"}
+    assert result["decision"] == {
+        "evidence_rejection": value >= 100, "change_alarm": value >= 100,
+        "combined": value >= 200}
+    json.dumps(result, allow_nan=False)
+
+
+def test_strict_json_rejects_nonfinite_log_fields_without_writing(cli, monkeypatch):
+    entry = {"E_final": 1.0, "E_max": 1.0, "M_max": 0.0, "log_E_final": math.nan}
+    monkeypatch.setattr(R, "run_registered", lambda models, rows: {models[0].name: entry})
+    with pytest.raises(SystemExit, match="Out of range float values"):
+        runner.main(cli[0])
+    assert not cli[1].exists()
+
+
+def test_environment_and_registered_dates_recorded(cli):
+    runner.main(cli[0])
+    meta = json.loads(cli[1].read_bytes())["_meta"]
+    assert meta["first_registered_date"] == "2026-09-24"
+    assert meta["last_registered_date"] == "2026-09-27"
+    assert meta["environment"] == {
+        "python": platform.python_version(), "numpy": np.__version__, "scipy": scipy.__version__,
+        "machine": platform.machine(), "platform": platform.platform()}
+    assert meta["verify_scope"] == "byte verification is defined within the recorded environment"
