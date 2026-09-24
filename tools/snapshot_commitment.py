@@ -12,7 +12,8 @@ Usage (from repo root):
     python3 tools/snapshot_commitment.py "label" --dry-run   # print, don't append
 
 What gets hashed: everything except VCS/venv/archive/cache dirs, results/
-(hash outputs individually in run rows instead), and machine-local secrets
+(hash outputs individually in run rows instead), machine-local gate/agent
+state (.checkpoints/, .pi/), and machine-local secrets
 (webapp/.keysalt, webapp/config.local.json — keys must never enter the
 ledger). The snapshot only appends rows whose (path, hash) pair changed
 since the previous snapshot, so repeated snapshots stay small.
@@ -28,8 +29,10 @@ ROOT = os.path.abspath(os.path.join(HERE, ".."))
 LEDGER = os.path.join(ROOT, "results", "commitment_ledger.txt")
 
 SKIP_DIRS = {".git", ".venv", "archive", "__pycache__", ".pytest_cache",
-             ".episodic-memory", "results", "joblogs", "node_modules"}
-SKIP_FILES = {".keysalt", "config.local.json", ".DS_Store"}
+             ".episodic-memory", "results", "joblogs", "node_modules",
+             ".checkpoints", ".pi"}  # machine-local gate cache + agent telemetry
+SKIP_FILES = {".keysalt", "config.local.json", ".DS_Store",
+              ".git"}  # in a git worktree .git is a file pointing at the main repo
 
 
 def tree_hashes():

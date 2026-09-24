@@ -50,7 +50,7 @@ ALPHA = 0.01
 REGISTERED_AFTER = "2026-09-23"
 # Conditioning snapshot: live rows dated <= REGISTERED_AFTER must match this pin before scoring.
 # Update the pin to include every conditioning draw before scoring a refreshed dataset.
-INPUT_SNAPSHOT_COMMIT = "bcf39ca"
+INPUT_SNAPSHOT_COMMIT = "1ce8541"
 # Registered C3 fixed-share loss bound (amendment v2, A4), conservative form: -log E_T must stay
 # <= intercept + slope*T on every null stream and on the real draws. The slope is the registered
 # conservative value for -log(1 - rho); the form dominates the amendment's general bound at all
@@ -784,7 +784,7 @@ def main():
                      "walk_forward": "maximum-inclusion set = six largest predictive inclusion probabilities; it maximises expected overlap exactly; it equals the joint mode for a single conditional-Poisson law, not in general for mixtures or pair_parity",
                      "claims": "C1 null crossing <= alpha (regression test); C2 CP-NEST vs exact d=1 grid on phi_1 (simulation claim, censoring-aware medians); C3 fixed-share bound is a theorem (c3_loss_bound_check), collapse = c3_collapse_v1_registered (v1 criterion, simulated); C4 registered-window exact overlap test, Holm-adjusted only at the fixed terminal analysis",
                      "input_snapshot_commit": INPUT_SNAPSHOT_COMMIT,
-                     "input_snapshot_note": "with --verify, conditioning rows dated <= registered_after are read from this commit's datasets/pcso-lotto/data_draws_1yr.csv; later rows from the working tree",
+                     "input_snapshot_note": "conditioning rows dated <= registered_after are read from this commit's datasets/pcso-lotto/data_draws_1yr.csv and must equal the live rows (the run fails closed otherwise); later rows from the working tree. --verify replays the harness commit and input blob recorded in results/pcso_model_leaderboard_provenance.json",
                      "input_sha256": {str(DRAWS.relative_to(ROOT)): hashlib.sha256(DRAWS.read_bytes()).hexdigest()},
                      "grade": "G0 exploratory"},
            "leaderboard": board,

@@ -17,6 +17,7 @@ webapp/.lantoken
 # Local agent runtime and approval checkpoints
 .claude/
 .checkpoints/
+.pi/
 # Local codex review-channel bundle (canonical bundle file; 5 of 7 referenced
 # components live in the user's episodic memory root, not this repo). The
 # `.claude/hooks/lib/command-classifier.sh` hook reads bundles/*.md at

@@ -1352,3 +1352,70 @@ b43a48bcdb93b538  ./docs/RESULTS_PCSO_PICKER_THEOREM_2026-09-23.md
 b456a1d57346f1f8  ./tests/test_pcso_model_registry.py
 3c9ace532c21ae41  ./tests/test_pcso_official_fetch.py
 eb3f71beab870547  ./tools/pcso_official_fetch.py
+# Snapshot 2026-09-24T04:23:25+00:00 — Registry harness re-hash: C3 fix 322c889, verify pinning b06f26c, conditioning pin 1ce8541 (2026-09-24)
+# chain-prev: d6c469a72731136d0493f7a11bd2df25b0f182204d0abf07a59a145fe9eb3255
+# (51 changed of 570 tracked files; hashed BEFORE any run script executes)
+735ef14a10e46c81  ./datasets/pcso-lotto/DATASET.md
+4f3e82130f9fe16b  ./datasets/pcso-lotto/data_astro_geomagnetic.csv
+16a591c4cf70c24f  ./datasets/pcso-lotto/data_draws.csv
+54d5e85b6e07c918  ./datasets/pcso-lotto/data_draws_1yr.csv
+8912f23c158b1ba0  ./datasets/pcso-lotto/data_draws_1yr_audited.csv
+8dd41072bbb103f5  ./datasets/pcso-lotto/data_official_draws_jackpots.csv
+dcb22126bacda421  ./datasets/pcso-lotto/provenance/pcso_refresh_2026-09-23.json
+30648d88a82cd0fa  ./datasets/pcso-lotto/provenance/pcso_refresh_2026-09-24.json
+c45003a556a55e47  ./datasets/pcso-lotto/provenance/raw_2026-09-23/lottopcso_642.html.gz
+3368c6a4ccbe554e  ./datasets/pcso-lotto/provenance/raw_2026-09-23/lottopcso_645.html.gz
+f5db9ef4c065c842  ./datasets/pcso-lotto/provenance/raw_2026-09-23/lottopcso_649.html.gz
+2bb25248615bf7b3  ./datasets/pcso-lotto/provenance/raw_2026-09-23/lottopcso_655.html.gz
+bf7b4db35ac2cd29  ./datasets/pcso-lotto/provenance/raw_2026-09-23/lottopcso_658.html.gz
+98c96b97de5ebf35  ./datasets/pcso-lotto/provenance/raw_2026-09-23/official_searxng_2026-09-23.md
+1ba6e70009411ad8  ./datasets/pcso-lotto/provenance/raw_2026-09-23/pcsodraw_642.html.gz
+92b18db21942ae9f  ./datasets/pcso-lotto/provenance/raw_2026-09-23/pcsodraw_645.html.gz
+1cbae78b6feed1f5  ./datasets/pcso-lotto/provenance/raw_2026-09-23/pcsodraw_649.html.gz
+730670cdcdee291a  ./datasets/pcso-lotto/provenance/raw_2026-09-23/pcsodraw_655.html.gz
+435d66ceee899f0b  ./datasets/pcso-lotto/provenance/raw_2026-09-23/pcsodraw_658.html.gz
+5c5869fc190eb352  ./datasets/pcso-lotto/provenance/raw_2026-09-24/lottopcso_645.html.gz
+0c19b87b71da9813  ./datasets/pcso-lotto/provenance/raw_2026-09-24/lottopcso_655.html.gz
+7aaab55b74fa70e7  ./datasets/pcso-lotto/provenance/raw_2026-09-24/official_searxng_2026-09-24.md
+eb364e488ede46dc  ./datasets/pcso-lotto/provenance/raw_2026-09-24/pcsodraw_645.html.gz
+f91fa7e7737d0294  ./datasets/pcso-lotto/provenance/raw_2026-09-24/pcsodraw_655.html.gz
+3ac5c4a5a336575d  ./docs/ERRATUM_2026-09-23_C3_NULL_SIGN.md
+74b69f7754a4d243  ./docs/RESULTS_PCSO_MLX_BACKEND_2026-09-23.md
+b3a5d4255ebbabd3  ./docs/plans/PCSO_MODEL_REGISTRY_PLAN.md
+1b5b951588ed0b34  ./lotto_picker.html
+0d1f9ac01d517dcb  ./src/pcso_mlx_benchmark.py
+d3d38e5d16f78647  ./src/pcso_mlx_sim.py
+71949e97e5791fe9  ./src/pcso_model_registry.py
+bf28ec348fb8c7a7  ./src/pcso_sparse_switch.py
+904ba5dc39a289be  ./tests/fixtures/research_intake/arxiv_atom.xml
+653590faef2038ae  ./tests/fixtures/research_intake/crossref_items.json
+afec76f0015f29f0  ./tests/fixtures/research_intake/jev_choice_answer.json
+89ed9bed5f6107b2  ./tests/fixtures/research_intake/jev_noul_clean.json
+29ead5941d05913b  ./tests/fixtures/research_intake/jev_noul_violation.json
+a064cc50426e91a9  ./tests/fixtures/research_intake/jev_score_answer.json
+3816990564101606  ./tests/test_pcso_mlx_sim.py
+f4c9fb538a416b83  ./tests/test_pcso_model_registry.py
+6e8da37545a91cc9  ./tests/test_pcso_official_fetch.py
+2cda0bc8c76f23da  ./tests/test_pcso_official_markdown_capture.py
+03546cccae97ed19  ./tests/test_pcso_registry_verify.py
+7883b7f6e0bbb47e  ./tests/test_pcso_sparse_switch.py
+69619306395fdd9b  ./tests/test_research_intake.py
+e5de05d5c973025a  ./tools/pcso_mlx_bench_all.py
+70781087264bd5ba  ./tools/pcso_mlx_remote.py
+32755a451672fd61  ./tools/pcso_mlx_report.py
+f47465d737bca104  ./tools/pcso_mlx_validate.py
+9901faa281c84e56  ./tools/research_intake.py
+88835a3b928b1fc2  ./tools/snapshot_commitment.py
+# Snapshot 2026-09-24T04:39:32+00:00 — Registration pcso.sparse.seq1 approved 2026-09-24 (registration date 2026-09-23): registration, cp_sparse_switch model and tests
+# chain-prev: 4e8d1ed6149b33764a516b559792b1d9f2e6701407646e891d46e301142381fa
+# (1 changed of 571 tracked files; hashed BEFORE any run script executes)
+d3876c5fd31e39db  ./docs/REGISTRATION_PCSO_SPARSE_SWITCH.md
+# Snapshot 2026-09-24T05:10:34+00:00 — PR #51 referee fixes: conditioning-pin addendum, real-pin test, payload oracle (2026-09-24)
+# chain-prev: 76e17f7ef0675887e374b6571ee44eb35c8a1ff19cf27f666a4a7605031c7105
+# (6 changed of 490 tracked files; hashed BEFORE any run script executes)
+6b9670d2e15d0190  ./.gitignore
+ca8dcfe87552f355  ./datasets/pcso-lotto/DATASET.md
+ee77815805786464  ./docs/ADDENDUM_2026-09-24_CONDITIONING_PIN.md
+6d6982a2124e2c11  ./tests/test_pcso_registry_pin.py
+b54b8551f7bdba27  ./tests/test_pcso_registry_verify.py
+adb63eaa1bf43678  ./tools/snapshot_commitment.py
