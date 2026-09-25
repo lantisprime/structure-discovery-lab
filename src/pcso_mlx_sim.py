@@ -229,14 +229,27 @@ def _log_mean_ratio(logr, weights):
     return mx.where(mx.abs(delta) < 0.5, mx.log1p(delta), ordinary)
 
 
-def _cp_constants(schedule):
+def cp_prior(tau=reg.CPNest.TAU, rho=reg.CPNest.RHO, v0=None):
+    """Validate exploratory parameters and normalize the seven-level prior."""
+    if not math.isfinite(tau) or tau <= 0 or not math.isfinite(rho) or not 0 <= rho <= 1:
+        raise ValueError("tau must be positive and finite; rho must be in [0, 1]")
+    prior = 2.0 ** -np.arange(reg.CPNest.D + 1) if v0 is None else np.array(v0, dtype=float, copy=True)
+    if (prior.shape != (reg.CPNest.D + 1,) or not np.isfinite(prior).all()
+            or np.any(prior <= 0) or not np.isfinite(prior.sum())):
+        raise ValueError("v0 must contain seven positive finite weights")
+    prior /= prior.sum()
+    return prior
+
+
+def _cp_constants(schedule, *, tau=reg.CPNest.TAU, rho=reg.CPNest.RHO, v0=None):
     """Data-independent precision is shared by all streams; factor once in float64 on CPU.
 
     Padded level d has nonzero coordinates 0..d-1. L is chol(inv(Lambda)) and the
     Gaussian transform is z @ L.T; the update is grad @ inv(Lambda_new).
     """
     D = reg.CPNest.D
-    precision = {d: np.eye(d) / reg.CPNest.TAU**2 for d in range(1, D + 1)}
+    cp_prior(tau, rho, v0)
+    precision = {d: np.eye(d) / tau**2 for d in range(1, D + 1)}
     features = {P: reg.features(P) for _, P in schedule}
     fisher = {P: K * (P - K) / (P - 1) * (F @ F.T) / P for P, F in features.items()}
     factors, inverses = [], []
@@ -251,14 +264,14 @@ def _cp_constants(schedule):
     return features, np.array(factors), np.array(inverses)
 
 
-def _mlx_cp(draws, schedule, M, seed, chunk, zf_seq):
+def _mlx_cp(draws, schedule, M, seed, chunk, zf_seq, *,
+            tau=reg.CPNest.TAU, rho=reg.CPNest.RHO, v0=None):
     R, T = draws.shape[:2]
-    features, chol, inv = _cp_constants(schedule)
+    features, chol, inv = _cp_constants(schedule, tau=tau, rho=rho, v0=v0)
     F = {P: mx.array(f, mx.float32) for P, f in features.items()}
     chol, inv = mx.array(chol, mx.float32), mx.array(inv, mx.float32)
     mask = mx.array(np.tril(np.ones((6, 6))), mx.float32)
-    prior = 2.0 ** -np.arange(7)
-    prior /= prior.sum()
+    prior = cp_prior(tau, rho, v0)
 
     def step(mu, v, zf, idx, feat, factor, inverse):
         # factor stores L.T, correcting the draft's transposed Gaussian contraction.
@@ -274,7 +287,7 @@ def _mlx_cp(draws, schedule, M, seed, chunk, zf_seq):
         # Normalize relative likelihoods directly. log(v) -> softmax introduced
         # a systematic GPU roundoff term on every fixed-share update.
         updated = v + v * mx.expm1(level)
-        v = (1 - reg.CPNest.RHO) * (updated / mx.sum(updated, axis=1, keepdims=True)) + reg.CPNest.RHO / 7
+        v = (1 - rho) * (updated / mx.sum(updated, axis=1, keepdims=True)) + rho / 7
         w = mx.exp(_contract(mu, feat))
         E = _esp(w)
         em = mx.ones_like(w)
@@ -353,11 +366,12 @@ def _mlx_grid(name, draws, schedule, chunk):
     return evidence_summary(le_out)
 
 
-def mlx_log_evidence(name, draws, schedule, M=32, seed=0, chunk=500, zf_seq=None, device=None):
+def mlx_log_evidence(name, draws, schedule, M=32, seed=0, chunk=500, zf_seq=None, device=None, *,
+                     tau=reg.CPNest.TAU, rho=reg.CPNest.RHO, v0=None):
     """Evaluate supplied streams; supplied zf_seq has shape (N,T,M/2,6).
 
-    Random simulations are reproducible for fixed seed AND chunk size. M must be even;
-    NULL uses M=32 and POWER must use the production M=128.
+    Without zf_seq, random simulations require fixed seed AND chunk size. M must be
+    even. The CLI requires production M=128 for POWER unless explicitly opted in.
     """
     if mx is None:
         raise RuntimeError("mlx is not installed; run on an Apple GPU with MLX")
@@ -381,7 +395,7 @@ def mlx_log_evidence(name, draws, schedule, M=32, seed=0, chunk=500, zf_seq=None
         raise ValueError("device must be gpu, cpu or None")
     with mx.stream(getattr(mx, device)) if device is not None else nullcontext():
         if name == "cp_nest":
-            return _mlx_cp(draws, schedule, M, seed, chunk, zf_seq)
+            return _mlx_cp(draws, schedule, M, seed, chunk, zf_seq, tau=tau, rho=rho, v0=v0)
         return _mlx_grid(name, draws, schedule, chunk)
 
 
@@ -405,6 +419,12 @@ def metadata(seed, schedule, M, chunk, device=None):
                               for p in ("src/pcso_mlx_sim.py", "src/pcso_model_registry.py")}}
 
 
+def validate_power_m(M, theta1, *, sensitivity=False):
+    """Only the declared sensitivity arm may opt into POWER M=32 or M=512."""
+    if theta1 and M != 128 and not (sensitivity and M in (32, 512)):
+        raise ValueError("POWER uses production M=128")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--null-streams", type=int, default=10000)
@@ -413,6 +433,8 @@ def main(argv=None):
                     f"pcso_mlx_null_calibration_{date.today().isoformat()}.json")
     ap.add_argument("--seed", type=int, default=20260923)
     ap.add_argument("--m", type=int, default=None)
+    ap.add_argument("--sensitivity-m", action="store_true",
+                    help="opt into the declared exploratory POWER M=32/512 arm")
     ap.add_argument("--chunk", type=int, default=500)
     ap.add_argument("--device", choices=("gpu", "cpu"), default="gpu")
     ap.add_argument("--max-draws", type=int, default=0, help="0 uses the entire real-data schedule")
@@ -424,8 +446,10 @@ def main(argv=None):
     if (args.null_streams <= 0 or args.chunk <= 0 or args.max_draws < 0 or M < 2 or M % 2
             or not math.isfinite(args.theta1)):
         ap.error("positive streams/chunk, nonnegative max-draws, even M >= 2, finite theta1 required")
-    if args.theta1 and M != 128:
-        ap.error("POWER uses production M=128")
+    try:
+        validate_power_m(M, args.theta1, sensitivity=args.sensitivity_m)
+    except ValueError as exc:
+        ap.error(str(exc))
     schedule = [(d, P) for d, P, _ in reg.load()]
     if args.max_draws:
         schedule = schedule[:args.max_draws]
