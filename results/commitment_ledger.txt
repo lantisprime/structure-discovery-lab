@@ -1429,3 +1429,8 @@ d0d074ee5bf9819a  ./src/pcso_sparse_registered.py
 # (2 changed of 494 tracked files; hashed BEFORE any run script executes)
 17a0959843de200b  ./src/pcso_sparse_study.py
 c203a0a8b5499faf  ./tests/test_pcso_sparse_study.py
+# Snapshot 2026-09-25T06:15:22+00:00 — Study pcso.cpnest.sensitivity1 APPROVED (spec only; before any runner code or simulation)
+# chain-prev: 5a687dee4dbd6d57d6dcaaa72a4bce585602123b2821ecb84a4570db383e62c3
+# (2 changed of 578 tracked files; hashed BEFORE any run script executes)
+b7b1525aaadadb87  ./docs/STUDY_PCSO_CPNEST_SENSITIVITY.md
+de88d00c3e3a38f1  ./lotto_picker.html

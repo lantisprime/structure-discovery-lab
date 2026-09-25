@@ -1,7 +1,7 @@
 # STUDY SPEC — pcso.cpnest.sensitivity1 (pre-declared sensitivity grid for CP-NEST)
 
-**STATUS: DRAFT 2026-09-24 — awaiting referee review and lab-owner approval.** Nothing in §§3–6 is run
-before this file is approved and commitment-hashed into `results/commitment_ledger.txt` with
+**STATUS: APPROVED 2026-09-25 (lab owner, in session: PR #55 merged, then "runner go").** Nothing in §§3–6 is
+run before this file is commitment-hashed into `results/commitment_ledger.txt` with
 `tools/snapshot_commitment.py`. Grade: G0 exploratory (simulation only).
 
 Design context: `docs/plans/PCSO_MODEL_REGISTRY_PLAN.md` §2 (CP-NEST), `docs/REGISTRATION_PCSO_MODEL_REGISTRY.md`,
