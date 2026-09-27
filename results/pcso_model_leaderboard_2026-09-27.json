@@ -1,0 +1,502 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/pcso_model_registry.py",
+    "run_date": "2026-09-27",
+    "seed": 20260923,
+    "design": "docs/plans/PCSO_MODEL_REGISTRY_PLAN.md",
+    "freeze": "2026-06-10",
+    "alpha": 0.01,
+    "registered_after": "2026-09-23",
+    "evidence": "prod_t q_t(S_t)/p0(S_t); post-freeze window conditions on earlier draws; registered window (draws dated > registered_after) starts fresh at E = 1, M = 0",
+    "walk_forward": "maximum-inclusion set = six largest predictive inclusion probabilities; it maximises expected overlap exactly; it equals the joint mode for a single conditional-Poisson law, not in general for mixtures or pair_parity",
+    "claims": "C1 null crossing <= alpha (regression test); C2 CP-NEST vs exact d=1 grid on phi_1 (simulation claim, censoring-aware medians); C3 fixed-share bound is a theorem (c3_loss_bound_check), collapse = c3_collapse_v1_registered (v1 criterion, simulated); C4 registered-window exact overlap test, Holm-adjusted only at the fixed terminal analysis",
+    "input_snapshot_commit": "1ce8541",
+    "input_snapshot_note": "conditioning rows dated <= registered_after are read from this commit's datasets/pcso-lotto/data_draws_1yr.csv and must equal the live rows (the run fails closed otherwise); later rows from the working tree. --verify replays the harness commit and input blob recorded in results/pcso_model_leaderboard_provenance.json",
+    "input_sha256": {
+      "datasets/pcso-lotto/data_draws_1yr.csv": "5a34f0c1fcdd5d437fe87641d282ab2b91d8e323340707d4bd29cc7d67c2418f"
+    },
+    "grade": "G0 exploratory"
+  },
+  "leaderboard": {
+    "uniform": {
+      "theory": "M0: i.i.d. uniform 6-sets",
+      "dim": 0,
+      "evidence_full_history": 1.0,
+      "evidence_post_freeze": 1.0,
+      "walk_forward_matches": {
+        "all": [
+          640,
+          627.0,
+          0.5728
+        ],
+        "post_freeze": [
+          172,
+          168.0,
+          0.7604
+        ]
+      },
+      "sr_edetector_max": 0.999006
+    },
+    "dirichlet_cp_a100": {
+      "theory": "conditional-Poisson product weights, Dirichlet prior (RESULTS_PCSO_REFRESH \u00a78)",
+      "dim": "P-1",
+      "evidence_full_history": 35.296905,
+      "evidence_post_freeze": 1.54671,
+      "walk_forward_matches": {
+        "all": [
+          669,
+          627.0,
+          0.0612
+        ],
+        "post_freeze": [
+          178,
+          168.0,
+          0.4077
+        ]
+      },
+      "sr_edetector_max": 64.929602
+    },
+    "tilt_high31": {
+      "theory": "one-parameter conditional-Poisson tilt; exact grid posterior",
+      "dim": 1,
+      "evidence_full_history": 0.406044,
+      "evidence_post_freeze": 1.252685,
+      "walk_forward_matches": {
+        "all": [
+          605,
+          627.0,
+          0.3212
+        ],
+        "post_freeze": [
+          165,
+          168.0,
+          0.7942
+        ]
+      },
+      "sr_edetector_max": 4.638627,
+      "state": {
+        "theta_posterior_mean": 0.01996,
+        "cs_95_grid": [
+          -0.02,
+          0.06
+        ],
+        "cs_99_grid": [
+          -0.025,
+          0.065
+        ],
+        "cs_scope": "confidence sequence over the declared 161-point grid"
+      }
+    },
+    "tilt_linear": {
+      "theory": "one-parameter conditional-Poisson tilt; exact grid posterior",
+      "dim": 1,
+      "evidence_full_history": 0.203426,
+      "evidence_post_freeze": 0.969758,
+      "walk_forward_matches": {
+        "all": [
+          652,
+          627.0,
+          0.269
+        ],
+        "post_freeze": [
+          186,
+          168.0,
+          0.1271
+        ]
+      },
+      "sr_edetector_max": 2.684849,
+      "state": {
+        "theta_posterior_mean": 0.01223,
+        "cs_95_grid": [
+          -0.03,
+          0.055
+        ],
+        "cs_99_grid": [
+          -0.035,
+          0.06
+        ],
+        "cs_scope": "confidence sequence over the declared 161-point grid"
+      }
+    },
+    "pair_parity": {
+      "theory": "second-order parity-pair log-linear tilt; exact 7-term normalisation",
+      "dim": 1,
+      "evidence_full_history": 0.462181,
+      "evidence_post_freeze": 0.759256,
+      "walk_forward_matches": {
+        "all": [
+          602,
+          627.0,
+          0.2596
+        ],
+        "post_freeze": [
+          160,
+          168.0,
+          0.4864
+        ]
+      },
+      "sr_edetector_max": 1.224076,
+      "state": {
+        "theta_posterior_mean": 0.02737,
+        "cs_95_grid": [
+          -0.06,
+          0.115
+        ],
+        "cs_99_grid": [
+          -0.075,
+          0.13
+        ],
+        "cs_scope": "confidence sequence over the declared 161-point grid"
+      }
+    },
+    "cp_nest": {
+      "theory": "nested CP tilts + online Laplace + fixed-share (PCSO_MODEL_REGISTRY_PLAN \u00a72)",
+      "dim": "0..6",
+      "evidence_full_history": 0.557713,
+      "evidence_post_freeze": 1.062894,
+      "walk_forward_matches": {
+        "all": [
+          617,
+          627.0,
+          0.6521
+        ],
+        "post_freeze": [
+          178,
+          168.0,
+          0.4077
+        ]
+      },
+      "sr_edetector_max": 1.554277,
+      "state": {
+        "level_weights": [
+          0.42888,
+          0.14779,
+          0.13591,
+          0.11304,
+          0.07091,
+          0.05651,
+          0.04695
+        ],
+        "cond_precision_d6": 11.8,
+        "theta_mean": {
+          "1": [
+            0.01159
+          ],
+          "2": [
+            -0.00738,
+            0.02464
+          ],
+          "3": [
+            -0.00232,
+            0.018,
+            0.01085
+          ],
+          "4": [
+            -0.00222,
+            0.01782,
+            0.01097,
+            -0.00287
+          ],
+          "5": [
+            -0.00421,
+            0.02043,
+            0.01034,
+            -0.00271,
+            0.0055
+          ],
+          "6": [
+            -0.00158,
+            0.01692,
+            0.01113,
+            -0.00258,
+            0.00489,
+            -0.00646
+          ]
+        },
+        "theta_sd": {
+          "1": [
+            0.01313
+          ],
+          "2": [
+            0.0205,
+            0.0205
+          ],
+          "3": [
+            0.02158,
+            0.0223,
+            0.01428
+          ],
+          "4": [
+            0.02159,
+            0.02232,
+            0.01429,
+            0.01314
+          ],
+          "5": [
+            0.02216,
+            0.02327,
+            0.01439,
+            0.01315,
+            0.01369
+          ],
+          "6": [
+            0.02291,
+            0.02446,
+            0.0145,
+            0.01315,
+            0.01374,
+            0.01381
+          ]
+        }
+      }
+    },
+    "ensemble": {
+      "theory": "prequential Bayesian model averaging",
+      "dim": "mixture",
+      "evidence_full_history": 6.179683,
+      "evidence_post_freeze": 1.331121,
+      "walk_forward_matches": {
+        "all": [
+          656,
+          627.0,
+          0.1985
+        ],
+        "post_freeze": [
+          176,
+          168.0,
+          0.5134
+        ]
+      },
+      "sr_edetector_max": 12.311681,
+      "model_weights": {
+        "uniform": 0.02697,
+        "dirichlet_cp_a100": 0.92908,
+        "tilt_high31": 0.01095,
+        "tilt_linear": 0.00549,
+        "pair_parity": 0.01247,
+        "cp_nest": 0.01505
+      }
+    }
+  },
+  "registered_window": {
+    "registered_after": "2026-09-23",
+    "n_draws": 4,
+    "decision_rule": "reject M0 if sup E >= 100 (ensemble headline); mechanism-change alarm if sup M >= 100; alpha = 0.01 (Ville / Shiryaev-Roberts)",
+    "c4_status": "pending_terminal_analysis (4/780)",
+    "rule": "Holm-adjusted overlap p-values are computed only at the fixed terminal analysis with >= 780 registered draws",
+    "models": {
+      "uniform": {
+        "n_draws": 4,
+        "E_final": 1.0,
+        "E_max": 1.0,
+        "log_E_final": 0.0,
+        "log_E_max": 0.0,
+        "M_max": 0.8,
+        "overlap_test": {
+          "observed_matches": 2,
+          "expected_under_M0": 3.0,
+          "p_two_sided_exact": 0.555333
+        }
+      },
+      "dirichlet_cp_a100": {
+        "n_draws": 4,
+        "E_final": 1.1316007024567443,
+        "E_max": 1.1316007024567443,
+        "log_E_final": 0.123633,
+        "log_E_max": 0.123633,
+        "M_max": 0.881756278956132,
+        "overlap_test": {
+          "observed_matches": 3,
+          "expected_under_M0": 3.0,
+          "p_two_sided_exact": 1.0
+        }
+      },
+      "tilt_high31": {
+        "n_draws": 4,
+        "E_final": 1.1498220329821527,
+        "E_max": 1.1498220329821527,
+        "log_E_final": 0.139607,
+        "log_E_max": 0.139607,
+        "M_max": 0.9172961709097149,
+        "overlap_test": {
+          "observed_matches": 5,
+          "expected_under_M0": 3.0,
+          "p_two_sided_exact": 0.323968
+        }
+      },
+      "tilt_linear": {
+        "n_draws": 4,
+        "E_final": 1.05732883308914,
+        "E_max": 1.05732883308914,
+        "log_E_final": 0.055746,
+        "log_E_max": 0.055746,
+        "M_max": 0.8532861521857461,
+        "overlap_test": {
+          "observed_matches": 3,
+          "expected_under_M0": 3.0,
+          "p_two_sided_exact": 1.0
+        }
+      },
+      "pair_parity": {
+        "n_draws": 4,
+        "E_final": 1.0071218486948113,
+        "E_max": 1.0428944048697897,
+        "log_E_final": 0.007097,
+        "log_E_max": 0.042,
+        "M_max": 0.7951806456184478,
+        "overlap_test": {
+          "observed_matches": 1,
+          "expected_under_M0": 3.0,
+          "p_two_sided_exact": 0.220441
+        }
+      },
+      "cp_nest": {
+        "n_draws": 4,
+        "E_final": 1.052943170269206,
+        "E_max": 1.0598126516452306,
+        "log_E_final": 0.051589,
+        "log_E_max": 0.058092,
+        "M_max": 0.8404303440204963,
+        "overlap_test": {
+          "observed_matches": 4,
+          "expected_under_M0": 3.0,
+          "p_two_sided_exact": 0.745856
+        }
+      },
+      "ensemble": {
+        "n_draws": 4,
+        "E_final": 1.1137640608652528,
+        "E_max": 1.1137640608652528,
+        "log_E_final": 0.107745,
+        "log_E_max": 0.107745,
+        "M_max": 0.8703335194959085,
+        "overlap_test": {
+          "observed_matches": 3,
+          "expected_under_M0": 3.0,
+          "p_two_sided_exact": 1.0
+        },
+        "ensemble_E_crossed": false,
+        "ensemble_M_crossed": false,
+        "component_log_evidence": {
+          "uniform": {
+            "log_E_final": 0.0,
+            "log_E_max": 0.0
+          },
+          "dirichlet_cp_a100": {
+            "log_E_final": 0.11336,
+            "log_E_max": 0.11336
+          },
+          "tilt_high31": {
+            "log_E_final": 0.139607,
+            "log_E_max": 0.139607
+          },
+          "tilt_linear": {
+            "log_E_final": 0.055746,
+            "log_E_max": 0.055746
+          },
+          "pair_parity": {
+            "log_E_final": 0.007097,
+            "log_E_max": 0.042
+          },
+          "cp_nest": {
+            "log_E_final": 0.051871,
+            "log_E_max": 0.058402
+          }
+        }
+      }
+    }
+  },
+  "mle_existence_gate": {
+    "42": {
+      "distinct_sets": 200,
+      "rank": 42,
+      "mle_exists_sufficient": true
+    },
+    "45": {
+      "distinct_sets": 202,
+      "rank": 45,
+      "mle_exists_sufficient": true
+    },
+    "49": {
+      "distinct_sets": 201,
+      "rank": 49,
+      "mle_exists_sufficient": true
+    },
+    "55": {
+      "distinct_sets": 201,
+      "rank": 55,
+      "mle_exists_sufficient": true
+    },
+    "58": {
+      "distinct_sets": 201,
+      "rank": 58,
+      "mle_exists_sufficient": true
+    }
+  },
+  "cp_nest_null_check": {
+    "replicates": 400,
+    "draws_per_replicate": 1005,
+    "fraction_sup_ge_1_over_alpha": 0.0,
+    "ville_bound": 0.01,
+    "median_sup_evidence": 1.4959,
+    "sr_edetector_fraction_max_ge_1_over_alpha": 0.0,
+    "M_samples": 32
+  },
+  "c3_collapse_v1_registered": {
+    "criterion": "v1 (unchanged from registration): under uniform draws, median of the final level-0 weight v_T(0) >= 0.9",
+    "fraction_v_T0_ge_0p9": 0.0,
+    "median_v_T0": 0.5089
+  },
+  "c3_loss_bound_check": {
+    "bound": "-log E_T <= 0.685304 + 0.0010005*T (fixed-share bound for CP-NEST against the uniform comparator level; conservative form, valid at all horizons)",
+    "real_draws": {
+      "T": 1005,
+      "neg_log_E_T": 0.583911,
+      "satisfied": true
+    },
+    "null_streams": {
+      "n": 400,
+      "T": 1005,
+      "fraction_satisfied": 1.0,
+      "must_be": 1.0
+    }
+  },
+  "power_planted_tilt_phi1": {
+    "replicates": 50,
+    "horizon_pooled_draws": 3015,
+    "comparator": "exact one-parameter grid process on phi_1 (tilt_linear)",
+    "theta1_0.05": {
+      "cp_nest": {
+        "fraction_crossed": 1.0,
+        "n_crossed": 50,
+        "n_streams": 50,
+        "median_draws_to_cross_censored": 918,
+        "clopper_pearson_lower_95_crossing_fraction": 0.9418
+      },
+      "tilt_linear": {
+        "fraction_crossed": 1.0,
+        "n_crossed": 50,
+        "n_streams": 50,
+        "median_draws_to_cross_censored": 707,
+        "clopper_pearson_lower_95_crossing_fraction": 0.9418
+      }
+    },
+    "theta1_0.10": {
+      "cp_nest": {
+        "fraction_crossed": 1.0,
+        "n_crossed": 50,
+        "n_streams": 50,
+        "median_draws_to_cross_censored": 263,
+        "clopper_pearson_lower_95_crossing_fraction": 0.9418
+      },
+      "tilt_linear": {
+        "fraction_crossed": 1.0,
+        "n_crossed": 50,
+        "n_streams": 50,
+        "median_draws_to_cross_censored": 197,
+        "clopper_pearson_lower_95_crossing_fraction": 0.9418
+      }
+    }
+  }
+}
