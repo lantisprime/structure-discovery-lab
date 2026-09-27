@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Parity gate for the official markdown captures — offline, stdlib+pytest.
 
-The PRIMARY official capture of the 2026-09-23, 2026-09-24 and 2026-09-26
-refreshes is the searxng-rendered markdown of pcso.gov.ph (raw HTML
+The PRIMARY official capture of the 2026-09-23, 2026-09-24, 2026-09-26 and
+2026-09-27 refreshes is the searxng-rendered markdown of pcso.gov.ph (raw HTML
 unavailable: direct fetch returned HTTP 403), which parse_results cannot
 ingest — so tests/test_pcso_official_fetch.py does not cover it.  This test
 parses each capture's markdown table directly and asserts exact equality, in
@@ -26,7 +26,7 @@ CANONICAL_CSV = os.path.join(
 
 # (capture file, first draw date, last draw date, table row count) of each
 # official capture.  The 2026-09-26 view returned 6 rows (that day's table had
-# no seventh row), the earlier ones 7.
+# no seventh row); the 2026-09-27 view returned 4 rows (two overlap + two new).
 CAPTURES = [
     (os.path.join(PROVENANCE, "raw_2026-09-23", "official_searxng_2026-09-23.md"),
      datetime.date(2026, 9, 20), datetime.date(2026, 9, 22), 7),
@@ -34,6 +34,8 @@ CAPTURES = [
      datetime.date(2026, 9, 21), datetime.date(2026, 9, 23), 7),
     (os.path.join(PROVENANCE, "raw_2026-09-26", "official_searxng_2026-09-26.md"),
      datetime.date(2026, 9, 23), datetime.date(2026, 9, 25), 6),
+    (os.path.join(PROVENANCE, "raw_2026-09-27", "official_searxng_2026-09-27.md"),
+     datetime.date(2026, 9, 25), datetime.date(2026, 9, 26), 4),
 ]
 
 # The capture table uses the PCSO site's compact game names.
