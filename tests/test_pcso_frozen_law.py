@@ -4,6 +4,7 @@ from itertools import combinations
 import math
 from pathlib import Path
 import sys
+import time
 
 import numpy as np
 import pytest
@@ -13,7 +14,9 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import pcso_model_registry as R
 import pcso_sparse_switch as SS
-from pcso_frozen_law import D_interval, decode, encode, freeze, inclusion, logq, score_bounds, top6, validate
+from pcso_frozen_law import (D_interval, certified_mass, decode, encode, freeze, inclusion,
+                             logq, score_bounds, top6, validate)
+import pcso_frozen_law as FL
 
 
 @pytest.fixture
@@ -37,7 +40,8 @@ def _check_exhaustive(law, P):
     graph_bytes = encode(freeze(law, P))
     graph = decode(graph_bytes)
     assert encode(decode(graph_bytes)) == graph_bytes
-    lo, hi = score_bounds(graph)
+    mass = certified_mass(graph)
+    lo, hi = score_bounds(graph, mass=mass)
     values = []
     for S in combinations(range(1, P + 1), 6):
         frozen_logq = logq(graph, S)
@@ -45,7 +49,7 @@ def _check_exhaustive(law, P):
         values.append(frozen_logq)
         d_value = frozen_logq + math.log(math.comb(P, 6))
         if not lo <= d_value <= hi:
-            dlo, dhi = D_interval(graph, S)
+            dlo, dhi = D_interval(graph, S, mass=mass)
             assert lo <= dlo <= dhi <= hi
     assert abs(math.fsum(math.exp(x) for x in values) - 1) <= 1e-12
     frozen_pi = inclusion(graph)
@@ -60,6 +64,27 @@ def test_small_pools_exhaustive(small):
         _check_exhaustive(law, P)
 
 
+def test_certified_mass_small_laws(small):
+    widths = []
+    for law, P in _small_graphs():
+        graph = FL._decode_arrays(__import__("json").loads(encode(freeze(law, P))))
+        validate(graph)
+        lo, hi = certified_mass(graph)
+        widths.append(hi - lo)
+        assert 1 - 1e-12 <= lo <= hi <= 1 + 1e-12
+    print(f"MAX_SMALL_CERTIFIED_MASS_WIDTH={max(widths):.17g}")
+
+
+def test_certified_mass_preserves_outward_enclosure(small):
+    graph = freeze(R.Law(np.zeros((1, 8)), np.array([1.])), 8)
+    graph["a"][0] = 1 + 5e-13
+    lo, hi = certified_mass(graph)
+    assert lo > 1
+    assert 1 - 1e-12 <= lo <= hi <= 1 + 1e-12
+    decoded = decode(encode(graph))
+    assert decoded["a"][0] == graph["a"][0]
+
+
 @pytest.fixture(scope="module")
 def real_frozen():
     import pcso_registered_predictions as PR
@@ -72,6 +97,8 @@ def real_frozen():
 def test_real_laws_random_subsets_and_bounds(real_frozen):
     pools = (42, 45, 49, 55, 58)
     encoded_sizes = []
+    mass_widths = []
+    largest_real = (0, 0.0, "", "", 0)
     for P in pools:
         rng = np.random.default_rng(P)
         subsets = [tuple(sorted(int(x) for x in rng.choice(P, 6, replace=False) + 1))
@@ -80,20 +107,127 @@ def test_real_laws_random_subsets_and_bounds(real_frozen):
             law = copy.deepcopy(model).predict(P)
             blob = encode(freeze(law, P))
             encoded_sizes.append(len(blob))
-            graph = decode(blob)
-            assert encode(decode(encode(graph))) == encode(graph)
-            lo, hi = score_bounds(graph)
+            graph = FL._decode_arrays(__import__("json").loads(blob))
+            validate(graph)
+            start = time.perf_counter()
+            mass_lo, mass_hi = certified_mass(graph)
+            elapsed = time.perf_counter() - start
+            mass_widths.append(mass_hi - mass_lo)
+            assert 1 - 1e-12 <= mass_lo <= mass_hi <= 1 + 1e-12
+            if len(blob) > largest_real[0]:
+                largest_real = (len(blob), elapsed, graph["type"], model.name, P)
+            restored = FL._decode_arrays(__import__("json").loads(encode(graph)))
+            validate(restored)
+            assert encode(restored) == encode(graph)
+            mass_mid = (mass_lo + mass_hi) / 2
+            lo, hi = score_bounds(graph, mass=(mass_lo, mass_hi))
             for S in subsets:
                 actual = logq(graph, S)
                 assert abs(actual - law.logq(S)) <= 1e-12
-                d_value = actual + math.log(math.comb(P, 6))
+                d_value = actual - math.log(mass_mid) + math.log(math.comb(P, 6))
                 if not lo <= d_value <= hi:
-                    dlo, dhi = D_interval(graph, S)
+                    dlo, dhi = D_interval(graph, S, mass=(mass_lo, mass_hi))
                     assert lo <= dlo <= dhi <= hi
             assert top6(graph) == law.top6()
     total = sum(encoded_sizes)
     print(f"TOTAL_ENCODED_BYTES={total}")
+    print(f"MAX_REAL_CERTIFIED_MASS_WIDTH={max(mass_widths):.17g}")
+    print(f"LARGEST_REAL_CERTIFIED_MASS_SECONDS={largest_real[1]:.9f}")
+    print(f"LARGEST_REAL_LAW={largest_real[2]}:{largest_real[3]}:P{largest_real[4]}")
     assert total < 200_000_000
+
+
+def test_sparse_support_rows_are_canonical(small):
+    graph = freeze(SS.CPSparseSwitch().predict(8), 8)
+    expert_index = next(i for i, e in enumerate(graph["experts"]) if e["k"] == 2)
+    expert = graph["experts"][expert_index]
+    two = next((i for i, row in enumerate(expert["supports"]) if len(set(map(int, row))) == 2), None)
+    assert two is not None
+    bad = copy.deepcopy(graph)
+    bad["experts"][expert_index]["supports"][two] = [0, 0]
+    with pytest.raises(ValueError, match="strictly increasing"):
+        validate(bad)
+    bad = copy.deepcopy(graph)
+    bad["experts"][expert_index]["supports"][1] = bad["experts"][expert_index]["supports"][0]
+    with pytest.raises(ValueError, match="strictly increasing|unique"):
+        validate(bad)
+
+
+def test_parity_rejects_wrong_registered_statistic():
+    graph = freeze(R.ParityPair().predict(8), 8)
+    graph["g"][0] = 2000
+    with pytest.raises(ValueError, match="g does not match"):
+        decode(encode(graph))
+
+
+def test_decode_requires_certified_normalization(small):
+    underflow = freeze(R.Law(np.full((1, 8), -124.5), np.array([1.])), 8)
+    with pytest.raises(ValueError):
+        decode(encode(underflow))
+    graph = freeze(R.Uniform().predict(8), 8)
+    graph["loge6"][0] -= 9e-11
+    with pytest.raises(ValueError, match="law mass not certified"):
+        decode(encode(graph))
+
+
+def test_scalar_sparse_array_round_trip(small):
+    graph = freeze(SS.CPSparseSwitch().predict(8), 8)
+    old = float(graph["logoutside"])
+    factor = -math.log1p(-math.exp(old))
+    graph["logoutside"] = np.array(-math.inf)
+    for expert in graph["experts"]:
+        expert["logweights"] += factor
+    blob = encode(graph)
+    assert encode(decode(blob)) == blob
+
+
+def test_parity_interval_endpoint_selection_counterexample(small):
+    import mpmath as mp
+
+    model = R.ParityPair()
+    g, logcnt, logz = model._pool(8)
+    theta = np.asarray(R.THETA, dtype=float)
+    i0 = int(np.argmin(np.abs(theta)))
+    i1 = int(np.argmin(np.abs(theta - .005)))
+    weights = np.zeros(len(theta))
+    weights[i0], weights[i1] = 1 - 1e-13, 1e-13
+    lp = np.full(len(theta), -math.inf)
+    lp[weights > 0] = np.log(weights[weights > 0] / weights.sum())
+    graph = {"type": "parity", "P": 8, "lp": lp, "theta": theta,
+             "g": np.asarray(g), "logcnt": np.asarray(logcnt), "logZ": np.asarray(logz)}
+    validate(graph)
+    S = (1, 2, 3, 4, 5, 6)
+    lo, hi = score_bounds(graph, _validated=True)
+    with mp.workdps(50):
+        exact = _high_precision_D(graph, S)
+        assert mp.mpf(lo) <= exact <= mp.mpf(hi)
+        print(f"N4_D={mp.nstr(exact, 18)} N4_LO={lo:.17g} N4_HI={hi:.17g}")
+
+
+def test_iv_precision_independence(small):
+    import mpmath as mp
+
+    graphs = [freeze(R.Law(np.random.default_rng(seed).normal(0, .3, (1, 8)), np.array([1.])), 8)
+              for seed in range(20)]
+    S = (2, 3, 4, 5, 6, 8)
+    defaults = (mp.mp.prec, mp.iv.prec)
+    try:
+        masses = [certified_mass(g) for g in graphs]
+        baseline = [(score_bounds(g, mass=m), D_interval(g, S, mass=m), m)
+                    for g, m in zip(graphs, masses)]
+        mp.mp.prec = 20
+        mp.iv.prec = 20
+        altered = [(score_bounds(g, mass=m), D_interval(g, S, mass=m), m)
+                   for g, m in zip(graphs, masses)]
+        assert altered == baseline
+        with mp.workdps(50):
+            for g, (_, (lo, hi), (mlo, mhi)) in zip(graphs, altered):
+                exact = _high_precision_D(g, S)
+                assert mp.mpf(lo) <= exact <= mp.mpf(hi)
+                assert 1 - 1e-12 <= mlo <= mhi <= 1 + 1e-12
+        assert (mp.mp.prec, mp.iv.prec) == (20, 20)
+    finally:
+        mp.mp.prec, mp.iv.prec = defaults
 
 
 def test_snapshot_isolation(small):
@@ -178,26 +312,24 @@ def test_zero_mass_and_nonfinite_scores(small):
         score_bounds(all_zero, _validated=True)
 
 
-def _high_precision_D(graph, S):
+def _high_precision_log_mass(graph):
     import mpmath as mp
+    assert graph["P"] <= 12, "high-precision mass enumeration is only for small pools"
+    with mp.workdps(50):
+        subsets = combinations(range(1, graph["P"] + 1), 6)
+        logrs = [_high_precision_logq(graph, subset) for subset in subsets]
+        peak = max(logrs)
+        return peak + mp.log(sum(mp.exp(x - peak) for x in logrs))
 
-    def exact_float(x):
-        return mp.mpf(float(x))
 
-    kind = graph["type"]
-    if kind == "cp":
-        vals = [mp.log(exact_float(a)) + sum(exact_float(row[i - 1]) for i in S)
-                - exact_float(e6) for row, a, e6 in zip(graph["logw"], graph["a"], graph["loge6"]) if a > 0]
-        peak = max(vals)
-        lq = peak + mp.log(sum(mp.exp(x - peak) for x in vals))
-    elif kind == "mix":
-        vals = [mp.log(exact_float(v)) + _high_precision_logq(child, S)
-                for v, child in zip(graph["v"], graph["children"]) if v > 0]
-        peak = max(vals)
-        lq = peak + mp.log(sum(mp.exp(x - peak) for x in vals))
-    else:
-        lq = _high_precision_logq(graph, S)
-    return lq + mp.log(math.comb(graph["P"], 6))
+def _high_precision_D(graph, S, log_mass=None):
+    import mpmath as mp
+    assert graph["P"] <= 12, "high-precision mass enumeration is only for small pools"
+    with mp.workdps(50):
+        if log_mass is None:
+            log_mass = _high_precision_log_mass(graph)
+        return (_high_precision_logq(graph, S) - log_mass
+                + mp.log(math.comb(graph["P"], 6)))
 
 
 def _high_precision_logq(graph, S):
@@ -244,17 +376,72 @@ def test_certified_enclosures_exhaustive(small):
     for law, P in laws:
         graph = freeze(law, P)
         validate(graph)
-        bounds = score_bounds(graph, _validated=True)
+        mass = certified_mass(graph, _validated=True)
+        bounds = score_bounds(graph, _validated=True, mass=mass)
+        log_mass = _high_precision_log_mass(graph)
         for S in combinations(range(1, P + 1), 6):
-            exact = _high_precision_D(graph, S)
+            exact = _high_precision_D(graph, S, log_mass)
             assert mp.mpf(bounds[0]) <= exact <= mp.mpf(bounds[1])
-            dlo, dhi = D_interval(graph, S, _validated=True)
-            assert mp.mpf(dlo) <= exact <= mp.mpf(dhi)
+            dlo, dhi = D_interval(graph, S, _validated=True, mass=mass)
+            assert mp.mpf(dlo) <= exact <= mp.mpf(dhi), (type(law).__name__, S, exact, dlo, dhi, mass)
             assert dhi - dlo <= 1e-12
             assert abs(logq(graph, S) + math.log(math.comb(P, 6)) - float(exact)) <= 1e-12
-            float_d = logq(graph, S) + math.log(math.comb(P, 6))
-            assert dlo - 1e-12 <= float_d <= dhi + 1e-12
         if P == 8:
-            dlo, dhi = D_interval(graph, explicit)
-            exact = _high_precision_D(graph, explicit)
+            dlo, dhi = D_interval(graph, explicit, mass=mass)
+            exact = _high_precision_D(graph, explicit, log_mass)
             assert mp.mpf(dlo) <= exact <= mp.mpf(dhi)
+
+
+def test_certified_decisions_use_exact_normalization(small):
+    import mpmath as mp
+
+    graph = freeze(R.Law(np.random.default_rng(17).normal(0, .4, (2, 8)),
+                         np.array([.4, .6])), 8)
+    S = (1, 2, 3, 4, 5, 8)
+    mass = certified_mass(graph)
+    expected = _high_precision_D(graph, S)
+    d0 = D_interval(graph, S)
+    d1 = D_interval(graph, S, mass=mass)
+    b0 = score_bounds(graph)
+    b1 = score_bounds(graph, mass=mass)
+    assert d1[0] <= expected <= d1[1]
+    assert d0[0] <= expected <= d0[1]
+    assert b0 == b1
+    with pytest.raises(ValueError):
+        D_interval(graph, S, mass=(0.0, 1.0))
+    with pytest.raises(ValueError):
+        score_bounds(graph, mass=(1.0, float("nan")))
+    import inspect
+    assert inspect.cleandoc(FL.logq.__doc__) == (
+        "Raw formula value log r(S). The committed law is q = r/M (amendment 2, C1);\n"
+        "decode's mass gate keeps |log M| <= ~1e-12; certified decisions use D_interval/score_bounds.")
+
+
+def test_fast_cp_mass_matches_interval_reference():
+    rng = np.random.default_rng(89)
+    cases = [(8, .01), (42, 1.0), (58, 20.0)]
+    for index in range(50):
+        P, scale = cases[index % len(cases)]
+        graph = freeze(R.Law(rng.normal(0, scale, (1, P)), np.array([1.])), P)
+        validate(graph)
+        fast = FL._certified_mass_cp_fast(graph)
+        reference = FL._certified_mass_cp_reference(graph)
+        fast_lo, fast_hi = FL._outward(fast, True), FL._outward(fast, False)
+        ref_lo, ref_hi = FL._outward(reference, True), FL._outward(reference, False)
+        assert fast_lo <= (ref_lo + ref_hi) / 2 <= fast_hi
+        assert (fast_hi - fast_lo) / max(abs(fast_lo), abs(fast_hi)) <= 1e-12
+
+
+def test_supplied_mass_matches_computed_mass(small):
+    import mpmath as mp
+
+    graph = freeze(R.Law(np.random.default_rng(23).normal(0, .2, (1, 8)), np.array([1.])), 8)
+    mass = certified_mass(graph)
+    S = (1, 2, 3, 4, 5, 6)
+    expected = _high_precision_D(graph, S)
+    for bounds in (D_interval(graph, S, mass=mass), D_interval(graph, S)):
+        assert mp.mpf(bounds[0]) <= expected <= mp.mpf(bounds[1])
+    with pytest.raises(ValueError):
+        D_interval(graph, S, mass=(0.0, 1.0))
+    with pytest.raises(ValueError):
+        D_interval(graph, S, mass=(1.0, float("nan")))

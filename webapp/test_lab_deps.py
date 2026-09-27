@@ -27,6 +27,7 @@ REQUIRED = {
     "ripser": "src/* persistent-homology instruments",
     "ephem": "eq_* ephemeris series (equation program)",
     "openpyxl": "PCSO .xlsx ingestion",
+    "mpmath": "src/pcso_frozen_law.py (certified interval enclosures)",
 }
 
 
