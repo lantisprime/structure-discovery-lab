@@ -1470,3 +1470,22 @@ ca6c8a15ad0725cb  ./tools/pcso_cpnest_sensitivity.py
 # (2 changed of 513 tracked files; hashed BEFORE any run script executes)
 4252312852e9bf34  ./docs/REGISTRATION_AMENDMENT_2026-09-27_PROSPECTIVE1_EB.md
 18d4b007eb434c10  ./docs/REGISTRATION_PCSO_PICKER_PROSPECTIVE.md
+# Snapshot 2026-09-27T11:49:29+00:00 — Record: pre-study snapshot of branch commit dc19c67 (2026-09-27T03:28:03Z, digest 0f02be57f21498dd946ba161873385cafd140d367ad58b8906e18c721f84d6d5; runner ca6c8a15, pcso_mlx_sim 060077e8) taken before any cpnest.sensitivity1 shard; re-anchored on master's chain at merge; plus study results files
+# chain-prev: 3709731c8ecf120079987c19282d277f10c7ed879952304db90b5a5eebbfcff0
+# (16 changed of 520 tracked files; hashed BEFORE any run script executes)
+fd60dea9b77dbb61  ./datasets/pcso-lotto/DATASET.md
+6cf025ac62f68caf  ./datasets/pcso-lotto/data_astro_geomagnetic.csv
+5ee885867c8e048a  ./datasets/pcso-lotto/data_draws.csv
+5d22f5a4dd179f76  ./datasets/pcso-lotto/data_draws_1yr.csv
+07d120f5c381f1fe  ./datasets/pcso-lotto/data_draws_1yr_audited.csv
+d419096f449d03f5  ./datasets/pcso-lotto/data_official_draws_jackpots.csv
+4410693dd8ffe1a4  ./datasets/pcso-lotto/provenance/pcso_refresh_2026-09-27.json
+c89b96dc66ec4739  ./datasets/pcso-lotto/provenance/raw_2026-09-27/lottopcso_642.html.gz
+a40988dc910732f7  ./datasets/pcso-lotto/provenance/raw_2026-09-27/lottopcso_655.html.gz
+aa845e06989de18f  ./datasets/pcso-lotto/provenance/raw_2026-09-27/official_searxng_2026-09-27.md
+a7f8ad7a4f2c67b0  ./datasets/pcso-lotto/provenance/raw_2026-09-27/pcsodraw_642.html.gz
+f77d086439be9215  ./datasets/pcso-lotto/provenance/raw_2026-09-27/pcsodraw_655.html.gz
+70cf38e00f25e104  ./docs/RESULTS_PCSO_CPNEST_SENSITIVITY_2026-09-27.md
+cf6c151ca56e2551  ./lotto_picker.html
+29b6b1d0498f156d  ./src/pcso_registered_predictions.py
+4ce288e909838e8d  ./tests/test_pcso_official_markdown_capture.py
