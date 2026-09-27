@@ -78,6 +78,17 @@ class TestLottoPickerPage(unittest.TestCase):
         parity = self.pg.locator("#parity").inner_text()
         self.assertIn("8/8 vectors OK", parity, parity)
 
+    def test_novel_ensemble_ticket_present_and_stable(self):
+        game_cards = self.pg.locator(".card:has(.tk.pred)")
+        n = game_cards.count()
+        self.assertGreater(n, 0, "no game cards rendered")
+        before = self.pg.locator(".tk.nov .ball").all_inner_texts()
+        self.assertEqual(len(before), n * 6, "each card must show a novel ensemble ticket with 6 balls")
+        self.pg.click("button:has-text('New random pair')")
+        self.pg.wait_for_timeout(400)
+        after = self.pg.locator(".tk.nov .ball").all_inner_texts()
+        self.assertEqual(before, after, "novel ensemble ticket must not change on regenerate click")
+
     def test_documentation_collapsed_by_default_and_expandable(self):
         doc = self.pg.locator("details.doc")
         self.assertGreaterEqual(doc.count(), 8, "expected collapsible doc sections")
