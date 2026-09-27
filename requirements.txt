@@ -4,6 +4,7 @@ ephem>=4.1        # eq_* ephemeris series (equation program)
 numpy>=1.24       # ubiquitous across src/
 openpyxl>=3.1     # PCSO .xlsx ingestion
 scipy>=1.10       # R5 re-shadow, measure_equivalence (families)
+mpmath>=1.3        # certified interval enclosures (pcso_frozen_law)
 matplotlib>=3.7   # meta_uniformity honesty-meter figure (fig9)
 pandas>=2.0       # data handling across src/
 ripser>=0.6       # persistent-homology (TDA) instruments
