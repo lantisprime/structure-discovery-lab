@@ -66,7 +66,7 @@
 </style>
 </head>
 <body>
-<h1>PCSO 2-Ticket Protocol Picker <span style="color:var(--mut);font-weight:400">v2.6 · 2026-09-27 (r10)</span></h1>
+<h1>PCSO 2-Ticket Protocol Picker <span style="color:var(--mut);font-weight:400">v2.7 · 2026-09-27 (r11)</span></h1>
 <div class="sub">Pick a date &rarr; see which games draw that night (9 PM PHT), the last <b>official</b> result, the posterior-predictive tickets, and a low-popularity random pair. <b>Tickets A/B are the fixed posterior sets per game (they do not change per click); the button regenerates the random pair C/D.</b></div>
 <details class="doc"><summary>Model equations &#8212; M&#8320;/M&#8321; and model averaging (tap to expand)</summary><div class="banner mono">
 Model M<sub>1</sub>: 6-without-replacement product-weight draw, f<sub>w</sub>(S) = &prod;<sub>i&isin;S</sub> w<sub>i</sub> / e<sub>6</sub>(w); inclusion &pi;<sub>i</sub> = w<sub>i</sub> e<sub>5</sub>(w<sub>&minus;i</sub>) / e<sub>6</sub>(w), &sum;<sub>i</sub>&pi;<sub>i</sub> = 6; prior w ~ Dirichlet(a=100) fixed a priori<br>
@@ -74,10 +74,10 @@ Prediction: S* = argmax P(next = S | data); R = C(n,6)&middot;E[f<sub>w</sub>(S*
 Model average (equal prior odds): R<sub>mix</sub> = 1 + (R&minus;1)/(1+BF<sub>01</sub>); credible intervals are on R<sub>w</sub>(S*) = C(n,6) f<sub>w</sub>(S*) and condition on M<sub>1</sub>(100)<br>
 Two distinct tickets: P(either wins) = [R(A)+R(B)]/C(n,6) &mdash; 2/C(n,6) under M<sub>0</sub>
 </div></details>
-<details class="doc"><summary>Headline numbers and evidence status (tap to expand)</summary><div class="fact"><b>Numbers, as the mathematics gives them (fitting run registered 2026-09-21, pinned at 994 official-verified draws through 2026-09-20, per-game fitting T = 198/199/199/199/199; canonical file now 1,005 draws through 2026-09-25; corrected per two gpt-6-astra reviews):</b> conditional on M<sub>1</sub>(100), the maximum-predictive six-set of each game carries R = 1.48&ndash;1.64 on P(jackpot) versus a uniform pick, with 95% credible intervals whose lower ends are 0.97&ndash;1.08. At a=100 the Bayes factor BF<sub>01</sub> is 0.29&ndash;1.15: four of the five games lean toward unequal weights (most in 6/55), while 6/42 now leans weakly toward uniform; at a=10 the direction reverses (BF<sub>01</sub> 184&ndash;18,359), so the evidence is weak and prior-sensitive. Model-averaged multipliers 1.22&ndash;1.50. Neither tested order-1 persistence statistic rejects at Bonferroni 0.01 (other transition alternatives were not exhausted). No selection rule differed from uniform in the draw-paired backtest after Holm (min Holm p 0.055; adaptive rules calibrated with tickets fixed, not by history replay). Popularity index: winning-bet counts scale by 1.68 [1.44, 1.95] per within-game SD at equal game and jackpot (HC1) &mdash; an association of counts; it establishes neither a draw-probability effect nor a calibrated payout gain.</div></details>
+<details class="doc"><summary>Headline numbers and evidence status (tap to expand)</summary><div class="fact"><b>Numbers, as the mathematics gives them (fitting run registered 2026-09-21, pinned at 994 official-verified draws through 2026-09-20, per-game fitting T = 198/199/199/199/199; canonical file now 1,007 draws through 2026-09-26; corrected per two gpt-6-astra reviews):</b> conditional on M<sub>1</sub>(100), the maximum-predictive six-set of each game carries R = 1.48&ndash;1.64 on P(jackpot) versus a uniform pick, with 95% credible intervals whose lower ends are 0.97&ndash;1.08. At a=100 the Bayes factor BF<sub>01</sub> is 0.29&ndash;1.15: four of the five games lean toward unequal weights (most in 6/55), while 6/42 now leans weakly toward uniform; at a=10 the direction reverses (BF<sub>01</sub> 184&ndash;18,359), so the evidence is weak and prior-sensitive. Model-averaged multipliers 1.22&ndash;1.50. Neither tested order-1 persistence statistic rejects at Bonferroni 0.01 (other transition alternatives were not exhausted). No selection rule differed from uniform in the draw-paired backtest after Holm (min Holm p 0.055; adaptive rules calibrated with tickets fixed, not by history replay). Popularity index: winning-bet counts scale by 1.68 [1.44, 1.95] per within-game SD at equal game and jackpot (HC1) &mdash; an association of counts; it establishes neither a draw-probability effect nor a calibrated payout gain.</div></details>
 
 <div class="controls">
-  <div><label>Draw date</label><input type="date" id="d" min="2026-09-26"></div>
+  <div><label>Draw date</label><input type="date" id="d" min="2026-09-27"></div>
   <div><label>Game</label><select id="g"><option value="all">All games that night</option></select></div>
   <div><button onclick="render(true)">New random pair &#x21bb;</button></div>
   <div><span id="regen" style="font-size:.75rem;color:var(--mut)">&nbsp;</span></div>
@@ -88,9 +88,9 @@ Two distinct tickets: P(either wins) = [R(A)+R(B)]/C(n,6) &mdash; 2/C(n,6) under
 <h2>Documentation</h2>
 <div class="hint">Everything below is optional detail &mdash; tap a section to expand it.</div>
 <details class="doc"><summary>1 &middot; Data provenance (official sources, verification)</summary><div class="foot">
-<b>Data (official, pcso.gov.ph SearchLottoResult, fetched 2026-09-26):</b> 1,027 draws Jun 1 2025 &ndash; Sep 25 2026 with jackpot and winning-bet counts; the 1,005-row canonical file (Jun 11 2025 &ndash; Sep 25 2026) matches the official page on every row (834/834 prior rows re-verified exactly on 2026-09-06; 128 rows appended then, <span class="mono">official_verified</span>; 32 further rows 2026-09-06&ndash;09-20 <span class="mono">official_verified</span>, cross-checked 32/32 on lottopcso.com and 32/32 on pcsodraw.com; 5 further rows 2026-09-21&ndash;22 <span class="mono">official_verified</span>, per-row sources pcso.gov.ph + pcsodraw.com, archive captures retained in <span class="mono">provenance/raw_2026-09-23/</span>; 2 further rows dated 2026-09-23 <span class="mono">official_verified</span>, cross-checked 2/2 on lottopcso.com and 2/2 on pcsodraw.com: Mega Lotto 6/45 draw #3000 and Grand Lotto 6/55 draw #2491; 4 further rows dated 2026-09-24&ndash;25 <span class="mono">official_verified</span>, cross-checked 3/4 on lottopcso.com and 3/4 on pcsodraw.com (the Super Lotto 6/49 draw of 2026-09-24 records the official 30-39-34-17-<b>47</b>-11; both archives independently show 37 in position five, resolved by a third-source corroboration read &mdash; see <span class="mono">DATASET.md</span> &sect;7)). Provenance: <span class="mono">datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json</span> (+ the 2026-09-24, 2026-09-23 and 2026-09-21 refreshes it extends); official page captured as markdown and archive HTML retained in <span class="mono">provenance/raw_2026-09-26/</span>. Prize matrix, ticket price and 9 PM draw time: official PCSO game pages fetched 2026-09-06 (<span class="mono">provenance/raw_2026-09-06/gamepage_*.html.gz</span>).<br><br>
-<b>Next draw (2026-09-26):</b> Lotto 6/42 and Grand Lotto 6/55, per the official schedule.<br><br>
-<b>Fitting pin (r9):</b> the tickets, R values and ball counts below remain the registered 2026-09-21 fitting state (994 draws through 2026-09-20; <span class="mono">results/pcso_next_draw_posterior_2026-09-21.json</span>). The eleven appended draws enter the monitoring layer (section 3) and the official last-draw cards; they are not refitted until a registered rerun of the posterior pipeline.<br><br>
+<b>Data (official, pcso.gov.ph SearchLottoResult, fetched 2026-09-27):</b> 1,029 draws Jun 1 2025 &ndash; Sep 26 2026 with jackpot and winning-bet counts; the 1,007-row canonical file (Jun 11 2025 &ndash; Sep 26 2026) matches the official page on every row (834/834 prior rows re-verified exactly on 2026-09-06; 128 rows appended then, <span class="mono">official_verified</span>; 32 further rows 2026-09-06&ndash;09-20 <span class="mono">official_verified</span>, cross-checked 32/32 on lottopcso.com and 32/32 on pcsodraw.com; 5 further rows 2026-09-21&ndash;22 <span class="mono">official_verified</span>, per-row sources pcso.gov.ph + pcsodraw.com, archive captures retained in <span class="mono">provenance/raw_2026-09-23/</span>; 2 further rows dated 2026-09-23 <span class="mono">official_verified</span>, cross-checked 2/2 on lottopcso.com and 2/2 on pcsodraw.com: Mega Lotto 6/45 draw #3000 and Grand Lotto 6/55 draw #2491; 4 further rows dated 2026-09-24&ndash;25 <span class="mono">official_verified</span>, cross-checked 3/4 on lottopcso.com and 3/4 on pcsodraw.com (the Super Lotto 6/49 draw of 2026-09-24 records the official 30-39-34-17-<b>47</b>-11; both archives independently show 37 in position five, resolved by a third-source corroboration read &mdash; see <span class="mono">DATASET.md</span> &sect;7); 2 further rows dated 2026-09-26 <span class="mono">official_verified</span>, cross-checked 2/2 on lottopcso.com and 2/2 on pcsodraw.com. Provenance: <span class="mono">datasets/pcso-lotto/provenance/pcso_refresh_2026-09-27.json</span> (+ the 2026-09-26, 2026-09-24, 2026-09-23 and 2026-09-21 refreshes it extends); official page captured as markdown and archive HTML retained in <span class="mono">provenance/raw_2026-09-27/</span>. Prize matrix, ticket price and 9 PM draw time: official PCSO game pages fetched 2026-09-06 (<span class="mono">provenance/raw_2026-09-06/gamepage_*.html.gz</span>).<br><br>
+<b>Next draw (2026-09-27):</b> Super Lotto 6/49 and Ultra Lotto 6/58, per the official schedule.<br><br>
+<b>Fitting pin (r9):</b> the tickets, R values and ball counts below remain the registered 2026-09-21 fitting state (994 draws through 2026-09-20; <span class="mono">results/pcso_next_draw_posterior_2026-09-21.json</span>). The thirteen appended draws enter the monitoring layer (section 3) and the official last-draw cards; they are not refitted until a registered rerun of the posterior pipeline.<br><br>
 </div></details>
 <details class="doc"><summary>2 &middot; Next-draw posterior predictive (product-weight model)</summary><div class="foot">
 <b>Next-draw posterior (<span class="mono">src/pcso_next_draw_posterior.py</span> &rarr; <span class="mono">results/pcso_next_draw_posterior_2026-09-21.json</span>):</b> likelihood &prod;<sub>i</sub> w<sub>i</sub><sup>c<sub>i</sub></sup> / e<sub>6</sub>(w)<sup>T</sup> (the e<sub>6</sub> normalizer is what a multinomial-on-counts model omits, and Dirichlet conjugacy does not survive it); posterior expectations by importance sampling from Dirichlet(a+c) with weights z(w)<sup>&minus;T</sup>, z(w) = e<sub>6</sub>(n&middot;w)/C(n,6), 200,000 samples per game (effective size &ge; 195,000). BF<sub>10</sub>(a) = n<sup>6T</sup> &Gamma;(na)/&Gamma;(na+6T) &prod;<sub>i</sub> &Gamma;(a+c<sub>i</sub>)/&Gamma;(a) &middot; E<sub>Dir(a+c)</sub>[z(w)<sup>&minus;T</sup>]. The conditional probability that some ball's inclusion deviates more than 10% from 6/n is &asymp;1 under M<sub>1</sub>(100) in every game &mdash; a property of the conditional model, not evidence for it; at equal model odds it is 0.47&ndash;0.78; under a=1000 the independent reconstruction reports 0.012&ndash;0.029. Static-weight inference: it does not estimate a changing "hotness" or Markov mechanism. Independent reconstruction by Codex gpt-6-astra (<span class="mono">results/codex_review_2026-09-06.md</span>) uses the same model and reaches the same conclusions; its point estimates differ at the third decimal and its order-1 test uses likelihood-ratio ordering, whereas this page's overlap test is an exact absolute-deviation test on the total overlap of consecutive draws. The 6/42 sixth-place tie is gone this run; sixth-place ties (6/45 with 25; 6/58 with 23, 30, 34) are shown on the tickets where applicable.<br>
@@ -103,7 +103,7 @@ Two distinct tickets: P(either wins) = [R(A)+R(B)]/C(n,6) &mdash; 2/C(n,6) under
 <p><b>Selection correction and model weight (<span class="mono">src/pcso_picker_calibration.py</span> &rarr; <span class="mono">results/pcso_picker_calibration_2026-09-21.json</span>; <span class="mono">docs/RESULTS_PCSO_PICKER_THEOREM_2026-09-23.md</span>):</b> tickets A and B are chosen by ranking the same counts that R is computed from, so the raw R is inflated even under uniform draws. Re-running the predictor on 1,000 uniform histories per game gives exp E<sub>0</sub>[log R] = 1.44&ndash;1.45 for A (first order: exp(&sigma;<sub>c</sub>s<sub>6</sub>/(a+c&#772;)), s<sub>6</sub> = expected sum of the top six of n standard normals); per evaluation-protocol rule H5 the page reports R<sub>c</sub> = exp(log R &minus; E<sub>0</sub>[log R]) = 1.02&ndash;1.13 (A) and 1.00&ndash;1.03 (B); null tail p for A 0.012&ndash;0.32, none below 0.05 after Holm over five games. The weight of the tilted model is &pi;<sub>1</sub> = e/(1+e), e = the held-out (post-freeze) prequential evidence of the same a=100 model (0.49&ndash;3.20 per game, product 1.17). The page's predictive probability is the normalised model-averaged law q<sub>mix</sub> = (1&minus;&pi;<sub>1</sub>)p<sub>0</sub> + &pi;<sub>1</sub>q<sub>1</sub>, i.e. R<sub>mix</sub> = 1 + &pi;<sub>1</sub>(R &minus; 1); R<sub>c</sub> is a null-centred diagnostic of how much of R is selection, not a probability (referee Codex gpt-6-astra, 2026-09-23; registration amendment v2 &sect;D). Walk-forward check over 844 draws (tickets built from earlier draws only): no rule matches more than uniform after Holm over six looks (minimum 0.25), and no ticket matched a full draw.</p>
 </div></details>
 <details class="doc"><summary>3 &middot; Monitoring and sequential inference (registered family + e-process layers)</summary><div class="foot">
-<b>Monitoring (registered m=9 family, confirmation set n=229 draws after the 2026-06-10 freeze, <span class="mono">results/pcso_confirmation_2026-09-26.json</span>; 2026-09-26 rerun under the published RNG-stream contract):</b> per-game confirmation sizes 46/46/46/45/46; exact-MC chi-square p = 0.014899 / 0.810219 / 0.019798 / 0.153085 / 0.128987 (6/42 &hellip; 6/58); mean-drawn vs moon altitude r=&minus;0.043469 (global and within-game; p=0.516124 global, 0.521124 within-game), vs illumination r=&minus;0.007538 (global and within-game; p=0.912054 global, 0.913004 within-game); 6/55 ball #45: 2 hits in 45 draws vs 4.909091 expected (two-sided binomial p=0.229697). <b>0 flags at the within-look Bonferroni level 0.05/9 &asymp; 0.005556</b> (8 of 9 tests computable). Kp non-computable (backfill pending). The threshold controls error within one look only; the sequential gap is covered by an <b>anytime-valid e-process monitor</b> (<span class="mono">src/pcso_eprocess_monitor.py</span> &rarr; <span class="mono">results/pcso_eprocess_monitor_2026-09-21.json</span>, re-run on the 2026-09-21 state at n=218; Ramdas&ndash;Gr&uuml;nwald&ndash;Vovk&ndash;Shafer arXiv:2210.01948: prequential predictive-likelihood evidence process testing the uniform null, prior Dirichlet(100) fixed a priori): per-game confirmation-set e = 1.09 / 0.51 / 3.02 / 0.53 / 1.33 (running max &le; 3.02), product e = 1.18; full-history e = 0.99&ndash;3.27 (running max 7.14 in 6/55 &mdash; coherent with BF<sub>10</sub> = 1/0.289), product e = 36.5. Ville threshold 1/0.0056 &asymp; 178.6: <b>the uniform null is not rejected at any monitoring instant</b>; anytime p &ge; 0.140 per game, 0.027 on the full-history product (exploratory, G-labeled, outside the frozen family). v2 (r5, <span class="mono">src/pcso_eprocess_monitor_v2.py</span> &rarr; <span class="mono">results/pcso_eprocess_monitor_v2_2026-09-21.json</span>): a mixture-prior evidence process (predictive prior uniform over Dir(a), a&isin;{10,30,100,300,1000}, fixed a priori — removes the single-concentration prior-sensitivity) gives full-history e = 0.38 / 2.99 / 1.69 / 7.54 / 3.90 (product 56.5; anytime p &asymp; 0.018) and confirmation e = 1.01 / 0.30 / 5.23 / 0.29 / 1.42 (product 0.67), and a Shin&ndash;Ramdas&ndash;Rinaldo e-detector over the confirmation set (restarts every 13 draws) gives max 3.3&ndash;9.0 &mdash; <b>no rejection and no draw-mechanism changepoint at any monitoring instant</b>.<br><br>
+<b>Monitoring (registered m=9 family, confirmation set n=231 draws after the 2026-06-10 freeze, <span class="mono">results/pcso_confirmation_2026-09-27.json</span>; 2026-09-27 rerun under the published RNG-stream contract):</b> per-game confirmation sizes 47/46/46/46/46; exact-MC chi-square p = 0.015998 / 0.805419 / 0.019498 / 0.068893 / 0.126087 (6/42 &hellip; 6/58); mean-drawn vs moon altitude r=&minus;0.027038 (global and within-game; p=0.690065 global, 0.680966 within-game), vs illumination r=0.007670 (global and within-game; p=0.908705 global, 0.909905 within-game); 6/55 ball #45: 2 hits in 46 draws vs 5.018182 expected (two-sided binomial p=0.232041). <b>0 flags at the within-look Bonferroni level 0.05/9 &asymp; 0.005556</b> (8 of 9 tests computable). Kp non-computable (backfill pending). The threshold controls error within one look only; the sequential gap is covered by an <b>anytime-valid e-process monitor</b> (<span class="mono">src/pcso_eprocess_monitor.py</span> &rarr; <span class="mono">results/pcso_eprocess_monitor_2026-09-21.json</span>, re-run on the 2026-09-21 state at n=218; Ramdas&ndash;Gr&uuml;nwald&ndash;Vovk&ndash;Shafer arXiv:2210.01948: prequential predictive-likelihood evidence process testing the uniform null, prior Dirichlet(100) fixed a priori): per-game confirmation-set e = 1.09 / 0.51 / 3.02 / 0.53 / 1.33 (running max &le; 3.02), product e = 1.18; full-history e = 0.99&ndash;3.27 (running max 7.14 in 6/55 &mdash; coherent with BF<sub>10</sub> = 1/0.289), product e = 36.5. Ville threshold 1/0.0056 &asymp; 178.6: <b>the uniform null is not rejected at any monitoring instant</b>; anytime p &ge; 0.140 per game, 0.027 on the full-history product (exploratory, G-labeled, outside the frozen family). v2 (r5, <span class="mono">src/pcso_eprocess_monitor_v2.py</span> &rarr; <span class="mono">results/pcso_eprocess_monitor_v2_2026-09-21.json</span>): a mixture-prior evidence process (predictive prior uniform over Dir(a), a&isin;{10,30,100,300,1000}, fixed a priori — removes the single-concentration prior-sensitivity) gives full-history e = 0.38 / 2.99 / 1.69 / 7.54 / 3.90 (product 56.5; anytime p &asymp; 0.018) and confirmation e = 1.01 / 0.30 / 5.23 / 0.29 / 1.42 (product 0.67), and a Shin&ndash;Ramdas&ndash;Rinaldo e-detector over the confirmation set (restarts every 13 draws) gives max 3.3&ndash;9.0 &mdash; <b>no rejection and no draw-mechanism changepoint at any monitoring instant</b>.<br><br>
 </div></details>
 <details class="doc"><summary>4 &middot; Registered model registry v2 (sequential leaderboard, criteria C1&ndash;C4)</summary><div class="foot">
 <b>Registry (<span class="mono">src/pcso_model_registry.py</span>; amendment v2 approved by the lab owner 2026-09-23, before any registered draw; v2 leaderboard, registered run 2026-09-27 under the same seed (<span class="mono">results/pcso_model_leaderboard_2026-09-27.json</span>, <span class="mono">--verify</span> PASS), sha256 <span class="mono">a932e15e&hellip;</span>, T = 1,005 through 2026-09-25, seed 20260923, alpha = 0.01):</b> each model accumulates a sequential evidence process E &mdash; a prequential product of predictive likelihoods against the uniform comparator &mdash; with anytime-valid error control (Ville bound on sup E; Shiryaev&ndash;Roberts e-detector for mechanism change). Registered criteria:<br>
@@ -128,6 +128,7 @@ Registered scores after four draws are not a signal: the registered window has b
 History: the v1 leaderboard (2026-09-21 record, sha256 <span class="mono">c5615c91&hellip;</span>) was scored as written &mdash; C3 collapse FAIL on an ill-posed criterion; amendment v2 introduced censoring-aware C2 and the corrected C3 bound and withdrew the collapse and mode-gap claims. Maximum-likelihood existence gate: satisfied in all five games (distinct observed sets &ge; pool).<br><br>
 <b>Sparse registration <span class="mono">pcso.sparse.seq1</span> (<span class="mono">docs/REGISTRATION_PCSO_SPARSE_SWITCH.md</span>):</b> <span class="mono">cp_sparse_switch</span> uses exact sparse conditional-Poisson experts (k &le; 2 specific balls of one game) with summable switching. Approved 2026-09-24; registration date 2026-09-23. This is a separate registration; the registry v2 ensemble is unchanged. Scoring runner: <span class="mono">src/pcso_sparse_registered.py</span>. Its predictive-likelihood evidence process E and weighted Shiryaev&ndash;Roberts e-detector M each have alpha = 0.01 and a threshold of 100 for separate decisions; a combined decision splits alpha 0.005/0.005 (threshold 200 each). First registered scores (<span class="mono">results/pcso_sparse_registered_2026-09-27.json</span>, sha256 <span class="mono">84c4f81a&hellip;</span>): <b>n=4</b> draws dated 2026-09-24&ndash;25 (pin <span class="mono">1ce8541</span>): E<sub>max</sub>=1.0033, M<sub>max</sub>=0.8027 (thresholds 100 each at alpha=0.01; combined decision threshold 200 at alpha=0.005 each); per-draw overlap (6/42, 6/49, 6/45, 6/58, in draw order) = 1, 0, 0, 1; decision: no rejection, no change alarm &mdash; four draws are no evidence against the uniform-draw null.<br>
 <b>S1&ndash;S5 registered simulation study: all claims PASS</b> (<span class="mono">src/pcso_sparse_study.py</span> &rarr; <span class="mono">results/pcso_sparse_study_2026-09-24.json</span>; CPU float64, seeds 20260923 + 5000 + s; owner resolutions 2026-09-24 recorded in the file). <b>S1 error control:</b> sup E &ge; 100 in 0/400 uniform streams and sup M &ge; 100 in 0/400 (criterion &le; 0.02). <b>S2 log-loss bound</b> &minus;log E<sub>T</sub> &le; log 2 + &Sigma;&tau;: 0 violations in 411,401 prefixes. <b>S3 planted sparse effect</b> (log-weight 1 on k random balls; fraction of 100 streams whose evidence reaches 100 within 200 draws of the affected game; sparse / CP-NEST / Dirichlet(100)): k=1, 6/45: 0.81 / 0.00 / 0.22; k=1, 6/58: 0.71 / 0.00 / 0.12; k=2, 6/45: 0.97 / 0.00 / 0.71; k=2, 6/58: 0.94 / 0.01 / 0.32 &mdash; above the exact lower bound minus 2 SE and strictly above both comparators in every cell. <b>S4 weak signal</b> (w = 1.1): 0/400 in all four cells (power bounds 1.9&ndash;3.4%). <b>S5 tracking:</b> Lemma 1 path bound holds on all 100,000 prefixes; the evidence reached 100 in 20/100 streams within the 500-draw deviation window (median delay not reached). Secondary cells (log-weight 0.25&ndash;0.5, reported only): 0&ndash;6% for every model. Passing removes the block on promotion; it is a property of the method under simulation, not evidence about the real draws. Weak deviations (w = 1.1) are out of reach by design: no level-1% test has more than &asymp;2&ndash;4.5% power by 200 draws of the affected game. A null result is not evidence against small ball-specific deviations. A rejection or mechanism-change alarm triggers one replication on further fresh draws before any change to the picker.<br><br>
+The two draws dated 2026-09-26 enter the registered windows at the next registered rescoring.<br><br>
 </div></details>
 <details class="doc"><summary>5 &middot; EXPLORATORY &mdash; GPU (MLX) backend for the null/power simulations (not registered)</summary><div class="foot">
 <b>EXPLORATORY (G0; <span class="mono">docs/RESULTS_PCSO_MLX_BACKEND_2026-09-23.md</span>; base 86ba523; registered CPU source unchanged, <span class="mono">git diff origin/master -- src/pcso_model_registry.py</span> empty):</b> an Apple-GPU (MLX) backend ports four models (tilt_high31, tilt_linear, pair_parity, cp_nest; uniform is analytic; Dirichlet and ensemble remain CPU-only) to accelerate the null-stream and power simulations. Throughput: the CP-NEST 400-stream null run drops from <b>138.8 s (CPU, 8 workers, M5) to 2.0 s (GPU)</b> (&asymp;70&times;); 10,000 streams complete in 37.2 s. Equivalence: paired GPU-vs-registered-CPU deltas over 400 full-horizon streams per configuration have <b>max |&Delta;| = 5.1&times;10<sup>&minus;5</sup> nats</b> (cp-nest final log-evidence; every configuration and statistic within 5.2&times;10<sup>&minus;5</sup>), inside the pre-declared empirical bounds (mean 10<sup>&minus;4</sup>, q99 3&times;10<sup>&minus;4</sup>, max 10<sup>&minus;3</sup> nats). Power cross-check (M=128, &theta;<sub>1</sub>=0.05): censored medians reproduce exactly on both backends (cp-nest 945/945, tilt_linear 805/805 draws). Gross screens: no gross discrepancy detected (pair_parity marginal, carried as a warning). Nothing registered depends on this backend; it is an infrastructure result about the simulation layer, kept strictly separate from the registered evidence.<br><br>
@@ -149,24 +150,22 @@ History: the v1 leaderboard (2026-09-21 record, sha256 <span class="mono">c5615c
 </div></details>
 <details class="doc"><summary>8 &middot; Expected-value model and draw schedule</summary><div class="foot">
 The sales input was replaced by per-game estimates N&#770; = W&middot;C(P,6)/T from the official winner counts W over T draws in the 1,016-row official file (exact Poisson 95% CI; E[winners] = N/C(P,6) holds exactly for uniform draws regardless of number popularity); constant-sales-across-draws is an approximation, as sales typically rise with the jackpot.<br><br>
-<b>EV model (uniform-draw scenario M<sub>0</sub>, all tickets and tiers on the same model):</b> hypergeometric tiers h<sub>k</sub> = C(6,k)C(n&minus;6,6&minus;k)/C(n,6); official Feb-2026 matrix (ticket &#8369;25; Category II/III fixed pools shared per winning bet, Category IV fixed); co-winner count K ~ Poisson(N&middot;h<sub>k</sub>) under an assumed uniform, independent competitor-bet model (the results estimate no lower-tier co-winner distribution); the 20% tax is applied to each realized individual share above &#8369;10,000 inside the expectation, E[T(A/(1+K))]. The posterior jackpot-probability multipliers R<sub>mix</sub>(A), R<sub>mix</sub>(B) are shown beside the tickets as separate information and are not folded into the EV. The CSI count contrast e<sup>&beta;z(S)</sup>/E<sub>U</sub>[e<sup>&beta;z</sup>] is shown per ticket as an association only; it is not used as a sharing probability. Jackpot defaults = last official draw (Sep 23&ndash;25, 2026); edit per draw night. N is an assumption. Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun. Full methodology: docs/RESULTS_PCSO_REFRESH_2026-09-06.md, docs/kb/conscious-selection-popularity.md; page review: results/codex_review_page_2026-09-06.md.
+<b>EV model (uniform-draw scenario M<sub>0</sub>, all tickets and tiers on the same model):</b> hypergeometric tiers h<sub>k</sub> = C(6,k)C(n&minus;6,6&minus;k)/C(n,6); official Feb-2026 matrix (ticket &#8369;25; Category II/III fixed pools shared per winning bet, Category IV fixed); co-winner count K ~ Poisson(N&middot;h<sub>k</sub>) under an assumed uniform, independent competitor-bet model (the results estimate no lower-tier co-winner distribution); the 20% tax is applied to each realized individual share above &#8369;10,000 inside the expectation, E[T(A/(1+K))]. The posterior jackpot-probability multipliers R<sub>mix</sub>(A), R<sub>mix</sub>(B) are shown beside the tickets as separate information and are not folded into the EV. The CSI count contrast e<sup>&beta;z(S)</sup>/E<sub>U</sub>[e<sup>&beta;z</sup>] is shown per ticket as an association only; it is not used as a sharing probability. Jackpot defaults = last official draw (Sep 24&ndash;26, 2026); edit per draw night. N is an assumption. Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun. Full methodology: docs/RESULTS_PCSO_REFRESH_2026-09-06.md, docs/kb/conscious-selection-popularity.md; page review: results/codex_review_page_2026-09-06.md.
 </div></details>
 <details class="doc"><summary>9 &middot; Novel-model validation &mdash; walk-forward backtest (last 30 days, 66 draws)</summary><div class="foot">
-<b>Walk-forward backtest (<span class="mono">results/pcso_registered_predictions_2026-09-27.json</span>, window 2026-08-26 to 2026-09-25, 66 draws across five games; sha256 <span class="mono">cae98ff90174c562c304583ae12f3188165dc1fb654b349c2de572ce5fea45c5</span>):</b> for each model, a ticket for each historical draw was formed from only the draws that preceded it (walk-forward), then compared to the draw actually observed.<br>
+<b>Walk-forward backtest (<span class="mono">results/pcso_registered_predictions_2026-09-27_d0926.json</span>, window 2026-08-27 to 2026-09-26, 66 draws across five games; sha256 <span class="mono">21613902ad6cd26a21465f5a43a95a3835f66483e2d87a208de20f073076a94e</span>):</b> for each model, a ticket for each historical draw was formed from only the draws that preceded it (walk-forward), then compared to the draw actually observed.<br>
 <table><tr><th>Model</th><th>draws</th><th>balls matched</th><th>expected under uniform</th><th>draws with 3+ matches (expected)</th><th>log-evidence</th></tr>
-<tr><td>cp_nest</td><td>66</td><td>46</td><td>48.472</td><td>2 (1.276)</td><td>&minus;0.108</td></tr>
-<tr><td>cp_sparse_switch</td><td>66</td><td>56</td><td>48.472</td><td>1 (1.276)</td><td>&minus;0.147</td></tr>
-<tr><td>dirichlet_cp_a100</td><td>66</td><td>49</td><td>48.472</td><td>0 (1.276)</td><td>0.466</td></tr>
-<tr><td>ensemble</td><td>66</td><td>52</td><td>48.472</td><td>1 (1.276)</td><td>0.416</td></tr>
-<tr><td>pair_parity</td><td>66</td><td>45</td><td>48.472</td><td>0 (1.276)</td><td>&minus;0.141</td></tr>
-<tr><td>tilt_high31</td><td>66</td><td>48</td><td>48.472</td><td>2 (1.276)</td><td>&minus;0.143</td></tr>
-<tr><td>tilt_linear</td><td>66</td><td>53</td><td>48.472</td><td>2 (1.276)</td><td>0.033</td></tr>
-<tr><td>uniform</td><td>66</td><td>51</td><td>48.472</td><td>2 (1.276)</td><td>0.0</td></tr>
+<tr><td>cp_nest</td><td>66</td><td>50</td><td>48.529</td><td>3 (1.281)</td><td>&minus;0.016</td></tr>
+<tr><td>cp_sparse_switch</td><td>66</td><td>57</td><td>48.529</td><td>1 (1.281)</td><td>&minus;0.114</td></tr>
+<tr><td>dirichlet_cp_a100</td><td>66</td><td>51</td><td>48.529</td><td>0 (1.281)</td><td>0.444</td></tr>
+<tr><td>ensemble</td><td>66</td><td>54</td><td>48.529</td><td>1 (1.281)</td><td>0.399</td></tr>
+<tr><td>pair_parity</td><td>66</td><td>44</td><td>48.529</td><td>0 (1.281)</td><td>&minus;0.249</td></tr>
+<tr><td>tilt_high31</td><td>66</td><td>48</td><td>48.529</td><td>2 (1.281)</td><td>0.037</td></tr>
+<tr><td>tilt_linear</td><td>66</td><td>56</td><td>48.529</td><td>3 (1.281)</td><td>0.183</td></tr>
+<tr><td>uniform</td><td>66</td><td>50</td><td>48.529</td><td>2 (1.281)</td><td>0.000</td></tr>
 </table>
 <p><b>Ensemble, last 10 walk-forward draws:</b></p>
 <table><tr><th>Date</th><th>Game</th><th>Ticket</th><th>Actual</th><th>Matches</th></tr>
-<tr><td>2026-09-21</td><td>Mega Lotto 6/45</td><td class="mono">04-05-08-24-27-43</td><td class="mono">02-07-28-36-39-43</td><td>1</td></tr>
-<tr><td>2026-09-22</td><td>Lotto 6/42</td><td class="mono">03-06-12-36-39-41</td><td class="mono">07-11-16-23-26-35</td><td>0</td></tr>
 <tr><td>2026-09-22</td><td>Super Lotto 6/49</td><td class="mono">08-15-16-26-36-44</td><td class="mono">06-15-25-29-37-38</td><td>1</td></tr>
 <tr><td>2026-09-22</td><td>Ultra Lotto 6/58</td><td class="mono">12-15-17-43-50-57</td><td class="mono">03-18-19-20-22-43</td><td>1</td></tr>
 <tr><td>2026-09-23</td><td>Grand Lotto 6/55</td><td class="mono">05-42-44-45-48-50</td><td class="mono">22-29-32-46-47-50</td><td>1</td></tr>
@@ -175,26 +174,28 @@ The sales input was replaced by per-game estimates N&#770; = W&middot;C(P,6)/T f
 <tr><td>2026-09-24</td><td>Super Lotto 6/49</td><td class="mono">08-15-16-25-26-44</td><td class="mono">11-17-30-34-39-47</td><td>0</td></tr>
 <tr><td>2026-09-25</td><td>Mega Lotto 6/45</td><td class="mono">04-05-08-24-27-43</td><td class="mono">14-32-33-37-38-45</td><td>0</td></tr>
 <tr><td>2026-09-25</td><td>Ultra Lotto 6/58</td><td class="mono">12-17-34-43-50-57</td><td class="mono">16-27-29-41-43-54</td><td>1</td></tr>
+<tr><td>2026-09-26</td><td>Grand Lotto 6/55</td><td class="mono">05-42-44-45-48-50</td><td class="mono">37-42-50-52-54-55</td><td>2</td></tr>
+<tr><td>2026-09-26</td><td>Lotto 6/42</td><td class="mono">03-06-12-36-39-41</td><td class="mono">05-16-19-26-31-41</td><td>1</td></tr>
 </table>
 <p>Each prediction used only earlier draws (walk-forward, no look-ahead). The figures above are <b>descriptive</b>: eight models over one chosen 66-draw window, with no multiplicity control across models, and most of the window predates the 2026-09-23 registration and was used in designing the models. In this window the novel models' tickets matched about as often as random tickets would &mdash; none of the eight models is distinguishable from the uniform-draw baseline on this descriptive comparison. The registered windows in section 4 (n=4 draws, dated after 2026-09-23) are the prospective test of these models, and remain far too small to be evidence either way. The next-draw tickets shown on the cards are not yet externally committed: committing them before each draw and scoring them afterwards starts once registration <span class="mono">pcso.picker.prospective1</span> (draft) is approved.</p>
 </div></details>
 
 <script>
-// ---- official facts (pcso.gov.ph, 2026-09-26 refresh; fitting state pinned 2026-09-21)
+// ---- official facts (pcso.gov.ph, 2026-09-27 refresh; fitting state pinned 2026-09-21)
 const GAMES = {
   "Lotto 6/42":      {pool:42, days:[2,4,6], minJack:10000000, cat2:1100000, cat3:1000000, cat4:20,  q40:0.02431372549, estN:701169, estNlo:462075, estNhi:1020164,
-                      last:{date:"2026-09-24", nums:[1,36,7,23,15,3], jack:58291713.31, win:0}, chiP:0.014899, n:46, T:198},
+                      last:{date:"2026-09-26", nums:[16,41,19,5,26,31], jack:62394735.87, win:0}, chiP:0.015998, n:47, T:198},
   "Mega Lotto 6/45": {pool:45, days:[1,3,5], minJack:15000000, cat2:1200000, cat3:1100000, cat4:30,  q40:0.009090909091, estN:1083333, estNlo:713923, estNhi:1576192,
-                      last:{date:"2026-09-25", nums:[37,33,38,14,45,32], jack:75233668.75, win:0}, chiP:0.810219, n:46, T:199},
+                      last:{date:"2026-09-25", nums:[37,33,38,14,45,32], jack:75233668.75, win:0}, chiP:0.805419, n:46, T:199},
   "Super Lotto 6/49":{pool:49, days:[0,2,4], minJack:25000000, cat2:1300000, cat3:1200000, cat4:50,  q40:0.028184281843, estN:1028221, estNlo:575487, estNhi:1695895,
-                      last:{date:"2026-09-24", nums:[30,39,34,17,47,11], jack:25396508.95, win:0}, chiP:0.019798, n:46, T:199},
+                      last:{date:"2026-09-24", nums:[30,39,34,17,47,11], jack:25396508.95, win:0}, chiP:0.019498, n:46, T:199},
   "Grand Lotto 6/55":{pool:55, days:[1,3,6], minJack:45000000, cat2:1400000, cat3:1300000, cat4:60,  q40:0.017210951674, estN:1142450, estNlo:493228, estNhi:2251082,
-                      last:{date:"2026-09-23", nums:[29,47,22,32,50,46], jack:219836261.65, win:0}, chiP:0.153085, n:45, T:199, note:" (#45: 2/45 hits, p=0.229697)"},
+                      last:{date:"2026-09-26", nums:[54,50,52,37,42,55], jack:225518898.10, win:0}, chiP:0.068893, n:46, T:199, note:" (#45: 2/46 hits, p=0.232041)"},
   "Ultra Lotto 6/58":{pool:58, days:[0,2,5], minJack:75000000, cat2:1500000, cat3:1400000, cat4:100, q40:0.003333333333, estN:3571355, estNlo:2116611, estNhi:5644280,
-                      last:{date:"2026-09-25", nums:[41,29,43,16,54,27], jack:330176341.88, win:0}, chiP:0.128987, n:46, T:199}
+                      last:{date:"2026-09-25", nums:[41,29,43,16,54,27], jack:330176341.88, win:0}, chiP:0.126087, n:46, T:199}
 };
 // ball counts over the 994 canonical draws of the registered 2026-09-21 fitting state, preserved in r9 (index 0 = ball 1;
-// the 11 official draws of 2026-09-21 through 2026-09-25 are monitoring-layer only until a registered posterior rerun)
+// the 13 official draws of 2026-09-21 through 2026-09-26 are monitoring-layer only until a registered posterior rerun)
 const COUNTS = {
   "Lotto 6/42": [31,25,38,24,24,36,23,26,24,29,26,38,30,22,24,29,28,33,17,30,30,25,33,32,22,29,33,27,29,29,21,22,31,26,33,34,25,28,37,19,37,29],
   "Mega Lotto 6/45": [26,24,29,40,33,29,17,34,24,32,20,25,21,29,25,24,32,24,29,21,22,23,25,38,33,14,34,28,24,16,27,23,27,27,28,24,23,28,19,22,30,32,34,27,28],
@@ -220,57 +221,57 @@ const CAL = {
   "Ultra Lotto 6/58": {pi1:0.5635, A:{Rc:1.0299}, B:{Rc:1.0241}},
 };
 // Novel registered models, next-draw predictions (ticket + R only), copied exactly from
-// results/pcso_registered_predictions_2026-09-27.json next_draw (sha256 cae98ff90174c562c304583ae12f3188165dc1fb654b349c2de572ce5fea45c5)
+// results/pcso_registered_predictions_2026-09-27_d0926.json next_draw (sha256 21613902ad6cd26a21465f5a43a95a3835f66483e2d87a208de20f073076a94e)
 const NOVEL = {
   "Grand Lotto 6/55": {
-    ensemble:{ticket:[5,42,44,45,48,50], R:1.606001},
-    cp_nest:{ticket:[50,51,52,53,54,55], R:1.106623},
-    cp_sparse_switch:{ticket:[5,42,44,45,48,50], R:1.039},
-    dirichlet_cp_a100:{ticket:[5,42,44,45,48,50], R:1.623074},
-    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.148676},
-    tilt_linear:{ticket:[50,51,52,53,54,55], R:1.12751},
-    pair_parity:{ticket:[1,3,5,7,9,11], R:1.131433},
-    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+    ensemble:{ticket:[5,42,44,45,48,50], R:1.60},
+    cp_nest:{ticket:[50,51,52,53,54,55], R:1.13},
+    cp_sparse_switch:{ticket:[5,42,44,45,50,54], R:1.05},
+    dirichlet_cp_a100:{ticket:[5,42,44,45,48,50], R:1.65},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.16},
+    tilt_linear:{ticket:[50,51,52,53,54,55], R:1.14},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.13},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.00}
   },
   "Lotto 6/42": {
-    ensemble:{ticket:[3,6,12,36,39,41], R:1.454255},
-    cp_nest:{ticket:[36,38,39,40,41,42], R:1.133937},
-    cp_sparse_switch:{ticket:[3,6,12,23,39,41], R:1.006331},
-    dirichlet_cp_a100:{ticket:[3,6,12,23,39,41], R:1.490525},
-    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.231815},
-    tilt_linear:{ticket:[37,38,39,40,41,42], R:1.122089},
-    pair_parity:{ticket:[1,3,5,7,9,11], R:1.136822},
-    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+    ensemble:{ticket:[3,6,12,23,39,41], R:1.44},
+    cp_nest:{ticket:[37,38,39,40,41,42], R:1.15},
+    cp_sparse_switch:{ticket:[3,12,16,26,39,41], R:1.01},
+    dirichlet_cp_a100:{ticket:[3,6,12,36,39,41], R:1.48},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.24},
+    tilt_linear:{ticket:[37,38,39,40,41,42], R:1.14},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.13},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.00}
   },
   "Mega Lotto 6/45": {
-    ensemble:{ticket:[4,5,8,24,27,43], R:1.482974},
-    cp_nest:{ticket:[40,41,42,43,44,45], R:1.123304},
-    cp_sparse_switch:{ticket:[4,5,14,24,43,45], R:1.017265},
-    dirichlet_cp_a100:{ticket:[4,5,8,24,27,43], R:1.525},
-    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.201654},
-    tilt_linear:{ticket:[40,41,42,43,44,45], R:1.123612},
-    pair_parity:{ticket:[1,3,5,7,9,11], R:1.134888},
-    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+    ensemble:{ticket:[4,5,8,24,27,43], R:1.49},
+    cp_nest:{ticket:[40,41,42,43,44,45], R:1.14},
+    cp_sparse_switch:{ticket:[4,5,14,24,43,45], R:1.02},
+    dirichlet_cp_a100:{ticket:[4,5,8,24,27,43], R:1.53},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.21},
+    tilt_linear:{ticket:[40,41,42,43,44,45], R:1.14},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.13},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.00}
   },
   "Super Lotto 6/49": {
-    ensemble:{ticket:[15,16,25,26,36,44], R:1.533988},
-    cp_nest:{ticket:[44,45,46,47,48,49], R:1.114459},
-    cp_sparse_switch:{ticket:[15,23,25,26,36,44], R:1.02635},
-    dirichlet_cp_a100:{ticket:[8,15,16,25,26,44], R:1.581918},
-    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.174759},
-    tilt_linear:{ticket:[44,45,46,47,48,49], R:1.125359},
-    pair_parity:{ticket:[1,3,5,7,9,11], R:1.133313},
-    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+    ensemble:{ticket:[8,15,25,26,36,44], R:1.54},
+    cp_nest:{ticket:[44,45,46,47,48,49], R:1.14},
+    cp_sparse_switch:{ticket:[15,23,25,26,36,44], R:1.02},
+    dirichlet_cp_a100:{ticket:[8,15,25,26,36,44], R:1.57},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.18},
+    tilt_linear:{ticket:[44,45,46,47,48,49], R:1.14},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.13},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.00}
   },
   "Ultra Lotto 6/58": {
-    ensemble:{ticket:[12,17,34,43,50,57], R:1.470029},
-    cp_nest:{ticket:[52,54,55,56,57,58], R:1.104142},
-    cp_sparse_switch:{ticket:[16,41,43,50,54,57], R:1.015392},
-    dirichlet_cp_a100:{ticket:[12,17,20,43,50,57], R:1.508989},
-    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.139238},
-    tilt_linear:{ticket:[53,54,55,56,57,58], R:1.128421},
-    pair_parity:{ticket:[1,3,5,7,9,11], R:1.130904},
-    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+    ensemble:{ticket:[12,17,30,43,50,57], R:1.47},
+    cp_nest:{ticket:[52,54,55,56,57,58], R:1.13},
+    cp_sparse_switch:{ticket:[16,41,43,50,54,57], R:1.01},
+    dirichlet_cp_a100:{ticket:[12,15,17,43,50,57], R:1.52},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.15},
+    tilt_linear:{ticket:[53,54,55,56,57,58], R:1.14},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.13},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.00}
   }
 };
 const NOV_ORDER = ["cp_nest","cp_sparse_switch","tilt_linear","tilt_high31","pair_parity","dirichlet_cp_a100","uniform"];
@@ -385,7 +386,7 @@ function render(newPicks){
   const hits=document.createElement("div"); hits.className="card";
   hits.innerHTML=`<div class="gname" style="font-size:.95rem">Official jackpot hits since 2026-07-01</div><table><tr><th>Date</th><th>Game</th><th>Combination (as drawn)</th><th>Jackpot</th><th>Bets</th><th>CSI</th></tr>`+
     HITS.map(([gm,dt,nm,J,w])=>`<tr><td>${dt}</td><td>${gm}</td><td class="mono">${nm.map(v=>String(v).padStart(2,"0")).join("-")}</td><td>${fmt(J)}</td><td>${w}</td><td>${csi(nm,Number(gm.slice(2))).toFixed(3)}</td></tr>`).join("")+`</table>
-    <div class="meta">Official sample, Jun 1 2025 &ndash; Sep 25 2026: 78 winner draws, 95 winning bets (none in the eleven draws dated 2026-09-21&ndash;25); winning bets per draw scale by 1.68 [1.44, 1.95] per within-game SD of CSI at equal game and jackpot.</div>`;
+    <div class="meta">Official sample, Jun 1 2025 &ndash; Sep 26 2026: 78 winner draws, 95 winning bets (none in the thirteen draws dated 2026-09-21&ndash;26); winning bets per draw scale by 1.68 [1.44, 1.95] per within-game SD of CSI at equal game and jackpot.</div>`;
   out.appendChild(hits);
   document.getElementById("parity").textContent = parityOK ? "CSI parity self-test vs src/csi_popularity.py: 8/8 vectors OK" : "CSI PARITY FAILED — do not trust the CSI values on this page";
 }

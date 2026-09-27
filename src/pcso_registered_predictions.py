@@ -153,8 +153,10 @@ def main(argv=None):
     ap.add_argument("--run-date", required=True, type=lambda s: date.fromisoformat(s).isoformat())
     ap.add_argument("--backtest-days", type=int, default=30)
     ap.add_argument("--verify", action="store_true")
+    ap.add_argument("--tag", default="", type=lambda s: s if all(c.isalnum() for c in s) else ap.error("--tag must be alphanumeric"),
+                    help="optional suffix for a second run on the same date (e.g. d0926 = data through 2026-09-26)")
     args = ap.parse_args(argv)
-    dst = ROOT / "results" / f"pcso_registered_predictions_{args.run_date}.json"
+    dst = ROOT / "results" / f"pcso_registered_predictions_{args.run_date}{'_' + args.tag if args.tag else ''}.json"
     rel = dst.relative_to(ROOT).as_posix()
     try:
         if not args.verify and dst.exists():
