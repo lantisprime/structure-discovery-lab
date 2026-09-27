@@ -1465,3 +1465,8 @@ e075733f017f6bc5  ./tests/test_pcso_cpnest_sensitivity.py
 c668caa781ecc58a  ./tests/test_pcso_registered_predictions.py
 ca6c8a15ad0725cb  ./tools/pcso_cpnest_sensitivity.py
 38db852f25c5c1b4  ./webapp/test_lotto_picker_e2e.py
+# Snapshot 2026-09-27T07:34:15+00:00 — Amendment pcso.picker.prospective1 EB (clauses 20-22) APPROVED 2026-09-27, before any prospective scoring
+# chain-prev: 70dc6e1b2901fd1026568558834eaaece6b57edf5f450e6fc34f628cc43a448e
+# (2 changed of 513 tracked files; hashed BEFORE any run script executes)
+4252312852e9bf34  ./docs/REGISTRATION_AMENDMENT_2026-09-27_PROSPECTIVE1_EB.md
+18d4b007eb434c10  ./docs/REGISTRATION_PCSO_PICKER_PROSPECTIVE.md
