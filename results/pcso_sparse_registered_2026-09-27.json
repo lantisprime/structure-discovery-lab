@@ -1,0 +1,98 @@
+{
+ "_meta": {
+  "alpha": 0.01,
+  "code_sha256": {
+   "src/pcso_model_registry.py": "71949e97e5791fe9783f6d24e52a1bc863f4ad22bb2186cc59720791c5aff7a1",
+   "src/pcso_sparse_registered.py": "d0d074ee5bf9819ad0871532710fcbb12c46dd8af91f11a1b65f170683385381",
+   "src/pcso_sparse_switch.py": "bf28ec348fb8c7a761b4888ad683e1ea13ac970cc971331033d3e38b3b300069"
+  },
+  "combined_alpha": {
+   "E": 0.005,
+   "M": 0.005
+  },
+  "combined_thresholds": {
+   "E": 200,
+   "M": 200
+  },
+  "environment": {
+   "machine": "arm64",
+   "numpy": "2.5.2",
+   "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+   "python": "3.14.6",
+   "scipy": "1.18.1"
+  },
+  "first_registered_date": "2026-09-24",
+  "input_sha256": {
+   "datasets/pcso-lotto/data_draws_1yr.csv": "5a34f0c1fcdd5d437fe87641d282ab2b91d8e323340707d4bd29cc7d67c2418f"
+  },
+  "input_snapshot_commit": "1ce8541",
+  "last_conditioning_date": "2026-09-23",
+  "last_registered_date": "2026-09-25",
+  "n_conditioning": 1001,
+  "note": "Separate hypothesis-test decisions use E_max >= 100 and M_max >= 100. A combined decision splits alpha 0.005/0.005 (threshold 200 each) for overall error control at 0.01.",
+  "registered_provenance": [
+   {
+    "date": "2026-09-24",
+    "game": "Lotto 6/42",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json"
+   },
+   {
+    "date": "2026-09-24",
+    "game": "Super Lotto 6/49",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json"
+   },
+   {
+    "date": "2026-09-25",
+    "game": "Mega Lotto 6/45",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json"
+   },
+   {
+    "date": "2026-09-25",
+    "game": "Ultra Lotto 6/58",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json"
+   }
+  ],
+  "registration": "docs/REGISTRATION_PCSO_SPARSE_SWITCH.md",
+  "registration_date": "2026-09-23",
+  "run_date": "2026-09-27",
+  "schema_version": 1,
+  "script": "src/pcso_sparse_registered.py",
+  "thresholds": {
+   "E": 100,
+   "M": 100
+  },
+  "verify_scope": "byte verification is defined within the recorded environment"
+ },
+ "decision": {
+  "change_alarm": false,
+  "combined": false,
+  "evidence_rejection": false
+ },
+ "registered": {
+  "E_final": 1.0033104622065818,
+  "E_max": 1.0033104622065818,
+  "M_max": 0.8026781237365245,
+  "log_E_final": 0.003305,
+  "log_E_max": 0.003305,
+  "log_M_max": -0.219801,
+  "n": 4,
+  "overlaps": [
+   [
+    42,
+    1
+   ],
+   [
+    49,
+    0
+   ],
+   [
+    45,
+    0
+   ],
+   [
+    58,
+    1
+   ]
+  ]
+ }
+}
