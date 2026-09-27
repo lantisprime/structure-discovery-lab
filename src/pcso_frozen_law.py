@@ -1,6 +1,8 @@
 """Frozen, byte-stable PCSO laws and a reference evaluator."""
 import base64
 import ctypes
+from fractions import Fraction
+import hashlib
 import json
 import math
 
@@ -16,7 +18,9 @@ _ivc.prec = 113
 import pcso_model_registry as R
 from pcso_sparse_switch import THETA as SPARSE_THETA, SparseLaw, _logcomb
 
-MASS_TOL = 1e-12  # construction-quality gate (amendment 2, C1); validity comes from exact normalization q = r/M
+_MASS_CACHE = {}
+# Committed ticket tie rule (clauses 6, 18): float inclusion error is ~(4P+c)u << 1e-12 << real differences.
+TIE_RTOL = 1e-12
 
 
 def _array(x, dtype):
@@ -26,11 +30,17 @@ def _array(x, dtype):
 def freeze(law, P) -> dict:
     """Copy a supported native law into a plain graph of arrays and scalars."""
     if isinstance(law, R.Law):
-        return {"type": "cp", "P": P, "logw": _array(law.logw, np.float64),
-                "a": _array(law.a, np.float64), "loge6": _array(law.loge6, np.float64)}
+        active = np.asarray(law.a) > 0
+        if not np.any(active):
+            raise ValueError("zero-weight components are not allowed in committed laws")
+        return {"type": "cp", "P": P, "logw": _array(law.logw[active], np.float64),
+                "a": _array(law.a[active], np.float64), "loge6": _array(law.loge6[active], np.float64)}
     if isinstance(law, R.MixLaw):
-        return {"type": "mix", "P": P, "v": _array(law.v, np.float64),
-                "children": [freeze(child, P) for child in law.laws]}
+        active = np.asarray(law.v) > 0
+        if not np.any(active):
+            raise ValueError("zero-weight components are not allowed in committed laws")
+        return {"type": "mix", "P": P, "v": _array(law.v[active], np.float64),
+                "children": [freeze(child, P) for child, keep in zip(law.laws, active) if keep]}
     if isinstance(law, R.ParityLaw):
         return {"type": "parity", "P": law.P, "lp": _array(law.lp, np.float64),
                 "theta": _array(R.THETA, np.float64), "g": _array(law.g, np.float64),
@@ -98,7 +108,7 @@ def decode(data: bytes) -> dict:
     graph = _decode_arrays(json.loads(data.decode("utf-8"), parse_constant=_reject_constant))
     validate(graph)
     lo, hi = certified_mass(graph, _validated=True)
-    if lo < 1 - MASS_TOL or hi > 1 + MASS_TOL:
+    if Fraction(lo) < 1 - Fraction(1, 10**12) or Fraction(hi) > 1 + Fraction(1, 10**12):
         raise ValueError("law mass not certified within 1e-12 of 1")
     return graph
 
@@ -170,13 +180,13 @@ def _validate(g):
         n = lw.shape[0]
         a = _float_array(g, "a", (n,))
         _float_array(g, "loge6", (n,))
-        if np.any(a < 0) or abs(float(a.sum()) - 1) > 1e-12:
-            raise ValueError("a must be nonnegative and sum to 1")
+        if np.any(a <= 0) or abs(float(a.sum()) - 1) > 1e-12:
+            raise ValueError("zero-weight components are not allowed in committed laws; a must be positive and sum to 1")
         expected = np.empty(n, dtype=np.float64)
         for i, row in enumerate(lw):
             m = float(np.max(row))
             e6_scaled = float(R.esp(np.exp(row - m)[None, :])[0, R.K])
-            if e6_scaled > 0:
+            if e6_scaled >= np.finfo(np.float64).tiny:
                 expected[i] = 6 * m + math.log(e6_scaled)
             else:
                 loge = np.full(R.K + 1, -math.inf)
@@ -195,8 +205,8 @@ def _validate(g):
         if not isinstance(children, list):
             raise ValueError("children must be a list")
         v = _float_array(g, "v", (len(children),))
-        if np.any(v < 0) or abs(float(v.sum()) - 1) > 1e-12:
-            raise ValueError("v must be nonnegative and sum to 1")
+        if np.any(v <= 0) or abs(float(v.sum()) - 1) > 1e-12:
+            raise ValueError("zero-weight components are not allowed in committed laws; v must be positive and sum to 1")
         for child in children:
             if not isinstance(child, dict) or child.get("P") != p:
                 raise ValueError("children must share the parent's P")
@@ -363,34 +373,108 @@ def logq(g, S, _validated=False):
     return _logq(g, S)
 
 
-def _inclusion(g):
+def _cp_raw_inclusion(g):
+    p = g["P"]
+    numerator = np.zeros(p, dtype=np.float64)
+    mass = np.float64(0)
+    for row, a, loge6 in zip(g["logw"], g["a"], g["loge6"]):
+        if a <= 0:
+            continue
+        shift = float(np.max(row))
+        x = np.exp(row - shift)
+        prefix = np.zeros((p + 1, R.K + 1), dtype=np.float64)
+        suffix = np.zeros((p + 1, R.K + 1), dtype=np.float64)
+        prefix[0, 0] = suffix[p, 0] = 1.0
+        for i in range(p):
+            prefix[i + 1] = prefix[i]
+            for k in range(R.K, 0, -1):
+                prefix[i + 1, k] += x[i] * prefix[i, k - 1]
+        for i in range(p - 1, -1, -1):
+            suffix[i] = suffix[i + 1]
+            for k in range(R.K, 0, -1):
+                suffix[i, k] += x[i] * suffix[i + 1, k - 1]
+        factor = np.float64(a) * np.exp(6 * shift - float(loge6))
+        mass += factor * prefix[p, R.K]
+        for i in range(p):
+            e5_without = sum(prefix[i, k] * suffix[i + 1, R.K - 1 - k]
+                             for k in range(R.K))
+            numerator[i] += factor * x[i] * e5_without
+    return numerator, mass
+
+
+def _sparse_raw_inclusion(g):
+    p = g["P"]
+    numerator = np.zeros(p, dtype=np.float64)
+    mass = np.float64(0)
+    outside_mass = math.exp(_scalar(g, "logoutside", finite=False))
+    numerator += outside_mass * (R.K / p)
+    mass += outside_mass
+    for expert in g["experts"]:
+        k = expert["k"]
+        supports = expert["supports"].astype(np.int64)
+        bits = np.array(np.meshgrid(*([[0, 1]] * k), indexing="ij")).reshape(k, -1).T
+        hits = bits.sum(axis=1)
+        terms = expert["theta"] @ bits.T + np.array(
+            [_logcomb(p-k, R.K-int(h)) for h in hits])
+        logz = logsumexp(terms, axis=1)
+        inside = np.exp(terms - logz[:, None]) @ bits
+        outside_terms = expert["theta"] @ bits.T + np.array(
+            [_logcomb(p-k-1, R.K-1-int(h)) for h in hits])
+        outside = np.exp(logsumexp(outside_terms, axis=1) - logz)
+        weights = np.exp(expert["logweights"])
+        row_weights = weights.sum(axis=1)
+        mass += row_weights.sum()
+        numerator += (row_weights * outside).sum()
+        for j in range(k):
+            correction = weights * (inside[:, j, None] - outside[:, None])
+            numerator += np.bincount(supports[:, j], weights=correction.sum(axis=0), minlength=p)
+    scale = math.comb(p, R.K) / math.exp(_scalar(g, "logC"))
+    return (outside_mass * scale * (R.K / p) + numerator - outside_mass * (R.K / p),
+            outside_mass * scale + (mass - outside_mass))
+
+
+def _raw_inclusion(g):
     kind = g["type"]
     if kind == "cp":
-        return g["a"] @ R.inclusion(np.exp(g["logw"]))
+        return _cp_raw_inclusion(g)
     if kind == "mix":
-        return sum(vk * _inclusion(child) for vk, child in zip(g["v"], g["children"]) if vk > 0)
+        numerator = np.zeros(g["P"], dtype=np.float64)
+        mass = np.float64(0)
+        for weight, child in zip(g["v"], g["children"]):
+            if weight > 0:
+                child_num, child_mass = _raw_inclusion(child)
+                numerator += weight * child_num
+                mass += weight * child_mass
+        return numerator, mass
     if kind == "parity":
-        odd = (g["P"] + 1) // 2
-        feasible = np.array([0 <= m <= odd and 0 <= R.K - m <= g["P"] - odd
-                             for m in range(R.K + 1)])
-        pm = np.zeros(R.K + 1)
-        pm[feasible] = np.exp(g["lp"][:, None] + np.outer(g["theta"], g["g"])
-                              + g["logcnt"][None, :] - g["logZ"][:, None])[:, feasible].sum(0)
-        Em = float(pm @ np.arange(R.K + 1))
-        i = np.arange(1, g["P"] + 1)
-        Po = int((i % 2 == 1).sum())
-        return np.where(i % 2 == 1, Em / Po, (R.K - Em) / (g["P"] - Po))
+        p = g["P"]
+        odd = (p + 1) // 2
+        even = p - odd
+        r_m = np.zeros(R.K + 1, dtype=np.float64)
+        counts = [0] * (R.K + 1)
+        for m in range(R.K + 1):
+            if 0 <= m <= odd and 0 <= R.K-m <= even:
+                counts[m] = math.comb(odd, m) * math.comb(even, R.K-m)
+                r_m[m] = math.exp(_lse(g["lp"] + g["theta"] * g["g"][m] - g["logZ"]))
+        mass = sum(counts[m] * r_m[m] for m in range(R.K + 1))
+        numerator = np.zeros(p, dtype=np.float64)
+        for i in range(p):
+            if i % 2 == 0:
+                count_fn = lambda m: (math.comb(odd-1, m-1) * math.comb(even, R.K-m)
+                                      if 0 <= m-1 <= odd-1 and 0 <= R.K-m <= even else 0)
+            else:
+                count_fn = lambda m: (math.comb(odd, m) * math.comb(even-1, R.K-1-m)
+                                      if 0 <= m <= odd and 0 <= R.K-1-m <= even-1 else 0)
+            numerator[i] = sum(count_fn(m) * r_m[m] for m in range(R.K + 1))
+        return numerator, mass
     if kind == "sparse":
-        pi = np.full(g["P"], math.exp(_scalar(g, "logoutside", finite=False)) * R.K / g["P"])
-        for expert in g["experts"]:
-            weights = np.exp(expert["logweights"])
-            pi += weights.sum(axis=1) @ expert["outside"]
-            for i in range(expert["k"]):
-                correction = (weights * expert["correction"][:, i, None]).sum(axis=0)
-                pi += np.bincount(expert["supports"][:, i], weights=correction, minlength=g["P"])
-        return pi
+        return _sparse_raw_inclusion(g)
     raise TypeError(f"unsupported graph type: {kind}")
 
+
+def _inclusion(g):
+    numerator, mass = _raw_inclusion(g)
+    return numerator / mass
 
 def inclusion(g, _validated=False):
     if not _validated:
@@ -398,8 +482,21 @@ def inclusion(g, _validated=False):
     return _inclusion(g)
 
 
-def top6(g):
-    return R.top6(inclusion(g))
+def top6(g, tie_rtol=TIE_RTOL):
+    return ticket_from_inclusion(inclusion(g), tie_rtol)
+
+
+def ticket_from_inclusion(pi, tie_rtol=TIE_RTOL):
+    """Maximum-inclusion ticket (clause 18) under the committed tie rule: at each pick, balls whose
+    inclusion is within relative tie_rtol of the remaining maximum are tied; ties favour lower numbers."""
+    remaining = list(range(len(pi)))
+    chosen = []
+    for _ in range(R.K):
+        top = max(pi[i] for i in remaining)
+        pick = min(i for i in remaining if pi[i] >= top * (1 - tie_rtol))
+        chosen.append(pick)
+        remaining.remove(pick)
+    return sorted(i + 1 for i in chosen)
 
 
 def _iv(x):
@@ -549,21 +646,12 @@ def _logq_iv(g, S):
     raise TypeError(f"unsupported graph type: {kind}")
 
 
-def _mass_interval(g, mass):
-    if mass is None:
-        return _certified_mass_iv(g)
-    try:
-        if len(mass) != 2:
-            raise ValueError
-        lo, hi = float(mass[0]), float(mass[1])
-    except (TypeError, ValueError, IndexError, OverflowError) as exc:
-        raise ValueError("mass must be a finite (lo, hi) pair with 0 < lo <= hi") from exc
-    if not (math.isfinite(lo) and math.isfinite(hi) and 0 < lo <= hi):
-        raise ValueError("mass must be a finite (lo, hi) pair with 0 < lo <= hi")
+def _mass_interval(g):
+    lo, hi = certified_mass(g, _validated=True)
     return _ivc.mpf([lo, hi])
 
 
-def score_bounds(g, _validated=False, mass=None) -> tuple[float, float]:
+def score_bounds(g, _validated=False) -> tuple[float, float]:
     """Certified D enclosure.
     Stored float64 values are exact rational inputs, and iv arithmetic rounds outward.
     Selection and sorting are exact operations on the stored float64 values.
@@ -574,18 +662,18 @@ def score_bounds(g, _validated=False, mass=None) -> tuple[float, float]:
     bounds = _score_bounds_iv(g)
     if (not math.isfinite(float(bounds[0].a)) or not math.isfinite(float(bounds[1].b))):
         raise ValueError("score bounds must have finite endpoints")
-    log_mass = _ivc.log(_mass_interval(g, mass))
+    log_mass = _ivc.log(_mass_interval(g))
     lo, hi = _outward(bounds[0] - log_mass, True), _outward(bounds[1] - log_mass, False)
     if not math.isfinite(lo) or not math.isfinite(hi):
         raise ValueError("score bounds must have finite endpoints")
     return lo, hi
 
 
-def D_interval(g, S, _validated=False, mass=None):
+def D_interval(g, S, _validated=False):
     if not _validated:
         validate(g)
         S = _validate_S(g, S)
-    value = (_logq_iv(g, S) - _ivc.log(_mass_interval(g, mass))
+    value = (_logq_iv(g, S) - _ivc.log(_mass_interval(g))
              + _ivc.log(_ivc.mpf(math.comb(g["P"], R.K))))
     lo, hi = _outward(value, True), _outward(value, False)
     if not math.isfinite(lo) or not math.isfinite(hi):
@@ -731,8 +819,12 @@ def certified_mass(g, _validated=False) -> tuple[float, float]:
     """
     if not _validated:
         validate(g)
+    key = hashlib.sha256(encode(g)).digest()
+    if key in _MASS_CACHE:
+        return _MASS_CACHE[key]
     mass = _certified_mass_iv(g)
     lo, hi = _outward(mass, True), _outward(mass, False)
     if not math.isfinite(lo) or not math.isfinite(hi):
         raise ValueError("certified mass endpoints must be finite")
-    return lo, hi
+    _MASS_CACHE[key] = (lo, hi)
+    return _MASS_CACHE[key]

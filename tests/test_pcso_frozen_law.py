@@ -36,32 +36,51 @@ def _small_graphs():
     return [(law, P) for law in laws]
 
 
-def _check_exhaustive(law, P):
+def _check_exhaustive(law, P, check_ticket=True):
     graph_bytes = encode(freeze(law, P))
     graph = decode(graph_bytes)
     assert encode(decode(graph_bytes)) == graph_bytes
     mass = certified_mass(graph)
-    lo, hi = score_bounds(graph, mass=mass)
+    lo, hi = score_bounds(graph)
     values = []
-    for S in combinations(range(1, P + 1), 6):
+    subsets = list(combinations(range(1, P + 1), 6))
+    raw = []
+    for S in subsets:
         frozen_logq = logq(graph, S)
         assert abs(frozen_logq - law.logq(S)) <= 1e-12
         values.append(frozen_logq)
+        raw.append(math.exp(frozen_logq))
         d_value = frozen_logq + math.log(math.comb(P, 6))
         if not lo <= d_value <= hi:
-            dlo, dhi = D_interval(graph, S, mass=mass)
+            dlo, dhi = D_interval(graph, S)
             assert lo <= dlo <= dhi <= hi
     assert abs(math.fsum(math.exp(x) for x in values) - 1) <= 1e-12
     frozen_pi = inclusion(graph)
+    raw = np.asarray(raw)
+    brute_pi = np.array([sum(raw[j] for j, S in enumerate(subsets) if i in S) / raw.sum()
+                         for i in range(1, P + 1)])
+    assert np.max(np.abs(frozen_pi - brute_pi)) <= 1e-12
     assert np.max(np.abs(frozen_pi - law.inclusion())) <= 1e-12
     assert abs(frozen_pi.sum() - 6) <= 1e-9
-    assert top6(graph) == law.top6()
+    if check_ticket:
+        assert top6(graph) == FL.ticket_from_inclusion(brute_pi)
     return graph_bytes
 
 
 def test_small_pools_exhaustive(small):
     for law, P in _small_graphs():
         _check_exhaustive(law, P)
+
+
+def test_small_law_inclusion_bruteforce_all_pools(small):
+    from pcso_sparse_switch import CPSparseSwitch
+
+    for P in SS.POOLS:
+        law = R.Law(np.random.default_rng(P).normal(0, .3, (3, P)), np.array([.5, .3, .2]))
+        laws = [law, R.MixLaw([law, R.Uniform().predict(P)], np.array([.7, .3])),
+                R.ParityPair().predict(P), CPSparseSwitch().predict(P)]
+        for candidate in laws:
+            _check_exhaustive(candidate, P, check_ticket=False)
 
 
 def test_certified_mass_small_laws(small):
@@ -99,6 +118,8 @@ def test_real_laws_random_subsets_and_bounds(real_frozen):
     encoded_sizes = []
     mass_widths = []
     largest_real = (0, 0.0, "", "", 0)
+    max_inclusion_difference = 0.0
+    top6_differences = []
     for P in pools:
         rng = np.random.default_rng(P)
         subsets = [tuple(sorted(int(x) for x in rng.choice(P, 6, replace=False) + 1))
@@ -120,21 +141,42 @@ def test_real_laws_random_subsets_and_bounds(real_frozen):
             validate(restored)
             assert encode(restored) == encode(graph)
             mass_mid = (mass_lo + mass_hi) / 2
-            lo, hi = score_bounds(graph, mass=(mass_lo, mass_hi))
+            lo, hi = score_bounds(graph)
             for S in subsets:
                 actual = logq(graph, S)
                 assert abs(actual - law.logq(S)) <= 1e-12
                 d_value = actual - math.log(mass_mid) + math.log(math.comb(P, 6))
                 if not lo <= d_value <= hi:
-                    dlo, dhi = D_interval(graph, S, mass=(mass_lo, mass_hi))
+                    dlo, dhi = D_interval(graph, S)
                     assert lo <= dlo <= dhi <= hi
-            assert top6(graph) == law.top6()
+            pi = inclusion(graph)
+            difference = float(np.max(np.abs(pi - law.inclusion())))
+            max_inclusion_difference = max(max_inclusion_difference, difference)
+            frozen_ticket, native_ticket = top6(graph), law.top6()
+            if frozen_ticket != native_ticket:
+                # Allowed only when both are maximum-inclusion sets under the committed tie rule.
+                fv = sorted(pi[t - 1] for t in frozen_ticket)
+                nv = sorted(pi[t - 1] for t in native_ticket)
+                tied = all(abs(a - b) <= FL.TIE_RTOL * max(a, b) for a, b in zip(fv, nv))
+                top6_differences.append((model.name, P, frozen_ticket, native_ticket, tied))
     total = sum(encoded_sizes)
     print(f"TOTAL_ENCODED_BYTES={total}")
     print(f"MAX_REAL_CERTIFIED_MASS_WIDTH={max(mass_widths):.17g}")
     print(f"LARGEST_REAL_CERTIFIED_MASS_SECONDS={largest_real[1]:.9f}")
     print(f"LARGEST_REAL_LAW={largest_real[2]}:{largest_real[3]}:P{largest_real[4]}")
+    print(f"MAX_REAL_INCLUSION_DIFFERENCE={max_inclusion_difference:.17g}")
+    print(f"REAL_TOP6_DIFFERENCES={top6_differences}")
     assert total < 200_000_000
+    assert max_inclusion_difference <= 1e-9
+    assert all(tied for *_, tied in top6_differences)
+
+
+def test_ticket_exact_ties_favour_lower_numbers():
+    # pair_parity is odd/even symmetric when Po == Pe (E[m] = 3): every inclusion is 6/P.
+    assert top6(freeze(R.ParityPair().predict(42), 42)) == [1, 2, 3, 4, 5, 6]
+    # identical log-weights above 31 are exact ties.
+    row = np.where(np.arange(1, 43) > 31, .3, 0.)[None, :]
+    assert top6(freeze(R.Law(row, np.ones(1)), 42)) == [32, 33, 34, 35, 36, 37]
 
 
 def test_sparse_support_rows_are_canonical(small):
@@ -168,6 +210,62 @@ def test_decode_requires_certified_normalization(small):
     graph["loge6"][0] -= 9e-11
     with pytest.raises(ValueError, match="law mass not certified"):
         decode(encode(graph))
+
+
+def test_referee_r3_inclusion_ticket_and_cp_extremes():
+    law = R.Law(np.array([[0.] * 4 + [1.] * 4, [1.] * 4 + [0.] * 4]), np.array([.5, .5]))
+    graph = freeze(law, 8)
+    graph["loge6"] += np.array([-9e-11, 9e-11])
+    graph = decode(encode(graph))
+    subsets = list(combinations(range(1, 9), 6))
+    raw = np.array([math.exp(logq(graph, subset)) for subset in subsets])
+    brute_pi = np.array([sum(raw[j] for j, subset in enumerate(subsets) if i in subset) / raw.sum()
+                         for i in range(1, 9)])
+    brute_ticket = R.top6(brute_pi)
+    assert brute_ticket == [1, 2, 5, 6, 7, 8]
+    assert top6(graph) == brute_ticket
+    print(f"R3_A_COUNTEREXAMPLE_TICKET_BRUTE={brute_ticket} INCLUSION={top6(graph)}")
+
+    extreme = freeze(R.Law(np.array([[50.] + [0.] * 57]), np.ones(1)), 58)
+    pi = inclusion(extreme)
+    assert np.all((0 <= pi) & (pi <= 1))
+    assert abs(pi.sum() - 6) <= 1e-9
+    assert pi[0] > .999
+
+
+def test_exact_sparse_mass_gate():
+    graph = {"type": "sparse", "P": 58, "logoutside": 9.984117289975799e-13,
+             "logC": math.log(math.comb(58, 6)), "experts": []}
+    with pytest.raises(ValueError, match="law mass not certified"):
+        decode(encode(graph))
+
+
+def test_subnormal_cp_cached_normalizer_validation():
+    graph = freeze(R.Law(np.array([[0.] + [-145.] * 7]), np.ones(1)), 8)
+    graph["loge6"][0] = -721.9554775622765
+    decode(encode(graph))
+
+
+def test_zero_weight_components_are_omitted():
+    law = R.Law(np.array([[0.] * 8, [1.] * 8]), np.array([1., 0.]))
+    graph = freeze(law, 8)
+    assert graph["logw"].shape == (1, 8)
+    assert graph["a"].shape == (1,)
+    validate(graph)
+    mix = R.MixLaw([R.Law(np.zeros((1, 8)), np.ones(1)),
+                    R.Law(np.ones((1, 8)), np.ones(1))], np.array([1., 0.]))
+    mixed = freeze(mix, 8)
+    assert mixed["v"].shape == (1,)
+    assert len(mixed["children"]) == 1
+    bad = {"type": "cp", "P": 8, "logw": np.zeros((2, 8)),
+           "a": np.array([1., 0.]), "loge6": np.full(2, math.log(math.comb(8, 6)))}
+    with pytest.raises(ValueError, match="zero-weight components"):
+        validate(bad)
+    bad_mix = {"type": "mix", "P": 8, "v": np.array([1., 0.]),
+               "children": [freeze(R.Law(np.zeros((1, 8)), np.ones(1)), 8),
+                            freeze(R.Law(np.zeros((1, 8)), np.ones(1)), 8)]}
+    with pytest.raises(ValueError, match="zero-weight components"):
+        validate(bad_mix)
 
 
 def test_scalar_sparse_array_round_trip(small):
@@ -213,11 +311,11 @@ def test_iv_precision_independence(small):
     defaults = (mp.mp.prec, mp.iv.prec)
     try:
         masses = [certified_mass(g) for g in graphs]
-        baseline = [(score_bounds(g, mass=m), D_interval(g, S, mass=m), m)
+        baseline = [(score_bounds(g), D_interval(g, S), m)
                     for g, m in zip(graphs, masses)]
         mp.mp.prec = 20
         mp.iv.prec = 20
-        altered = [(score_bounds(g, mass=m), D_interval(g, S, mass=m), m)
+        altered = [(score_bounds(g), D_interval(g, S), m)
                    for g, m in zip(graphs, masses)]
         assert altered == baseline
         with mp.workdps(50):
@@ -377,17 +475,17 @@ def test_certified_enclosures_exhaustive(small):
         graph = freeze(law, P)
         validate(graph)
         mass = certified_mass(graph, _validated=True)
-        bounds = score_bounds(graph, _validated=True, mass=mass)
+        bounds = score_bounds(graph, _validated=True)
         log_mass = _high_precision_log_mass(graph)
         for S in combinations(range(1, P + 1), 6):
             exact = _high_precision_D(graph, S, log_mass)
             assert mp.mpf(bounds[0]) <= exact <= mp.mpf(bounds[1])
-            dlo, dhi = D_interval(graph, S, _validated=True, mass=mass)
+            dlo, dhi = D_interval(graph, S, _validated=True)
             assert mp.mpf(dlo) <= exact <= mp.mpf(dhi), (type(law).__name__, S, exact, dlo, dhi, mass)
             assert dhi - dlo <= 1e-12
             assert abs(logq(graph, S) + math.log(math.comb(P, 6)) - float(exact)) <= 1e-12
         if P == 8:
-            dlo, dhi = D_interval(graph, explicit, mass=mass)
+            dlo, dhi = D_interval(graph, explicit)
             exact = _high_precision_D(graph, explicit, log_mass)
             assert mp.mpf(dlo) <= exact <= mp.mpf(dhi)
 
@@ -401,17 +499,15 @@ def test_certified_decisions_use_exact_normalization(small):
     mass = certified_mass(graph)
     expected = _high_precision_D(graph, S)
     d0 = D_interval(graph, S)
-    d1 = D_interval(graph, S, mass=mass)
+    d1 = D_interval(graph, S)
     b0 = score_bounds(graph)
-    b1 = score_bounds(graph, mass=mass)
+    b1 = score_bounds(graph)
     assert d1[0] <= expected <= d1[1]
     assert d0[0] <= expected <= d0[1]
     assert b0 == b1
-    with pytest.raises(ValueError):
-        D_interval(graph, S, mass=(0.0, 1.0))
-    with pytest.raises(ValueError):
-        score_bounds(graph, mass=(1.0, float("nan")))
     import inspect
+    assert "mass" not in inspect.signature(score_bounds).parameters
+    assert "mass" not in inspect.signature(D_interval).parameters
     assert inspect.cleandoc(FL.logq.__doc__) == (
         "Raw formula value log r(S). The committed law is q = r/M (amendment 2, C1);\n"
         "decode's mass gate keeps |log M| <= ~1e-12; certified decisions use D_interval/score_bounds.")
@@ -432,16 +528,11 @@ def test_fast_cp_mass_matches_interval_reference():
         assert (fast_hi - fast_lo) / max(abs(fast_lo), abs(fast_hi)) <= 1e-12
 
 
-def test_supplied_mass_matches_computed_mass(small):
-    import mpmath as mp
-
+def test_certified_mass_cache_is_bound_to_graph_contents(small):
     graph = freeze(R.Law(np.random.default_rng(23).normal(0, .2, (1, 8)), np.array([1.])), 8)
-    mass = certified_mass(graph)
-    S = (1, 2, 3, 4, 5, 6)
-    expected = _high_precision_D(graph, S)
-    for bounds in (D_interval(graph, S, mass=mass), D_interval(graph, S)):
-        assert mp.mpf(bounds[0]) <= expected <= mp.mpf(bounds[1])
-    with pytest.raises(ValueError):
-        D_interval(graph, S, mass=(0.0, 1.0))
-    with pytest.raises(ValueError):
-        D_interval(graph, S, mass=(1.0, float("nan")))
+    first = certified_mass(graph)
+    graph["loge6"][0] -= 9e-11
+    second = certified_mass(graph)
+    assert second != first
+    assert second[0] > first[0] + 8e-11
+    assert second[1] > first[1] + 8e-11
