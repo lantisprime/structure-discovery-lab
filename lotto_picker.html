@@ -29,6 +29,8 @@
   .b2 .ball { background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), var(--gold); }
   .pred .ball { background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), var(--vio); }
   .pred2 .ball { background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), #7f68b8; }
+  .nov .ball { background:radial-gradient(circle at 35% 30%, #ffffff22, transparent), var(--grn); }
+  .tk.nov b { width:auto; max-width:100%; color:var(--grn); font-weight:700; }
   .last .ball { width:30px; height:30px; font-size:.8rem; background:#3a4a63; color:var(--ink); }
   .evrow { display:flex; gap:10px; align-items:end; margin-top:12px; flex-wrap:wrap; }
   .ev { font-size:.85rem; padding:6px 10px; border-radius:8px; line-height:1.5; }
@@ -64,7 +66,7 @@
 </style>
 </head>
 <body>
-<h1>PCSO 2-Ticket Protocol Picker <span style="color:var(--mut);font-weight:400">v2.5 · 2026-09-27 (r9)</span></h1>
+<h1>PCSO 2-Ticket Protocol Picker <span style="color:var(--mut);font-weight:400">v2.6 · 2026-09-27 (r10)</span></h1>
 <div class="sub">Pick a date &rarr; see which games draw that night (9 PM PHT), the last <b>official</b> result, the posterior-predictive tickets, and a low-popularity random pair. <b>Tickets A/B are the fixed posterior sets per game (they do not change per click); the button regenerates the random pair C/D.</b></div>
 <details class="doc"><summary>Model equations &#8212; M&#8320;/M&#8321; and model averaging (tap to expand)</summary><div class="banner mono">
 Model M<sub>1</sub>: 6-without-replacement product-weight draw, f<sub>w</sub>(S) = &prod;<sub>i&isin;S</sub> w<sub>i</sub> / e<sub>6</sub>(w); inclusion &pi;<sub>i</sub> = w<sub>i</sub> e<sub>5</sub>(w<sub>&minus;i</sub>) / e<sub>6</sub>(w), &sum;<sub>i</sub>&pi;<sub>i</sub> = 6; prior w ~ Dirichlet(a=100) fixed a priori<br>
@@ -149,6 +151,33 @@ History: the v1 leaderboard (2026-09-21 record, sha256 <span class="mono">c5615c
 The sales input was replaced by per-game estimates N&#770; = W&middot;C(P,6)/T from the official winner counts W over T draws in the 1,016-row official file (exact Poisson 95% CI; E[winners] = N/C(P,6) holds exactly for uniform draws regardless of number popularity); constant-sales-across-draws is an approximation, as sales typically rise with the jackpot.<br><br>
 <b>EV model (uniform-draw scenario M<sub>0</sub>, all tickets and tiers on the same model):</b> hypergeometric tiers h<sub>k</sub> = C(6,k)C(n&minus;6,6&minus;k)/C(n,6); official Feb-2026 matrix (ticket &#8369;25; Category II/III fixed pools shared per winning bet, Category IV fixed); co-winner count K ~ Poisson(N&middot;h<sub>k</sub>) under an assumed uniform, independent competitor-bet model (the results estimate no lower-tier co-winner distribution); the 20% tax is applied to each realized individual share above &#8369;10,000 inside the expectation, E[T(A/(1+K))]. The posterior jackpot-probability multipliers R<sub>mix</sub>(A), R<sub>mix</sub>(B) are shown beside the tickets as separate information and are not folded into the EV. The CSI count contrast e<sup>&beta;z(S)</sup>/E<sub>U</sub>[e<sup>&beta;z</sup>] is shown per ticket as an association only; it is not used as a sharing probability. Jackpot defaults = last official draw (Sep 23&ndash;25, 2026); edit per draw night. N is an assumption. Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun. Full methodology: docs/RESULTS_PCSO_REFRESH_2026-09-06.md, docs/kb/conscious-selection-popularity.md; page review: results/codex_review_page_2026-09-06.md.
 </div></details>
+<details class="doc"><summary>9 &middot; Novel-model validation &mdash; walk-forward backtest (last 30 days, 66 draws)</summary><div class="foot">
+<b>Walk-forward backtest (<span class="mono">results/pcso_registered_predictions_2026-09-27.json</span>, window 2026-08-26 to 2026-09-25, 66 draws across five games; sha256 <span class="mono">cae98ff90174c562c304583ae12f3188165dc1fb654b349c2de572ce5fea45c5</span>):</b> for each model, a ticket for each historical draw was formed from only the draws that preceded it (walk-forward), then compared to the draw actually observed.<br>
+<table><tr><th>Model</th><th>draws</th><th>balls matched</th><th>expected under uniform</th><th>draws with 3+ matches (expected)</th><th>log-evidence</th></tr>
+<tr><td>cp_nest</td><td>66</td><td>46</td><td>48.472</td><td>2 (1.276)</td><td>&minus;0.108</td></tr>
+<tr><td>cp_sparse_switch</td><td>66</td><td>56</td><td>48.472</td><td>1 (1.276)</td><td>&minus;0.147</td></tr>
+<tr><td>dirichlet_cp_a100</td><td>66</td><td>49</td><td>48.472</td><td>0 (1.276)</td><td>0.466</td></tr>
+<tr><td>ensemble</td><td>66</td><td>52</td><td>48.472</td><td>1 (1.276)</td><td>0.416</td></tr>
+<tr><td>pair_parity</td><td>66</td><td>45</td><td>48.472</td><td>0 (1.276)</td><td>&minus;0.141</td></tr>
+<tr><td>tilt_high31</td><td>66</td><td>48</td><td>48.472</td><td>2 (1.276)</td><td>&minus;0.143</td></tr>
+<tr><td>tilt_linear</td><td>66</td><td>53</td><td>48.472</td><td>2 (1.276)</td><td>0.033</td></tr>
+<tr><td>uniform</td><td>66</td><td>51</td><td>48.472</td><td>2 (1.276)</td><td>0.0</td></tr>
+</table>
+<p><b>Ensemble, last 10 walk-forward draws:</b></p>
+<table><tr><th>Date</th><th>Game</th><th>Ticket</th><th>Actual</th><th>Matches</th></tr>
+<tr><td>2026-09-21</td><td>Mega Lotto 6/45</td><td class="mono">04-05-08-24-27-43</td><td class="mono">02-07-28-36-39-43</td><td>1</td></tr>
+<tr><td>2026-09-22</td><td>Lotto 6/42</td><td class="mono">03-06-12-36-39-41</td><td class="mono">07-11-16-23-26-35</td><td>0</td></tr>
+<tr><td>2026-09-22</td><td>Super Lotto 6/49</td><td class="mono">08-15-16-26-36-44</td><td class="mono">06-15-25-29-37-38</td><td>1</td></tr>
+<tr><td>2026-09-22</td><td>Ultra Lotto 6/58</td><td class="mono">12-15-17-43-50-57</td><td class="mono">03-18-19-20-22-43</td><td>1</td></tr>
+<tr><td>2026-09-23</td><td>Grand Lotto 6/55</td><td class="mono">05-42-44-45-48-50</td><td class="mono">22-29-32-46-47-50</td><td>1</td></tr>
+<tr><td>2026-09-23</td><td>Mega Lotto 6/45</td><td class="mono">04-08-24-25-27-43</td><td class="mono">04-05-07-40-44-45</td><td>1</td></tr>
+<tr><td>2026-09-24</td><td>Lotto 6/42</td><td class="mono">03-06-12-23-39-41</td><td class="mono">01-03-07-15-23-36</td><td>2</td></tr>
+<tr><td>2026-09-24</td><td>Super Lotto 6/49</td><td class="mono">08-15-16-25-26-44</td><td class="mono">11-17-30-34-39-47</td><td>0</td></tr>
+<tr><td>2026-09-25</td><td>Mega Lotto 6/45</td><td class="mono">04-05-08-24-27-43</td><td class="mono">14-32-33-37-38-45</td><td>0</td></tr>
+<tr><td>2026-09-25</td><td>Ultra Lotto 6/58</td><td class="mono">12-17-34-43-50-57</td><td class="mono">16-27-29-41-43-54</td><td>1</td></tr>
+</table>
+<p>Each prediction used only earlier draws (walk-forward, no look-ahead). The figures above are <b>descriptive</b>: eight models over one chosen 66-draw window, with no multiplicity control across models, and most of the window predates the 2026-09-23 registration and was used in designing the models. In this window the novel models' tickets matched about as often as random tickets would &mdash; none of the eight models is distinguishable from the uniform-draw baseline on this descriptive comparison. The registered windows in section 4 (n=4 draws, dated after 2026-09-23) are the prospective test of these models, and remain far too small to be evidence either way. The next-draw tickets shown on the cards are not yet externally committed: committing them before each draw and scoring them afterwards starts once registration <span class="mono">pcso.picker.prospective1</span> (draft) is approved.</p>
+</div></details>
 
 <script>
 // ---- official facts (pcso.gov.ph, 2026-09-26 refresh; fitting state pinned 2026-09-21)
@@ -190,6 +219,63 @@ const CAL = {
   "Super Lotto 6/49": {pi1:0.762,  A:{Rc:1.0889}, B:{Rc:1.0285}},
   "Ultra Lotto 6/58": {pi1:0.5635, A:{Rc:1.0299}, B:{Rc:1.0241}},
 };
+// Novel registered models, next-draw predictions (ticket + R only), copied exactly from
+// results/pcso_registered_predictions_2026-09-27.json next_draw (sha256 cae98ff90174c562c304583ae12f3188165dc1fb654b349c2de572ce5fea45c5)
+const NOVEL = {
+  "Grand Lotto 6/55": {
+    ensemble:{ticket:[5,42,44,45,48,50], R:1.606001},
+    cp_nest:{ticket:[50,51,52,53,54,55], R:1.106623},
+    cp_sparse_switch:{ticket:[5,42,44,45,48,50], R:1.039},
+    dirichlet_cp_a100:{ticket:[5,42,44,45,48,50], R:1.623074},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.148676},
+    tilt_linear:{ticket:[50,51,52,53,54,55], R:1.12751},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.131433},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+  },
+  "Lotto 6/42": {
+    ensemble:{ticket:[3,6,12,36,39,41], R:1.454255},
+    cp_nest:{ticket:[36,38,39,40,41,42], R:1.133937},
+    cp_sparse_switch:{ticket:[3,6,12,23,39,41], R:1.006331},
+    dirichlet_cp_a100:{ticket:[3,6,12,23,39,41], R:1.490525},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.231815},
+    tilt_linear:{ticket:[37,38,39,40,41,42], R:1.122089},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.136822},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+  },
+  "Mega Lotto 6/45": {
+    ensemble:{ticket:[4,5,8,24,27,43], R:1.482974},
+    cp_nest:{ticket:[40,41,42,43,44,45], R:1.123304},
+    cp_sparse_switch:{ticket:[4,5,14,24,43,45], R:1.017265},
+    dirichlet_cp_a100:{ticket:[4,5,8,24,27,43], R:1.525},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.201654},
+    tilt_linear:{ticket:[40,41,42,43,44,45], R:1.123612},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.134888},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+  },
+  "Super Lotto 6/49": {
+    ensemble:{ticket:[15,16,25,26,36,44], R:1.533988},
+    cp_nest:{ticket:[44,45,46,47,48,49], R:1.114459},
+    cp_sparse_switch:{ticket:[15,23,25,26,36,44], R:1.02635},
+    dirichlet_cp_a100:{ticket:[8,15,16,25,26,44], R:1.581918},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.174759},
+    tilt_linear:{ticket:[44,45,46,47,48,49], R:1.125359},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.133313},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+  },
+  "Ultra Lotto 6/58": {
+    ensemble:{ticket:[12,17,34,43,50,57], R:1.470029},
+    cp_nest:{ticket:[52,54,55,56,57,58], R:1.104142},
+    cp_sparse_switch:{ticket:[16,41,43,50,54,57], R:1.015392},
+    dirichlet_cp_a100:{ticket:[12,17,20,43,50,57], R:1.508989},
+    tilt_high31:{ticket:[32,33,34,35,36,37], R:1.139238},
+    tilt_linear:{ticket:[53,54,55,56,57,58], R:1.128421},
+    pair_parity:{ticket:[1,3,5,7,9,11], R:1.130904},
+    uniform:{ticket:[1,2,3,4,5,6], R:1.0}
+  }
+};
+const NOV_ORDER = ["cp_nest","cp_sparse_switch","tilt_linear","tilt_high31","pair_parity","dirichlet_cp_a100","uniform"];
+const NOV_LABEL = {cp_nest:"cp_nest", cp_sparse_switch:"cp_sparse_switch", tilt_linear:"tilt_linear", tilt_high31:"tilt_high31",
+  pair_parity:"pair_parity", dirichlet_cp_a100:"dirichlet_cp_a100", uniform:"uniform = baseline"};
 // fitted within-game CSI reference (results/csi_popularity_2026-09-06.json csi_observed_within_game_reference)
 const REFOBS = {42:{mean:0.109025883081, sd:0.12903359837}, 45:{mean:0.099543610457, sd:0.121632734284}, 49:{mean:0.103452031331, sd:0.129107545078},
                 55:{mean:0.074822679337, sd:0.093637899891}, 58:{mean:0.070902572402, sd:0.094544668148}};
@@ -272,6 +358,9 @@ function render(newPicks){
     if(newPicks===true||G.rnd===undefined) G.rnd=randomPair(g);
     const [A,B]=posteriorTickets(g), id="j_"+g.replace(/\W/g,"");
     const def=G.last.win>0?G.minJack:G.last.jack;
+    const Nov=NOVEL[g];
+    const novBlock = `<div class="tk nov"><b>Novel ensemble (registered pcso.registry.seq1 roster, seed 20260923) &mdash; next-draw ticket</b>${balls(Nov.ensemble.ticket)}<small>R = ${Nov.ensemble.R.toFixed(2)} vs a random ticket (model statement)</small></div>
+      <details class="carddoc"><summary>other registered models &mdash; next-draw tickets</summary><div class="meta mono">${NOV_ORDER.map(m=>`${NOV_LABEL[m]}: ${Nov[m].ticket.map(v=>String(v).padStart(2,"0")).join("-")} &middot; R = ${Nov[m].R.toFixed(2)}`).join("<br>")}</div></details>`;
     const rnd = G.rnd ? `<div class="tk"><b>Ticket C</b>${balls(G.rnd[0])}<small>CSI ${csi(G.rnd[0],P).toFixed(3)} (z ${zcsi(G.rnd[0],P).toFixed(2)}, count contrast ${contrast(G.rnd[0],P).toFixed(2)})</small></div>
       <div class="tk b2"><b>Ticket D</b>${balls(G.rnd[1])}<small>CSI ${csi(G.rnd[1],P).toFixed(3)} (z ${zcsi(G.rnd[1],P).toFixed(2)}, count contrast ${contrast(G.rnd[1],P).toFixed(2)})</small></div>`
       : `<div class="meta">No pair with both CSI at or below the cutoff was found in 20,000 proposals; press "New random pair".</div>`;
@@ -279,7 +368,8 @@ function render(newPicks){
     card.innerHTML=`<div class="gname">${g}</div>
       <div class="meta">Draw ${dateStr}, 9:00 PM PHT &middot; uniform P(jackpot)=1/${C.toLocaleString()} per ticket &middot; fitting T=${G.T} draws</div>
       <div class="tk last"><b>Last official</b>${balls(G.last.nums)}<small>${G.last.date} &middot; jackpot ${fmt(G.last.jack)} &middot; ${G.last.win} winning bet${G.last.win===1?"":"s"}</small></div>
-      <div class="sec">Posterior prediction (product-weight model, a=100; intervals condition on M&#8321;)</div>
+      ${novBlock}
+      <div class="sec">Comparator: 2026-09-21 product-weight posterior (not the novel model) &mdash; product-weight model, a=100; intervals condition on M&#8321;</div>
       <div class="tk pred"><b>Ticket A</b>${balls(A)}<small>maximum-inclusion set &middot; model-averaged R<sub>mix</sub>=${(1+K.pi1*(Q.R-1)).toFixed(3)} (held-out weight &pi;&#8321;=${K.pi1.toFixed(2)}) &middot; P(next=A)=${((1+K.pi1*(Q.R-1))/C).toExponential(3)} &middot; posterior R=${Q.R.toFixed(3)} [${Q.cri[0].toFixed(3)}, ${Q.cri[1].toFixed(3)}] &middot; diagnostic (not a probability): selection-corrected R<sub>c</sub>=${K.A.Rc.toFixed(3)}${Q.ties.length?" &middot; sixth place tied with "+Q.ties.join(", "):""} &middot; CSI ${csi(A,P).toFixed(3)} (z ${zcsi(A,P).toFixed(2)})</small></div>
       <div class="tk pred2"><b>Ticket B</b>${balls(B)}<small>posterior ranks 7&ndash;12, disjoint from A (the maximum-predictive set outside A; not a proven optimal pair) &middot; model-averaged R<sub>mix</sub>=${(1+K.pi1*(Q.B.R-1)).toFixed(3)} &middot; posterior R=${Q.B.R.toFixed(3)} &middot; diagnostic R<sub>c</sub>=${K.B.Rc.toFixed(3)} [${Q.B.cri[0].toFixed(3)}, ${Q.B.cri[1].toFixed(3)}] &middot; R<sub>mix</sub>=${Q.B.Rmix.toFixed(3)} &middot; CSI ${csi(B,P).toFixed(3)} (z ${zcsi(B,P).toFixed(2)})</small></div>
       <details class="carddoc"><summary>diagnostics</summary><div class="meta mono">P(A or B drawn) = (R<sub>mix</sub>(A)+R<sub>mix</sub>(B))/C = ${((2+K.pi1*(Q.R-1)+K.pi1*(Q.B.R-1))/C).toExponential(3)} vs 2/C = ${(2/C).toExponential(3)} &middot; BF<sub>01</sub>(a=100)=${Q.bf01.toFixed(3)} &middot; P(any ball &gt;10% off 6/${P} | equal model odds)=${Q.pE10.toFixed(2)} &middot; order-1 overlap, absolute-deviation exact p=${Q.overlapP.toFixed(3)} &middot; confirmation-set &chi;&sup2; p=${G.chiP}${G.note||""}</div></details>
