@@ -1,6 +1,6 @@
 # DATASET CARD — pcso-lotto
 
-Onboarded: Jun 10–11, 2026 · Updated: Sep 24, 2026 · Status: **ACTIVE**
+Onboarded: Jun 10–11, 2026 · Updated: Sep 26, 2026 · Status: **ACTIVE**
 (manual refresh runs from the official source — see §8; no scheduled task exists in this repo) · Owner: Cha
 
 ## 1. Identity & generative null (H₀)
@@ -15,12 +15,13 @@ per game, at observed sequence lengths.
 
 | File | Rows | Role |
 |---|---|---|
-| `data_draws_1yr.csv` | 1,001 | **Canonical append-only dataset** — Jun 11 2025 – Sep 23 2026, all games |
-| `data_draws_1yr_audited.csv` | 1,001 | Same rows + Source1/Source2/Status audit columns |
-| `data_draws.csv` | 419 | Short-window append-only dataset; its 194-row exploration prefix is frozen — see §6 |
-| `data_astro_geomagnetic.csv` | 419+ | Per-draw Moon/Sun ephemeris + legacy Kp columns + summary block; confirmation Kp is blank |
-| `data_official_draws_jackpots.csv` | 1,023 | **Official per-draw record** (pcso.gov.ph SearchLottoResult, Jun 1 2025 – Sep 23 2026): combination, jackpot (PHP), winning bets — the payout-layer input (kb card 28) |
+| `data_draws_1yr.csv` | 1,005 | **Canonical append-only dataset** — Jun 11 2025 – Sep 25 2026, all games |
+| `data_draws_1yr_audited.csv` | 1,005 | Same rows + Source1/Source2/Status audit columns |
+| `data_draws.csv` | 423 | Short-window append-only dataset; its 194-row exploration prefix is frozen — see §6 |
+| `data_astro_geomagnetic.csv` | 423+ | Per-draw Moon/Sun ephemeris + legacy Kp columns + summary block; confirmation Kp is blank |
+| `data_official_draws_jackpots.csv` | 1,027 | **Official per-draw record** (pcso.gov.ph SearchLottoResult, Jun 1 2025 – Sep 25 2026): combination, jackpot (PHP), winning bets — the payout-layer input (kb card 28) |
 | `provenance/pcso_refresh_2026-09-24.json` + `provenance/raw_2026-09-24/` | 2 draws · 5 captures | Sep-24 refresh manifest (same layout as Sep-23); official page captured as markdown via the searxng gateway with a no-op query string (the plain URL returned a stale cached copy), lottopcso/pcsodraw 6/45 + 6/55 archives as gzipped raw HTML |
+| `provenance/pcso_refresh_2026-09-26.json` + `provenance/raw_2026-09-26/` | 4 draws · 10 captures | Sep-26 refresh manifest (same layout as Sep-24); official page captured as markdown via the searxng gateway with a no-op query string, lottopcso/pcsodraw 6/42 + 6/45 + 6/49 + 6/58 archives as gzipped raw HTML, plus the 6/49 third-source corroboration capture |
 | `provenance/pcso_refresh_2026-09-23.json` + `provenance/raw_2026-09-23/` | 5 draws · 11 captures | Sep-23 refresh manifest with per-draw sources + pcsodraw draw numbers, cross-check and continuity blocks; official page captured as markdown read via the searxng gateway (raw HTML not retained; direct fetch 403), lottopcso/pcsodraw archives as gzipped raw HTML |
 | `provenance/pcso_refresh_2026-09-21.json` + `provenance/raw_2026-09-21/` | 32 draws · 15 captures | Sep-21 refresh manifest with per-draw sources + pcsodraw draw numbers, cross-check and continuity blocks, and gzipped raw HTML of every page parsed (official POST per game, lottopcso, pcsodraw) |
 | `provenance/pcso_refresh_2026-09-06.json` + `provenance/raw_2026-09-06/` | 128 draws · 27 captures | Sep-2026 refresh manifest with per-draw sources, draw-number continuity, gzipped raw HTML of every results page parsed, and the five official game pages (`gamepage_*.html.gz`, prize matrix / ticket price / draw time of record) |
@@ -89,6 +90,22 @@ files 5/5 (draws and jackpots); cross-checked 2/2 on lottopcso.com (numbers + ja
 chaining onto the Sep-23 continuity). Validation: `src/pcso_monitoring_run.py` all
 validators PASS and `--verify` reproduces the result byte-exactly; confirmation n=225,
 0 flags, min p=0.018.
+
+**Sep 26, 2026 refresh (`provenance/pcso_refresh_2026-09-26.json`):** 4 further rows
+(6/42 and 6/49, 2026-09-24; 6/45 and 6/58, 2026-09-25) appended from the official pcso.gov.ph
+results page read as markdown via the searxng gateway with a no-op query string (`?r=20260926`);
+the draw data are backed by retained official markdown, archive HTML captures, and a third-source
+corroboration capture in `provenance/raw_2026-09-26/`. Status
+`official_verified`; the 2026-09-23 rows visible in the official view matched the prior
+files 2/2 (draws and jackpots); cross-checked 3/4 on lottopcso.com (numbers + jackpot) and
+3/4 on pcsodraw.com (numbers) with exact draw-number continuity 4/4 (6/42 1834→1835 ·
+6/45 3000→3001 · 6/49 1873→1874 · 6/58 1628→1629). One conflict: both archives publish 37
+where the official page shows 47 as the fifth 6/49 number on two independent cache-busted
+re-reads; third-source corroboration (philstar.com, plus GMA/Inquirer/IBC/pcso.gov.ph search
+snippets) confirms the official 30-39-34-17-47-11, so the official value was recorded and the
+archives' 37 logged as an archive-side error (§7). Validation: `src/pcso_monitoring_run.py` all
+validators PASS and `--verify` reproduces the result byte-exactly; confirmation n=229,
+0 flags, min p=0.015.
 Suspicious rows (archive conflicts, not resolved): 6/55 2025-08-13 and 2025-09-03
 (pcsodraw-side duplication errors — our values presumed correct), 6/55 2025-10-29
 (unresolved, NEEDS THIRD SOURCE — open item).
@@ -119,6 +136,15 @@ Suspicious rows (archive conflicts, not resolved): 6/55 2025-08-13 and 2025-09-0
 
 ## 7. Known anomalies & dispositions
 
+**6/49 archive conflict (2026-09-24, draw 1874) — RESOLVED:** lottopcso.com and pcsodraw.com
+publish 30-39-34-17-**37**-11; the official pcso.gov.ph page gives 30-39-34-17-**47**-11 on two
+independent cache-busted re-reads (`?r=20260926`, `?r=20260926b`). Third source confirms the
+official page: philstar.com same-day lotto results, with GMA News, Inquirer.net, IBC 13 and a
+pcso.gov.ph search snippet agreeing on 47. Disposition: official value recorded (source rule:
+pcso.gov.ph is the record, archives are cross-checks); the archives' 37 is an archive-side error
+(a shared upstream feed is suspected); pcsodraw draw-number continuity 1873→1874 is unaffected.
+Evidence: `provenance/raw_2026-09-26/corroboration_649_2026-09-24.md`.
+
 **6/55 #45 (2025):** 26 hits/88 draws vs 9.6 expected; data VERIFIED genuine (25/26
 rows two-source). Persisted 3 quarters, died at the Feb-2026 era boundary; scan-statistic
 look-elsewhere p=0.148; no Markov/SOC/cross-domain signature. Disposition: era-bounded
@@ -144,7 +170,7 @@ pair affinity, gap law, rolling windows, backtests) — count it once (Governanc
   `expected_new_draws`; `official_verified` accepted). Manifests:
   `provenance/pcso_weekly_2026-07-08.json`, `provenance/pcso_refresh_2026-09-06.json`,
   `provenance/pcso_refresh_2026-09-21.json`, `provenance/pcso_refresh_2026-09-23.json`,
-  `provenance/pcso_refresh_2026-09-24.json`.
+  `provenance/pcso_refresh_2026-09-24.json`, `provenance/pcso_refresh_2026-09-26.json`.
 - The workbook (`PCSO_Lotto_Analysis_Mar-Jun_2026.xlsx`) was NOT extended in the Sep-2026
   refresh; its 252-row Draws sheet is verified unchanged by the runner's invariants and it
   no longer mirrors the canonical CSVs.
