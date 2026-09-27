@@ -1434,3 +1434,34 @@ c203a0a8b5499faf  ./tests/test_pcso_sparse_study.py
 # (2 changed of 578 tracked files; hashed BEFORE any run script executes)
 b7b1525aaadadb87  ./docs/STUDY_PCSO_CPNEST_SENSITIVITY.md
 de88d00c3e3a38f1  ./lotto_picker.html
+# Snapshot 2026-09-27T06:42:00+00:00 — Registrations pcso.picker.prospective1 and pcso.signshare.seq1 APPROVED 2026-09-27 (before any implementing code, anchoring or simulation)
+# chain-prev: 194344034736cc9e253a820fbefbd7ef174d1195dab2345daac1b01c75dcf15e
+# (28 changed of 512 tracked files; hashed BEFORE any run script executes)
+7cd32010876fbfa7  ./datasets/pcso-lotto/DATASET.md
+61a4ceff2120abf8  ./datasets/pcso-lotto/data_astro_geomagnetic.csv
+067d6fa6dac4fe07  ./datasets/pcso-lotto/data_draws.csv
+5a34f0c1fcdd5d43  ./datasets/pcso-lotto/data_draws_1yr.csv
+ab3b9a53cbdec659  ./datasets/pcso-lotto/data_draws_1yr_audited.csv
+6c908dec9d32813c  ./datasets/pcso-lotto/data_official_draws_jackpots.csv
+2641c1d5f04a8605  ./datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json
+8400bf85ba2fa660  ./datasets/pcso-lotto/provenance/raw_2026-09-26/corroboration_649_2026-09-24.md
+a988f9514678403f  ./datasets/pcso-lotto/provenance/raw_2026-09-26/lottopcso_642.html.gz
+63914a81dae1bae3  ./datasets/pcso-lotto/provenance/raw_2026-09-26/lottopcso_645.html.gz
+502c3a1a1ca79ebf  ./datasets/pcso-lotto/provenance/raw_2026-09-26/lottopcso_649.html.gz
+7013bdef064ad1a1  ./datasets/pcso-lotto/provenance/raw_2026-09-26/lottopcso_658.html.gz
+c6ded8da31ca6680  ./datasets/pcso-lotto/provenance/raw_2026-09-26/official_searxng_2026-09-26.md
+f50821228ac70173  ./datasets/pcso-lotto/provenance/raw_2026-09-26/pcsodraw_642.html.gz
+a9e62bf562d6a9cc  ./datasets/pcso-lotto/provenance/raw_2026-09-26/pcsodraw_645.html.gz
+77e8f7c03895fa25  ./datasets/pcso-lotto/provenance/raw_2026-09-26/pcsodraw_649.html.gz
+546ea90076fd580b  ./datasets/pcso-lotto/provenance/raw_2026-09-26/pcsodraw_658.html.gz
+1a7048c802cb3312  ./docs/REGISTRATION_PCSO_PICKER_PROSPECTIVE.md
+d934272d9f9644cd  ./docs/REGISTRATION_PCSO_SIGNSHARE_SEQ1.md
+9f1be5cb8a47dee5  ./lotto_picker.html
+2aedae9fe626620e  ./src/pcso_mixture_mode.py
+060077e82b96373e  ./src/pcso_mlx_sim.py
+843c84d7d13213e9  ./src/pcso_registered_predictions.py
+e075733f017f6bc5  ./tests/test_pcso_cpnest_sensitivity.py
+2fe2ee33fe7cd624  ./tests/test_pcso_official_markdown_capture.py
+c668caa781ecc58a  ./tests/test_pcso_registered_predictions.py
+ca6c8a15ad0725cb  ./tools/pcso_cpnest_sensitivity.py
+38db852f25c5c1b4  ./webapp/test_lotto_picker_e2e.py

@@ -1,4 +1,8 @@
-"""Exact mode of a predictive law on 6-subsets of {1..P}: argmax_S q(S) under the fitted law q.
+"""Heuristic mode of a predictive law on 6-subsets of {1..P}: a 2-swap local optimum of q(S) (not certified global).
+
+(GPT Astra 6, 2026-09-27: improving single-ball exchanges can stop at a non-global optimum; a normalized
+CP-mixture counterexample has a global mode 13.48% more probable. Treat results as heuristic unless a bound
+certifies optimality.)
 
 A single conditional-Poisson law is a product-weight distribution, so its mode is the six largest
 weights — exactly Law.top6(). For a mixture of laws (MixLaw, the ensemble's predictive law) top6()
