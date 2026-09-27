@@ -109,15 +109,14 @@ class SignShareFilter:
         return self.w.copy()
 
     def restore(self, ckpt):
-        try:
-            w = np.asarray(ckpt)
-        except (TypeError, ValueError) as exc:
-            raise ValueError("checkpoint must be a finite probability array of shape (3, 16, 7)") from exc
-        if (w.shape != (3, 16, 7) or not np.issubdtype(w.dtype, np.number)
-                or not np.all(np.isfinite(w)) or np.any(w < 0)
-                or abs(float(w.sum()) - 1.0) > 1e-12):
-            raise ValueError("checkpoint must be a finite probability array of shape (3, 16, 7)")
-        self.w = w.copy()
+        message = "checkpoint must be a finite float64 probability array of shape (3, 16, 7)"
+        if not isinstance(ckpt, np.ndarray) or ckpt.dtype != np.dtype(np.float64):
+            raise ValueError(message)
+        w = ckpt.copy()
+        if (w.shape != (3, 16, 7) or not np.all(np.isfinite(w)) or np.any(w < 0)
+                or abs(math.fsum(w.ravel()) - 1.0) > 1e-12):
+            raise ValueError(message)
+        self.w = w
 
     def replay(self, ckpt, events):
         """Replay observations from a saved checkpoint.

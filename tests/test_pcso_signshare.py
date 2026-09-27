@@ -197,6 +197,25 @@ def test_delayed_observation_replay():
     assert diff > 1e-12
 
 
+def test_restore_rejects_non_float64_checkpoints():
+    f = SignShareFilter()
+    good = f.checkpoint()
+    wrapped = np.zeros((3, 16, 7), dtype=np.uint64)
+    wrapped[0, 0, 0] = 2**63
+    wrapped[0, 0, 1] = 2**63
+    wrapped[0, 0, 2] = 1
+    for bad in (good.astype(np.complex128), good.astype(np.float16), wrapped, good.tolist()):
+        try:
+            f.restore(bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"restore accepted {type(bad).__name__} {getattr(bad, 'dtype', '')}")
+    np.testing.assert_array_equal(f.w, good)
+    f.restore(good)
+    np.testing.assert_array_equal(f.w, good)
+
+
 def test_transition_power_matches_independent_dense_matrix():
     T = np.zeros((336, 336))
     pi = np.asarray((0.10, 0.09, 0.09, 0.27, 0.27, 0.09, 0.09))
