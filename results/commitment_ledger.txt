@@ -1489,3 +1489,8 @@ f77d086439be9215  ./datasets/pcso-lotto/provenance/raw_2026-09-27/pcsodraw_655.h
 cf6c151ca56e2551  ./lotto_picker.html
 29b6b1d0498f156d  ./src/pcso_registered_predictions.py
 4ce288e909838e8d  ./tests/test_pcso_official_markdown_capture.py
+# Snapshot 2026-09-27T13:52:42+00:00 — Amendment 2 + clarifications pcso.picker.prospective1 (exact q=r/M; embedded children; EB center 0)
+# chain-prev: 5d29729d011a61fc114b33acca509197fc08a90cd07478bb4bf538775c23655b
+# (2 changed of 604 tracked files; hashed BEFORE any run script executes)
+b85c25445a3045e0  ./docs/REGISTRATION_AMENDMENT_2026-09-27_PROSPECTIVE1_NORM_CENTER.md
+90979e0d392e7b49  ./docs/REGISTRATION_PCSO_PICKER_PROSPECTIVE.md

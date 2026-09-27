@@ -5,6 +5,8 @@
 Prospective evidence begins at the first eligible anchored batch (clause 1); nothing before it counts.
 **AMENDED 2026-09-27** (before any prospective scoring): clauses 20–22 and the advantage-bound Definitions are replaced by
 `docs/REGISTRATION_AMENDMENT_2026-09-27_PROSPECTIVE1_EB.md` (empirical-Bernstein mixture; tighter registered score-bound defaults).
+**AMENDED 2026-09-27 (2)** (before any prospective scoring): `docs/REGISTRATION_AMENDMENT_2026-09-27_PROSPECTIVE1_NORM_CENTER.md`
+clarifies clause 6 (exact normalization q = r/M) and the Canonical law format (embedded children), and sets the EB center D̂ = 0.
 
 Purpose: the picker's headline tickets are the novel registered models' predictions (picker r10, PR #60,
 `src/pcso_registered_predictions.py`). This registration makes their validation prospective: full predictive
