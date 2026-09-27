@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Parity gate for the official markdown captures — offline, stdlib+pytest.
 
-The PRIMARY official capture of the 2026-09-23 and 2026-09-24 refreshes is the
-searxng-rendered markdown of pcso.gov.ph (raw HTML unavailable: direct fetch
-returned HTTP 403), which parse_results cannot ingest — so
-tests/test_pcso_official_fetch.py does not cover it.  This test parses each
-7-row markdown table directly and asserts exact equality, in both directions
-(no missing, no extra), with the canonical data_official_draws_jackpots.csv
-rows dated inside that capture's window: numbers in the official published
-order, jackpot to 2 decimals, winners.
+The PRIMARY official capture of the 2026-09-23, 2026-09-24 and 2026-09-26
+refreshes is the searxng-rendered markdown of pcso.gov.ph (raw HTML
+unavailable: direct fetch returned HTTP 403), which parse_results cannot
+ingest — so tests/test_pcso_official_fetch.py does not cover it.  This test
+parses each capture's markdown table directly and asserts exact equality, in
+both directions (no missing, no extra), with the canonical
+data_official_draws_jackpots.csv rows dated inside that capture's window:
+numbers in the official published order, jackpot to 2 decimals, winners.
 
 Run: python -m pytest tests/test_pcso_official_markdown_capture.py -q
 """
@@ -24,12 +24,16 @@ PROVENANCE = os.path.join(REPO, "datasets", "pcso-lotto", "provenance")
 CANONICAL_CSV = os.path.join(
     REPO, "datasets", "pcso-lotto", "data_official_draws_jackpots.csv")
 
-# (capture file, first draw date, last draw date) of each official capture.
+# (capture file, first draw date, last draw date, table row count) of each
+# official capture.  The 2026-09-26 view returned 6 rows (that day's table had
+# no seventh row), the earlier ones 7.
 CAPTURES = [
     (os.path.join(PROVENANCE, "raw_2026-09-23", "official_searxng_2026-09-23.md"),
-     datetime.date(2026, 9, 20), datetime.date(2026, 9, 22)),
+     datetime.date(2026, 9, 20), datetime.date(2026, 9, 22), 7),
     (os.path.join(PROVENANCE, "raw_2026-09-24", "official_searxng_2026-09-24.md"),
-     datetime.date(2026, 9, 21), datetime.date(2026, 9, 23)),
+     datetime.date(2026, 9, 21), datetime.date(2026, 9, 23), 7),
+    (os.path.join(PROVENANCE, "raw_2026-09-26", "official_searxng_2026-09-26.md"),
+     datetime.date(2026, 9, 23), datetime.date(2026, 9, 25), 6),
 ]
 
 # The capture table uses the PCSO site's compact game names.
@@ -84,14 +88,14 @@ def canonical_rows(start, end):
         return rows
 
 
-@pytest.mark.parametrize("capture,start,end", CAPTURES)
-def test_capture_has_seven_rows_in_window(capture, start, end):
+@pytest.mark.parametrize("capture,start,end,expected_rows", CAPTURES)
+def test_capture_has_expected_rows_in_window(capture, start, end, expected_rows):
     rows = capture_rows(capture)
-    assert len(rows) == 7
+    assert len(rows) == expected_rows
     assert all(start <= r[1] <= end for r in rows)
 
 
-@pytest.mark.parametrize("capture,start,end", CAPTURES)
-def test_capture_matches_canonical_exactly(capture, start, end):
+@pytest.mark.parametrize("capture,start,end,_", CAPTURES)
+def test_capture_matches_canonical_exactly(capture, start, end, _):
     """Bidirectional: no missing and no extra canonical rows in the window."""
     assert sorted(capture_rows(capture)) == sorted(canonical_rows(start, end))
