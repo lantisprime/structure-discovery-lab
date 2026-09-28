@@ -394,7 +394,8 @@ def _cp_raw_inclusion(g):
     for i in range(p - 1, -1, -1):
         suffix[:, i] = suffix[:, i + 1]
         suffix[:, i, 1:] = np.logaddexp(suffix[:, i + 1, 1:], logx[:, i, None] + suffix[:, i + 1, :-1])
-    logfactor = np.log(a) + 6 * shift - loge6
+    # Parenthesized: 6*shift and loge6 share large offsets that must cancel before log(a) is added.
+    logfactor = np.log(a) + (6 * shift - loge6)
     row_logmass = logfactor + prefix[:, p, R.K]
     with np.errstate(divide="ignore"):
         # e5 without ball i: sum_k prefix[i][k] * suffix[i+1][5-k]

@@ -171,6 +171,20 @@ def test_real_laws_random_subsets_and_bounds(real_frozen):
     assert all(tied for *_, tied in top6_differences)
 
 
+def test_cp_inclusion_large_common_offset():
+    # Astra R5-A: log(a) must be added after 6*shift - loge6 cancels.
+    s = 1e15
+    rows = np.array([[s - 0.375] * 4 + [s] * 4, [s] * 4 + [s - 1] * 4])
+    graph = {"type": "cp", "P": 8, "logw": rows,
+             "a": np.array([0.5787180591146428, 0.4212819408853572]),
+             "loge6": np.array([6 * s + 2, 6 * s + 1])}
+    graph = decode(encode(graph))
+    pi = inclusion(graph)
+    np.testing.assert_allclose(pi[:4], 0.7479230711508856, rtol=0, atol=1e-12)
+    np.testing.assert_allclose(pi[4:], 0.7520769288491144, rtol=0, atol=1e-12)
+    assert top6(graph) == [1, 2, 5, 6, 7, 8]
+
+
 def test_ticket_exact_ties_favour_lower_numbers():
     # pair_parity is odd/even symmetric when Po == Pe (E[m] = 3): every inclusion is 6/P.
     assert top6(freeze(R.ParityPair().predict(42), 42)) == [1, 2, 3, 4, 5, 6]
