@@ -19,7 +19,7 @@ import pcso_model_registry as R
 from pcso_sparse_switch import THETA as SPARSE_THETA, SparseLaw, _logcomb
 
 _MASS_CACHE = {}
-# Committed ticket tie rule (clauses 6, 18): float inclusion error is ~(4P+c)u << 1e-12 << real differences.
+# Committed ticket tie rule (clarification C3): the ticket is this float algorithm's output, an approximate maximum-inclusion set; tickets are descriptive.
 TIE_RTOL = 1e-12
 
 
@@ -30,12 +30,16 @@ def _array(x, dtype):
 def freeze(law, P) -> dict:
     """Copy a supported native law into a plain graph of arrays and scalars."""
     if isinstance(law, R.Law):
+        if np.any(~np.isfinite(law.a)) or np.any(law.a < 0):
+            raise ValueError("component weights must be finite and nonnegative")
         active = np.asarray(law.a) > 0
         if not np.any(active):
             raise ValueError("zero-weight components are not allowed in committed laws")
         return {"type": "cp", "P": P, "logw": _array(law.logw[active], np.float64),
                 "a": _array(law.a[active], np.float64), "loge6": _array(law.loge6[active], np.float64)}
     if isinstance(law, R.MixLaw):
+        if np.any(~np.isfinite(law.v)) or np.any(law.v < 0):
+            raise ValueError("mixture weights must be finite and nonnegative")
         active = np.asarray(law.v) > 0
         if not np.any(active):
             raise ValueError("zero-weight components are not allowed in committed laws")
@@ -375,31 +379,28 @@ def logq(g, S, _validated=False):
 
 def _cp_raw_inclusion(g):
     p = g["P"]
-    numerator = np.zeros(p, dtype=np.float64)
-    mass = np.float64(0)
-    for row, a, loge6 in zip(g["logw"], g["a"], g["loge6"]):
-        if a <= 0:
-            continue
-        shift = float(np.max(row))
-        x = np.exp(row - shift)
-        prefix = np.zeros((p + 1, R.K + 1), dtype=np.float64)
-        suffix = np.zeros((p + 1, R.K + 1), dtype=np.float64)
-        prefix[0, 0] = suffix[p, 0] = 1.0
-        for i in range(p):
-            prefix[i + 1] = prefix[i]
-            for k in range(R.K, 0, -1):
-                prefix[i + 1, k] += x[i] * prefix[i, k - 1]
-        for i in range(p - 1, -1, -1):
-            suffix[i] = suffix[i + 1]
-            for k in range(R.K, 0, -1):
-                suffix[i, k] += x[i] * suffix[i + 1, k - 1]
-        factor = np.float64(a) * np.exp(6 * shift - float(loge6))
-        mass += factor * prefix[p, R.K]
-        for i in range(p):
-            e5_without = sum(prefix[i, k] * suffix[i + 1, R.K - 1 - k]
-                             for k in range(R.K))
-            numerator[i] += factor * x[i] * e5_without
-    return numerator, mass
+    active = g["a"] > 0
+    rows, a, loge6 = g["logw"][active], g["a"][active], g["loge6"][active]
+    n = rows.shape[0]
+    shift = rows.max(axis=1)
+    logx = rows - shift[:, None]
+    # Log-domain prefix/suffix elementary symmetric sums, vectorized over rows.
+    prefix = np.full((n, p + 1, R.K + 1), -math.inf, dtype=np.float64)
+    suffix = np.full((n, p + 1, R.K + 1), -math.inf, dtype=np.float64)
+    prefix[:, 0, 0] = suffix[:, p, 0] = 0.0
+    for i in range(p):
+        prefix[:, i + 1] = prefix[:, i]
+        prefix[:, i + 1, 1:] = np.logaddexp(prefix[:, i, 1:], logx[:, i, None] + prefix[:, i, :-1])
+    for i in range(p - 1, -1, -1):
+        suffix[:, i] = suffix[:, i + 1]
+        suffix[:, i, 1:] = np.logaddexp(suffix[:, i + 1, 1:], logx[:, i, None] + suffix[:, i + 1, :-1])
+    logfactor = np.log(a) + 6 * shift - loge6
+    row_logmass = logfactor + prefix[:, p, R.K]
+    with np.errstate(divide="ignore"):
+        # e5 without ball i: sum_k prefix[i][k] * suffix[i+1][5-k]
+        loge5 = logsumexp(prefix[:, :p, :R.K] + suffix[:, 1:, :R.K][:, :, ::-1], axis=2)
+        log_numerator = logsumexp(logfactor[:, None] + logx + loge5, axis=0)
+    return log_numerator, float(logsumexp(row_logmass))
 
 
 def _sparse_raw_inclusion(g):
@@ -407,8 +408,9 @@ def _sparse_raw_inclusion(g):
     numerator = np.zeros(p, dtype=np.float64)
     mass = np.float64(0)
     outside_mass = math.exp(_scalar(g, "logoutside", finite=False))
-    numerator += outside_mass * (R.K / p)
-    mass += outside_mass
+    outside_scale = math.comb(p, R.K) / math.exp(_scalar(g, "logC"))
+    numerator += outside_mass * outside_scale * (R.K / p)
+    mass += outside_mass * outside_scale
     for expert in g["experts"]:
         k = expert["k"]
         supports = expert["supports"].astype(np.int64)
@@ -423,14 +425,15 @@ def _sparse_raw_inclusion(g):
         outside = np.exp(logsumexp(outside_terms, axis=1) - logz)
         weights = np.exp(expert["logweights"])
         row_weights = weights.sum(axis=1)
-        mass += row_weights.sum()
-        numerator += (row_weights * outside).sum()
+        row_scale = np.exp(logz - expert["logz_ratio"] - _scalar(g, "logC"))
+        mass += np.sum(row_scale * row_weights)
+        numerator += np.sum(row_scale * row_weights * outside)
         for j in range(k):
             correction = weights * (inside[:, j, None] - outside[:, None])
-            numerator += np.bincount(supports[:, j], weights=correction.sum(axis=0), minlength=p)
-    scale = math.comb(p, R.K) / math.exp(_scalar(g, "logC"))
-    return (outside_mass * scale * (R.K / p) + numerator - outside_mass * (R.K / p),
-            outside_mass * scale + (mass - outside_mass))
+            numerator += np.bincount(supports[:, j], weights=(row_scale[:, None] * correction).sum(axis=0), minlength=p)
+    # Correction terms can round a mathematically nonnegative numerator slightly below zero.
+    with np.errstate(divide="ignore"):
+        return np.log(np.maximum(numerator, 0.0)), math.log(mass)
 
 
 def _raw_inclusion(g):
@@ -438,14 +441,15 @@ def _raw_inclusion(g):
     if kind == "cp":
         return _cp_raw_inclusion(g)
     if kind == "mix":
-        numerator = np.zeros(g["P"], dtype=np.float64)
-        mass = np.float64(0)
+        log_numerator_terms = []
+        log_mass_terms = []
         for weight, child in zip(g["v"], g["children"]):
             if weight > 0:
                 child_num, child_mass = _raw_inclusion(child)
-                numerator += weight * child_num
-                mass += weight * child_mass
-        return numerator, mass
+                logweight = math.log(float(weight))
+                log_numerator_terms.append(logweight + child_num)
+                log_mass_terms.append(logweight + child_mass)
+        return logsumexp(log_numerator_terms, axis=0), float(logsumexp(log_mass_terms))
     if kind == "parity":
         p = g["P"]
         odd = (p + 1) // 2
@@ -466,15 +470,15 @@ def _raw_inclusion(g):
                 count_fn = lambda m: (math.comb(odd, m) * math.comb(even-1, R.K-1-m)
                                       if 0 <= m <= odd and 0 <= R.K-1-m <= even-1 else 0)
             numerator[i] = sum(count_fn(m) * r_m[m] for m in range(R.K + 1))
-        return numerator, mass
+        return np.log(numerator), math.log(mass)
     if kind == "sparse":
         return _sparse_raw_inclusion(g)
     raise TypeError(f"unsupported graph type: {kind}")
 
 
 def _inclusion(g):
-    numerator, mass = _raw_inclusion(g)
-    return numerator / mass
+    log_numerator, log_mass = _raw_inclusion(g)
+    return np.minimum(1.0, np.exp(log_numerator - log_mass))
 
 def inclusion(g, _validated=False):
     if not _validated:

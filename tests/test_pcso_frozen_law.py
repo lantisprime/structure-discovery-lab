@@ -243,7 +243,69 @@ def test_exact_sparse_mass_gate():
 def test_subnormal_cp_cached_normalizer_validation():
     graph = freeze(R.Law(np.array([[0.] + [-145.] * 7]), np.ones(1)), 8)
     graph["loge6"][0] = -721.9554775622765
-    decode(encode(graph))
+    graph = decode(encode(graph))
+    pi = inclusion(graph)
+    subsets = list(combinations(range(1, 9), 6))
+    lograw = np.array([logq(graph, subset) for subset in subsets])
+    raw = np.exp(lograw - lograw.max())
+    brute_pi = np.array([sum(raw[j] for j, subset in enumerate(subsets) if i in subset) / raw.sum()
+                         for i in range(1, 9)])
+    assert np.all(np.isfinite(pi)) and np.all((0 <= pi) & (pi <= 1))
+    assert abs(pi.sum() - 6) <= 1e-9
+    assert np.max(np.abs(pi - brute_pi)) <= 1e-12
+    assert top6(graph) == FL.ticket_from_inclusion(brute_pi)
+
+
+def test_sparse_inclusion_uses_stored_logz_ratio(small):
+    # Start from a frozen native CPSparseSwitch graph, then reduce its k=1 expert to
+    # the referee's two active theta rows and ball-8 support; this keeps the native schema.
+    graph = freeze(SS.CPSparseSwitch().predict(8), 8)
+    expert = next(item for item in graph["experts"] if item["k"] == 1)
+    for item in graph["experts"]:
+        item["logweights"][:] = -math.inf
+    expert["theta"][:] = 0
+    expert["theta"][0, 0] = 1
+    expert["theta"][1, 0] = -1
+    terms = np.column_stack((np.full(len(expert["theta"]), math.log(7)),
+                             expert["theta"][:, 0] + math.log(21)))
+    outside_terms = np.column_stack((np.full(len(expert["theta"]), math.log(6)),
+                                     expert["theta"][:, 0] + math.log(15)))
+    logz = np.logaddexp(terms[:, 0], terms[:, 1])
+    expert["logz_ratio"][:] = logz - math.log(math.comb(8, 6))
+    expert["outside"][:] = np.exp(np.logaddexp(outside_terms[:, 0], outside_terms[:, 1]) - logz)
+    expert["correction"][:, 0] = np.exp(expert["theta"][:, 0] + math.log(21) - logz) - expert["outside"]
+    expert["logweights"][:] = -math.inf
+    outside_mass = 1e-13
+    wp, wm = .6155292893150024 * (1 - outside_mass), .38447071068499755 * (1 - outside_mass)
+    expert["logweights"][0, 7] = math.log(wp)
+    expert["logweights"][1, 7] = math.log(wm)
+    graph["logoutside"] = math.log(outside_mass)
+    expert["logz_ratio"][0] -= 4e-11
+    expert["logz_ratio"][1] += 4e-11 * wp / wm
+    graph = decode(encode(graph))
+    subsets = list(combinations(range(1, 9), 6))
+    raw = np.array([math.exp(logq(graph, subset)) for subset in subsets])
+    brute_pi = np.array([sum(raw[j] for j, subset in enumerate(subsets) if i in subset) / raw.sum()
+                         for i in range(1, 9)])
+    assert np.max(np.abs(inclusion(graph) - brute_pi)) <= 1e-12
+    assert top6(graph) == FL.ticket_from_inclusion(brute_pi) == [1, 2, 3, 4, 5, 8]
+
+
+def test_freeze_rejects_negative_native_weights():
+    rows = np.zeros((2, 8))
+    with pytest.raises(ValueError, match="weights must be finite and nonnegative"):
+        freeze(R.Law(rows, np.array([1 + 1e-13, -1e-13])), 8)
+    laws = [R.Law(np.zeros((1, 8)), np.ones(1)), R.Law(np.ones((1, 8)), np.ones(1))]
+    with pytest.raises(ValueError, match="weights must be finite and nonnegative"):
+        freeze(R.MixLaw(laws, np.array([1.1, -.1])), 8)
+    bad_law = R.Law(rows, np.ones(2))
+    bad_law.a[0] = np.nan
+    with pytest.raises(ValueError, match="weights must be finite and nonnegative"):
+        freeze(bad_law, 8)
+    bad_mix = R.MixLaw(laws, np.array([.5, .5]))
+    bad_mix.v[0] = np.inf
+    with pytest.raises(ValueError, match="weights must be finite and nonnegative"):
+        freeze(bad_mix, 8)
 
 
 def test_zero_weight_components_are_omitted():
