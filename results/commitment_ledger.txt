@@ -1494,3 +1494,14 @@ cf6c151ca56e2551  ./lotto_picker.html
 # (2 changed of 604 tracked files; hashed BEFORE any run script executes)
 b85c25445a3045e0  ./docs/REGISTRATION_AMENDMENT_2026-09-27_PROSPECTIVE1_NORM_CENTER.md
 90979e0d392e7b49  ./docs/REGISTRATION_PCSO_PICKER_PROSPECTIVE.md
+# Snapshot 2026-09-28T10:25:59+00:00 — pcso.picker.prospective1 clarification C3 (ticket algorithm) + frozen-law layer (src/pcso_frozen_law.py)
+# chain-prev: ae3f76c2de0c004891e0d35892f9487b7355e98726ac99c4c8c83544e456dd91
+# (8 changed of 526 tracked files; hashed BEFORE any run script executes)
+8ac33fbba052f9c2  ./docs/REGISTRATION_CLARIFICATION_2026-09-28_PROSPECTIVE1_TICKET.md
+5fadf5f3c580453b  ./docs/REGISTRATION_PCSO_PICKER_PROSPECTIVE.md
+529f293905da121f  ./requirements.txt
+fd9c69c1fbe3ef3a  ./src/pcso_frozen_law.py
+4b99efafadbf89c1  ./src/pcso_signshare.py
+2727744441c69108  ./tests/test_pcso_frozen_law.py
+d4b9e4391a6ca9bb  ./tests/test_pcso_signshare.py
+eb31e5e58bcaa993  ./webapp/test_lab_deps.py

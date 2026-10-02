@@ -7,6 +7,8 @@ Prospective evidence begins at the first eligible anchored batch (clause 1); not
 `docs/REGISTRATION_AMENDMENT_2026-09-27_PROSPECTIVE1_EB.md` (empirical-Bernstein mixture; tighter registered score-bound defaults).
 **AMENDED 2026-09-27 (2)** (before any prospective scoring): `docs/REGISTRATION_AMENDMENT_2026-09-27_PROSPECTIVE1_NORM_CENTER.md`
 clarifies clause 6 (exact normalization q = r/M) and the Canonical law format (embedded children), and sets the EB center D̂ = 0.
+**CLARIFIED 2026-09-28** (C3, `docs/REGISTRATION_CLARIFICATION_2026-09-28_PROSPECTIVE1_TICKET.md`): the headline ticket is the output
+of the registered floating-point algorithm `ticket_from_inclusion` (tie tolerance 10⁻¹², ties to lower numbers); tickets stay descriptive.
 
 Purpose: the picker's headline tickets are the novel registered models' predictions (picker r10, PR #60,
 `src/pcso_registered_predictions.py`). This registration makes their validation prospective: full predictive
