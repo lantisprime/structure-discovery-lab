@@ -101,10 +101,11 @@ def next_tickets(models, pools):
             graph = FL._decode_arrays(json.loads(FL.encode(FL.freeze(law, P))))
             pi = FL.inclusion(graph)
             ticket = FL.ticket_from_inclusion(pi)
+            log_r = FL.logq(graph, ticket) - FL._raw_inclusion(graph)[1] + math.log(math.comb(P, R.K))
             out[g][m.name] = {"ticket": ticket,
                               "inclusion": [round(float(pi[b - 1]), 6) for b in ticket],
                               "uniform_inclusion": round(R.K / P, 6),
-                              "R": round(math.exp(_log_e(law, P, ticket)), 6)}
+                              "R": round(math.exp(log_r), 6)}
     return out
 
 
@@ -142,7 +143,7 @@ def build(rows, run_date, backtest_days, input_sha, code_sha, provenance):
             "environment": {"python": platform.python_version(), "numpy": np.__version__,
                             "scipy": scipy.__version__, "machine": platform.machine()},
             "ticket": "next_draw ticket: clarification C3 — ticket_from_inclusion on the reference evaluator's binary64 inclusions of the frozen committed law q = r/M (src/pcso_frozen_law.py; parity posteriors normalized at snapshot per clarification C4); the listed inclusion values are those reference values; descriptive only; backtest ticket: law.top6() (six largest native inclusions, ties to the lower ball), identical to the registered harness overlap scoring",
-            "R": "C(P,6) * q(ticket): the model's predictive probability of the exact ticket over the uniform-draw probability; a model statement, not a realized evidence increment",
+            "R": "C(P,6) * q(ticket) for next_draw tickets, with q = r/M the frozen committed law (reference evaluator, clarification C4); backtest log_e uses the native law; a model statement, not a realized evidence increment",
             "baseline": "uniform model (every 6-set has probability 1/C(P,6))",
             "inference": "backtest summaries are DESCRIPTIVE: eight models over a chosen window, no multiplicity control, not a registered test; registered decisions are the registry E/M processes and the C4 terminal analysis",
             "windows": {"exploratory": "draws dated <= the registration date; the models were designed with them",

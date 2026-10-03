@@ -154,7 +154,7 @@ The sales input was replaced by per-game estimates N&#770; = W&middot;C(P,6)/T f
 <b>EV model (uniform-draw scenario M<sub>0</sub>, all tickets and tiers on the same model):</b> hypergeometric tiers h<sub>k</sub> = C(6,k)C(n&minus;6,6&minus;k)/C(n,6); official Feb-2026 matrix (ticket &#8369;25; Category II/III fixed pools shared per winning bet, Category IV fixed); co-winner count K ~ Poisson(N&middot;h<sub>k</sub>) under an assumed uniform, independent competitor-bet model (the results estimate no lower-tier co-winner distribution); the 20% tax is applied to each realized individual share above &#8369;10,000 inside the expectation, E[T(A/(1+K))]. The posterior jackpot-probability multipliers R<sub>mix</sub>(A), R<sub>mix</sub>(B) are shown beside the tickets as separate information and are not folded into the EV. The CSI count contrast e<sup>&beta;z(S)</sup>/E<sub>U</sub>[e<sup>&beta;z</sup>] is shown per ticket as an association only; it is not used as a sharing probability. Jackpot defaults = last official draw (Sep 24&ndash;26, 2026); edit per draw night. N is an assumption. Schedule: 6/42 Tue/Thu/Sat &middot; 6/45 Mon/Wed/Fri &middot; 6/49 Tue/Thu/Sun &middot; 6/55 Mon/Wed/Sat &middot; 6/58 Tue/Fri/Sun. Full methodology: docs/RESULTS_PCSO_REFRESH_2026-09-06.md, docs/kb/conscious-selection-popularity.md; page review: results/codex_review_page_2026-09-06.md.
 </div></details>
 <details class="doc"><summary>9 &middot; Novel-model validation &mdash; walk-forward backtest (window 2026-09-02 to 2026-10-02, 66 draws)</summary><div class="foot">
-<b>Walk-forward backtest (<span class="mono">results/pcso_registered_predictions_2026-10-03.json</span>, window 2026-09-02 to 2026-10-02, 66 draws across five games; sha256 <span class="mono">d00f91906cec3c20de7a6deb7eed68e14feceace72371c842da80851b831c32d</span>):</b> for each model, a ticket for each historical draw was formed from only the draws that preceded it (walk-forward), then compared to the draw actually observed.<br>
+<b>Walk-forward backtest (<span class="mono">results/pcso_registered_predictions_2026-10-03.json</span>, window 2026-09-02 to 2026-10-02, 66 draws across five games; sha256 <span class="mono">7c588eb7ffe3a0071675c0af3d4269ad28adf3bcb2ec5f9272254ada48b1c843</span>):</b> for each model, a ticket for each historical draw was formed from only the draws that preceded it (walk-forward), then compared to the draw actually observed.<br>
 <table><tr><th>Model</th><th>draws</th><th>balls matched</th><th>expected under uniform</th><th>draws with 3+ matches (expected)</th><th>log-evidence</th></tr>
 <tr><td>cp_nest</td><td>66</td><td>54</td><td>48.472</td><td>4 (1.276)</td><td>0.067</td></tr>
 <tr><td>cp_sparse_switch</td><td>66</td><td>63</td><td>48.472</td><td>3 (1.276)</td><td>&minus;0.086</td></tr>
@@ -222,7 +222,7 @@ const CAL = {
   "Ultra Lotto 6/58": {pi1:0.5635, A:{Rc:1.0299}, B:{Rc:1.0241}},
 };
 // Novel registered models, next-draw predictions (ticket + R only), copied exactly from
-// results/pcso_registered_predictions_2026-10-03.json next_draw (sha256 d00f91906cec3c20de7a6deb7eed68e14feceace72371c842da80851b831c32d)
+// results/pcso_registered_predictions_2026-10-03.json next_draw (sha256 7c588eb7ffe3a0071675c0af3d4269ad28adf3bcb2ec5f9272254ada48b1c843)
 const NOVEL = {
   "Grand Lotto 6/55": {
     ensemble:{ticket:[5,42,44,45,48,50], R:1.65},

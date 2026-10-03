@@ -1,6 +1,6 @@
 {
  "_meta": {
-  "R": "C(P,6) * q(ticket): the model's predictive probability of the exact ticket over the uniform-draw probability; a model statement, not a realized evidence increment",
+  "R": "C(P,6) * q(ticket) for next_draw tickets, with q = r/M the frozen committed law (reference evaluator, clarification C4); backtest log_e uses the native law; a model statement, not a realized evidence increment",
   "backtest_window": [
    "2026-09-02",
    "2026-10-02"
@@ -9,7 +9,7 @@
   "code_sha256": {
    "src/pcso_frozen_law.py": "1bffdf4bac096c00275d41644708a72db245dfdbe19ed3f372a05bedadc0cb2a",
    "src/pcso_model_registry.py": "71949e97e5791fe9783f6d24e52a1bc863f4ad22bb2186cc59720791c5aff7a1",
-   "src/pcso_registered_predictions.py": "50feea7865665ca56f94740c6a135003214e62c69a32c1c1b4e190798dbe8b80",
+   "src/pcso_registered_predictions.py": "ad12fefd9e27e2a5df4fe6d008c8832e88bc9af9cd376e01757941483c8eb08e",
    "src/pcso_sparse_registered.py": "d0d074ee5bf9819ad0871532710fcbb12c46dd8af91f11a1b65f170683385381",
    "src/pcso_sparse_switch.py": "bf28ec348fb8c7a761b4888ad683e1ea13ac970cc971331033d3e38b3b300069"
   },
