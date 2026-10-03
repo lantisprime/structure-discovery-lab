@@ -112,8 +112,12 @@ def test_next_tickets_follow_c3(real):
     tickets = P.next_tickets(models, pools)
     for pool in pools:
         for model in models:
-            expected = FL.ticket_from_inclusion(copy.deepcopy(model).predict(pool).inclusion())
+            law = copy.deepcopy(model).predict(pool)
+            graph = FL._decode_arrays(json.loads(FL.encode(FL.freeze(law, pool))))
+            expected = FL.ticket_from_inclusion(FL.inclusion(graph))
             assert tickets[P.GAME[pool]][model.name]["ticket"] == expected
+    for pool in (42, 58):
+        assert tickets[P.GAME[pool]]["pair_parity"]["ticket"] == [1, 2, 3, 4, 5, 6]
 
 
 def test_registered_tickets_equal_the_harness_overlaps(real):

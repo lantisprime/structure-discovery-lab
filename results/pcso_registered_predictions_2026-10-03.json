@@ -7,9 +7,9 @@
   ],
   "baseline": "uniform model (every 6-set has probability 1/C(P,6))",
   "code_sha256": {
-   "src/pcso_frozen_law.py": "fd9c69c1fbe3ef3aa8bda23ae48062fbbb8c9702b442d497a1d112f80bd18d8f",
+   "src/pcso_frozen_law.py": "1bffdf4bac096c00275d41644708a72db245dfdbe19ed3f372a05bedadc0cb2a",
    "src/pcso_model_registry.py": "71949e97e5791fe9783f6d24e52a1bc863f4ad22bb2186cc59720791c5aff7a1",
-   "src/pcso_registered_predictions.py": "dc4e90c54ee6d2bb1fc68ddd31cec02ff9d2ddecbf2e984a2e2e87eed68a62c5",
+   "src/pcso_registered_predictions.py": "50feea7865665ca56f94740c6a135003214e62c69a32c1c1b4e190798dbe8b80",
    "src/pcso_sparse_registered.py": "d0d074ee5bf9819ad0871532710fcbb12c46dd8af91f11a1b65f170683385381",
    "src/pcso_sparse_switch.py": "bf28ec348fb8c7a761b4888ad683e1ea13ac970cc971331033d3e38b3b300069"
   },
@@ -130,7 +130,7 @@
   "script": "src/pcso_registered_predictions.py",
   "seed": 20260923,
   "sparse_registration_date": "2026-09-23",
-  "ticket": "next_draw ticket: the C3 tie rule ticket_from_inclusion in src/pcso_frozen_law.py (six sequential picks, each the lowest-numbered remaining ball whose inclusion is within relative 1e-12 of the remaining maximum) applied to the NATIVE inclusion probabilities law.inclusion(), not to the reference evaluator of a frozen committed law (C3 step 1), so exact mathematical ties that the native evaluator separates by more than 1e-12 (pair_parity on pools with equal odd/even counts) are not resolved to lower numbers; descriptive only; backtest ticket: law.top6() (six largest inclusions, ties to the lower ball), identical to the registered harness overlap scoring",
+  "ticket": "next_draw ticket: clarification C3 \u2014 ticket_from_inclusion on the reference evaluator's binary64 inclusions of the frozen committed law q = r/M (src/pcso_frozen_law.py; parity posteriors normalized at snapshot per clarification C4); the listed inclusion values are those reference values; descriptive only; backtest ticket: law.top6() (six largest native inclusions, ties to the lower ball), identical to the registered harness overlap scoring",
   "windows": {
    "exploratory": "draws dated <= the registration date; the models were designed with them",
    "registered": "draws dated after the registration date"
@@ -13307,7 +13307,7 @@
     "uniform_inclusion": 0.142857
    },
    "pair_parity": {
-    "R": 1.120286,
+    "R": 0.981492,
     "inclusion": [
      0.142857,
      0.142857,
@@ -13318,11 +13318,11 @@
     ],
     "ticket": [
      1,
+     2,
      3,
+     4,
      5,
-     7,
-     9,
-     11
+     6
     ],
     "uniform_inclusion": 0.142857
    },
@@ -13793,7 +13793,7 @@
     "uniform_inclusion": 0.103448
    },
    "pair_parity": {
-    "R": 1.115083,
+    "R": 0.981386,
     "inclusion": [
      0.103448,
      0.103448,
@@ -13804,11 +13804,11 @@
     ],
     "ticket": [
      1,
+     2,
      3,
+     4,
      5,
-     7,
-     9,
-     11
+     6
     ],
     "uniform_inclusion": 0.103448
    },
