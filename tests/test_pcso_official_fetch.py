@@ -127,3 +127,39 @@ def test_from_dir_committed_captures_zero_candidates():
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "", (
         f"expected zero candidate CSV lines, got:\n{proc.stdout}")
+
+
+# --------------------------------------------------------------------------
+# 4. Client fallback chain (no network): urllib 403 -> curl 403 -> headed
+#    browser. The edge rejects non-browser/headless clients by fingerprint
+#    (2026-10-03), so a 403 from curl must reach the browser, not abort.
+# --------------------------------------------------------------------------
+
+def _raise_403(*_args, **_kwargs):
+    raise F.Http403("HTTP 403")
+
+
+def test_curl_403_falls_back_to_browser(monkeypatch):
+    calls = []
+    monkeypatch.setattr(F, "_urllib_request", _raise_403)
+    monkeypatch.setattr(F, "_curl_fetch", lambda *a: calls.append("curl") or _raise_403())
+    monkeypatch.setattr(F, "_browser_fetch", lambda *a: calls.append("browser") or "<html/>")
+    html, client = F.fetch_with_client(17, "2026-09-28", "2026-09-28")
+    assert (html, client, calls) == ("<html/>", "browser", ["curl", "browser"])
+
+
+def test_curl_403_status_raises_http403(monkeypatch, tmp_path):
+    monkeypatch.setattr(F.shutil, "which", lambda _name: "/usr/bin/curl")
+    monkeypatch.setattr(F, "_curl_run", lambda *a: ("403", b"Access Denied"))
+    with pytest.raises(F.Http403):
+        F._curl_fetch(17, datetime.date(2026, 9, 28), datetime.date(2026, 9, 28))
+
+
+def test_curl_other_error_does_not_reach_browser(monkeypatch):
+    def curl_500(*_a):
+        raise F.FetchError("curl GET returned HTTP 500")
+    monkeypatch.setattr(F, "_urllib_request", _raise_403)
+    monkeypatch.setattr(F, "_curl_fetch", curl_500)
+    monkeypatch.setattr(F, "_browser_fetch", lambda *a: pytest.fail("browser must not run"))
+    with pytest.raises(F.FetchError, match="HTTP 500"):
+        F.fetch_with_client(17, "2026-09-28", "2026-09-28")

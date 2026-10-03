@@ -167,9 +167,12 @@ pair affinity, gap law, rolling windows, backtests) — count it once (Governanc
 ## 8. Update pipeline & instruments
 
 - **No scheduled task exists in this repo** (roadmap item 6 honesty fix, 2026-09-06). Refreshes
-  are manual runs: fetch the official date-range search per game (`SearchLottoResult.aspx`
-  POST form; the site returns HTTP 403 to non-browser clients, so use curl with browser
-  headers), cross-check archives, append rows (date, then pool order; CRLF), extend
+  are manual runs: fetch the official date-range search per game with
+  `tools/pcso_official_fetch.py --start --end --out-dir` (`SearchLottoResult.aspx` POST form;
+  the edge returns HTTP 403 to urllib, curl and headless browsers by client fingerprint, so
+  the tool falls back automatically to a headed Playwright Chromium window, verified
+  2026-10-03; the searxng page read shows only the last ~3 days and cannot submit the
+  form), cross-check archives, append rows (date, then pool order; CRLF), extend
   `data_astro_geomagnetic.csv` with `make_astro_geomagnetic_1yr.compute_ephemeris` (PyEphem
   4.2.1; parity on the Jun–Jul 2026 rows: 54/58 byte-identical, 4 differ by 0.001 in Moon
   Illum — the §10 V2 rounding artifact), write a dated manifest with raw captures, then run

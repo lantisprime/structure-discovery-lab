@@ -18,7 +18,10 @@ required pipeline step). For each of the five 6/N games it
   2. POSTs the date-range + game search with browser headers (Safari UA);
      if the site's edge returns HTTP 403 to the urllib client, the identical
      GET/POST sequence is retried through ``curl`` with the same headers and a
-     shared cookie jar,
+     shared cookie jar; if curl also gets HTTP 403, the search form is filled
+     and submitted in a HEADED Playwright Chromium window (the edge rejects
+     non-browser and headless clients by fingerprint, not by host — verified
+     2026-10-03: curl/urllib/headless 403, headed 200),
   3. saves the raw response HTML, gzipped, as immutable provenance,
   4. parses the result rows (game, draw date, combination in the official
      published order, jackpot PHP, winners) for the five 6/N games only,
@@ -36,8 +39,10 @@ Run (fetch):
 Run (offline re-parse):
     python3 tools/pcso_official_fetch.py --from-dir <dir> [--out-dir <dir>]
 
-Standard library only. Exit status: 0 success, 1 fetch/parse failure,
-2 usage error.
+Standard library only, except the last-resort browser fallback, which needs
+Playwright (requirements-dev.txt; ``python -m playwright install chromium``)
+and a desktop session for the headed window. Exit status: 0 success,
+1 fetch/parse failure, 2 usage error.
 """
 
 from __future__ import annotations
@@ -350,6 +355,8 @@ def _curl_fetch(game_id: int, start: datetime.date, end: datetime.date) -> str:
 
         status, body = _curl_run(["-b", jar, "-c", jar, "-L", BASE_URL],
                                  get_headers, out)
+        if status == "403":
+            raise Http403(f"curl GET returned HTTP 403 for {BASE_URL}")
         if status != "200":
             raise FetchError(f"curl GET returned HTTP {status} for {BASE_URL}")
         page_html = body.decode("utf-8", "replace")
@@ -371,9 +378,53 @@ def _curl_fetch(game_id: int, start: datetime.date, end: datetime.date) -> str:
         status, body = _curl_run(
             ["-b", jar, "-c", jar, "--data", "@" + post_file, BASE_URL],
             post_headers, out)
+        if status == "403":
+            raise Http403(f"curl POST returned HTTP 403 for {BASE_URL}")
         if status != "200":
             raise FetchError(f"curl POST returned HTTP {status} for {BASE_URL}")
         return body.decode("utf-8", "replace")
+
+
+def _browser_fetch(game_id: int, start: datetime.date, end: datetime.date) -> str:
+    """Fill and submit the official search form in a headed Chromium window."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise FetchError("HTTP 403 from curl and Playwright is not installed "
+                         "(pip install -r requirements-dev.txt; "
+                         "python -m playwright install chromium)")
+    values = {
+        "ddlStartMonth": MONTHS[start.month - 1], "ddlStartDate": str(start.day),
+        "ddlStartYear": str(start.year), "ddlEndMonth": MONTHS[end.month - 1],
+        "ddlEndDay": str(end.day), "ddlEndYear": str(end.year),
+        "ddlSelectGame": str(game_id),
+    }
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=False)  # headless is 403'd too
+            try:
+                page = browser.new_context(user_agent=USER_AGENT,
+                                           locale="en-PH").new_page()
+                resp = page.goto(BASE_URL, wait_until="domcontentloaded",
+                                 timeout=TIMEOUT_SECS * 1000)
+                if resp is None or resp.status != 200:
+                    raise FetchError(f"browser GET returned HTTP "
+                                     f"{resp.status if resp else 'none'} for {BASE_URL}")
+                for name, value in values.items():
+                    page.select_option(f'select[name="{F_PREFIX}{name}"]', value)
+                with page.expect_navigation(wait_until="domcontentloaded",
+                                            timeout=TIMEOUT_SECS * 1000) as nav:
+                    page.click(f'[name="{F_PREFIX}btnSearch"]')
+                if nav.value is None or nav.value.status != 200:
+                    raise FetchError(f"browser POST returned HTTP "
+                                     f"{nav.value.status if nav.value else 'none'} for {BASE_URL}")
+                return page.content()
+            finally:
+                browser.close()
+    except FetchError:
+        raise
+    except Exception as exc:  # Playwright errors: missing browser, no display, timeout
+        raise FetchError(f"browser fetch failed: {exc}")
 
 
 def fetch_with_client(game_id: int, start, end) -> tuple:
@@ -406,7 +457,12 @@ def fetch_with_client(game_id: int, start, end) -> tuple:
         print("[fetch] HTTP 403 from official site via urllib; "
               "falling back to curl with the same browser headers",
               file=sys.stderr)
+    try:
         return _curl_fetch(game_id, start, end), "curl"
+    except Http403:
+        print("[fetch] HTTP 403 via curl; falling back to a headed "
+              "Playwright Chromium window", file=sys.stderr)
+        return _browser_fetch(game_id, start, end), "browser"
 
 
 def fetch(game_id: int, start, end) -> str:
