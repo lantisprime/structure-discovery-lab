@@ -1505,3 +1505,34 @@ fd9c69c1fbe3ef3a  ./src/pcso_frozen_law.py
 2727744441c69108  ./tests/test_pcso_frozen_law.py
 d4b9e4391a6ca9bb  ./tests/test_pcso_signshare.py
 eb31e5e58bcaa993  ./webapp/test_lab_deps.py
+# Snapshot 2026-10-03T07:48:58+00:00 — pcso.picker.prospective1 clarification C4 (parity posterior normalization) + 2026-10-03 refresh state, before the C4 implementation
+# chain-prev: c81cc1155279e12319a395f1b5000b4e6b659ef2bd0f465bad3b229a1ddd0336
+# (28 changed of 543 tracked files; hashed BEFORE any run script executes)
+763c661da93627f5  ./datasets/pcso-lotto/DATASET.md
+bcca5a48614355cc  ./datasets/pcso-lotto/data_astro_geomagnetic.csv
+68d9b29190c03ee2  ./datasets/pcso-lotto/data_draws.csv
+ef9422ec1e6afaa0  ./datasets/pcso-lotto/data_draws_1yr.csv
+acc6a66b8af3fd21  ./datasets/pcso-lotto/data_draws_1yr_audited.csv
+6ef36cfbb5e5593f  ./datasets/pcso-lotto/data_official_draws_jackpots.csv
+d040cca8a8850bf4  ./datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json
+77bb29abd496b87f  ./datasets/pcso-lotto/provenance/raw_2026-10-03/lottopcso_642.html.gz
+4f70d7f1e92aa0ef  ./datasets/pcso-lotto/provenance/raw_2026-10-03/lottopcso_645.html.gz
+b79bc550365c76d9  ./datasets/pcso-lotto/provenance/raw_2026-10-03/lottopcso_649.html.gz
+dd9486948a73c77e  ./datasets/pcso-lotto/provenance/raw_2026-10-03/lottopcso_655.html.gz
+4c6f65277a7def57  ./datasets/pcso-lotto/provenance/raw_2026-10-03/lottopcso_658.html.gz
+4c1308200d948664  ./datasets/pcso-lotto/provenance/raw_2026-10-03/official_13_2026-09-25_2026-10-02.html.gz
+349a75137cd934d0  ./datasets/pcso-lotto/provenance/raw_2026-10-03/official_17_2026-09-25_2026-10-02.html.gz
+15df7f80b9f15f6a  ./datasets/pcso-lotto/provenance/raw_2026-10-03/official_18_2026-09-25_2026-10-02.html.gz
+d65559e4a25cbcc6  ./datasets/pcso-lotto/provenance/raw_2026-10-03/official_1_2026-09-25_2026-10-02.html.gz
+397f06fa3f96187b  ./datasets/pcso-lotto/provenance/raw_2026-10-03/official_2_2026-09-25_2026-10-02.html.gz
+77923e3683de6ffb  ./datasets/pcso-lotto/provenance/raw_2026-10-03/pcsodraw_642.html.gz
+d7340d80d0aa15f7  ./datasets/pcso-lotto/provenance/raw_2026-10-03/pcsodraw_645.html.gz
+9dcad97df14e74ef  ./datasets/pcso-lotto/provenance/raw_2026-10-03/pcsodraw_649.html.gz
+e3d58e63f21eb7ee  ./datasets/pcso-lotto/provenance/raw_2026-10-03/pcsodraw_655.html.gz
+fe61df49982eb4de  ./datasets/pcso-lotto/provenance/raw_2026-10-03/pcsodraw_658.html.gz
+f2d46ac547b3e630  ./docs/REGISTRATION_CLARIFICATION_2026-10-03_PROSPECTIVE1_PARITY.md
+51fa27b1626d452a  ./docs/REGISTRATION_PCSO_PICKER_PROSPECTIVE.md
+dc4e90c54ee6d2bb  ./src/pcso_registered_predictions.py
+355a7e8d50cf6318  ./tests/test_pcso_official_fetch.py
+f0cdd25fcb6289ee  ./tests/test_pcso_registered_predictions.py
+e939aa40f2337578  ./tools/pcso_official_fetch.py

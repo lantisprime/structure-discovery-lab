@@ -9,6 +9,8 @@ Prospective evidence begins at the first eligible anchored batch (clause 1); not
 clarifies clause 6 (exact normalization q = r/M) and the Canonical law format (embedded children), and sets the EB center D̂ = 0.
 **CLARIFIED 2026-09-28** (C3, `docs/REGISTRATION_CLARIFICATION_2026-09-28_PROSPECTIVE1_TICKET.md`): the headline ticket is the output
 of the registered floating-point algorithm `ticket_from_inclusion` (tie tolerance 10⁻¹², ties to lower numbers); tickets stay descriptive.
+**CLARIFIED 2026-10-03** (C4, `docs/REGISTRATION_CLARIFICATION_2026-10-03_PROSPECTIVE1_PARITY.md`): `freeze` stores each parity
+posterior normalized (lp − lse(lp)); all gates stay; the prospective ensemble uses the normalized parity children.
 
 Purpose: the picker's headline tickets are the novel registered models' predictions (picker r10, PR #60,
 `src/pcso_registered_predictions.py`). This registration makes their validation prospective: full predictive
