@@ -49,5 +49,22 @@
       "--power-sims",
       "50"
     ]
+  },
+  "results/pcso_model_leaderboard_2026-10-03.json": {
+    "artifact_sha256": "ab30ac5ecb8e6e70f8eaa4475b411b322e15c679ade96d0ad5b1b902d3d85e3f",
+    "harness_commit": "c6e3fcb5b235402fb094e4e521ca3f409865158f",
+    "input_blob": "6797c163b3d896d5dfa864e2f6a186eb87c0d3ed",
+    "input_sha256": "ef9422ec1e6afaa056d2928e007c70288c66293bc10b3909623dbfa3b6615e69",
+    "argv": [
+      "src/pcso_model_registry.py",
+      "--seed",
+      "20260923",
+      "--run-date",
+      "2026-10-03",
+      "--null-sims",
+      "400",
+      "--power-sims",
+      "50"
+    ]
   }
 }

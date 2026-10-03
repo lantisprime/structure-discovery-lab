@@ -1,4 +1,5 @@
 """Novel-model tickets: no lookahead, and the tickets equal what the registered harness scores."""
+import copy
 import json
 from pathlib import Path
 import sys
@@ -9,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import pcso_model_registry as R
+import pcso_frozen_law as FL
 import pcso_registered_predictions as P
 import pcso_sparse_registered as SR
 from pcso_sparse_switch import CPSparseSwitch
@@ -102,6 +104,16 @@ def test_next_tickets_are_isolated_from_order_and_leave_state_untouched(real):
         alone = P.next_tickets(models, [pool])
         assert alone == {P.GAME[pool]: together[P.GAME[pool]]}
     assert json.dumps(cp.rng.bit_generator.state, sort_keys=True) == rng_before
+
+
+def test_next_tickets_follow_c3(real):
+    rows, _, models = real
+    pools = sorted({p for _, p, _ in rows})
+    tickets = P.next_tickets(models, pools)
+    for pool in pools:
+        for model in models:
+            expected = FL.ticket_from_inclusion(copy.deepcopy(model).predict(pool).inclusion())
+            assert tickets[P.GAME[pool]][model.name]["ticket"] == expected
 
 
 def test_registered_tickets_equal_the_harness_overlaps(real):

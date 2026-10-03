@@ -6,8 +6,10 @@ pcso.sparse.seq1 model cp_sparse_switch. Every model runs through all rows in (d
 the way the registered harness does: predict, then update (CP-NEST's predict draws its predictive
 samples and sets the law its update uses, so it is called exactly once per row), and
 cp_sparse_switch restarts its switching clock at the first draw dated after the registration date.
-Each ticket is therefore made only from earlier draws. A ticket is law.top6(), the
-maximum-inclusion set scored by the registered overlap test; the uniform model is the baseline.
+Each ticket is therefore made only from earlier draws. The backtest ticket is law.top6() (what the
+registered overlap test scores); the next-draw ticket applies the C3 tie rule
+(pcso_frozen_law.ticket_from_inclusion) to the native inclusion probabilities. The uniform model
+is the baseline.
 
 Writes results/pcso_registered_predictions_<run_date>.json (byte-deterministic):
   next_draw  per game and model: the ticket for that game's next draw after the last data row, its
@@ -42,13 +44,15 @@ import scipy
 
 import pcso_model_registry as R
 import pcso_sparse_registered as SR
+import pcso_frozen_law as FL
 from pcso_sparse_switch import CPSparseSwitch
 
 ROOT = Path(__file__).resolve().parents[1]
 SEED = 20260923
 SPARSE_REGISTRATION_DATE = SR.REGISTRATION_DATE
 SCRIPT = "src/pcso_registered_predictions.py"
-CODE = ("src/pcso_model_registry.py", "src/pcso_sparse_switch.py", "src/pcso_sparse_registered.py", SCRIPT)
+CODE = ("src/pcso_model_registry.py", "src/pcso_sparse_switch.py", "src/pcso_sparse_registered.py",
+        "src/pcso_frozen_law.py", SCRIPT)
 GAME = {P: g for g, P in R.POOL.items()}
 
 
@@ -94,8 +98,8 @@ def next_tickets(models, pools):
         out[g] = {}
         for m in models:
             law = copy.deepcopy(m).predict(P)
-            ticket = sorted(int(b) for b in law.top6())
             pi = law.inclusion()
+            ticket = FL.ticket_from_inclusion(pi)
             out[g][m.name] = {"ticket": ticket,
                               "inclusion": [round(float(pi[b - 1]), 6) for b in ticket],
                               "uniform_inclusion": round(R.K / P, 6),
@@ -136,7 +140,7 @@ def build(rows, run_date, backtest_days, input_sha, code_sha, provenance):
             "input_sha256": input_sha, "code_sha256": code_sha, "registered_provenance": provenance,
             "environment": {"python": platform.python_version(), "numpy": np.__version__,
                             "scipy": scipy.__version__, "machine": platform.machine()},
-            "ticket": "maximum-inclusion set law.top6() (six largest predictive inclusion probabilities; ties to the lower ball)",
+            "ticket": "next_draw ticket: the C3 tie rule ticket_from_inclusion in src/pcso_frozen_law.py (six sequential picks, each the lowest-numbered remaining ball whose inclusion is within relative 1e-12 of the remaining maximum) applied to the NATIVE inclusion probabilities law.inclusion(), not to the reference evaluator of a frozen committed law (C3 step 1), so exact mathematical ties that the native evaluator separates by more than 1e-12 (pair_parity on pools with equal odd/even counts) are not resolved to lower numbers; descriptive only; backtest ticket: law.top6() (six largest inclusions, ties to the lower ball), identical to the registered harness overlap scoring",
             "R": "C(P,6) * q(ticket): the model's predictive probability of the exact ticket over the uniform-draw probability; a model statement, not a realized evidence increment",
             "baseline": "uniform model (every 6-set has probability 1/C(P,6))",
             "inference": "backtest summaries are DESCRIPTIVE: eight models over a chosen window, no multiplicity control, not a registered test; registered decisions are the registry E/M processes and the C4 terminal analysis",
