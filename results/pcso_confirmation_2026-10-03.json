@@ -1,0 +1,270 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "script": "src/pcso_monitoring_run.py (validators + family imported from src/pcso_weekly_update.py)",
+    "registration": "datasets/pcso-lotto/DATASET.md section 6",
+    "run_date": "2026-10-03",
+    "pipeline": "pcso-weekly-update",
+    "grade": "G0 exploratory forward monitoring",
+    "confirmation_cutoff": "2026-06-10",
+    "seed_scheme": "single random.Random(20261003) stream in published test order",
+    "null_simulator": "random.sample(range(1, P+1), 6) independently per draw",
+    "add_one_correction": true,
+    "test_order": [
+      "chi_square:Lotto 6/42",
+      "chi_square:Mega Lotto 6/45",
+      "chi_square:Super Lotto 6/49",
+      "chi_square:Grand Lotto 6/55",
+      "chi_square:Ultra Lotto 6/58",
+      "pearson:mean_drawn_vs_moon_altitude",
+      "pearson:mean_drawn_vs_moon_illumination",
+      "pearson:mean_drawn_vs_kp",
+      "binomial:Grand Lotto 6/55:number45"
+    ],
+    "input_sha256": {
+      "datasets/pcso-lotto/data_draws.csv": "68d9b29190c03ee2de1a8007fd5cc3db7d95fa78ce9aba13c36f2c8e7ee92082",
+      "datasets/pcso-lotto/data_draws_1yr.csv": "ef9422ec1e6afaa056d2928e007c70288c66293bc10b3909623dbfa3b6615e69",
+      "datasets/pcso-lotto/data_draws_1yr_audited.csv": "acc6a66b8af3fd21a5bb9ccce9e3d61bd0cf8abfc536fe62728201fbbd1b2042",
+      "datasets/pcso-lotto/data_astro_geomagnetic.csv": "bcca5a48614355cc702099db5c19f5d929d7310d8f7cd876463a3cd666503c1a",
+      "PCSO_Lotto_Analysis_Mar-Jun_2026.xlsx": "5400f8a227f2f23a2a3770019082bf6d5a6cc6566a72d315fd413f628b524fe1",
+      "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json": "d040cca8a8850bf4d53af0499a977dc94dd0f0302e39f462b9f81c550753aad5"
+    },
+    "exploration_prefix_sha256": {
+      "data_draws.csv": "8f38c1d2fc1f3778552f015b4dc690c603be4a0d8c3659d692691d2ceb5f5087",
+      "data_draws_1yr.csv": "0a9d06d08557bc6010d2a04415a3fb94ec696780f8214538afd4cd3c815c36b0",
+      "data_draws_1yr_audited.csv": "ddcaf22dc665d5837afe840bdb1816f11fdda4908ef0ff270ec091a477ce7693",
+      "data_astro_geomagnetic.csv": "ee511ace0a90f39afa105f40ab2e8f6e16bb6bfd3ccb626a9782fdde65ab9427"
+    },
+    "workbook": {
+      "sha256": "5400f8a227f2f23a2a3770019082bf6d5a6cc6566a72d315fd413f628b524fe1",
+      "sheets": 8,
+      "formulas": 786,
+      "cached_value_errors": 0,
+      "draw_rows": 252
+    },
+    "audit_correction": {
+      "supersedes_unreproducible_artifact_sha256": "a9e1424b3f2f8d752867f760b38b69f5b9ad39de2f787b6741beb26f6dcc7d50",
+      "reason": "the original untracked JSON had no generating script; this rerun applies the dataset card's declared null and publishes the RNG stream contract",
+      "verdict_changed": false
+    },
+    "raw_source_capture": {
+      "available": true,
+      "fetched_at": "2026-10-03",
+      "per_source_fetch_times": {
+        "pcso.gov.ph": {
+          "fetched_at": "2026-10-03",
+          "method": "tools/pcso_official_fetch.py fetch mode; five official date-range POST responses retained as gzipped raw HTML"
+        },
+        "lottopcso.com": {
+          "fetched_at": "2026-10-03",
+          "method": "curl with Safari UA (HTTP 200), raw HTML retained gzipped"
+        },
+        "pcsodraw.com": {
+          "fetched_at": "2026-10-03",
+          "method": "curl with Safari UA (HTTP 200), raw HTML retained gzipped"
+        }
+      },
+      "fetch_client": "tools/pcso_official_fetch.py fetch mode: urllib HTTP 403 -> curl HTTP 403 -> headed Playwright Chromium HTTP 200 (GET + form POST)",
+      "official_query": {
+        "url": "https://www.pcso.gov.ph/SearchLottoResult.aspx",
+        "form": "date-range POST per game",
+        "ranges": [
+          {
+            "game_id": 13,
+            "start": "2026-09-25",
+            "end": "2026-10-02"
+          },
+          {
+            "game_id": 2,
+            "start": "2026-09-25",
+            "end": "2026-10-02"
+          },
+          {
+            "game_id": 1,
+            "start": "2026-09-25",
+            "end": "2026-10-02"
+          },
+          {
+            "game_id": 17,
+            "start": "2026-09-25",
+            "end": "2026-10-02"
+          },
+          {
+            "game_id": 18,
+            "start": "2026-09-25",
+            "end": "2026-10-02"
+          }
+        ]
+      },
+      "files": [
+        {
+          "file": "provenance/raw_2026-10-03/lottopcso_642.html.gz",
+          "sha256_uncompressed": "e4c60fa33676990845d0dedde9ac2d2dca3b0510729f4c15db3bc48446edcca4",
+          "bytes": 123887
+        },
+        {
+          "file": "provenance/raw_2026-10-03/lottopcso_645.html.gz",
+          "sha256_uncompressed": "1e94e9ebf376d7355abb3b4eb2a020119c40c8b4da96baee65cd9d0e97356edb",
+          "bytes": 141448
+        },
+        {
+          "file": "provenance/raw_2026-10-03/lottopcso_649.html.gz",
+          "sha256_uncompressed": "9464d48b792b5896de618b44a00b4c797cb3e59f32cfb8fbc50abbf6fa884873",
+          "bytes": 159349
+        },
+        {
+          "file": "provenance/raw_2026-10-03/lottopcso_655.html.gz",
+          "sha256_uncompressed": "6893cd466f80389ff09324dcfd28b2fb42c796bec70e31b33bbe3443543a261c",
+          "bytes": 165812
+        },
+        {
+          "file": "provenance/raw_2026-10-03/lottopcso_658.html.gz",
+          "sha256_uncompressed": "8e8c4e9a7edac52a3c10de0ed67e020de693f330c41b4397dfb08bae88d274f5",
+          "bytes": 108115
+        },
+        {
+          "file": "provenance/raw_2026-10-03/official_13_2026-09-25_2026-10-02.html.gz",
+          "sha256_uncompressed": "ee55b647142ec662706d7576901debb7644e2ba05fb21351c9ac5624348fa27d",
+          "bytes": 39846
+        },
+        {
+          "file": "provenance/raw_2026-10-03/official_17_2026-09-25_2026-10-02.html.gz",
+          "sha256_uncompressed": "8890644cebadfa3fcb47a661d7d73060a605b49dc4f66d09b0b797b232245f53",
+          "bytes": 39911
+        },
+        {
+          "file": "provenance/raw_2026-10-03/official_18_2026-09-25_2026-10-02.html.gz",
+          "sha256_uncompressed": "20926b20fa9758907a6b0a0012e970c68c2faba903fd60591dcf87fc9917daf6",
+          "bytes": 40313
+        },
+        {
+          "file": "provenance/raw_2026-10-03/official_1_2026-09-25_2026-10-02.html.gz",
+          "sha256_uncompressed": "52096716979c5002e24496ca5453fa9ea782f464a88b5534c7b0b610379ce229",
+          "bytes": 39885
+        },
+        {
+          "file": "provenance/raw_2026-10-03/official_2_2026-09-25_2026-10-02.html.gz",
+          "sha256_uncompressed": "b16dd5fc40f4435ef7110808a3cf64700998671ca9968882a8782e8daedaebb5",
+          "bytes": 40281
+        },
+        {
+          "file": "provenance/raw_2026-10-03/pcsodraw_642.html.gz",
+          "sha256_uncompressed": "d4d60769693198be3f4dd7dd3bb8b89b87df6caee9702711f365fce475fffffa",
+          "bytes": 24731
+        },
+        {
+          "file": "provenance/raw_2026-10-03/pcsodraw_645.html.gz",
+          "sha256_uncompressed": "b3bcff2c2f5050deba500309e0a277300c8bc987e18c9dfa3de727082485ecc5",
+          "bytes": 24960
+        },
+        {
+          "file": "provenance/raw_2026-10-03/pcsodraw_649.html.gz",
+          "sha256_uncompressed": "2dae22d483cc64480f391d52c55a369673ba885f38060518d61511484840ea3e",
+          "bytes": 24958
+        },
+        {
+          "file": "provenance/raw_2026-10-03/pcsodraw_655.html.gz",
+          "sha256_uncompressed": "aa52bc84ae5f1c8790ea9f549c8f9a12af85c0eef7c8bc1714da2d8eee8cff56",
+          "bytes": 25167
+        },
+        {
+          "file": "provenance/raw_2026-10-03/pcsodraw_658.html.gz",
+          "sha256_uncompressed": "b43e885812903df90fba45469bfff9820e2676f0e0f13f3af9473e0eb9860cc9",
+          "bytes": 25202
+        }
+      ]
+    }
+  },
+  "confirmation_sizes": {
+    "Lotto 6/42": 49,
+    "Mega Lotto 6/45": 49,
+    "Super Lotto 6/49": 49,
+    "Grand Lotto 6/55": 48,
+    "Ultra Lotto 6/58": 49,
+    "total": 244
+  },
+  "registered_family_m": 9,
+  "computable_tests": 8,
+  "bonferroni_threshold": 0.005556,
+  "seed": 20261003,
+  "tests": {
+    "chi_square_mc_10000": {
+      "Lotto 6/42": {
+        "n": 49,
+        "chi2": 55.142857,
+        "p_mc": 0.013499,
+        "mc_exceedances": 134,
+        "flag": false
+      },
+      "Mega Lotto 6/45": {
+        "n": 49,
+        "chi2": 32.938776,
+        "p_mc": 0.761724,
+        "mc_exceedances": 7617,
+        "flag": false
+      },
+      "Super Lotto 6/49": {
+        "n": 49,
+        "chi2": 57.666667,
+        "p_mc": 0.061394,
+        "mc_exceedances": 613,
+        "flag": false
+      },
+      "Grand Lotto 6/55": {
+        "n": 48,
+        "chi2": 65.298611,
+        "p_mc": 0.050995,
+        "mc_exceedances": 509,
+        "flag": false
+      },
+      "Ultra Lotto 6/58": {
+        "n": 49,
+        "chi2": 63.469388,
+        "p_mc": 0.125187,
+        "mc_exceedances": 1251,
+        "flag": false
+      }
+    },
+    "pearson_permutation_20000": {
+      "mean_drawn_vs_moon_altitude": {
+        "r": -0.023953,
+        "p": 0.713414,
+        "permutation_exceedances": 14268,
+        "n": 244,
+        "flag": false
+      },
+      "mean_drawn_vs_moon_illumination": {
+        "r": 0.018451,
+        "p": 0.773861,
+        "permutation_exceedances": 15477,
+        "n": 244,
+        "flag": false
+      },
+      "mean_drawn_vs_kp": {
+        "status": "not_computable",
+        "reason": "Kp blank for confirmation draws"
+      }
+    },
+    "binomial_655_number45": {
+      "n_655": 48,
+      "k": 2,
+      "expected": 5.236364,
+      "p_two_sided": 0.165698,
+      "flag": false
+    },
+    "pearson_permutation_20000_within_game_variant": {
+      "mean_drawn_vs_moon_altitude": {
+        "r": -0.023953,
+        "p_within_game": 0.713514,
+        "n": 244
+      },
+      "mean_drawn_vs_moon_illumination": {
+        "r": 0.018451,
+        "p_within_game": 0.773811,
+        "n": 244
+      }
+    }
+  },
+  "flags": [],
+  "note": "The m=9 threshold is within-look only. Weekly cumulative looks are exploratory monitoring without a registered sequential alpha-spending rule; any flag requires a separately registered fresh replication. Kp remains non-computable pending GFZ backfill."
+}
