@@ -46,7 +46,10 @@ def freeze(law, P) -> dict:
         return {"type": "mix", "P": P, "v": _array(law.v[active], np.float64),
                 "children": [freeze(child, P) for child, keep in zip(law.laws, active) if keep]}
     if isinstance(law, R.ParityLaw):
-        return {"type": "parity", "P": law.P, "lp": _array(law.lp, np.float64),
+        # C4: normalize the snapshot, leaving registered native state untouched.
+        lp = _array(law.lp, np.float64)
+        lp -= _lse(lp)
+        return {"type": "parity", "P": law.P, "lp": lp,
                 "theta": _array(R.THETA, np.float64), "g": _array(law.g, np.float64),
                 "logcnt": _array(law.logcnt, np.float64), "logZ": _array(law.logZ, np.float64)}
     if isinstance(law, SparseLaw):

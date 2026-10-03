@@ -1,0 +1,233 @@
+{
+ "_meta": {
+  "alpha": 0.01,
+  "code_sha256": {
+   "src/pcso_model_registry.py": "71949e97e5791fe9783f6d24e52a1bc863f4ad22bb2186cc59720791c5aff7a1",
+   "src/pcso_sparse_registered.py": "d0d074ee5bf9819ad0871532710fcbb12c46dd8af91f11a1b65f170683385381",
+   "src/pcso_sparse_switch.py": "bf28ec348fb8c7a761b4888ad683e1ea13ac970cc971331033d3e38b3b300069"
+  },
+  "combined_alpha": {
+   "E": 0.005,
+   "M": 0.005
+  },
+  "combined_thresholds": {
+   "E": 200,
+   "M": 200
+  },
+  "environment": {
+   "machine": "arm64",
+   "numpy": "2.5.2",
+   "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+   "python": "3.14.6",
+   "scipy": "1.18.1"
+  },
+  "first_registered_date": "2026-09-24",
+  "input_sha256": {
+   "datasets/pcso-lotto/data_draws_1yr.csv": "ef9422ec1e6afaa056d2928e007c70288c66293bc10b3909623dbfa3b6615e69"
+  },
+  "input_snapshot_commit": "1ce8541",
+  "last_conditioning_date": "2026-09-23",
+  "last_registered_date": "2026-10-02",
+  "n_conditioning": 1001,
+  "note": "Separate hypothesis-test decisions use E_max >= 100 and M_max >= 100. A combined decision splits alpha 0.005/0.005 (threshold 200 each) for overall error control at 0.01.",
+  "registered_provenance": [
+   {
+    "date": "2026-09-24",
+    "game": "Lotto 6/42",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json"
+   },
+   {
+    "date": "2026-09-24",
+    "game": "Super Lotto 6/49",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json"
+   },
+   {
+    "date": "2026-09-25",
+    "game": "Mega Lotto 6/45",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json"
+   },
+   {
+    "date": "2026-09-25",
+    "game": "Ultra Lotto 6/58",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-26.json"
+   },
+   {
+    "date": "2026-09-26",
+    "game": "Grand Lotto 6/55",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-27.json"
+   },
+   {
+    "date": "2026-09-26",
+    "game": "Lotto 6/42",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-09-27.json"
+   },
+   {
+    "date": "2026-09-27",
+    "game": "Super Lotto 6/49",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-09-27",
+    "game": "Ultra Lotto 6/58",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-09-28",
+    "game": "Grand Lotto 6/55",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-09-28",
+    "game": "Mega Lotto 6/45",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-09-29",
+    "game": "Lotto 6/42",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-09-29",
+    "game": "Super Lotto 6/49",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-09-29",
+    "game": "Ultra Lotto 6/58",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-09-30",
+    "game": "Grand Lotto 6/55",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-09-30",
+    "game": "Mega Lotto 6/45",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-10-01",
+    "game": "Lotto 6/42",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-10-01",
+    "game": "Super Lotto 6/49",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-10-02",
+    "game": "Mega Lotto 6/45",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   },
+   {
+    "date": "2026-10-02",
+    "game": "Ultra Lotto 6/58",
+    "manifest": "datasets/pcso-lotto/provenance/pcso_refresh_2026-10-03.json"
+   }
+  ],
+  "registration": "docs/REGISTRATION_PCSO_SPARSE_SWITCH.md",
+  "registration_date": "2026-09-23",
+  "run_date": "2026-10-03",
+  "schema_version": 1,
+  "script": "src/pcso_sparse_registered.py",
+  "thresholds": {
+   "E": 100,
+   "M": 100
+  },
+  "verify_scope": "byte verification is defined within the recorded environment"
+ },
+ "decision": {
+  "change_alarm": false,
+  "combined": false,
+  "evidence_rejection": false
+ },
+ "registered": {
+  "E_final": 1.0373926487742773,
+  "E_max": 1.0379896866448368,
+  "M_max": 0.9832642470753052,
+  "log_E_final": 0.03671,
+  "log_E_max": 0.037286,
+  "log_M_max": -0.016877,
+  "n": 19,
+  "overlaps": [
+   [
+    42,
+    1
+   ],
+   [
+    49,
+    0
+   ],
+   [
+    45,
+    0
+   ],
+   [
+    58,
+    1
+   ],
+   [
+    55,
+    2
+   ],
+   [
+    42,
+    1
+   ],
+   [
+    49,
+    1
+   ],
+   [
+    58,
+    2
+   ],
+   [
+    55,
+    1
+   ],
+   [
+    45,
+    1
+   ],
+   [
+    42,
+    0
+   ],
+   [
+    49,
+    0
+   ],
+   [
+    58,
+    0
+   ],
+   [
+    55,
+    3
+   ],
+   [
+    45,
+    0
+   ],
+   [
+    42,
+    0
+   ],
+   [
+    49,
+    1
+   ],
+   [
+    45,
+    4
+   ],
+   [
+    58,
+    0
+   ]
+  ]
+ }
+}

@@ -1,5 +1,7 @@
 """Novel-model tickets: no lookahead, and the tickets equal what the registered harness scores."""
+import copy
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -9,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import pcso_model_registry as R
+import pcso_frozen_law as FL
 import pcso_registered_predictions as P
 import pcso_sparse_registered as SR
 from pcso_sparse_switch import CPSparseSwitch
@@ -102,6 +105,42 @@ def test_next_tickets_are_isolated_from_order_and_leave_state_untouched(real):
         alone = P.next_tickets(models, [pool])
         assert alone == {P.GAME[pool]: together[P.GAME[pool]]}
     assert json.dumps(cp.rng.bit_generator.state, sort_keys=True) == rng_before
+
+
+def test_next_tickets_follow_c3(real):
+    rows, _, models = real
+    pools = sorted({p for _, p, _ in rows})
+    tickets = P.next_tickets(models, pools)
+    for pool in pools:
+        for model in models:
+            law = copy.deepcopy(model).predict(pool)
+            graph = FL._decode_arrays(json.loads(FL.encode(FL.freeze(law, pool))))
+            expected = FL.ticket_from_inclusion(FL.inclusion(graph))
+            assert tickets[P.GAME[pool]][model.name]["ticket"] == expected
+            log_r = (FL.logq(graph, expected) - FL._raw_inclusion(graph)[1]
+                     + math.log(math.comb(pool, R.K)))
+            assert tickets[P.GAME[pool]][model.name]["R"] == round(
+                math.exp(log_r), 6)
+    for pool in (42, 58):
+        assert tickets[P.GAME[pool]]["pair_parity"]["ticket"] == [1, 2, 3, 4, 5, 6]
+
+
+def test_next_r_is_invariant_to_parity_posterior_scale():
+    class ScaledParity:
+        def __init__(self, name, shift):
+            self.name, self.shift = name, shift
+
+        def predict(self, P):
+            law = R.ParityPair().predict(P)
+            law.lp = law.lp + self.shift
+            return law
+
+    shifted, plain = ScaledParity("shifted", 0.25), ScaledParity("plain", 0)
+    tickets = P.next_tickets([shifted, plain], [42, 49])
+    for pool in (42, 49):
+        game = P.GAME[pool]
+        assert tickets[game]["shifted"]["ticket"] == tickets[game]["plain"]["ticket"]
+        assert abs(tickets[game]["shifted"]["R"] - tickets[game]["plain"]["R"]) <= 1e-6
 
 
 def test_registered_tickets_equal_the_harness_overlaps(real):

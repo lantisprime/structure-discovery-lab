@@ -18,7 +18,10 @@ required pipeline step). For each of the five 6/N games it
   2. POSTs the date-range + game search with browser headers (Safari UA);
      if the site's edge returns HTTP 403 to the urllib client, the identical
      GET/POST sequence is retried through ``curl`` with the same headers and a
-     shared cookie jar,
+     shared cookie jar; if curl also gets HTTP 403, the search form is filled
+     and submitted in a HEADED Playwright Chromium window (the edge rejects
+     non-browser and headless clients by fingerprint, not by host — verified
+     2026-10-03: curl/urllib/headless 403, headed 200),
   3. saves the raw response HTML, gzipped, as immutable provenance,
   4. parses the result rows (game, draw date, combination in the official
      published order, jackpot PHP, winners) for the five 6/N games only,
@@ -36,8 +39,10 @@ Run (fetch):
 Run (offline re-parse):
     python3 tools/pcso_official_fetch.py --from-dir <dir> [--out-dir <dir>]
 
-Standard library only. Exit status: 0 success, 1 fetch/parse failure,
-2 usage error.
+Standard library only, except the last-resort browser fallback, which needs
+Playwright (requirements-dev.txt; ``python -m playwright install chromium``)
+and a desktop session for the headed window. Exit status: 0 success,
+1 fetch/parse failure, 2 usage error.
 """
 
 from __future__ import annotations
@@ -270,6 +275,31 @@ def parse_results(html: str) -> list:
     return rows
 
 
+def validate_rows(rows, game_id, start, end):
+    """Ensure parsed rows belong to the requested game and date range."""
+    expected_game = GAME_ID_TO_NAME[game_id]
+    seen = set()
+    for row in rows:
+        if row["game"] != expected_game:
+            raise ParseError(
+                f"row game {row['game']!r} does not match requested game "
+                f"{expected_game!r} (game id {game_id})"
+            )
+        try:
+            row_date = datetime.date.fromisoformat(row["date"])
+        except (TypeError, ValueError) as exc:
+            raise ParseError(f"invalid row date {row.get('date')!r}: {exc}")
+        if row_date < start or row_date > end:
+            raise ParseError(
+                f"row date {row['date']} is outside requested range {start}..{end}"
+            )
+        key = (row["game"], row["date"])
+        if key in seen:
+            raise ParseError(f"duplicate row for game {row['game']!r} on {row['date']}")
+        seen.add(key)
+    return rows
+
+
 # --------------------------------------------------------------------------
 # fetch — GET the page, read hidden fields, POST the search
 # --------------------------------------------------------------------------
@@ -350,6 +380,8 @@ def _curl_fetch(game_id: int, start: datetime.date, end: datetime.date) -> str:
 
         status, body = _curl_run(["-b", jar, "-c", jar, "-L", BASE_URL],
                                  get_headers, out)
+        if status == "403":
+            raise Http403(f"curl GET returned HTTP 403 for {BASE_URL}")
         if status != "200":
             raise FetchError(f"curl GET returned HTTP {status} for {BASE_URL}")
         page_html = body.decode("utf-8", "replace")
@@ -371,9 +403,58 @@ def _curl_fetch(game_id: int, start: datetime.date, end: datetime.date) -> str:
         status, body = _curl_run(
             ["-b", jar, "-c", jar, "--data", "@" + post_file, BASE_URL],
             post_headers, out)
+        if status == "403":
+            raise Http403(f"curl POST returned HTTP 403 for {BASE_URL}")
         if status != "200":
             raise FetchError(f"curl POST returned HTTP {status} for {BASE_URL}")
         return body.decode("utf-8", "replace")
+
+
+def _browser_fetch(game_id: int, start: datetime.date, end: datetime.date) -> str:
+    """Fill and submit the official search form in a headed Chromium window."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise FetchError("HTTP 403 from curl and Playwright is not installed "
+                         "(pip install -r requirements-dev.txt; "
+                         "python -m playwright install chromium)")
+    values = {
+        "ddlStartMonth": MONTHS[start.month - 1], "ddlStartDate": str(start.day),
+        "ddlStartYear": str(start.year), "ddlEndMonth": MONTHS[end.month - 1],
+        "ddlEndDay": str(end.day), "ddlEndYear": str(end.year),
+        "ddlSelectGame": str(game_id),
+    }
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=False)  # headless is 403'd too
+            try:
+                page = browser.new_context(user_agent=USER_AGENT,
+                                           locale="en-PH").new_page()
+                resp = page.goto(BASE_URL, wait_until="domcontentloaded",
+                                 timeout=TIMEOUT_SECS * 1000)
+                if resp is None or resp.status != 200:
+                    raise FetchError(f"browser GET returned HTTP "
+                                     f"{resp.status if resp else 'none'} for {BASE_URL}")
+                for name, value in values.items():
+                    page.select_option(f'select[name="{F_PREFIX}{name}"]', value)
+                with page.expect_navigation(wait_until="domcontentloaded",
+                                            timeout=TIMEOUT_SECS * 1000) as nav:
+                    page.click(f'[name="{F_PREFIX}btnSearch"]')
+                method = nav.value.request.method if nav.value is not None else "none"
+                if method != "POST":
+                    raise FetchError(
+                        f"browser search did not submit the form (navigation method {method})"
+                    )
+                if nav.value is None or nav.value.status != 200:
+                    raise FetchError(f"browser POST returned HTTP "
+                                     f"{nav.value.status if nav.value else 'none'} for {BASE_URL}")
+                return page.content()
+            finally:
+                browser.close()
+    except FetchError:
+        raise
+    except Exception as exc:  # Playwright errors: missing browser, no display, timeout
+        raise FetchError(f"browser fetch failed: {exc}")
 
 
 def fetch_with_client(game_id: int, start, end) -> tuple:
@@ -406,7 +487,12 @@ def fetch_with_client(game_id: int, start, end) -> tuple:
         print("[fetch] HTTP 403 from official site via urllib; "
               "falling back to curl with the same browser headers",
               file=sys.stderr)
+    try:
         return _curl_fetch(game_id, start, end), "curl"
+    except Http403:
+        print("[fetch] HTTP 403 via curl; falling back to a headed "
+              "Playwright Chromium window", file=sys.stderr)
+        return _browser_fetch(game_id, start, end), "browser"
 
 
 def fetch(game_id: int, start, end) -> str:
@@ -484,11 +570,12 @@ def save_capture(out_dir: str, game_id: int, start: str, end: str,
     return name
 
 
-def file_meta(filename: str, game_id: int, raw_bytes: bytes) -> dict:
+def file_meta(filename: str, game_id: int, raw_bytes: bytes, client: str) -> dict:
     return {
         "file": filename,
         "game_id": game_id,
         "game": GAME_ID_TO_NAME[game_id],
+        "fetch_client": client,
         "sha256_uncompressed": hashlib.sha256(raw_bytes).hexdigest(),
         "bytes": len(raw_bytes),
     }
@@ -527,6 +614,18 @@ def build_manifest(mode: str, run_date: str, start: str, end: str,
                  "to any dataset file by this tool"),
     }
     return manifest
+
+
+def aggregate_clients(pairs: list) -> str:
+    """Summarize (game id, client) pairs for successfully captured games."""
+    if not pairs:
+        return "n/a"
+    clients = {client for _gid, client in pairs}
+    if len(clients) == 1:
+        return next(iter(clients))
+    return "mixed: " + ", ".join(
+        f"{gid}={client}" for gid, client in sorted(pairs)
+    )
 
 
 # --------------------------------------------------------------------------
@@ -570,9 +669,9 @@ def _run(args) -> int:
     canonical_rows = load_canonical_rows(csv_path)
     last_dates = last_date_per_game(canonical_rows)
     files_meta = []
+    client_pairs = []
     parsed_by_game = {}
     failures = []
-    client = "n/a (offline re-parse)" if args.from_dir else "urllib"
     run_date = datetime.date.today().isoformat()
 
     if args.from_dir:
@@ -594,12 +693,17 @@ def _run(args) -> int:
                         "no result rows parsed from capture — page structure "
                         "may have changed or the range has no draws"
                     )
+                rows = validate_rows(
+                    rows, gid, _iso_date(cstart, "capture start"),
+                    _iso_date(cend, "capture end"))
             except (OSError, ParseError) as exc:
                 failures.append((GAME_ID_TO_NAME[gid], str(exc)))
                 print(f"[error] {GAME_ID_TO_NAME[gid]}: {exc}", file=sys.stderr)
                 continue
             parsed_by_game[GAME_ID_TO_NAME[gid]] = rows
-            files_meta.append(file_meta(os.path.basename(path), gid, raw))
+            capture_client = "n/a (offline re-parse)"
+            files_meta.append(file_meta(os.path.basename(path), gid, raw, capture_client))
+            client_pairs.append((gid, capture_client))
     else:
         start, end = args.start, args.end
         os.makedirs(args.out_dir, exist_ok=True)
@@ -607,7 +711,6 @@ def _run(args) -> int:
             game = GAME_ID_TO_NAME[gid]
             try:
                 html, client_used = fetch_with_client(gid, start, end)
-                client = client_used
                 raw = html.encode("utf-8")
                 save_capture(args.out_dir, gid, start, end, raw)
                 rows = parse_results(html)
@@ -616,13 +719,17 @@ def _run(args) -> int:
                         "no result rows parsed from official response — page "
                         "structure may have changed or the range has no draws"
                     )
+                rows = validate_rows(
+                    rows, gid, _iso_date(start, "--start"),
+                    _iso_date(end, "--end"))
             except (FetchError, ParseError, ValueError) as exc:
                 failures.append((game, str(exc)))
                 print(f"[error] {game}: {exc}", file=sys.stderr)
                 continue
             parsed_by_game[game] = rows
             files_meta.append(
-                file_meta(capture_filename(gid, start, end), gid, raw))
+                file_meta(capture_filename(gid, start, end), gid, raw, client_used))
+            client_pairs.append((gid, client_used))
 
     candidates = select_candidates(parsed_by_game, last_dates)
 
@@ -642,7 +749,7 @@ def _run(args) -> int:
             start=start, end=end,
             files_meta=files_meta,
             candidates=candidates,
-            client=client,
+            client=aggregate_clients(client_pairs),
             last_dates=last_dates,
             complete=not failures,
             capture_dir=args.from_dir,

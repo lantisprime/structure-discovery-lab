@@ -14,6 +14,7 @@ import datetime
 import gzip
 import importlib.util
 import os
+import shutil
 import subprocess
 import sys
 
@@ -127,3 +128,85 @@ def test_from_dir_committed_captures_zero_candidates():
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "", (
         f"expected zero candidate CSV lines, got:\n{proc.stdout}")
+
+
+# --------------------------------------------------------------------------
+# 4. Client fallback chain (no network): urllib 403 -> curl 403 -> headed
+#    browser. The edge rejects non-browser/headless clients by fingerprint
+#    (2026-10-03), so a 403 from curl must reach the browser, not abort.
+# --------------------------------------------------------------------------
+
+def _raise_403(*_args, **_kwargs):
+    raise F.Http403("HTTP 403")
+
+
+def test_curl_403_falls_back_to_browser(monkeypatch):
+    calls = []
+    monkeypatch.setattr(F, "_urllib_request", _raise_403)
+    monkeypatch.setattr(F, "_curl_fetch", lambda *a: calls.append("curl") or _raise_403())
+    monkeypatch.setattr(F, "_browser_fetch", lambda *a: calls.append("browser") or "<html/>")
+    html, client = F.fetch_with_client(17, "2026-09-28", "2026-09-28")
+    assert (html, client, calls) == ("<html/>", "browser", ["curl", "browser"])
+
+
+def test_curl_403_status_raises_http403(monkeypatch, tmp_path):
+    monkeypatch.setattr(F.shutil, "which", lambda _name: "/usr/bin/curl")
+    monkeypatch.setattr(F, "_curl_run", lambda *a: ("403", b"Access Denied"))
+    with pytest.raises(F.Http403):
+        F._curl_fetch(17, datetime.date(2026, 9, 28), datetime.date(2026, 9, 28))
+
+
+def test_curl_other_error_does_not_reach_browser(monkeypatch):
+    def curl_500(*_a):
+        raise F.FetchError("curl GET returned HTTP 500")
+    monkeypatch.setattr(F, "_urllib_request", _raise_403)
+    monkeypatch.setattr(F, "_curl_fetch", curl_500)
+    monkeypatch.setattr(F, "_browser_fetch", lambda *a: pytest.fail("browser must not run"))
+    with pytest.raises(F.FetchError, match="HTTP 500"):
+        F.fetch_with_client(17, "2026-09-28", "2026-09-28")
+
+
+def test_validate_rows_enforces_requested_game_range_and_unique_keys():
+    rows = F.parse_results(read_capture(18))
+    start, end = datetime.date(2026, 9, 1), datetime.date(2026, 9, 21)
+    assert F.validate_rows(rows, 18, start, end) is rows
+
+    wrong_game = [dict(rows[0], game="Lotto 6/42")]
+    with pytest.raises(F.ParseError, match="does not match requested game"):
+        F.validate_rows(wrong_game, 18, start, end)
+
+    out_of_range = [dict(rows[0], date="2026-08-31")]
+    with pytest.raises(F.ParseError, match="outside requested range"):
+        F.validate_rows(out_of_range, 18, start, end)
+
+    duplicate = [rows[0], dict(rows[0])]
+    with pytest.raises(F.ParseError, match="duplicate row"):
+        F.validate_rows(duplicate, 18, start, end)
+
+
+def test_from_dir_rejects_capture_copied_under_wrong_game_id(tmp_path):
+    for gid in sorted(F.GAME_ID_TO_NAME):
+        source = os.path.join(
+            CAPTURES_DIR, f"official_{gid}_2026-09-01_2026-09-21.html.gz")
+        target_end = "2026-09-20" if gid == 13 else "2026-09-21"
+        target = tmp_path / f"official_{gid}_2026-09-01_{target_end}.html.gz"
+        shutil.copyfile(source, target)
+    wrong_game_copy = tmp_path / "official_13_2026-09-01_2026-09-21.html.gz"
+    shutil.copyfile(
+        os.path.join(CAPTURES_DIR,
+                     "official_18_2026-09-01_2026-09-21.html.gz"),
+        wrong_game_copy)
+
+    proc = subprocess.run(
+        [sys.executable, TOOL, "--from-dir", str(tmp_path)],
+        cwd=REPO, capture_output=True, text=True, timeout=120)
+    assert proc.returncode != 0
+    assert "does not match requested game" in proc.stderr
+
+
+def test_aggregate_clients_summarizes_successful_captures():
+    assert F.aggregate_clients([(13, "urllib"), (18, "urllib")]) == "urllib"
+    assert F.aggregate_clients([(13, "curl"), (18, "urllib")]) == (
+        "mixed: 13=curl, 18=urllib")
+    # Failed games are omitted from pairs because they have no capture entry.
+    assert F.aggregate_clients([(13, "urllib")]) == "urllib"

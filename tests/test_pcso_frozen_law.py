@@ -113,6 +113,16 @@ def real_frozen():
     return models
 
 
+def _canonical_native_logq(law, S):
+    """C4 oracle: remove each parity child's native posterior scale."""
+    if isinstance(law, R.ParityLaw):
+        return law.logq(S) - FL._lse(law.lp)
+    if isinstance(law, R.MixLaw):
+        return FL._lse([math.log(float(v)) + _canonical_native_logq(child, S)
+                        for v, child in zip(law.v, law.laws) if v > 0])
+    return law.logq(S)
+
+
 def test_real_laws_random_subsets_and_bounds(real_frozen):
     pools = (42, 45, 49, 55, 58)
     encoded_sizes = []
@@ -144,7 +154,7 @@ def test_real_laws_random_subsets_and_bounds(real_frozen):
             lo, hi = score_bounds(graph)
             for S in subsets:
                 actual = logq(graph, S)
-                assert abs(actual - law.logq(S)) <= 1e-12
+                assert abs(actual - _canonical_native_logq(law, S)) <= 1e-12
                 d_value = actual - math.log(mass_mid) + math.log(math.comb(P, 6))
                 if not lo <= d_value <= hi:
                     dlo, dhi = D_interval(graph, S)
@@ -191,6 +201,85 @@ def test_ticket_exact_ties_favour_lower_numbers():
     # identical log-weights above 31 are exact ties.
     row = np.where(np.arange(1, 43) > 31, .3, 0.)[None, :]
     assert top6(freeze(R.Law(row, np.ones(1)), 42)) == [32, 33, 34, 35, 36, 37]
+
+
+@pytest.mark.parametrize("shift", [9.19e-12, 0.25, -0.25])
+@pytest.mark.parametrize("mixed", [False, True])
+def test_parity_snapshot_normalization(shift, mixed):
+    import mpmath as mp
+
+    P = 9
+    parity = R.ParityPair().predict(P)
+    parity.lp = parity.lp + shift
+    before = parity.lp.copy()
+    assert abs(FL._lse(before)) > 1e-12
+    law = (R.MixLaw([R.Uniform().predict(P), parity], np.array([.6, .4]))
+           if mixed else parity)
+    graph = decode(encode(freeze(law, P)))
+    np.testing.assert_array_equal(parity.lp, before)
+    child = graph["children"][1] if mixed else graph
+    assert abs(FL._lse(child["lp"])) <= 1e-12
+    assert not np.shares_memory(child["lp"], parity.lp)
+    blob = encode(graph)
+    assert encode(decode(blob)) == blob
+    mass = certified_mass(graph)
+    bounds = score_bounds(graph)
+    subsets = list(combinations(range(1, P + 1), 6))
+    with mp.workdps(50):
+        raw = [mp.exp(_high_precision_logq(graph, S)) for S in subsets]
+        total = sum(raw)
+        assert mp.mpf(mass[0]) <= total <= mp.mpf(mass[1])
+        assert 1 - mp.mpf("1e-12") <= mass[0] <= mass[1] <= 1 + mp.mpf("1e-12")
+        brute_pi = np.array([float(sum(r for S, r in zip(subsets, raw) if i in S) / total)
+                             for i in range(1, P + 1)])
+        for S, r in zip(subsets, raw):
+            exact = mp.log(r / total) + mp.log(math.comb(P, 6))
+            dlo, dhi = D_interval(graph, S)
+            assert mp.mpf(dlo) <= exact <= mp.mpf(dhi)
+            assert mp.mpf(bounds[0]) <= exact <= mp.mpf(bounds[1])
+            assert dhi - dlo <= 1e-12
+            assert abs(logq(graph, S) - _canonical_native_logq(law, S)) <= 1e-12
+    np.testing.assert_allclose(inclusion(graph), brute_pi, rtol=0, atol=1e-12)
+    assert top6(graph) == FL.ticket_from_inclusion(brute_pi)
+
+
+@pytest.mark.parametrize("P", [42, 58])
+@pytest.mark.parametrize("shift", [9.19e-12, 0.25])
+def test_parity_snapshot_symmetric_ticket(P, shift):
+    law = R.ParityPair().predict(P)
+    law.lp = law.lp + shift
+    graph = decode(encode(freeze(law, P)))
+    pi = inclusion(graph)
+    np.testing.assert_allclose(pi, np.full(P, 6 / P), rtol=1e-12, atol=0)
+    assert pi.min() >= (1 - FL.TIE_RTOL) * pi.max()
+    assert top6(graph) == [1, 2, 3, 4, 5, 6]
+
+
+def test_parity_snapshot_quality_gates_and_cache():
+    law = R.ParityPair().predict(9)
+    law.lp[::2] = -math.inf
+    graph = decode(encode(freeze(law, 9)))
+    assert np.all(np.isneginf(graph["lp"][::2]))
+    for value in (np.nan, math.inf, -math.inf):
+        bad = copy.deepcopy(graph)
+        bad["lp"][:] = value
+        with pytest.raises(ValueError):
+            validate(bad)
+    bad = copy.deepcopy(graph)
+    bad["lp"] += 1e-6
+    with pytest.raises(ValueError, match="exp\\(lp\\) must sum to 1"):
+        validate(bad)
+    first = certified_mass(graph)
+    graph["lp"] += 5e-13
+    validate(graph)
+    second = certified_mass(graph)
+    assert second[0] > first[1] + 4e-13
+    graph["logZ"] -= 4e-12
+    validate(graph)
+    third = certified_mass(graph)
+    assert third[0] > second[1] + 3e-12
+    with pytest.raises(ValueError, match="law mass not certified"):
+        decode(encode(graph))
 
 
 def test_sparse_support_rows_are_canonical(small):
